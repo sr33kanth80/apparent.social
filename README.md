@@ -1,73 +1,87 @@
-# React + TypeScript + Vite
+# apparent.social
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A React + TypeScript + Vite application backed by Supabase. This repo contains the marketing site, a basic authenticated dashboard shell, VC contact data (for development/demo), and supporting Supabase SQL and Edge Functions.
 
-Currently, two official plugins are available:
+## Tech stack
+- React 19 + TypeScript
+- Vite 8 (dev server and build)
+- Tailwind CSS 4
+- Radix UI primitives
+- React Router 7
+- Supabase (database + auth + Edge Functions)
+- Map tooling: maplibre-gl and Leaflet (tile layer driven via env)
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Quick start
+1) Requirements
+   - Node.js 20+ and npm 10+
+   - A Supabase project (optional for basic UI; required for auth/data)
+2) Install
+   - npm install
+3) Configure environment
+   - Copy .env.example to .env and fill in values (see Environment variables)
+4) Run
+   - npm run dev
+   - Open the URL printed by Vite (usually http://localhost:5173)
 
-## React Compiler
+## Scripts
+- npm run dev — start Vite dev server
+- npm run build — type-check (tsc -b) and build for production
+- npm run preview — preview the production build locally
+- npm run lint — run ESLint
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Environment variables (.env)
+Copy .env.example to .env and provide the following values:
+- VITE_SUPABASE_URL — your Supabase project URL
+- VITE_SUPABASE_ANON_KEY — your Supabase anon (public) API key
+- VITE_NETWORK_TILE_URL — map tile URL template. Example (OpenStreetMap):
+  https://tile.openstreetmap.org/{z}/{x}/{y}.png
+  Note: ensure you comply with the tile provider's terms of use.
 
-## Expanding the ESLint configuration
+The app reads these from import.meta.env (see src/lib/supabase.ts and map components).
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+## Project layout
+- src/ — application code
+  - components/ — UI components and sections (Navbar, Hero, Footer, etc.)
+  - components/ui/ — design system & widgets (buttons, inputs, sidebar, map, etc.)
+  - pages/ — route-level pages (Home, ForFounders, ForVCs, Dashboard, etc.)
+  - lib/ — utilities and services (Supabase client, auth helpers, types)
+- public/ — static assets (icons, logos, fonts)
+- supabase/ — database assets
+  - migrations/ — SQL migrations used to create and evolve schema
+  - seed.sql — large development seed of VC contacts (idempotent upserts)
+  - functions/ — Supabase Edge Functions (TypeScript)
+- scripts/ — local scripts (e.g., data seed helpers)
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+## Supabase setup (optional but recommended)
+1) Create a Supabase project and get its URL and anon key.
+2) Database schema & seed
+   - Open the Supabase SQL editor and run the files in supabase/migrations/ in chronological order.
+   - Optionally, load supabase/seed.sql to import development/demo VC contacts. This is a large script that performs upserts; running it is safe to repeat.
+3) Environment
+   - Set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY in .env
+4) Edge Functions (optional)
+   - The repo includes functions in supabase/functions/ (e.g., apify_ingest, start_daily_scrapes). If you plan to use them, deploy via the Supabase CLI:
+     - supabase functions deploy apify_ingest
+     - supabase functions deploy start_daily_scrapes
+   - You may need to configure environment variables/secrets for these functions in the Supabase dashboard.
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+## Routing and auth
+- React Router powers navigation in src/pages.
+- Protected routes use the wrapper in src/components/ProtectedDashboardRoute.tsx.
+- Supabase client initialization lives in src/lib/supabase.ts. If VITE_SUPABASE_URL or VITE_SUPABASE_ANON_KEY are missing, the client is not created and the app will run in a limited, unauthenticated mode.
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+## Development notes
+- .gitignore excludes node_modules, build artifacts, and .env by default.
+- If you work across Windows/macOS/Linux and care about consistent line endings, consider adding a .gitattributes like:
+  * text=auto eol=lf
+  I can add this in a follow-up PR if desired.
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## Deployment
+This is a standard static Vite build output that can be hosted on any static host (e.g., Vercel, Netlify, GitHub Pages with a SPA fallback). For Netlify/Vercel, set the build command to npm run build and the output directory to dist. Be sure to configure environment variables in your hosting provider.
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+## Contributing
+- Run npm run lint locally before committing.
+- Use clear, conventional commit messages when possible (e.g., feat:, fix:, chore:).
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+## License
+Add your license of choice (e.g., MIT) or keep this private.
