@@ -17,12 +17,12 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 type JsonRecord = Record<string, unknown>
 
 type SignalRow = {
-  company?: string | null
-  founder?: string | null
+  company: string
+  founder: string
   detail: string
   source_type: string
-  source_url?: string | null
-  profile_url?: string | null
+  source_url: string
+  profile_url: string
   stage?: string | null
   location?: string | null
   freshness_at: string
@@ -81,12 +81,12 @@ function mapYcItemToSignal(item: JsonRecord, runFinishedAt?: string): SignalRow 
   if (meta.length) parts.push(meta.join(' · '))
 
   return {
-    company: company || undefined,
-    founder: founderName || undefined,
+    company: company || '',
+    founder: founderName || '',
     detail: parts.join(' — ').trim() || company || 'YC company',
     source_type: 'YC Directory',
-    source_url: ycUrl || undefined,
-    profile_url: founderLinkedin || undefined,
+    source_url: ycUrl || '',
+    profile_url: founderLinkedin || '',
     stage: 'YC',
     location: locations.join(', ') || undefined,
     freshness_at: safeIso(runFinishedAt ?? text((item as JsonRecord).scrapedAt as string | undefined)),
@@ -119,12 +119,12 @@ function mapGithubTrendingItemToSignal(item: JsonRecord): SignalRow {
   const tags = [language, since, 'github'].filter(Boolean) as string[]
 
   return {
-    company: owner || undefined,
-    founder: undefined,
+    company: owner || '',
+    founder: '',
     detail: detailBits.join(' — ').trim() || fullName || 'GitHub repo',
     source_type: 'GitHub Trending',
-    source_url: repoUrl || undefined,
-    profile_url: owner ? `https://github.com/${owner}` : undefined,
+    source_url: repoUrl || '',
+    profile_url: owner ? `https://github.com/${owner}` : '',
     stage: 'Open Source',
     location: undefined,
     freshness_at: safeIso(scrapedAt),
@@ -187,7 +187,9 @@ serve(async (req) => {
     // Fall back to default Apify webhook shape if necessary.
     const datasetId = text((body as JsonRecord).datasetId) ||
       text((body.resource as JsonRecord | undefined)?.defaultDatasetId)
-    const itemsTotalRaw = (body as JsonRecord).itemsTotal ?? (body.resource as JsonRecord | undefined)?.stats && (body.resource as JsonRecord).stats?.itemsTotal
+    const resource = body.resource as JsonRecord | undefined
+    const resourceStats = resource?.stats as JsonRecord | undefined
+    const itemsTotalRaw = (body as JsonRecord).itemsTotal ?? resourceStats?.itemsTotal
     const itemsTotal = typeof itemsTotalRaw === 'number' ? itemsTotalRaw : Number(itemsTotalRaw ?? 0)
     const startedAt = text((body as JsonRecord).startedAt) || text((body.resource as JsonRecord | undefined)?.startedAt)
     const finishedAt = text((body as JsonRecord).finishedAt) || text((body.resource as JsonRecord | undefined)?.finishedAt)

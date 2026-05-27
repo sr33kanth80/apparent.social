@@ -19,6 +19,7 @@ Required secrets (never commit these; set via Supabase CLI):
   supabase secrets set \
     APIFY_TOKEN="<your token>" \
     APIFY_WEBHOOK_SECRET="<random-long-secret>" \
+    CRON_SECRET="<another-random-long-secret>" \
     SUPABASE_URL="https://<ref>.supabase.co" \
     SUPABASE_SERVICE_ROLE_KEY="<service role key>"
 
@@ -29,7 +30,8 @@ Scheduling (3:00 AM Central Time daily)
 Example dev test
 - Deploy functions, set secrets.
 - Call start_daily_scrapes once:
-  curl -i https://<ref>.functions.supabase.co/start_daily_scrapes
+  curl -i 'https://<ref>.supabase.co/functions/v1/start_daily_scrapes' \
+    -H 'X-Cron-Secret: <CRON_SECRET>'
 - When Apify calls back, apify_ingest responds with { ok: true, upserted: N }
 - Verify rows in public.source_signals and entries in public.scrape_runs.
 

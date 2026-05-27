@@ -5,6 +5,7 @@
 // Secrets required:
 // - APIFY_TOKEN
 // - APIFY_WEBHOOK_SECRET
+// - CRON_SECRET (required in X-Cron-Secret header to start runs)
 //
 // Optional env to override actor slugs:
 // - YC_ACTOR_SLUG (default: clearpath~ycombinator-api-scraper)
@@ -15,6 +16,7 @@ import { serve } from 'https://deno.land/std@0.177.0/http/server.ts'
 
 const APIFY_TOKEN = Deno.env.get('APIFY_TOKEN') as string
 const APIFY_WEBHOOK_SECRET = Deno.env.get('APIFY_WEBHOOK_SECRET') as string
+const CRON_SECRET = Deno.env.get('CRON_SECRET') as string
 const YC_ACTOR_SLUG = Deno.env.get('YC_ACTOR_SLUG') || 'clearpath~ycombinator-api-scraper'
 const GH_ACTOR_SLUG = Deno.env.get('GH_ACTOR_SLUG') || 'viralanalyzer~github-trending-scraper'
 
@@ -53,8 +55,12 @@ async function startActorRun(actorSlug: string, input: unknown, webhookUrl: stri
 }
 
 serve(async (req) => {
-  if (!APIFY_TOKEN || !APIFY_WEBHOOK_SECRET) {
+  if (!APIFY_TOKEN || !APIFY_WEBHOOK_SECRET || !CRON_SECRET) {
     return new Response('missing secrets', { status: 500 })
+  }
+
+  if (req.headers.get('x-cron-secret') !== CRON_SECRET) {
+    return new Response('unauthorized', { status: 401 })
   }
 
   const base = baseUrlFromRequest(req)

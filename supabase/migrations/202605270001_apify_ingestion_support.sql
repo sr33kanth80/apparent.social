@@ -20,6 +20,13 @@ create table if not exists public.scrape_runs (
 );
 
 -- 3) Unique index to dedupe signals by source
+delete from public.source_signals a
+using public.source_signals b
+where a.id > b.id
+  and a.source_type = b.source_type
+  and a.source_url = b.source_url
+  and coalesce(a.source_url, '') <> '';
+
 create unique index if not exists source_signals_src_unique
   on public.source_signals (source_type, source_url)
   where coalesce(source_url, '') <> '';
