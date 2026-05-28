@@ -45,21 +45,22 @@ export const clearDevSession = () => {
 };
 
 export const getCurrentAppUser = async (): Promise<AppUser | null> => {
+  // When Supabase is configured, real auth always takes priority over any dev session
+  if (isSupabaseConfigured && supabase) {
+    const { data, error } = await supabase.auth.getUser();
+    if (!error && data.user) {
+      clearDevSession(); // evict any stale dev session
+      return toAppUser(data.user);
+    }
+  }
+
+  // Fall back to dev session only when Supabase is not configured or has no active session
   const devSession = getDevSession();
   if (devSession) {
     return devSession;
   }
 
-  if (!isSupabaseConfigured || !supabase) {
-    return null;
-  }
-
-  const { data, error } = await supabase.auth.getUser();
-  if (error || !data.user) {
-    return null;
-  }
-
-  return toAppUser(data.user);
+  return null;
 };
 
 export const signInWithEmail = async (
@@ -70,6 +71,8 @@ export const signInWithEmail = async (
   if (!isSupabaseConfigured || !supabase) {
     return createDevSession(role);
   }
+
+  clearDevSession(); // ensure no stale dev session survives a real sign-in
 
   const signInResult = await supabase.auth.signInWithPassword({ email, password });
 
