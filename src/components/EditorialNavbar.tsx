@@ -19,10 +19,11 @@ export const EditorialNavbar = () => {
     if (!container || !el) return;
     const cr = container.getBoundingClientRect();
     const r = el.getBoundingClientRect();
-    const left = r.left - cr.left - 6;
-    const top = r.top - cr.top - 2;
-    const width = r.width + 12;
-    const height = r.height + 4;
+    const BORDER_ADJUST = 1;
+    const left = r.left - cr.left - BORDER_ADJUST;
+    const top = r.top - cr.top - BORDER_ADJUST;
+    const width = r.width + BORDER_ADJUST * 2;
+    const height = r.height + BORDER_ADJUST * 2;
     container.style.setProperty('--hover-left', `${left}px`);
     container.style.setProperty('--hover-top', `${top}px`);
     container.style.setProperty('--hover-width', `${width}px`);

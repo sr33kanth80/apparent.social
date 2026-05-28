@@ -405,7 +405,7 @@ a.rounded-full:hover {
   top: var(--hover-top);
   width: var(--hover-width);
   height: var(--hover-height);
-  border: 1.5px solid #000; /* black outline on hover */
+  border: 1px solid #000; /* thinner outline to match active */
   border-radius: 9999px;
   pointer-events: none;
   opacity: 0;
