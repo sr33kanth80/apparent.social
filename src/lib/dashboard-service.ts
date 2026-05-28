@@ -26,7 +26,6 @@ import type {
   Meetup,
   NetworkCluster,
   PublicFounderProfile,
-  PublicInvestorProfile,
   PublicProfileResult,
   PublicProjectDetail,
   ProductLaunch,
@@ -1380,6 +1379,8 @@ const loadLocalDashboard = async (user: AppUser, role: DashboardRole, labelByKey
       termReviews,
       messages,
       feedItems: buildFeedItems(role, profileSaved, signalRowsWithBuilders, meetups, productLaunches, feedActions),
+      savedInvestorMatchNames: [],
+      launchEngagement: {},
     };
   }
 
@@ -1402,6 +1403,8 @@ const loadLocalDashboard = async (user: AppUser, role: DashboardRole, labelByKey
     termReviews,
     messages,
     feedItems: buildFeedItems(role, profileSaved, seedInvestorSignals, meetups, productLaunches, feedActions),
+    savedInvestorMatchNames: [],
+    launchEngagement: {},
   };
 };
 

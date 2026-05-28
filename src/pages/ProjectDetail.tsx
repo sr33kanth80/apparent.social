@@ -43,6 +43,7 @@ const fallbackProjectDetail = (projectId: string): PublicProjectDetail | null =>
     },
     founder: {
       userId: launch.founderProfilePath.replace('/profile/', ''),
+      username: launch.founderProfilePath.replace('/profile/', ''),
       profileName: launch.founder,
       headline: `${launch.founder} launched ${launch.name}.`,
       bio: launch.description,
