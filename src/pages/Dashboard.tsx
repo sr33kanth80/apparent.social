@@ -2811,220 +2811,117 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
         <div id="profile" className="mx-auto max-w-[1292px] scroll-mt-24 space-y-6">
           {isInvestor ? (
             <>
-              {/* ── Investor Identity Header ───────────────────────────────── */}
+              {/* Header — mirrors founder avatar/name card exactly */}
               <section className="border-y border-black/10 bg-white">
-                <div className="px-6 py-6">
-                  <div className="flex flex-col gap-6 md:flex-row md:items-start md:justify-between">
-                    <div className="flex items-center gap-5">
-                      <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-2xl bg-[#42520d] text-xl font-semibold text-white shadow-sm">
+                <div className="px-5 py-5">
+                  <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                    <div className="flex items-center gap-4">
+                      <div className="flex h-24 w-24 shrink-0 items-center justify-center overflow-hidden rounded-[24px] bg-[#42520d] text-2xl font-semibold text-white shadow-sm">
                         {getInitials(user.email.split('@')[0].replace(/[._-]+/g, ' '))}
                       </div>
-                      <div>
-                        <h2 className="text-2xl font-semibold tracking-tight">
+                      <div className="pb-1">
+                        <h2 className="text-2xl font-semibold tracking-[-0.03em]">
                           {user.email.split('@')[0].replace(/[._-]+/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())}
                         </h2>
-                        <p className="mt-1 text-sm text-gray-500">Investor · {user.email}</p>
-                        <div className="mt-3 flex items-center gap-3">
-                          <div className="h-1.5 w-36 overflow-hidden rounded-full bg-black/10">
-                            <div className="h-full rounded-full bg-[#42520d] transition-all duration-500" style={{ width: `${profileStrength}%` }} />
-                          </div>
-                          <span className="text-xs text-gray-500">{profileStrength}% complete</span>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="flex flex-wrap gap-3">
-                      <div className="rounded-xl border border-black/8 bg-[#f7f3e4] px-4 py-3 text-center min-w-[80px]">
-                        <p className="text-xl font-semibold">{signalRows.length}</p>
-                        <p className="mt-0.5 text-xs text-gray-500">Signals</p>
-                      </div>
-                      <div className="rounded-xl border border-black/8 bg-[#f7f3e4] px-4 py-3 text-center min-w-[80px]">
-                        <p className="text-xl font-semibold">{averageSignalScore || '—'}</p>
-                        <p className="mt-0.5 text-xs text-gray-500">Avg relevance</p>
-                      </div>
-                      <div className="rounded-xl border border-black/8 bg-[#f7f3e4] px-4 py-3 text-center min-w-[80px]">
-                        <p className="text-xl font-semibold">{completedFieldCount}<span className="text-sm font-normal text-gray-400">/{intakeFields.length}</span></p>
-                        <p className="mt-0.5 text-xs text-gray-500">Fields set</p>
+                        <p className="mt-2 max-w-2xl text-sm leading-6 text-gray-600">Investor profile on Apparent</p>
                       </div>
                     </div>
                   </div>
                 </div>
               </section>
 
-              {/* ── Investment Thesis ─────────────────────────────────────── */}
+              {/* Thesis fields — same divide-y card as founder "Your Profile" */}
               <section className="border-y border-black/10 bg-white">
-                <div className="flex items-center justify-between border-b border-black/10 px-6 py-4">
+                <div className="flex flex-col gap-3 border-b border-black/10 px-5 py-4 md:flex-row md:items-center md:justify-between">
                   <div>
-                    <h3 className="text-sm font-semibold">Investment thesis</h3>
-                    <p className="mt-0.5 text-xs text-gray-500">Your thesis is the core signal that powers ranking. The sharper it is, the better your matches.</p>
+                    <h3 className="text-sm font-semibold">Your Thesis</h3>
+                    <p className="mt-1 text-xs text-gray-500">Capture the thesis, stage, geography, and founder signals that shape your sourcing and rank your deal flow.</p>
                   </div>
-                  <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${intakeValues.thesis?.trim() ? 'bg-green-50 text-green-700' : 'bg-[#f4f1eb] text-gray-500'}`}>
-                    {intakeValues.thesis?.trim() ? 'Defined' : 'Not set'}
-                  </span>
+                  <span className="rounded-full bg-[#f4f1eb] px-3 py-1.5 text-xs text-gray-600">{completedFieldCount}/{intakeFields.length} complete</span>
                 </div>
-                <div className="px-6 py-5">
-                  <textarea
-                    value={intakeValues.thesis ?? ''}
-                    onChange={(e) => handleIntakeChange('thesis', e.target.value)}
-                    placeholder="Developer infrastructure tools with clear usage pull from technical teams. We look for founders who build in public, show a sharp wedge, and have early user pull before raising."
-                    rows={4}
-                    className="w-full resize-none border-0 bg-transparent text-sm leading-relaxed text-gray-900 outline-none placeholder:text-gray-300"
-                  />
+                <div className="divide-y divide-black/10">
+                  {investorIntakeFields.map((field) => (
+                    <label key={field.key} className="grid gap-3 px-5 py-4 transition-colors hover:bg-[#fbf8f3] md:grid-cols-[260px_1fr]">
+                      <div>
+                        <p className="text-sm font-medium">{field.label}</p>
+                        <p className="mt-1 text-xs text-gray-400">{intakeValues[field.key]?.trim() ? 'Captured' : 'Optional'}</p>
+                      </div>
+                      {field.kind === 'textarea' ? (
+                        <textarea value={intakeValues[field.key] ?? ''} onChange={(event) => handleIntakeChange(field.key, event.target.value)} placeholder={field.placeholder} className="min-h-20 w-full resize-none border-0 bg-transparent text-sm leading-relaxed outline-none placeholder:text-gray-400" />
+                      ) : field.kind === 'select' ? (
+                        <select value={intakeValues[field.key] ?? ''} onChange={(event) => handleIntakeChange(field.key, event.target.value)} className="h-8 w-full border-0 bg-transparent text-sm outline-none">
+                          <option value="">{field.placeholder}</option>
+                          {field.options?.map((option) => (
+                            <option key={option} value={option}>{option}</option>
+                          ))}
+                        </select>
+                      ) : (
+                        <input value={intakeValues[field.key] ?? ''} onChange={(event) => handleIntakeChange(field.key, event.target.value)} placeholder={field.placeholder} className="h-8 w-full border-0 bg-transparent text-sm outline-none placeholder:text-gray-400" />
+                      )}
+                    </label>
+                  ))}
+                </div>
+                <div className="flex flex-col gap-3 border-t border-black/10 px-5 py-4 sm:flex-row sm:items-center sm:justify-end">
+                  <button className={`rounded-full ${accentSurface} px-5 py-2.5 text-sm font-medium ${accentForeground} transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60`} onClick={handleSaveProfile} disabled={isSavingWorkspace}>
+                    {isSavingWorkspace ? 'Saving...' : 'Save thesis'}
+                  </button>
                 </div>
               </section>
 
-              {/* ── Investment Focus + Thesis Health ─────────────────────── */}
-              <div className="grid gap-6 lg:grid-cols-[1fr_280px]">
-                <section className="border-y border-black/10 bg-white">
-                  <div className="border-b border-black/10 px-6 py-4">
-                    <h3 className="text-sm font-semibold">Investment focus</h3>
-                    <p className="mt-0.5 text-xs text-gray-500">These parameters shape which signals surface at the top of your deal feed.</p>
+              {/* Bottom grid — mirrors founder "Products + Past products" layout */}
+              <section className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">
+                <div className="border-y border-black/10 bg-white">
+                  <div className="flex items-center justify-between border-b border-black/10 px-5 py-4">
+                    <div>
+                      <h3 className="text-sm font-semibold">Top ranked signals</h3>
+                      <p className="mt-1 text-xs text-gray-500">Your highest-scoring deals based on your current thesis. Goes up as you refine your criteria above.</p>
+                    </div>
+                    <button type="button" className={`rounded-full ${accentSurface} px-3 py-1.5 text-xs font-semibold ${accentForeground}`} onClick={() => handleDashboardViewChange('deals')}>
+                      View all
+                    </button>
                   </div>
                   <div className="divide-y divide-black/10">
-                    <div className="grid sm:grid-cols-2 sm:divide-x sm:divide-black/10">
-                      <label className="grid gap-2 px-6 py-4 transition-colors hover:bg-[#fbf8f3]">
-                        <div>
-                          <p className="text-sm font-medium">Sectors</p>
-                          <p className="mt-0.5 text-xs text-gray-400">{intakeValues.sectors?.trim() ? 'Set' : 'Optional'}</p>
+                    {signalRows.slice(0, 5).map((signal) => (
+                      <article key={signal.id} className="px-5 py-4">
+                        <div className="flex items-start gap-3">
+                          <div className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-[14px] bg-[#f7f3e4] text-xs font-semibold text-[#42520d]">
+                            {signal.company.slice(0, 2).toUpperCase()}
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center justify-between gap-2">
+                              <p className="text-sm font-semibold">{signal.company}</p>
+                              <span className="shrink-0 rounded-full bg-[#f4f1eb] px-2 py-0.5 text-xs text-gray-600">{signal.relevance}</span>
+                            </div>
+                            <p className="mt-1 line-clamp-2 text-sm leading-5 text-gray-500">{signal.detail}</p>
+                            <div className="mt-2 flex flex-wrap gap-2 text-xs text-gray-400">
+                              <span>{signal.source}</span>
+                              <span>·</span>
+                              <span>{signal.freshness}</span>
+                            </div>
+                          </div>
                         </div>
-                        <input value={intakeValues.sectors ?? ''} onChange={(e) => handleIntakeChange('sectors', e.target.value)} placeholder="AI infra, devtools, workflow automation" className="h-8 w-full border-0 bg-transparent text-sm outline-none placeholder:text-gray-300" />
-                      </label>
-                      <label className="grid gap-2 px-6 py-4 transition-colors hover:bg-[#fbf8f3]">
-                        <div>
-                          <p className="text-sm font-medium">Preferred stage</p>
-                          <p className="mt-0.5 text-xs text-gray-400">{intakeValues.stage?.trim() ? 'Set' : 'Optional'}</p>
-                        </div>
-                        <select value={intakeValues.stage ?? ''} onChange={(e) => handleIntakeChange('stage', e.target.value)} className="h-8 w-full border-0 bg-transparent text-sm outline-none">
-                          <option value="">Select stage</option>
-                          {investorStageOptions.map((opt) => <option key={opt} value={opt}>{opt}</option>)}
-                        </select>
-                      </label>
-                    </div>
-                    <div className="grid sm:grid-cols-2 sm:divide-x sm:divide-black/10">
-                      <label className="grid gap-2 px-6 py-4 transition-colors hover:bg-[#fbf8f3]">
-                        <div>
-                          <p className="text-sm font-medium">Geography</p>
-                          <p className="mt-0.5 text-xs text-gray-400">{intakeValues.geography?.trim() ? 'Set' : 'Optional'}</p>
-                        </div>
-                        <input value={intakeValues.geography ?? ''} onChange={(e) => handleIntakeChange('geography', e.target.value)} placeholder="SF, NYC, remote-first teams" className="h-8 w-full border-0 bg-transparent text-sm outline-none placeholder:text-gray-300" />
-                      </label>
-                      <label className="grid gap-2 px-6 py-4 transition-colors hover:bg-[#fbf8f3]">
-                        <div>
-                          <p className="text-sm font-medium">Check size</p>
-                          <p className="mt-0.5 text-xs text-gray-400">{intakeValues.checkSize?.trim() ? 'Set' : 'Optional'}</p>
-                        </div>
-                        <input value={intakeValues.checkSize ?? ''} onChange={(e) => handleIntakeChange('checkSize', e.target.value)} placeholder="$250k – $1.5M" className="h-8 w-full border-0 bg-transparent text-sm outline-none placeholder:text-gray-300" />
-                      </label>
-                    </div>
+                      </article>
+                    ))}
+                    {signalRows.length === 0 && (
+                      <div className="px-5 py-10 text-sm leading-6 text-gray-500">No signals yet. Save your thesis above to start seeing ranked deal flow.</div>
+                    )}
                   </div>
-                </section>
+                </div>
 
                 <aside className="border-y border-black/10 bg-white">
                   <div className="border-b border-black/10 px-5 py-4">
-                    <h3 className="text-sm font-semibold">Thesis health</h3>
+                    <h3 className="text-sm font-semibold">Portfolio calibration</h3>
+                    <p className="mt-1 text-xs text-gray-500">Companies from your taste list, used to calibrate signal ranking.</p>
                   </div>
                   <div className="divide-y divide-black/10">
-                    <div className="px-5 py-4">
-                      <p className="text-xs text-gray-500">Profile strength</p>
-                      <div className="mt-2 flex items-center gap-3">
-                        <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-black/10">
-                          <div className="h-full rounded-full bg-[#42520d] transition-all duration-500" style={{ width: `${profileStrength}%` }} />
-                        </div>
-                        <span className="text-sm font-semibold">{profileStrength}%</span>
-                      </div>
-                    </div>
-                    <div className="px-5 py-4">
-                      <p className="text-xs text-gray-500">Avg signal relevance</p>
-                      <p className="mt-1 text-2xl font-semibold tracking-tight">{averageSignalScore || '—'}</p>
-                      <p className="mt-0.5 text-xs text-gray-400">across {signalRows.length} signals</p>
-                    </div>
-                    <div className="px-5 py-4">
-                      <p className="text-xs text-gray-500">Fields completed</p>
-                      <p className="mt-1 text-sm font-semibold">{completedFieldCount} / {intakeFields.length}</p>
-                      <p className="mt-0.5 text-xs text-gray-400">
-                        {intakeFields.length - completedFieldCount > 0
-                          ? `${intakeFields.length - completedFieldCount} more will improve matches`
-                          : 'Thesis fully defined ✓'}
-                      </p>
-                    </div>
+                    {(intakeValues.portfolioExamples ?? '').split(',').map((s) => s.trim()).filter(Boolean).map((company) => (
+                      <div key={company} className="px-5 py-3 text-sm text-gray-700">{company}</div>
+                    ))}
+                    {!(intakeValues.portfolioExamples ?? '').trim() && (
+                      <div className="px-5 py-8 text-sm leading-6 text-gray-500">Add portfolio examples in your thesis to calibrate your signal ranking.</div>
+                    )}
                   </div>
                 </aside>
-              </div>
-
-              {/* ── Founder Signals: Look For + Pass On ───────────────────── */}
-              <div className="grid gap-6 lg:grid-cols-2">
-                <section className="border-y border-black/10 bg-white">
-                  <div className="flex items-center gap-3 border-b border-black/10 px-6 py-4">
-                    <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-green-50 text-green-700">
-                      <Target className="h-3.5 w-3.5" />
-                    </span>
-                    <div>
-                      <h3 className="text-sm font-semibold">Founder signals you care about</h3>
-                      <p className="text-xs text-gray-500">Boosts a builder's relevance score when these appear in their profile.</p>
-                    </div>
-                  </div>
-                  <div className="px-6 py-5">
-                    <textarea
-                      value={intakeValues.founderSignals ?? ''}
-                      onChange={(e) => handleIntakeChange('founderSignals', e.target.value)}
-                      placeholder="Shipping velocity, technical depth, sharp product taste, customer obsession, prior exit or traction."
-                      rows={4}
-                      className="w-full resize-none border-0 bg-transparent text-sm leading-relaxed text-gray-900 outline-none placeholder:text-gray-300"
-                    />
-                  </div>
-                </section>
-
-                <section className="border-y border-black/10 bg-white">
-                  <div className="flex items-center gap-3 border-b border-black/10 px-6 py-4">
-                    <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-red-50 text-red-400">
-                      <X className="h-3.5 w-3.5" />
-                    </span>
-                    <div>
-                      <h3 className="text-sm font-semibold">Fast pass signals</h3>
-                      <p className="text-xs text-gray-500">Reduces a signal's relevance score when these patterns are present.</p>
-                    </div>
-                  </div>
-                  <div className="px-6 py-5">
-                    <textarea
-                      value={intakeValues.passSignals ?? ''}
-                      onChange={(e) => handleIntakeChange('passSignals', e.target.value)}
-                      placeholder="No clear user pull, weak founder-market fit, unclear wedge, consumer app without retention signal."
-                      rows={4}
-                      className="w-full resize-none border-0 bg-transparent text-sm leading-relaxed text-gray-900 outline-none placeholder:text-gray-300"
-                    />
-                  </div>
-                </section>
-              </div>
-
-              {/* ── Portfolio Calibration ─────────────────────────────────── */}
-              <section className="border-y border-black/10 bg-white">
-                <div className="border-b border-black/10 px-6 py-4">
-                  <h3 className="text-sm font-semibold">Portfolio calibration</h3>
-                  <p className="mt-0.5 text-xs text-gray-500">Companies that match your taste. Used to calibrate signal ranking — the closer a builder is to these, the higher they score.</p>
-                </div>
-                <div className="px-6 py-5">
-                  <input
-                    value={intakeValues.portfolioExamples ?? ''}
-                    onChange={(e) => handleIntakeChange('portfolioExamples', e.target.value)}
-                    placeholder="Linear, Supabase, Vercel, Cursor, Notion, Stripe"
-                    className="w-full border-0 bg-transparent text-sm outline-none placeholder:text-gray-300"
-                  />
-                  {intakeValues.portfolioExamples?.trim() && (
-                    <div className="mt-4 flex flex-wrap gap-2">
-                      {intakeValues.portfolioExamples.split(',').map((s) => s.trim()).filter(Boolean).map((company) => (
-                        <span key={company} className="rounded-full bg-[#f7f3e4] px-3 py-1 text-xs font-medium text-gray-700">{company}</span>
-                      ))}
-                    </div>
-                  )}
-                </div>
-                <div className="flex justify-end border-t border-black/10 px-6 py-4">
-                  <button
-                    className="rounded-full bg-[#42520d] px-6 py-2.5 text-sm font-medium text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
-                    onClick={handleSaveProfile}
-                    disabled={isSavingWorkspace}
-                  >
-                    {isSavingWorkspace ? 'Saving…' : 'Save thesis'}
-                  </button>
-                </div>
               </section>
             </>
           ) : (
