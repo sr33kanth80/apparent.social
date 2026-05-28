@@ -1198,6 +1198,7 @@ export const loadPublicProfile = async (username: string): Promise<PublicProfile
     return { kind: 'not_found' };
   }
 
+  try {
   // 1. Resolve username → user_id + role
   const { data: profileRow } = await supabase
     .from('profiles')
@@ -1320,6 +1321,9 @@ export const loadPublicProfile = async (username: string): Promise<PublicProfile
       launches,
     },
   };
+  } catch {
+    return { kind: 'not_found' };
+  }
 };
 
 const loadLocalDashboard = async (user: AppUser, role: DashboardRole, labelByKey: Record<string, string>): Promise<DashboardData> => {

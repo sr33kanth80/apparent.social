@@ -441,12 +441,19 @@ export const PublicProfile = () => {
     let cancelled = false;
     setIsLoading(true);
 
-    loadPublicProfile(handle).then((res) => {
-      if (!cancelled) {
-        setResult(res);
-        setIsLoading(false);
-      }
-    });
+    loadPublicProfile(handle)
+      .then((res) => {
+        if (!cancelled) {
+          setResult(res);
+          setIsLoading(false);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setResult({ kind: 'not_found' });
+          setIsLoading(false);
+        }
+      });
 
     return () => {
       cancelled = true;
