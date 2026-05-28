@@ -161,9 +161,11 @@ function App() {
               </>
             }
           />
-          {/* /@username — canonical public profile URL */}
+          {/* /@username — canonical public profile URL.
+              React Router v7 can't parse /@:param (@ breaks the segment
+              parser), so we use /:handle and strip the @ in the component. */}
           <Route
-            path="/@:username"
+            path="/:handle"
             element={<PublicProfile />}
           />
           {/* Legacy /profile/:profileId — kept for backward compat */}

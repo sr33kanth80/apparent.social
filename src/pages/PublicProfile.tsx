@@ -424,15 +424,20 @@ const InvestorRestrictedPage = ({ username }: { username: string }) => (
 // ─── root ─────────────────────────────────────────────────────────────────────
 
 export const PublicProfile = () => {
-  // Support both /@:username and legacy /profile/:profileId
-  const { username = '', profileId = '' } = useParams();
-  const handle = (username || profileId).replace(/^@/, '');
+  // Support /@:handle (now routed as /:handle in App.tsx — React Router v7
+  // can't parse /@:param) and legacy /profile/:profileId.
+  const { handle: rawHandle = '', profileId = '' } = useParams();
+  const handle = (rawHandle || profileId).replace(/^@/, '');
+
+  // If the path segment doesn't start with @ it's not a profile route —
+  // let it fall through to not_found so other pages aren't shadowed.
+  const isProfileRoute = rawHandle.startsWith('@') || Boolean(profileId);
 
   const [result, setResult] = useState<PublicProfileResult | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    if (!handle) {
+    if (!handle || !isProfileRoute) {
       setResult({ kind: 'not_found' });
       setIsLoading(false);
       return;
@@ -458,7 +463,7 @@ export const PublicProfile = () => {
     return () => {
       cancelled = true;
     };
-  }, [handle]);
+  }, [handle, isProfileRoute]);
 
   if (isLoading) {
     return (
