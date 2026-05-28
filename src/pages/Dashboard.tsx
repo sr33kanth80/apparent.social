@@ -1038,6 +1038,10 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
   const [termDraft, setTermDraft] = useState(emptyTermDraft);
   const [messageDraft, setMessageDraft] = useState(emptyMessageDraft);
   const [feedbackDraft, setFeedbackDraft] = useState(emptyFeedbackDraft);
+  const [isOnboarding, setIsOnboarding] = useState(() =>
+    Boolean((location.state as { onboarding?: boolean } | null)?.onboarding),
+  );
+  const [onboardingStep, setOnboardingStep] = useState(0);
   const [dashboardLaunchFilter, setDashboardLaunchFilter] = useState('Today');
   const [selectedForYouLaunchId, setSelectedForYouLaunchId] = useState(seedDashboardLaunches[0].id);
   const dashboardFilterScrollRef = useRef<HTMLDivElement | null>(null);
@@ -2168,6 +2172,16 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
   const handleIntakeChange = (key: string, value: string) => {
     setIntakeValues((current) => ({ ...current, [key]: value }));
     setProfileSaved(false);
+  };
+
+  const handleOnboardingComplete = async () => {
+    setIsOnboarding(false);
+    try {
+      await saveIntakeValues(user, role, intakeValues);
+      setProfileSaved(true);
+    } catch {
+      // non-fatal — user can save profile manually later
+    }
   };
 
   const handleSaveProfile = async () => {
@@ -5496,9 +5510,143 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
   const isMessagesView = activeView === 'messages';
   const isVCHeatMapView = activeView === 'vc-heatmap';
 
+  const onboardingSteps = isInvestor
+    ? [
+        {
+          title: 'Define your thesis',
+          subtitle: 'What kind of founders and companies do you back? This powers your signal ranking.',
+          fields: [
+            { key: 'thesis', label: 'Investment thesis', placeholder: 'Developer infrastructure tools with clear usage pull from technical teams.', kind: 'textarea' as FieldKind },
+            { key: 'sectors', label: 'Sectors', placeholder: 'AI infra, devtools, workflow automation', kind: 'input' as FieldKind },
+          ],
+        },
+        {
+          title: 'Your investment focus',
+          subtitle: "A bit more detail so we can match you to the right builders.",
+          fields: [
+            { key: 'stage', label: 'Preferred stage', placeholder: 'Select stage', kind: 'select' as FieldKind, options: investorStageOptions },
+            { key: 'checkSize', label: 'Typical check size', placeholder: '$250k – $1.5M', kind: 'input' as FieldKind },
+            { key: 'geography', label: 'Geography', placeholder: 'SF, NYC, remote-first', kind: 'input' as FieldKind },
+          ],
+        },
+      ]
+    : [
+        {
+          title: "Tell us who you are",
+          subtitle: 'This is what investors and founders see when they find your profile.',
+          fields: [
+            { key: 'profileName', label: 'Your name', placeholder: 'Your name', kind: 'input' as FieldKind },
+            { key: 'headline', label: 'Headline', placeholder: 'Founder building AI tools for engineering teams.', kind: 'input' as FieldKind },
+            { key: 'bio', label: 'Bio', placeholder: 'A short founder bio: what you care about, where you have built, and who you want to meet.', kind: 'textarea' as FieldKind },
+          ],
+        },
+        {
+          title: "What are you building?",
+          subtitle: 'Help investors and co-builders understand your current focus.',
+          fields: [
+            { key: 'currentBuild', label: "What you're building", placeholder: 'A GitHub-native analytics layer for engineering leaders.', kind: 'textarea' as FieldKind },
+            { key: 'category', label: 'Category', placeholder: 'Devtools, AI infra, SaaS', kind: 'input' as FieldKind },
+            { key: 'stage', label: 'Current stage', placeholder: 'Select stage', kind: 'select' as FieldKind, options: founderStageOptions },
+            { key: 'location', label: 'Location', placeholder: 'Brooklyn / remote', kind: 'input' as FieldKind },
+          ],
+        },
+      ];
+
+  const currentOnboardingStep = onboardingSteps[onboardingStep];
+  const isLastOnboardingStep = onboardingStep === onboardingSteps.length - 1;
+
+  if (isOnboarding && currentOnboardingStep) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-[#fbf8f3] px-4">
+        <div className="w-full max-w-lg">
+          <div className="mb-8 flex items-center gap-2">
+            <LogoIcon className="h-6 w-6 text-black" />
+            <img src="/apparent-wordmark.png" alt="Apparent" className="h-6 w-auto object-contain" />
+          </div>
+
+          <div className="mb-6 flex items-center gap-2">
+            {onboardingSteps.map((_, i) => (
+              <div
+                key={i}
+                className={`h-1 flex-1 rounded-full transition-colors ${i <= onboardingStep ? (isInvestor ? 'bg-green-700' : 'bg-[#02A070]') : 'bg-black/10'}`}
+              />
+            ))}
+          </div>
+
+          <p className="mb-1 text-sm text-black/40">
+            Step {onboardingStep + 1} of {onboardingSteps.length}
+          </p>
+          <h1 className="mb-1 text-2xl font-semibold tracking-tight">{currentOnboardingStep.title}</h1>
+          <p className="mb-8 text-sm leading-relaxed text-black/55">{currentOnboardingStep.subtitle}</p>
+
+          <div className="flex flex-col gap-4">
+            {currentOnboardingStep.fields.map((field) => (
+              <div key={field.key} className="flex flex-col gap-1.5">
+                <label className="text-sm font-medium text-black/70">{field.label}</label>
+                {field.kind === 'textarea' ? (
+                  <textarea
+                    rows={3}
+                    placeholder={field.placeholder}
+                    value={intakeValues[field.key] ?? ''}
+                    onChange={(e) => handleIntakeChange(field.key, e.target.value)}
+                    className="w-full rounded-xl border border-black/10 bg-white px-4 py-3 text-sm leading-relaxed text-black placeholder:text-black/25 focus:border-black/30 focus:outline-none"
+                  />
+                ) : field.kind === 'select' && field.options ? (
+                  <select
+                    value={intakeValues[field.key] ?? ''}
+                    onChange={(e) => handleIntakeChange(field.key, e.target.value)}
+                    className="w-full rounded-xl border border-black/10 bg-white px-4 py-3 text-sm text-black focus:border-black/30 focus:outline-none"
+                  >
+                    <option value="">{field.placeholder}</option>
+                    {field.options.map((opt) => (
+                      <option key={opt} value={opt}>{opt}</option>
+                    ))}
+                  </select>
+                ) : (
+                  <input
+                    type="text"
+                    placeholder={field.placeholder}
+                    value={intakeValues[field.key] ?? ''}
+                    onChange={(e) => handleIntakeChange(field.key, e.target.value)}
+                    className="w-full rounded-xl border border-black/10 bg-white px-4 py-3 text-sm text-black placeholder:text-black/25 focus:border-black/30 focus:outline-none"
+                  />
+                )}
+              </div>
+            ))}
+          </div>
+
+          <div className="mt-8 flex items-center justify-between">
+            {onboardingStep > 0 ? (
+              <button
+                type="button"
+                onClick={() => setOnboardingStep((s) => s - 1)}
+                className="text-sm text-black/40 hover:text-black/70"
+              >
+                ← Back
+              </button>
+            ) : (
+              <span />
+            )}
+            <button
+              type="button"
+              onClick={isLastOnboardingStep ? handleOnboardingComplete : () => setOnboardingStep((s) => s + 1)}
+              className={`rounded-xl px-6 py-3 text-sm font-semibold text-white transition ${isInvestor ? 'bg-green-700 hover:bg-green-800' : 'bg-black hover:bg-black/80'}`}
+            >
+              {isLastOnboardingStep ? 'Enter your workspace →' : 'Continue →'}
+            </button>
+          </div>
+
+          <p className="mt-6 text-center text-xs text-black/30">
+            You can update any of this later from your profile.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-[#fbf8f3] text-black">
-      <SessionNavBar role={role} />
+      <SessionNavBar role={role} user={user} />
 
       <main className="min-h-screen pl-[15rem]">
         <div className={isVCHeatMapView ? 'min-h-screen' : isMessagesView ? 'mx-auto flex h-screen w-full max-w-[1440px] flex-col overflow-hidden px-6 pt-6' : 'mx-auto max-w-[1440px] px-6 py-6'}>

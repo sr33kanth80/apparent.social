@@ -28,8 +28,9 @@ export const Login = () => {
     setIsSubmitting(true);
 
     try {
-      await signInWithEmail(data.email, data.password ?? '', activeRole);
-      navigate(isInvestor ? '/dashboard/investor' : '/dashboard/founder');
+      const result = await signInWithEmail(data.email, data.password ?? '', activeRole);
+      const path = isInvestor ? '/dashboard/investor' : '/dashboard/founder';
+      navigate(path, result.isNew ? { state: { onboarding: true } } : undefined);
     } catch (error) {
       setAuthError(error instanceof Error ? error.message : 'Unable to sign in.');
     } finally {

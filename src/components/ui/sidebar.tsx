@@ -39,12 +39,26 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Separator } from '@/components/ui/separator';
 import { signOut } from '@/lib/auth-service';
+import type { AppUser } from '@/lib/apparent-types';
 
 type DashboardRole = 'founder' | 'investor';
 
 interface SessionNavBarProps {
   role: DashboardRole;
+  user: AppUser;
 }
+
+const deriveDisplayName = (email: string): string =>
+  email
+    .split('@')[0]
+    .replace(/[._-]+/g, ' ')
+    .replace(/\b\w/g, (c) => c.toUpperCase());
+
+const deriveInitials = (email: string): string => {
+  const parts = email.split('@')[0].split(/[._-]+/);
+  if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
+  return email[0].toUpperCase();
+};
 
 interface NavItem {
   label: string;
@@ -199,7 +213,7 @@ const NavLinkItem = ({
   );
 };
 
-export function SessionNavBar({ role }: SessionNavBarProps) {
+export function SessionNavBar({ role, user }: SessionNavBarProps) {
   const [isHovered, setIsHovered] = useState(false);
   const [isPinned, setIsPinned] = useState(() => {
     if (typeof window === 'undefined') {
@@ -214,6 +228,8 @@ export function SessionNavBar({ role }: SessionNavBarProps) {
   const activePath = location.pathname;
   const activeHash = location.hash || (activePath === config.basePath ? '#overview' : '');
   const isCollapsed = !isPinned && !isHovered;
+  const displayName = deriveDisplayName(user.email);
+  const initials = deriveInitials(user.email);
 
   const handleSignOut = async () => {
     await signOut();
@@ -267,7 +283,7 @@ export function SessionNavBar({ role }: SessionNavBarProps) {
                     <Button variant="ghost" size="sm" className="flex w-fit items-center gap-2 px-2">
                       <Avatar className="size-4 rounded">
                         <AvatarFallback className="bg-black text-[10px] text-white">
-                          {config.initials}
+                          {initials}
                         </AvatarFallback>
                       </Avatar>
                       <motion.li variants={variants} className="flex w-fit items-center gap-2">
@@ -356,7 +372,7 @@ export function SessionNavBar({ role }: SessionNavBarProps) {
                     <DropdownMenuTrigger className="w-full">
                       <div className="flex h-8 w-full flex-row items-center gap-2 rounded-md px-2 py-1.5 transition hover:bg-muted hover:text-primary">
                         <Avatar className="size-4">
-                          <AvatarFallback className="text-[10px]">{config.initials}</AvatarFallback>
+                          <AvatarFallback className="text-[10px]">{initials}</AvatarFallback>
                         </Avatar>
                         <motion.li variants={variants} className="flex w-full items-center gap-2">
                           {!isCollapsed && (
@@ -371,11 +387,11 @@ export function SessionNavBar({ role }: SessionNavBarProps) {
                     <DropdownMenuContent sideOffset={5}>
                       <div className="flex flex-row items-center gap-2 p-2">
                         <Avatar className="size-6">
-                          <AvatarFallback>{config.initials}</AvatarFallback>
+                          <AvatarFallback>{initials}</AvatarFallback>
                         </Avatar>
                         <div className="flex flex-col text-left">
-                          <span className="text-sm font-medium">{config.account}</span>
-                          <span className="line-clamp-1 text-xs text-muted-foreground">{config.email}</span>
+                          <span className="text-sm font-medium">{displayName}</span>
+                          <span className="line-clamp-1 text-xs text-muted-foreground">{user.email}</span>
                         </div>
                       </div>
                       <DropdownMenuSeparator />

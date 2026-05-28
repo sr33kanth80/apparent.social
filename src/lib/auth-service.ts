@@ -67,9 +67,9 @@ export const signInWithEmail = async (
   email: string,
   password: string,
   role: DashboardRole,
-): Promise<AppUser> => {
+): Promise<AppUser & { isNew: boolean }> => {
   if (!isSupabaseConfigured || !supabase) {
-    return createDevSession(role);
+    return { ...createDevSession(role), isNew: false };
   }
 
   clearDevSession(); // ensure no stale dev session survives a real sign-in
@@ -78,7 +78,7 @@ export const signInWithEmail = async (
 
   if (signInResult.data.user) {
     await ensureProfile(toAppUser(signInResult.data.user), role);
-    return { ...toAppUser(signInResult.data.user), role };
+    return { ...toAppUser(signInResult.data.user), role, isNew: false };
   }
 
   const signUpResult = await supabase.auth.signUp({
@@ -95,7 +95,7 @@ export const signInWithEmail = async (
 
   const appUser = { ...toAppUser(signUpResult.data.user), role };
   await ensureProfile(appUser, role);
-  return appUser;
+  return { ...appUser, isNew: true };
 };
 
 export const sendEmailLink = async (email: string, role: DashboardRole) => {
