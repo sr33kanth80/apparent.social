@@ -1046,6 +1046,9 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
   const [selectedForYouLaunchId, setSelectedForYouLaunchId] = useState(seedDashboardLaunches[0].id);
   const dashboardFilterScrollRef = useRef<HTMLDivElement | null>(null);
   const [savingWorkflow, setSavingWorkflow] = useState<string | null>(null);
+  const [autoSaveStatus, setAutoSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
+  const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const hasLoadedRef = useRef(false);
   const [activity, setActivity] = useState<string[]>([
     isInvestor ? 'Investor intake started' : 'Founder proof intake started',
     'For You is showing the front page feed',
@@ -1248,6 +1251,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
         }
 
         setIntakeValues(data.intakeValues);
+        hasLoadedRef.current = true;
         setProfileSaved(data.profileSaved);
         setSignalRows(data.signalRows);
         setDailyDigestEnabled(data.settings.dailyDigestEnabled);
@@ -1772,13 +1776,28 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
   };
 
   const handleProfileAssetUpload = (file: File | undefined) => {
-    if (!file) {
-      return;
-    }
-
+    if (!file) return;
     const reader = new FileReader();
-    reader.onload = () => {
-      handleIntakeChange('profilePhotoUrl', String(reader.result ?? ''));
+    reader.onload = async () => {
+      const url = String(reader.result ?? '');
+      // Update state — the debounce will also fire, but we save immediately
+      // here too because photo uploads are discrete user actions
+      setIntakeValues((current) => {
+        const next = { ...current, profilePhotoUrl: url };
+        // Kick off an immediate save with the merged values
+        setAutoSaveStatus('saving');
+        saveIntakeValues(user, role, next)
+          .then(() => {
+            setProfileSaved(true);
+            setAutoSaveStatus('saved');
+            setTimeout(() => setAutoSaveStatus('idle'), 2000);
+          })
+          .catch(() => {
+            setAutoSaveStatus('error');
+            setTimeout(() => setAutoSaveStatus('idle'), 3000);
+          });
+        return next;
+      });
       addActivity(`Updated profile image: ${file.name}`);
     };
     reader.readAsDataURL(file);
@@ -2169,6 +2188,28 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
     window.setTimeout(() => scrollToSection('profile'), 50);
   };
 
+  // Debounced auto-save: fires 1.5 s after the last field change
+  useEffect(() => {
+    if (!hasLoadedRef.current) return; // don't fire during initial data load
+    if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
+    autoSaveTimerRef.current = setTimeout(async () => {
+      setAutoSaveStatus('saving');
+      try {
+        await saveIntakeValues(user, role, intakeValues);
+        setProfileSaved(true);
+        setAutoSaveStatus('saved');
+        setTimeout(() => setAutoSaveStatus('idle'), 2000);
+      } catch {
+        setAutoSaveStatus('error');
+        setTimeout(() => setAutoSaveStatus('idle'), 3000);
+      }
+    }, 1500);
+    return () => {
+      if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [intakeValues]);
+
   const handleIntakeChange = (key: string, value: string) => {
     setIntakeValues((current) => ({ ...current, [key]: value }));
     setProfileSaved(false);
@@ -2191,10 +2232,9 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
     try {
       await saveIntakeValues(user, role, intakeValues);
       setProfileSaved(true);
-      setActiveView('for-you');
-      navigate(`${dashboardBasePath}#for-you`);
+      setAutoSaveStatus('saved');
+      setTimeout(() => setAutoSaveStatus('idle'), 2000);
       addActivity(isInvestor ? 'Investor thesis saved. For You personalized.' : 'Founder profile saved. For You personalized.');
-      window.setTimeout(() => scrollToSection('for-you'), 50);
     } catch (error) {
       setDashboardError(error instanceof Error ? error.message : 'Unable to save workspace.');
       addActivity('Workspace save failed');
@@ -2861,7 +2901,12 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
                     </label>
                   ))}
                 </div>
-                <div className="flex flex-col gap-3 border-t border-black/10 px-5 py-4 sm:flex-row sm:items-center sm:justify-end">
+                <div className="flex flex-col gap-3 border-t border-black/10 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+                  <span className="text-xs text-gray-400">
+                    {autoSaveStatus === 'saving' && 'Auto-saving…'}
+                    {autoSaveStatus === 'saved' && '✓ Saved'}
+                    {autoSaveStatus === 'error' && 'Auto-save failed — use the button'}
+                  </span>
                   <button className={`rounded-full ${accentSurface} px-5 py-2.5 text-sm font-medium ${accentForeground} transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60`} onClick={handleSaveProfile} disabled={isSavingWorkspace}>
                     {isSavingWorkspace ? 'Saving...' : 'Save thesis'}
                   </button>

@@ -1456,21 +1456,7 @@ export const saveIntakeValues = async (
 
   const { error } = await supabase.from('founder_profiles').upsert(founderProfilePayload);
 
-  if (!error) return;
-
-  const { error: legacyError } = await supabase.from('founder_profiles').upsert({
-    user_id: user.id,
-    current_build: values.currentBuild ?? '',
-    category: values.category ?? '',
-    stage: values.stage ?? '',
-    github: values.github ?? '',
-    traction: values.traction ?? '',
-    looking_for: values.lookingFor ?? '',
-    location: values.location ?? '',
-    press: values.press ?? '',
-  });
-
-  if (legacyError) throw legacyError;
+  if (error) throw error;
 };
 
 export const saveSignalStage = async (user: AppUser, signalId: string, stage: InvestorDealStage) => {
