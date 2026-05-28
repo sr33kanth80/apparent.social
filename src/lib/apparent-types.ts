@@ -93,6 +93,8 @@ export interface ProductLaunch {
   publicProfileEnabled?: boolean;
   teamMembers?: LaunchTeamMember[];
   metrics: string;
+  /** Aggregate upvote count from the DB (populated for real launches). */
+  upvoteCount?: number;
   updatedAt: string;
 }
 
@@ -301,6 +303,12 @@ export interface FeedItem {
   reply: string;
 }
 
+export interface LaunchEngagementEntry {
+  upvoted: boolean;
+  upvotes: number;
+  comments: string[];
+}
+
 export interface DashboardData {
   intakeValues: Record<string, string>;
   completedLabels: string[];
@@ -316,4 +324,8 @@ export interface DashboardData {
   termReviews: TermReview[];
   messages: UserMessage[];
   feedItems: FeedItem[];
+  /** Names of investor matches the current founder has bookmarked. */
+  savedInvestorMatchNames: string[];
+  /** Per-launch upvote + comment state for the current user. */
+  launchEngagement: Record<string, LaunchEngagementEntry>;
 }

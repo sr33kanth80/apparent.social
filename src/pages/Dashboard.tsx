@@ -68,7 +68,9 @@ import {
   loadDashboardData,
   saveBuilderDiscoveryState,
   saveFeedAction,
+  saveInvestorMatchBookmark,
   saveIntakeValues,
+  saveLaunchComment,
   saveMeetup,
   saveMessage,
   saveOutreachDraft,
@@ -77,6 +79,7 @@ import {
   saveSignalStage,
   saveTermReview,
   subscribeBuilderNetwork,
+  toggleLaunchUpvote,
   toggleMeetupRsvp,
 } from '@/lib/dashboard-service';
 import { cityGeoCoordinates } from '@/lib/app-defaults';
@@ -977,19 +980,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
   const [intakeValues, setIntakeValues] = useState(() => buildInitialIntake(intakeFields));
   const [profileSaved, setProfileSaved] = useState(false);
   const [selectedMatch, setSelectedMatch] = useState<MatchItem | null>(null);
-  const [savedInvestorMatchNames, setSavedInvestorMatchNames] = useState<string[]>(() => {
-    if (typeof window === 'undefined') {
-      return [];
-    }
-
-    try {
-      const stored = window.localStorage.getItem(`apparent:${user.id}:saved-investor-matches`);
-      const parsed = stored ? JSON.parse(stored) : [];
-      return Array.isArray(parsed) ? parsed.filter((item): item is string => typeof item === 'string') : [];
-    } catch {
-      return [];
-    }
-  });
+  const [savedInvestorMatchNames, setSavedInvestorMatchNames] = useState<string[]>([]);
   const [actionMode, setActionMode] = useState<ActionMode | null>(null);
   const [showNotifications, setShowNotifications] = useState(false);
   const [signalRows, setSignalRows] = useState(investorSignals);
@@ -1121,7 +1112,8 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
   const getLaunchEngagement = (launch: ProductLaunch) =>
     launchEngagement[launch.id] ?? {
       upvoted: false,
-      upvotes: Math.max(12, launch.name.length * 7 + launch.category.length * 3),
+      // Real DB launches get upvoteCount from the DB; seed/decorative ones fall back to a stable fake count
+      upvotes: launch.upvoteCount ?? Math.max(12, launch.name.length * 7 + launch.category.length * 3),
       comments: ['This is now visible to Apparent founders and investors.'],
     };
   const dashboardLaunchRows = useMemo(
@@ -1167,13 +1159,8 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
     dashboardLaunchRows.find((launch) => launch.id === selectedForYouLaunchId) ?? dashboardLaunchRows[0];
   const topDashboardLaunch = dashboardLaunchRows[0];
 
-  useEffect(() => {
-    if (typeof window === 'undefined') {
-      return;
-    }
-
-    window.localStorage.setItem(`apparent:${user.id}:saved-investor-matches`, JSON.stringify(savedInvestorMatchNames));
-  }, [savedInvestorMatchNames, user.id]);
+  // savedInvestorMatchNames is now persisted to Supabase via saveInvestorMatchBookmark.
+  // No localStorage write effect needed.
 
   const messageThreads = useMemo<MessageThread[]>(() => {
     const threads = new Map<string, MessageThread>();
@@ -1265,6 +1252,8 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
         setTermReviews(data.termReviews);
         setMessages(data.messages);
         setFeedRows(data.feedItems);
+        setSavedInvestorMatchNames(data.savedInvestorMatchNames);
+        setLaunchEngagement(data.launchEngagement);
         setSelectedClusterCity((current) =>
           data.builderClusters.some((cluster) => cluster.city === current)
             ? current
@@ -2149,10 +2138,17 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
 
   const handleToggleInvestorMatchSave = (match: MatchItem) => {
     const isSaved = savedInvestorMatchSet.has(match.name);
+    const nextSaved = !isSaved;
     setSavedInvestorMatchNames((current) =>
       isSaved ? current.filter((name) => name !== match.name) : [match.name, ...current.filter((name) => name !== match.name)],
     );
     addActivity(`${isSaved ? 'Removed' : 'Saved'} investor match: ${match.name}`);
+    saveInvestorMatchBookmark(user, match.name, nextSaved).catch(() => {
+      // revert optimistic update on failure
+      setSavedInvestorMatchNames((current) =>
+        isSaved ? [match.name, ...current] : current.filter((name) => name !== match.name),
+      );
+    });
   };
 
   const handleMessageInvestorMatch = async (match: MatchItem) => {
@@ -2169,6 +2165,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
       });
       setMessages((current) => [savedMessage, ...current.filter((message) => message.id !== savedMessage.id)]);
       setSavedInvestorMatchNames((current) => [match.name, ...current.filter((name) => name !== match.name)]);
+      saveInvestorMatchBookmark(user, match.name, true).catch(() => { /* non-critical */ });
       setSelectedMessageThreadId(savedMessage.recipient.toLowerCase());
       setIsMessageFormOpen(false);
       addActivity(`Drafted investor note: ${match.name}`);
@@ -2491,13 +2488,19 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
 
   const handleToggleLaunchUpvote = (launch: ProductLaunch) => {
     const current = getLaunchEngagement(launch);
+    const wasUpvoted = current.upvoted;
     const next = {
       ...current,
-      upvoted: !current.upvoted,
-      upvotes: current.upvotes + (current.upvoted ? -1 : 1),
+      upvoted: !wasUpvoted,
+      upvotes: current.upvotes + (wasUpvoted ? -1 : 1),
     };
+    // Optimistic update
     setLaunchEngagement((items) => ({ ...items, [launch.id]: next }));
     addActivity(`${next.upvoted ? 'Upvoted' : 'Removed upvote'}: ${launch.name}`);
+    // Persist to Supabase (fire-and-forget with optimistic revert on error)
+    toggleLaunchUpvote(user, launch.id, wasUpvoted).catch(() => {
+      setLaunchEngagement((items) => ({ ...items, [launch.id]: current }));
+    });
   };
 
   const handlePostLaunchComment = (launch: ProductLaunch) => {
@@ -2507,6 +2510,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
     }
 
     const current = getLaunchEngagement(launch);
+    // Optimistic update
     setLaunchEngagement((items) => ({
       ...items,
       [launch.id]: {
@@ -2516,6 +2520,8 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
     }));
     setLaunchCommentDrafts((items) => ({ ...items, [launch.id]: '' }));
     addActivity(`Commented on ${launch.name}`);
+    // Persist (fire-and-forget; comment stays in UI even if save fails)
+    saveLaunchComment(user, launch.id, draft).catch(() => { /* non-critical */ });
   };
 
   const handleOpenFounderProfileFromLaunch = () => {

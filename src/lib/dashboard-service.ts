@@ -21,6 +21,7 @@ import type {
   InvestorCriteriaValues,
   InvestorDealStage,
   InvestorSignal,
+  LaunchEngagementEntry,
   LaunchTeamMember,
   Meetup,
   NetworkCluster,
@@ -281,6 +282,7 @@ const mapProductLaunchRow = (row: Record<string, unknown>): ProductLaunch => ({
   lookingFor: String(row.looking_for ?? row.lookingFor ?? ''),
   publicProfileEnabled: Boolean(row.public_profile_enabled ?? row.publicProfileEnabled ?? true),
   metrics: String(row.metrics ?? ''),
+  upvoteCount: Number(row.upvote_count ?? row.upvoteCount ?? 0),
   updatedAt: String(row.updated_at ?? row.updatedAt ?? nowIso()),
 });
 
@@ -1285,6 +1287,8 @@ export const loadDashboardData = async (
     { data: termRows },
     { data: messageRows },
     { data: feedActionRows },
+    { data: userUpvoteRows },
+    { data: commentRows },
   ] = await Promise.all([
     supabase.from('product_launches').select('*').eq('owner_id', user.id).order('updated_at', { ascending: false }),
     supabase.from('meetups').select('*').order('starts_at', { ascending: true }),
@@ -1292,6 +1296,8 @@ export const loadDashboardData = async (
     supabase.from('term_reviews').select('*').eq('user_id', user.id).order('updated_at', { ascending: false }),
     supabase.from('user_messages').select('*').eq('owner_id', user.id).order('updated_at', { ascending: false }),
     supabase.from('feed_item_actions').select('*').eq('user_id', user.id),
+    supabase.from('launch_upvotes').select('launch_id').eq('user_id', user.id),
+    supabase.from('launch_comments').select('launch_id, body').order('created_at', { ascending: false }),
   ]);
   const rsvpCounts = new Map<string, number>();
   const joinedMeetups = new Set<string>();
@@ -1308,6 +1314,33 @@ export const loadDashboardData = async (
   );
   const termReviews = (termRows ?? []).map((row) => mapTermReviewRow(row));
   const messages = (messageRows ?? []).map((row) => mapMessageRow(row));
+
+  // Which launches has this user upvoted?
+  const userUpvotedIds = new Set((userUpvoteRows ?? []).map((row) => String(row.launch_id)));
+
+  // Group comments by launch_id
+  const commentsByLaunch = (commentRows ?? []).reduce<Record<string, string[]>>((acc, row) => {
+    const lid = String(row.launch_id);
+    if (!acc[lid]) acc[lid] = [];
+    acc[lid].push(String(row.body));
+    return acc;
+  }, {});
+
+  // Build engagement map for every known real launch
+  const launchEngagement: Record<string, LaunchEngagementEntry> = {};
+  for (const launch of productLaunches) {
+    launchEngagement[launch.id] = {
+      upvoted: userUpvotedIds.has(launch.id),
+      upvotes: launch.upvoteCount ?? 0,
+      comments: commentsByLaunch[launch.id] ?? [],
+    };
+  }
+
+  // Saved investor match names (stored as feed_item_actions with "inv-match:" prefix)
+  const savedInvestorMatchNames = (feedActionRows ?? [])
+    .filter((row) => String(row.item_id).startsWith('inv-match:') && Boolean(row.saved))
+    .map((row) => String(row.item_id).slice('inv-match:'.length));
+
   const feedActions = (feedActionRows ?? []).reduce<Record<string, Partial<FeedItem>>>((actions, row) => {
     actions[String(row.item_id)] = {
       saved: Boolean(row.saved),
@@ -1372,6 +1405,8 @@ export const loadDashboardData = async (
       termReviews,
       messages,
       feedItems: buildFeedItems(role, profileSaved, signalRowsWithBuilders, effectiveMeetups, productLaunches, feedActions),
+      savedInvestorMatchNames,
+      launchEngagement,
     };
   }
 
@@ -1401,6 +1436,8 @@ export const loadDashboardData = async (
     termReviews,
     messages,
     feedItems: buildFeedItems(role, profileSaved, seedInvestorSignals, effectiveMeetups, productLaunches, feedActions),
+    savedInvestorMatchNames,
+    launchEngagement,
   };
 };
 
@@ -1837,4 +1874,66 @@ export const saveFeedAction = async (
   });
 
   if (error) throw error;
+};
+
+/**
+ * Toggle an upvote on a launch.
+ * `currentlyUpvoted` is the CURRENT state before this action — pass `true` to remove the upvote.
+ * Uses the `launch_upvotes` table; the DB trigger maintains `product_launches.upvote_count`.
+ * Falls back to no-op for dev sessions (state is managed optimistically in the component).
+ */
+export const toggleLaunchUpvote = async (
+  user: AppUser,
+  launchId: string,
+  currentlyUpvoted: boolean,
+): Promise<void> => {
+  if (!isSupabaseConfigured || !supabase || user.isDev) {
+    return;
+  }
+
+  if (currentlyUpvoted) {
+    const { error } = await supabase
+      .from('launch_upvotes')
+      .delete()
+      .eq('user_id', user.id)
+      .eq('launch_id', launchId);
+    if (error) throw error;
+  } else {
+    const { error } = await supabase
+      .from('launch_upvotes')
+      .upsert({ user_id: user.id, launch_id: launchId });
+    if (error) throw error;
+  }
+};
+
+/**
+ * Persist a comment on a launch.
+ * Returns the comment body that was saved.
+ */
+export const saveLaunchComment = async (
+  user: AppUser,
+  launchId: string,
+  body: string,
+): Promise<string> => {
+  if (!isSupabaseConfigured || !supabase || user.isDev) {
+    return body; // dev: optimistic only
+  }
+
+  const { error } = await supabase
+    .from('launch_comments')
+    .insert({ user_id: user.id, launch_id: launchId, body });
+  if (error) throw error;
+  return body;
+};
+
+/**
+ * Save / un-save an investor match name for a founder.
+ * Reuses `feed_item_actions` with an "inv-match:" prefix so no extra table is needed.
+ */
+export const saveInvestorMatchBookmark = async (
+  user: AppUser,
+  matchName: string,
+  saved: boolean,
+): Promise<void> => {
+  return saveFeedAction(user, `inv-match:${matchName}`, { saved, reposted: false, reply: '' });
 };
