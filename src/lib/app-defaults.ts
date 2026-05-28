@@ -20,6 +20,8 @@ export const defaultInvestorCriteria: InvestorCriteriaValues = {
   founderSignals: '',
   passSignals: '',
   portfolioExamples: '',
+  publicProfileEnabled: 'false',
+  publicFields: JSON.stringify(['thesis', 'sectors', 'stage', 'geography']),
 };
 
 export const defaultFounderProfile: FounderProfileValues = {

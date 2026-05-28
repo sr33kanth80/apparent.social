@@ -6,6 +6,8 @@ export interface AppUser {
   email: string;
   role: DashboardRole;
   isDev: boolean;
+  /** Canonical @-handle derived from email and stored in profiles.username. */
+  username?: string;
 }
 
 export interface InvestorCriteriaValues {
@@ -17,6 +19,10 @@ export interface InvestorCriteriaValues {
   founderSignals: string;
   passSignals: string;
   portfolioExamples: string;
+  /** Stored as 'true' | 'false' string so it fits Record<string,string> */
+  publicProfileEnabled: string;
+  /** JSON-stringified string[] of visible field keys */
+  publicFields: string;
 }
 
 export interface FounderProfileValues {
@@ -117,6 +123,7 @@ export interface LaunchTeamMember {
 
 export interface PublicFounderProfile {
   userId: string;
+  username: string;
   profileName: string;
   headline: string;
   bio: string;
@@ -135,6 +142,29 @@ export interface PublicFounderProfile {
   pastProducts: string;
   launches: ProductLaunch[];
 }
+
+export interface PublicInvestorProfile {
+  userId: string;
+  username: string;
+  displayName: string;
+  profilePhotoUrl: string;
+  thesis: string;
+  sectors: string;
+  stage: string;
+  checkSize: string;
+  geography: string;
+  portfolioExamples: string;
+  founderSignals: string;
+  /** Which fields are visible (respects the investor's per-field toggle). */
+  publicFields: string[];
+  /** True when the investor hasn't enabled public visibility — logged-out visitors see a gate. */
+  restricted: boolean;
+}
+
+export type PublicProfileResult =
+  | { kind: 'founder'; profile: PublicFounderProfile }
+  | { kind: 'investor'; profile: PublicInvestorProfile }
+  | { kind: 'not_found' };
 
 export interface PublicProjectDetail {
   launch: ProductLaunch;

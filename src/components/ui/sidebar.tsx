@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
+  ArrowUpRight,
   Blocks,
   ChevronsUpDown,
   FileClock,
@@ -38,7 +39,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Separator } from '@/components/ui/separator';
-import { signOut } from '@/lib/auth-service';
+import { deriveUsername, signOut } from '@/lib/auth-service';
 import type { AppUser } from '@/lib/apparent-types';
 
 type DashboardRole = 'founder' | 'investor';
@@ -230,6 +231,8 @@ export function SessionNavBar({ role, user }: SessionNavBarProps) {
   const isCollapsed = !isPinned && !isHovered;
   const displayName = deriveDisplayName(user.email);
   const initials = deriveInitials(user.email);
+  const username = user.username ?? deriveUsername(user.email);
+  const publicProfileUrl = `/@${username}`;
 
   const handleSignOut = async () => {
     await signOut();
@@ -392,14 +395,21 @@ export function SessionNavBar({ role, user }: SessionNavBarProps) {
                         <div className="flex flex-col text-left">
                           <span className="text-sm font-medium">{displayName}</span>
                           <span className="line-clamp-1 text-xs text-muted-foreground">{user.email}</span>
+                          <span className="text-xs text-muted-foreground/70">@{username}</span>
                         </div>
                       </div>
                       <DropdownMenuSeparator />
                       <DropdownMenuItem asChild className="flex items-center gap-2">
                         <Link to={`${config.basePath}#profile`}>
-                          <UserCircle className="h-4 w-4" /> Profile
+                          <UserCircle className="h-4 w-4" /> Edit profile
                         </Link>
                       </DropdownMenuItem>
+                      <DropdownMenuItem asChild className="flex items-center gap-2">
+                        <Link to={publicProfileUrl} target="_blank" rel="noreferrer">
+                          <ArrowUpRight className="h-4 w-4" /> View public profile
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
                       <DropdownMenuItem className="flex items-center gap-2" onClick={handleSignOut}>
                         <LogOut className="h-4 w-4" /> Sign out
                       </DropdownMenuItem>

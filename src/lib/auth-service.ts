@@ -4,6 +4,10 @@ import type { AppUser, DashboardRole } from '@/lib/apparent-types';
 
 const DEV_SESSION_KEY = 'apparent-dev-session';
 
+/** Derive a URL-safe @-handle from an email address (mirrors the DB trigger logic). */
+export const deriveUsername = (email: string): string =>
+  email.split('@')[0].toLowerCase().replace(/[^a-z0-9]/g, '') || 'user';
+
 const getRoleFromMetadata = (user: User): DashboardRole =>
   user.user_metadata?.role === 'investor' ? 'investor' : 'founder';
 
@@ -50,14 +54,22 @@ export const getCurrentAppUser = async (): Promise<AppUser | null> => {
     const { data, error } = await supabase.auth.getUser();
     if (!error && data.user) {
       clearDevSession(); // evict any stale dev session
-      return toAppUser(data.user);
+      const appUser = toAppUser(data.user);
+      // Load the canonical username from the profiles table.
+      // Falls back to the client-side derivation if the row isn't ready yet.
+      const { data: profileRow } = await supabase
+        .from('profiles')
+        .select('username')
+        .eq('id', appUser.id)
+        .maybeSingle();
+      return { ...appUser, username: profileRow?.username ?? deriveUsername(appUser.email) };
     }
   }
 
   // Fall back to dev session only when Supabase is not configured or has no active session
   const devSession = getDevSession();
   if (devSession) {
-    return devSession;
+    return { ...devSession, username: deriveUsername(devSession.email) };
   }
 
   return null;
@@ -77,16 +89,15 @@ export const signInWithEmail = async (
   const signInResult = await supabase.auth.signInWithPassword({ email, password });
 
   if (signInResult.data.user) {
-    await ensureProfile(toAppUser(signInResult.data.user), role);
-    return { ...toAppUser(signInResult.data.user), role, isNew: false };
+    const base = toAppUser(signInResult.data.user);
+    const username = await ensureProfile(base, role);
+    return { ...base, role, username, isNew: false };
   }
 
   const signUpResult = await supabase.auth.signUp({
     email,
     password,
-    options: {
-      data: { role },
-    },
+    options: { data: { role } },
   });
 
   if (signUpResult.error || !signUpResult.data.user) {
@@ -94,8 +105,8 @@ export const signInWithEmail = async (
   }
 
   const appUser = { ...toAppUser(signUpResult.data.user), role };
-  await ensureProfile(appUser, role);
-  return { ...appUser, isNew: true };
+  const username = await ensureProfile(appUser, role);
+  return { ...appUser, username, isNew: true };
 };
 
 export const sendEmailLink = async (email: string, role: DashboardRole) => {
@@ -124,18 +135,28 @@ export const signOut = async () => {
   }
 };
 
-export const ensureProfile = async (user: AppUser, role = user.role) => {
+/** Upserts the profiles row and returns the canonical username. */
+export const ensureProfile = async (user: AppUser, role = user.role): Promise<string> => {
   if (!isSupabaseConfigured || !supabase || user.isDev) {
-    return;
+    return deriveUsername(user.email);
   }
 
+  // Upsert without username — the DB trigger sets it on INSERT.
+  // On UPDATE (existing user) the username column is untouched.
   const { error } = await supabase.from('profiles').upsert({
     id: user.id,
     role,
     email: user.email,
   });
 
-  if (error) {
-    throw error;
-  }
+  if (error) throw error;
+
+  // Read back the canonical username (the trigger may have added a numeric suffix).
+  const { data } = await supabase
+    .from('profiles')
+    .select('username')
+    .eq('id', user.id)
+    .maybeSingle();
+
+  return data?.username ?? deriveUsername(user.email);
 };

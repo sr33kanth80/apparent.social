@@ -26,6 +26,8 @@ import type {
   Meetup,
   NetworkCluster,
   PublicFounderProfile,
+  PublicInvestorProfile,
+  PublicProfileResult,
   PublicProjectDetail,
   ProductLaunch,
   TermReview,
@@ -189,6 +191,10 @@ const mapCriteriaRow = (row: Record<string, unknown> | null): InvestorCriteriaVa
   founderSignals: String(row?.founder_signals ?? ''),
   passSignals: String(row?.pass_signals ?? ''),
   portfolioExamples: String(row?.portfolio_examples ?? ''),
+  publicProfileEnabled: String(row?.public_profile_enabled === true ? 'true' : 'false'),
+  publicFields: JSON.stringify(
+    Array.isArray(row?.public_fields) ? row.public_fields : ['thesis', 'sectors', 'stage', 'geography'],
+  ),
 });
 
 const mapFounderRow = (row: Record<string, unknown> | null): FounderProfileValues => ({
@@ -358,11 +364,13 @@ export const serializeTeamMembers = (members: LaunchTeamMember[] | undefined) =>
 const mapPublicFounderProfile = (
   row: Record<string, unknown> | null,
   launches: ProductLaunch[],
+  username = '',
 ): PublicFounderProfile | null => {
   if (!row) return null;
 
   return {
     userId: String(row.user_id ?? ''),
+    username: String(row.username ?? username),
     profileName: String(row.profile_name ?? '') || String(row.display_name ?? ''),
     headline: String(row.headline ?? ''),
     bio: String(row.bio ?? ''),
@@ -1180,6 +1188,141 @@ export const loadPublicFounderProfile = async (profileId: string): Promise<Publi
   );
 };
 
+/**
+ * Load a public profile by @-handle (username).
+ * Returns a discriminated union so the UI can render the right layout.
+ * For investors whose public_profile_enabled = false, returns `restricted: true`
+ * (the investor row will be null for anon visitors because of RLS).
+ */
+export const loadPublicProfile = async (username: string): Promise<PublicProfileResult> => {
+  if (!isSupabaseConfigured || !supabase) {
+    return { kind: 'not_found' };
+  }
+
+  // 1. Resolve username → user_id + role
+  const { data: profileRow } = await supabase
+    .from('profiles')
+    .select('id, role, display_name, email, username')
+    .ilike('username', username)
+    .maybeSingle();
+
+  if (!profileRow) {
+    return { kind: 'not_found' };
+  }
+
+  const userId = String(profileRow.id);
+  const role = String(profileRow.role);
+  const canonicalUsername = String(profileRow.username ?? username);
+  const displayName =
+    String(profileRow.display_name ?? '').trim() ||
+    String(profileRow.email ?? '').split('@')[0];
+
+  // 2a. Investor branch
+  if (role === 'investor') {
+    const { data: criteriaRow } = await supabase
+      .from('investor_criteria')
+      .select('*')
+      .eq('user_id', userId)
+      .maybeSingle();
+
+    // null means: row exists but RLS blocked access (anon + not publicly visible)
+    if (!criteriaRow) {
+      return {
+        kind: 'investor',
+        profile: {
+          userId,
+          username: canonicalUsername,
+          displayName,
+          profilePhotoUrl: '',
+          thesis: '',
+          sectors: '',
+          stage: '',
+          checkSize: '',
+          geography: '',
+          portfolioExamples: '',
+          founderSignals: '',
+          publicFields: [],
+          restricted: true,
+        },
+      };
+    }
+
+    const isPublic = Boolean(criteriaRow.public_profile_enabled);
+    const publicFields: string[] = Array.isArray(criteriaRow.public_fields)
+      ? (criteriaRow.public_fields as string[])
+      : ['thesis', 'sectors', 'stage', 'geography'];
+
+    const vis = (key: string, dbKey = key) =>
+      publicFields.includes(key) ? String(criteriaRow[dbKey] ?? '') : '';
+
+    return {
+      kind: 'investor',
+      profile: {
+        userId,
+        username: canonicalUsername,
+        displayName,
+        profilePhotoUrl: '',
+        thesis: vis('thesis'),
+        sectors: vis('sectors'),
+        stage: vis('stage'),
+        checkSize: vis('checkSize', 'check_size'),
+        geography: vis('geography'),
+        portfolioExamples: vis('portfolioExamples', 'portfolio_examples'),
+        founderSignals: vis('founderSignals', 'founder_signals'),
+        publicFields,
+        restricted: !isPublic,
+      },
+    };
+  }
+
+  // 2b. Founder branch
+  const [{ data: founderRow }, { data: launchRows }] = await Promise.all([
+    supabase
+      .from('founder_profiles')
+      .select('*')
+      .eq('user_id', userId)
+      .maybeSingle(),
+    supabase
+      .from('product_launches')
+      .select('*')
+      .eq('owner_id', userId)
+      .eq('public_profile_enabled', true)
+      .order('updated_at', { ascending: false }),
+  ]);
+
+  const launches = (launchRows ?? []).map((row) => mapProductLaunchRow(row));
+  const profile = mapPublicFounderProfile(
+    founderRow ? { ...(founderRow as Record<string, unknown>), display_name: displayName } : { user_id: userId, display_name: displayName },
+    launches,
+    canonicalUsername,
+  );
+
+  return {
+    kind: 'founder',
+    profile: profile ?? {
+      userId,
+      username: canonicalUsername,
+      profileName: displayName,
+      headline: '',
+      bio: '',
+      profilePhotoUrl: '',
+      currentBuild: '',
+      category: '',
+      stage: '',
+      github: '',
+      traction: '',
+      lookingFor: '',
+      location: '',
+      press: '',
+      website: '',
+      linkedin: '',
+      xProfile: '',
+      pastProducts: '',
+      launches,
+    },
+  };
+};
+
 const loadLocalDashboard = async (user: AppUser, role: DashboardRole, labelByKey: Record<string, string>): Promise<DashboardData> => {
   const settings = readLocal<UserSettings>(storageKey(user, 'settings'), settingsDefault);
   const productLaunches = readLocal<ProductLaunch[]>(storageKey(user, 'product-launches'), []);
@@ -1455,6 +1598,15 @@ export const saveIntakeValues = async (
   }
 
   if (role === 'investor') {
+    const safePublicFields = (() => {
+      try {
+        const parsed = JSON.parse(values.publicFields ?? '[]');
+        return Array.isArray(parsed) ? parsed : ['thesis', 'sectors', 'stage', 'geography'];
+      } catch {
+        return ['thesis', 'sectors', 'stage', 'geography'];
+      }
+    })();
+
     const { error } = await supabase.from('investor_criteria').upsert({
       user_id: user.id,
       thesis: values.thesis ?? '',
@@ -1465,6 +1617,8 @@ export const saveIntakeValues = async (
       founder_signals: values.founderSignals ?? '',
       pass_signals: values.passSignals ?? '',
       portfolio_examples: values.portfolioExamples ?? '',
+      public_profile_enabled: values.publicProfileEnabled === 'true',
+      public_fields: safePublicFields,
     });
 
     if (error) throw error;

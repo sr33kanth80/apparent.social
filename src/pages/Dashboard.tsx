@@ -2870,6 +2870,15 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
                           {user.email.split('@')[0].replace(/[._-]+/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())}
                         </h2>
                         <p className="mt-2 max-w-2xl text-sm leading-6 text-gray-600">Investor profile on Apparent</p>
+                        <a
+                          href={`/@${user.username ?? user.email.split('@')[0].toLowerCase().replace(/[^a-z0-9]/g, '')}`}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="mt-2 inline-flex items-center gap-1 rounded-full bg-[#f4f1eb] px-3 py-1 text-xs font-medium text-gray-600 transition hover:bg-[#42520d] hover:text-white"
+                        >
+                          <ArrowUpRight className="h-3 w-3" />
+                          @{user.username ?? user.email.split('@')[0].toLowerCase().replace(/[^a-z0-9]/g, '')} · View public profile
+                        </a>
                       </div>
                     </div>
                   </div>
@@ -2916,6 +2925,79 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
                   <button className={`rounded-full ${accentSurface} px-5 py-2.5 text-sm font-medium ${accentForeground} transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60`} onClick={handleSaveProfile} disabled={isSavingWorkspace}>
                     {isSavingWorkspace ? 'Saving...' : 'Save thesis'}
                   </button>
+                </div>
+              </section>
+
+              {/* Public profile visibility controls */}
+              <section className="border-y border-black/10 bg-white">
+                <div className="flex flex-col gap-3 border-b border-black/10 px-5 py-4 md:flex-row md:items-center md:justify-between">
+                  <div>
+                    <h3 className="text-sm font-semibold">Public profile</h3>
+                    <p className="mt-1 text-xs text-gray-500">
+                      Control what's visible on your public Apparent page at{' '}
+                      <a
+                        href={`/@${user.username ?? user.email.split('@')[0].toLowerCase().replace(/[^a-z0-9]/g, '')}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="font-medium text-[#42520d] underline underline-offset-2"
+                      >
+                        /@{user.username ?? user.email.split('@')[0].toLowerCase().replace(/[^a-z0-9]/g, '')}
+                      </a>
+                    </p>
+                  </div>
+                  <label className="flex cursor-pointer items-center gap-2 select-none">
+                    <span className="text-xs font-medium text-gray-600">
+                      {intakeValues.publicProfileEnabled === 'true' ? 'Public profile on' : 'Private (platform only)'}
+                    </span>
+                    <button
+                      type="button"
+                      role="switch"
+                      aria-checked={intakeValues.publicProfileEnabled === 'true'}
+                      onClick={() => handleIntakeChange('publicProfileEnabled', intakeValues.publicProfileEnabled === 'true' ? 'false' : 'true')}
+                      className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors ${intakeValues.publicProfileEnabled === 'true' ? 'bg-[#42520d]' : 'bg-gray-200'}`}
+                    >
+                      <span className={`inline-block h-3.5 w-3.5 translate-x-0.5 rounded-full bg-white shadow transition-transform ${intakeValues.publicProfileEnabled === 'true' ? 'translate-x-[1.125rem]' : ''}`} />
+                    </button>
+                  </label>
+                </div>
+                {/* Field-level visibility checkboxes */}
+                <div className="grid gap-1 px-5 py-4 sm:grid-cols-2 lg:grid-cols-3">
+                  {[
+                    { key: 'thesis', label: 'Investment thesis' },
+                    { key: 'sectors', label: 'Sectors' },
+                    { key: 'stage', label: 'Preferred stage' },
+                    { key: 'geography', label: 'Geography' },
+                    { key: 'checkSize', label: 'Check size' },
+                    { key: 'portfolioExamples', label: 'Portfolio companies' },
+                    { key: 'founderSignals', label: 'What you back' },
+                  ].map(({ key, label }) => {
+                    const currentFields: string[] = (() => {
+                      try { return JSON.parse(intakeValues.publicFields ?? '[]'); } catch { return []; }
+                    })();
+                    const isChecked = currentFields.includes(key);
+                    const toggleField = () => {
+                      const next = isChecked ? currentFields.filter((f) => f !== key) : [...currentFields, key];
+                      handleIntakeChange('publicFields', JSON.stringify(next));
+                    };
+                    return (
+                      <label key={key} className="flex cursor-pointer items-center gap-2 rounded-lg px-2 py-2 text-sm transition hover:bg-[#fbf8f3]">
+                        <input
+                          type="checkbox"
+                          checked={isChecked}
+                          onChange={toggleField}
+                          className="h-3.5 w-3.5 rounded accent-[#42520d]"
+                        />
+                        <span className="text-gray-700">{label}</span>
+                      </label>
+                    );
+                  })}
+                </div>
+                <div className="border-t border-black/10 px-5 py-3">
+                  <p className="text-xs text-gray-400">
+                    {intakeValues.publicProfileEnabled === 'true'
+                      ? 'Your profile is visible to the internet. Only checked fields are shown to non-members.'
+                      : 'Your profile is only visible to signed-in Apparent members — no public indexing.'}
+                  </p>
                 </div>
               </section>
 
@@ -2991,6 +3073,15 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
                       <div className="pb-1">
                         <h2 className="text-2xl font-semibold tracking-[-0.03em]">{profileName}</h2>
                         <p className="mt-2 max-w-2xl text-sm leading-6 text-gray-600">{profileHeadline}</p>
+                        <a
+                          href={`/@${user.username ?? user.email.split('@')[0].toLowerCase().replace(/[^a-z0-9]/g, '')}`}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="mt-2 inline-flex items-center gap-1 rounded-full bg-[#f4f1eb] px-3 py-1 text-xs font-medium text-gray-600 transition hover:bg-[#dcefc7] hover:text-black"
+                        >
+                          <ArrowUpRight className="h-3 w-3" />
+                          @{user.username ?? user.email.split('@')[0].toLowerCase().replace(/[^a-z0-9]/g, '')} · View public profile
+                        </a>
                       </div>
                     </div>
                     <div className="flex flex-wrap gap-2">

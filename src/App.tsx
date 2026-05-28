@@ -161,6 +161,12 @@ function App() {
               </>
             }
           />
+          {/* /@username — canonical public profile URL */}
+          <Route
+            path="/@:username"
+            element={<PublicProfile />}
+          />
+          {/* Legacy /profile/:profileId — kept for backward compat */}
           <Route
             path="/profile/:profileId"
             element={
