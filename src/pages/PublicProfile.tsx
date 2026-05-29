@@ -163,12 +163,24 @@ const FounderProfilePage = ({ profile }: { profile: PublicFounderProfile }) => {
               >
                 <div className="flex items-center gap-3">
                   {launch.logoUrl ? (
-                    <img src={launch.logoUrl} alt="" className="h-10 w-10 rounded-[12px] object-cover" />
-                  ) : (
-                    <div className="flex h-10 w-10 items-center justify-center rounded-[12px] bg-[#dcefc7] text-xs font-bold text-[#42520d]">
-                      {launch.name.slice(0, 2).toUpperCase()}
-                    </div>
-                  )}
+                    <img
+                      src={launch.logoUrl}
+                      alt=""
+                      className="h-10 w-10 rounded-[12px] object-contain p-1"
+                      onError={(e) => {
+                        const img = e.currentTarget;
+                        img.style.display = 'none';
+                        const fallback = img.nextElementSibling as HTMLElement | null;
+                        if (fallback) fallback.style.display = 'flex';
+                      }}
+                    />
+                  ) : null}
+                  <div
+                    className="h-10 w-10 items-center justify-center rounded-[12px] bg-[#dcefc7] text-xs font-bold text-[#42520d]"
+                    style={{ display: launch.logoUrl ? 'none' : 'flex' }}
+                  >
+                    {launch.name.slice(0, 2).toUpperCase()}
+                  </div>
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-base font-semibold" style={serif}>{launch.name}</p>
                     <p className="mt-0.5 text-xs text-black/50">{launch.category}</p>

@@ -43,8 +43,9 @@ const launch = (
   publicProfileEnabled: true,
 });
 
-/** Clearbit Logo API — returns a clean square company logo. */
-const logo = (domain: string) => `https://logo.clearbit.com/${domain}`;
+/** Google Favicons API — reliable 128 px logo used throughout the app. */
+const logo = (domain: string) =>
+  `https://www.google.com/s2/favicons?domain=${domain}&sz=128`;
 
 /** Unavatar.io proxy for Twitter/X profile photos. */
 const twitterPhoto = (handle: string) =>
