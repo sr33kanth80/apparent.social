@@ -47,6 +47,9 @@ type DashboardRole = 'founder' | 'investor';
 interface SessionNavBarProps {
   role: DashboardRole;
   user: AppUser;
+  /** When false, advanced nav groups are tucked behind a "More" expander
+      until the user has set up their workspace (progressive disclosure). */
+  activated?: boolean;
 }
 
 const deriveDisplayName = (email: string): string =>
@@ -214,8 +217,9 @@ const NavLinkItem = ({
   );
 };
 
-export function SessionNavBar({ role, user }: SessionNavBarProps) {
+export function SessionNavBar({ role, user, activated = true }: SessionNavBarProps) {
   const [isHovered, setIsHovered] = useState(false);
+  const [navExpanded, setNavExpanded] = useState(false);
   const [isPinned, setIsPinned] = useState(() => {
     if (typeof window === 'undefined') {
       return true;
@@ -229,6 +233,11 @@ export function SessionNavBar({ role, user }: SessionNavBarProps) {
   const activePath = location.pathname;
   const activeHash = location.hash || (activePath === config.basePath ? '#overview' : '');
   const isCollapsed = !isPinned && !isHovered;
+  // Progressive disclosure: keep advanced groups hidden for brand-new users
+  // until they activate — but never hide the group containing the active view.
+  const advancedItems = config.groups.slice(1).flat();
+  const activeInAdvanced = advancedItems.some((item) => item.href === activeHash || (item.path && item.path === activePath));
+  const showAdvanced = activated || navExpanded || activeInAdvanced;
   const displayName = deriveDisplayName(user.email);
   const initials = deriveInitials(user.email);
   const username = user.username ?? deriveUsername(user.email);
@@ -341,21 +350,35 @@ export function SessionNavBar({ role, user }: SessionNavBarProps) {
               <div className="flex grow flex-col gap-4">
                 <ScrollArea className="h-16 grow p-2">
                   <div className="flex w-full flex-col gap-1">
-                    {config.groups.map((group, groupIndex) => (
-                      <div key={groupIndex} className="flex flex-col gap-1">
-                        {groupIndex > 0 && <Separator className="my-1 w-full" />}
-                        {group.map((item) => (
-                          <NavLinkItem
-                            key={item.label}
-                            item={item}
-                            isCollapsed={isCollapsed}
-                            isActive={activeHash === item.href || activePath === item.path}
-                            activeClass={config.active}
-                            basePath={config.basePath}
-                          />
-                        ))}
-                      </div>
-                    ))}
+                    {config.groups.map((group, groupIndex) => {
+                      if (groupIndex > 0 && !showAdvanced) return null;
+                      return (
+                        <div key={groupIndex} className="flex flex-col gap-1">
+                          {groupIndex > 0 && <Separator className="my-1 w-full" />}
+                          {group.map((item) => (
+                            <NavLinkItem
+                              key={item.label}
+                              item={item}
+                              isCollapsed={isCollapsed}
+                              isActive={activeHash === item.href || activePath === item.path}
+                              activeClass={config.active}
+                              basePath={config.basePath}
+                            />
+                          ))}
+                        </div>
+                      );
+                    })}
+                    {!showAdvanced && (
+                      <button
+                        type="button"
+                        onClick={() => setNavExpanded(true)}
+                        className="flex h-8 w-full flex-row items-center rounded-md px-2 py-1.5 text-muted-foreground transition hover:bg-muted hover:text-primary"
+                        title="Show more tools"
+                      >
+                        <Plus className="h-4 w-4 shrink-0" />
+                        {!isCollapsed && <span className="ml-2 text-sm font-medium">More tools</span>}
+                      </button>
+                    )}
                   </div>
                 </ScrollArea>
               </div>

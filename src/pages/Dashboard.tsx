@@ -40,6 +40,7 @@ import {
   type FormEvent,
   type KeyboardEvent as ReactKeyboardEvent,
   type PointerEvent as ReactPointerEvent,
+  type ReactNode,
 } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { ActionSearchBar, type Action } from '@/components/ui/action-search-bar';
@@ -560,6 +561,37 @@ const scrollToSection = (id: string) => {
   const target = document.getElementById(id);
   target?.scrollIntoView({ behavior: 'smooth', block: 'start' });
 };
+
+// Teaching empty state: explains what a surface is for + offers the next action,
+// so first-timers learn by doing instead of staring at a blank panel.
+const EmptyState = ({
+  icon,
+  title,
+  body,
+  ctaLabel,
+  onCta,
+}: {
+  icon: ReactNode;
+  title: string;
+  body: string;
+  ctaLabel?: string;
+  onCta?: () => void;
+}) => (
+  <div className="flex flex-col items-center justify-center px-6 py-12 text-center">
+    <div className="mb-3 flex h-11 w-11 items-center justify-center rounded-full bg-[#f4f1eb] text-[#42520d]">{icon}</div>
+    <p className="text-sm font-semibold">{title}</p>
+    <p className="mt-1 max-w-sm text-xs leading-relaxed text-gray-500">{body}</p>
+    {ctaLabel && onCta && (
+      <button
+        type="button"
+        onClick={onCta}
+        className="mt-4 rounded-full bg-[#42520d] px-4 py-2 text-xs font-semibold text-white transition-opacity hover:opacity-90"
+      >
+        {ctaLabel}
+      </button>
+    )}
+  </div>
+);
 
 const viewFromHash = (hash: string): ViewMode => {
   if (hash === '#profile') {
@@ -4013,9 +4045,13 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
               })}
 
               {productLaunches.length === 0 && (
-                <div className="px-5 py-10 text-sm leading-6 text-gray-500">
-                  No launches yet. Fill out the launch details above and publish your first product into Apparent.
-                </div>
+                <EmptyState
+                  icon={<Rocket className="h-5 w-5" />}
+                  title="Launch your first product"
+                  body="Publishing a product is what gets you discovered — it puts you on Builder Radar and in front of thesis-fit investors. Add proof, traction, and a link."
+                  ctaLabel="Launch a product"
+                  onCta={() => setIsLaunchFormOpen(true)}
+                />
               )}
             </div>
           </section>
@@ -4753,6 +4789,18 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
         </div>
         <span className="text-xs text-gray-500">{signalRows.length} active companies</span>
       </div>
+      {investorPipeline.every((column) => column.items.length === 0) ? (
+        <EmptyState
+          icon={<FileText className="h-5 w-5" />}
+          title="Your deal flow is empty"
+          body="Save founders from Builder Radar — try the “Raising now” filter to find contactable, thesis-fit founders — then drag them across these stages from discovery to meeting."
+          ctaLabel="Open Builder Radar"
+          onCta={() => {
+            setActiveView('overview');
+            window.setTimeout(() => scrollToSection('map'), 80);
+          }}
+        />
+      ) : (
       <div className="grid divide-y divide-black/10 lg:grid-cols-5 lg:divide-x lg:divide-y-0">
         {investorPipeline.map((column) => (
           <div
@@ -4815,6 +4863,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
           </div>
         ))}
       </div>
+      )}
     </section>
   );
 
@@ -6201,7 +6250,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
 
   return (
     <div className="min-h-screen bg-[#fbf8f3] text-black">
-      <SessionNavBar role={role} user={user} />
+      <SessionNavBar role={role} user={user} activated={profileSaved} />
 
       <main className="min-h-screen pl-[15rem]">
         <div className={isVCHeatMapView ? 'min-h-screen' : isMessagesView ? 'mx-auto flex h-screen w-full max-w-[1440px] flex-col overflow-hidden px-6 pt-6' : 'mx-auto max-w-[1440px] px-6 py-6'}>
