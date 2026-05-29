@@ -38,25 +38,33 @@ function baseUrlFromRequest(req: Request): string {
   return `${url.protocol}//${url.host}${prefix}`
 }
 
+// Apify ad-hoc webhooks must be passed as a base64-encoded `webhooks` QUERY
+// parameter, and the POST body must be the actor input itself (NOT a wrapper).
+function buildWebhooksParam(webhookUrl: string): string {
+  const webhooks = [
+    {
+      eventTypes: ['ACTOR.RUN.SUCCEEDED'],
+      requestUrl: webhookUrl,
+      // Custom header so apify_ingest can authenticate the callback.
+      headersTemplate: JSON.stringify({ 'X-Hook-Secret': APIFY_WEBHOOK_SECRET }),
+      payloadTemplate:
+        '{"datasetId":"{{resource.defaultDatasetId}}","startedAt":"{{resource.startedAt}}","finishedAt":"{{resource.finishedAt}}","itemsTotal":"{{resource.stats.itemsTotal}}","runId":"{{resource.id}}"}',
+    },
+  ]
+  return btoa(JSON.stringify(webhooks))
+}
+
 async function startActorRun(actorSlug: string, input: unknown, webhookUrl: string) {
-  const startUrl = `https://api.apify.com/v2/acts/${encodeURIComponent(actorSlug)}/runs?token=${encodeURIComponent(APIFY_TOKEN)}`
-  const payload = {
-    input,
-    webhooks: [
-      {
-        eventTypes: ['ACTOR.RUN.SUCCEEDED'],
-        requestUrl: webhookUrl,
-        headers: { 'X-Hook-Secret': APIFY_WEBHOOK_SECRET },
-        payloadTemplate:
-          '{"datasetId":"{{resource.defaultDatasetId}}","startedAt":"{{resource.startedAt}}","finishedAt":"{{resource.finishedAt}}","itemsTotal":"{{resource.stats.itemsTotal}}","runId":"{{resource.id}}"}',
-      },
-    ],
-  }
+  const webhooksParam = buildWebhooksParam(webhookUrl)
+  const startUrl =
+    `https://api.apify.com/v2/acts/${encodeURIComponent(actorSlug)}/runs` +
+    `?token=${encodeURIComponent(APIFY_TOKEN)}` +
+    `&webhooks=${encodeURIComponent(webhooksParam)}`
 
   const res = await fetch(startUrl, {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
-    body: JSON.stringify(payload),
+    body: JSON.stringify(input),
   })
   if (!res.ok) {
     const txt = await res.text()
@@ -76,10 +84,13 @@ serve(async (req) => {
   }
 
   const base = baseUrlFromRequest(req)
-  const ycWebhook = `${base}/apify_ingest?src=yc`
-  const ghWebhook = `${base}/apify_ingest?src=gh`
-  const phWebhook = `${base}/apify_ingest?src=ph`
-  const hnWebhook = `${base}/apify_ingest?src=hn`
+  // Secret also passed as a query param so apify_ingest can authenticate even if
+  // the actor/webhook strips custom headers.
+  const hook = encodeURIComponent(APIFY_WEBHOOK_SECRET)
+  const ycWebhook = `${base}/apify_ingest?src=yc&hook=${hook}`
+  const ghWebhook = `${base}/apify_ingest?src=gh&hook=${hook}`
+  const phWebhook = `${base}/apify_ingest?src=ph&hook=${hook}`
+  const hnWebhook = `${base}/apify_ingest?src=hn&hook=${hook}`
 
   // YC input (proxy enabled)
   const ycInput = {

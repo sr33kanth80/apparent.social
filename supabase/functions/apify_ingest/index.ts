@@ -60,24 +60,48 @@ function safeIso(val?: string | null): string {
   return new Date().toISOString()
 }
 
+// Schema: clearpath~ycombinator-api-scraper. Each dataset item is a YC company
+// record: { name, slug, website, one_liner, description, batch, industry,
+// subindustry, tags[], pretty_location, all_locations, country, regions[],
+// founders[{ full_name, linkedin, founder_bio }], _metadata.scraped_at, ... }
 function mapYcItemToSignal(item: JsonRecord, runFinishedAt?: string): SignalRow {
-  const company = text(item.companyName ?? item.name)
-  const description = text(item.description ?? item.tagline ?? '')
-  const batch = text(item.batch ?? item.batchYear ? `S${item.batchYear}` : '')
-  const status = text(item.status)
-  const ycUrl = text(item.detailPageUrl ?? item.url ?? '')
+  const company = text(item.name ?? item.companyName)
+  const slug = text(item.slug)
+  const oneLiner = text(item.one_liner ?? item.tagline)
+  const description = text(item.description ?? item.long_description)
+  const batch = text(item.batch)
+  const industry = text(item.industry)
+  const subindustry = text(item.subindustry)
+  const teamSize = item.team_size
+  const website = text(item.website ?? item.website_display)
+
   const founders = asArray<JsonRecord>(item.founders)
-  const firstFounder = founders[0] || {}
-  const founderName = text((firstFounder as JsonRecord).name)
-  const founderLinkedin = text((firstFounder as JsonRecord).linkedin ?? (firstFounder as JsonRecord).linkedinUrl)
-  const industries = asArray<string>(item.industries ?? item.tags)
-  const locations = asArray<string>(item.locations)
+  const firstFounder = (founders[0] || {}) as JsonRecord
+  const founderName = text(firstFounder.full_name) ||
+    [text(firstFounder.first_name), text(firstFounder.last_name)].filter(Boolean).join(' ')
+  const founderLinkedin = text(firstFounder.linkedin ?? firstFounder.linkedinUrl)
+
+  // Prefer a stable YC company page URL for dedup; fall back to website.
+  const sourceUrl = slug ? `https://www.ycombinator.com/companies/${slug}` : website
+
+  const locationCandidates = [
+    text(item.pretty_location),
+    text(item.all_locations),
+    asArray<string>(item.regions).filter(Boolean).join(', '),
+    text(item.country),
+  ].filter(Boolean)
+  const location = locationCandidates[0] || undefined
+
+  const tags = asArray<string>(item.tags).filter(Boolean)
+  const rawTags = [industry, subindustry, ...tags, batch ? `YC ${batch}` : ''].filter(Boolean) as string[]
 
   const parts: string[] = []
-  if (description) parts.push(description)
+  if (oneLiner) parts.push(oneLiner)
+  else if (description) parts.push(description.slice(0, 280))
   const meta: string[] = []
   if (batch) meta.push(`YC ${batch}`)
-  if (status) meta.push(status)
+  if (industry) meta.push(industry)
+  if (typeof teamSize === 'number' && teamSize > 0) meta.push(`team ${teamSize}`)
   if (meta.length) parts.push(meta.join(' · '))
 
   return {
@@ -85,13 +109,17 @@ function mapYcItemToSignal(item: JsonRecord, runFinishedAt?: string): SignalRow 
     founder: founderName || '',
     detail: parts.join(' — ').trim() || company || 'YC company',
     source_type: 'YC Directory',
-    source_url: ycUrl || '',
-    profile_url: founderLinkedin || '',
-    stage: 'YC',
-    location: locations.join(', ') || undefined,
-    freshness_at: safeIso(runFinishedAt ?? text((item as JsonRecord).scrapedAt as string | undefined)),
+    source_url: sourceUrl || '',
+    profile_url: founderLinkedin || website || '',
+    stage: batch ? `YC ${batch}` : 'YC',
+    location,
+    freshness_at: safeIso(
+      runFinishedAt ??
+        text((item._metadata as JsonRecord | undefined)?.scraped_at as string | undefined) ??
+        text(item.scrapedAt as string | undefined),
+    ),
     github_url: undefined,
-    raw_tags: industries.length ? industries : undefined,
+    raw_tags: rawTags.length ? rawTags : undefined,
     raw: item,
   }
 }
@@ -268,8 +296,8 @@ serve(async (req) => {
               ? 'hacker_news'
               : src
 
-    const hookHeader = req.headers.get('x-hook-secret') || ''
-    if (!APIFY_WEBHOOK_SECRET || hookHeader !== APIFY_WEBHOOK_SECRET) {
+    const hookSecret = req.headers.get('x-hook-secret') || url.searchParams.get('hook') || ''
+    if (!APIFY_WEBHOOK_SECRET || hookSecret !== APIFY_WEBHOOK_SECRET) {
       return new Response('unauthorized', { status: 401 })
     }
 
