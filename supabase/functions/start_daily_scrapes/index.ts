@@ -24,9 +24,18 @@ const PH_ACTOR_SLUG = Deno.env.get('PH_ACTOR_SLUG') || 'bebity~product-hunt-scra
 const HN_ACTOR_SLUG = Deno.env.get('HN_ACTOR_SLUG') || 'lhotanok~hacker-news-scraper'
 
 function baseUrlFromRequest(req: Request): string {
+  // Explicit override wins (e.g. INGEST_BASE_URL=https://<ref>.supabase.co/functions/v1).
+  const explicit = Deno.env.get('INGEST_BASE_URL')
+  if (explicit) return explicit.replace(/\/+$/, '')
+
   const url = new URL(req.url)
-  // Supabase functions are usually hosted like https://<ref>.functions.supabase.co/<fn>
-  return `${url.protocol}//${url.host}`
+  // Preserve any path prefix this function was reached through so sibling
+  // functions resolve correctly under BOTH hostname styles:
+  //   - https://<ref>.functions.supabase.co/start_daily_scrapes      → prefix ""
+  //   - https://<ref>.supabase.co/functions/v1/start_daily_scrapes   → prefix "/functions/v1"
+  const match = url.pathname.match(/^(.*)\/start_daily_scrapes\/?$/)
+  const prefix = match ? match[1] : ''
+  return `${url.protocol}//${url.host}${prefix}`
 }
 
 async function startActorRun(actorSlug: string, input: unknown, webhookUrl: string) {
