@@ -1,5 +1,5 @@
 import { useEffect, useId, useMemo, useState } from 'react';
-import { ArrowUpRight, Building2, Flame, Globe2, Layers3, LocateFixed, Users, X } from 'lucide-react';
+import { ArrowUpRight, Building2, Flame, Globe2, Layers3, LocateFixed, SlidersHorizontal, Users, X } from 'lucide-react';
 import type { GeoJSONSource, MapLayerMouseEvent } from 'maplibre-gl';
 import { Link } from 'react-router-dom';
 import { Map, useMap } from '@/components/ui/map';
@@ -35,6 +35,9 @@ interface HeatMapProps {
   vcOnly?: boolean;
   /** Fill the available space edge-to-edge (no max-width section or rounded card). */
   fullBleed?: boolean;
+  /** Founder's own stage/sectors — powers the "Match my profile" shortcut. */
+  founderStage?: string;
+  founderSectors?: string;
 }
 
 const HEATMAP_GRADIENT_COLORS = ['#fff7bc', '#fee391', '#fec44f', '#fe9929', '#d7301f'];
@@ -430,12 +433,128 @@ function HeatMapDetailPanel({ point, onClose }: { point: HeatMapPoint; onClose: 
   );
 }
 
-export const HeatMap = ({ includeVCContacts = false, vcOnly = false, fullBleed = false }: HeatMapProps) => {
+// ── Founder VC filters ──────────────────────────────────────────────────────
+type VcFilters = {
+  stages: string[];
+  sectors: string[];
+  fundTypes: string[];
+  contactableOnly: boolean;
+  activeOnly: boolean;
+};
+
+type FilterOption = { key: string; match: string[] };
+
+const STAGE_OPTIONS: FilterOption[] = [
+  { key: 'Pre-Seed', match: ['pre-seed', 'preseed'] },
+  { key: 'Seed', match: ['seed'] },
+  { key: 'Series A', match: ['series a'] },
+  { key: 'Series B+', match: ['series b', 'series c', 'series d'] },
+];
+
+const SECTOR_OPTIONS: FilterOption[] = [
+  { key: 'AI/ML', match: ['artificial intelligence', 'machine learning', 'ai/ml'] },
+  { key: 'FinTech', match: ['fintech'] },
+  { key: 'Devtools', match: ['developer tools', 'devtools'] },
+  { key: 'SaaS', match: ['saas'] },
+  { key: 'Healthcare', match: ['healthcare', 'health', 'biotech', 'medical'] },
+  { key: 'Crypto/Web3', match: ['blockchain', 'crypto', 'web3'] },
+  { key: 'Consumer', match: ['consumer', 'e-commerce', 'd2c'] },
+  { key: 'Climate', match: ['climatetech', 'cleantech', 'climate', 'energy'] },
+  { key: 'Enterprise', match: ['enterprise', 'b2b'] },
+  { key: 'Data/Infra', match: ['big data', 'analytics', 'infrastructure', 'cloud'] },
+];
+
+const FUND_TYPE_OPTIONS: FilterOption[] = [
+  { key: 'VC Fund', match: ['venture fund', 'venture capital'] },
+  { key: 'Accelerator', match: ['accelerator', 'incubator'] },
+  { key: 'Angel', match: ['angel'] },
+  { key: 'Micro VC', match: ['micro'] },
+  { key: 'Corporate', match: ['corporate'] },
+  { key: 'Family Office', match: ['family office'] },
+];
+
+const ACTIVE_MIN_INVESTMENTS = 10;
+
+const emptyVcFilters = (): VcFilters => ({
+  stages: [],
+  sectors: [],
+  fundTypes: [],
+  contactableOnly: false,
+  activeOnly: false,
+});
+
+// True if no keys selected (no filter), or the haystack matches any selected option.
+const matchesSelection = (haystack: string, options: FilterOption[], selectedKeys: string[]) => {
+  if (!selectedKeys.length) return true;
+  const lower = haystack.toLowerCase();
+  return options
+    .filter((option) => selectedKeys.includes(option.key))
+    .some((option) => option.match.some((term) => lower.includes(term)));
+};
+
+const vcPassesHardFilters = (contact: VCContact, filters: VcFilters): boolean => {
+  if (filters.contactableOnly && !(contact.partnerEmail && contact.partnerEmail.trim())) return false;
+  if (filters.activeOnly && contact.numberOfInvestments < ACTIVE_MIN_INVESTMENTS) return false;
+  if (!matchesSelection(contact.fundStage || '', STAGE_OPTIONS, filters.stages)) return false;
+  if (!matchesSelection(contact.fundType || '', FUND_TYPE_OPTIONS, filters.fundTypes)) return false;
+  return true;
+};
+
+const vcMatchesSectors = (contact: VCContact, sectors: string[]): boolean => {
+  if (!sectors.length) return false;
+  const lower = (contact.fundFocusSectors || '').toLowerCase();
+  return SECTOR_OPTIONS.filter((option) => sectors.includes(option.key)).some((option) =>
+    option.match.some((term) => lower.includes(term)),
+  );
+};
+
+const optionKeysFromText = (text: string, options: FilterOption[]): string[] => {
+  const lower = (text || '').toLowerCase();
+  return options.filter((option) => option.match.some((term) => lower.includes(term))).map((option) => option.key);
+};
+
+export const HeatMap = ({
+  includeVCContacts = false,
+  vcOnly = false,
+  fullBleed = false,
+  founderStage = '',
+  founderSectors = '',
+}: HeatMapProps) => {
   const [publishedLaunches, setPublishedLaunches] = useState<ProductLaunch[]>([]);
   const [vcContacts, setVcContacts] = useState<VCContact[]>([]);
   const [mode, setMode] = useState<HeatMapMode>('all');
   const [selectedPoint, setSelectedPoint] = useState<HeatMapPoint | null>(null);
   const [infoDismissed, setInfoDismissed] = useState(false);
+  const [vcFilters, setVcFilters] = useState<VcFilters>(emptyVcFilters);
+  const [filtersOpen, setFiltersOpen] = useState(false);
+
+  const toggleFilterKey = (group: 'stages' | 'sectors' | 'fundTypes', key: string) =>
+    setVcFilters((current) => ({
+      ...current,
+      [group]: current[group].includes(key)
+        ? current[group].filter((existing) => existing !== key)
+        : [...current[group], key],
+    }));
+
+  const matchMyProfile = () => {
+    const stages = optionKeysFromText(founderStage, STAGE_OPTIONS);
+    const sectors = optionKeysFromText(founderSectors, SECTOR_OPTIONS);
+    setVcFilters((current) => ({
+      ...current,
+      stages: stages.length ? stages : current.stages,
+      sectors: sectors.length ? sectors : current.sectors,
+    }));
+    setFiltersOpen(true);
+  };
+
+  const activeFilterCount =
+    vcFilters.stages.length +
+    vcFilters.sectors.length +
+    vcFilters.fundTypes.length +
+    (vcFilters.contactableOnly ? 1 : 0) +
+    (vcFilters.activeOnly ? 1 : 0);
+  const canMatchProfile = Boolean(founderStage.trim() || founderSectors.trim());
+  const totalVcContacts = vcContacts.length;
 
   useEffect(() => {
     let isMounted = true;
@@ -473,14 +592,26 @@ export const HeatMap = ({ includeVCContacts = false, vcOnly = false, fullBleed =
       ...publishedLaunches.map((launch, index) => launchToPoint(launch, index)),
     ];
     const vcContactPoints = vcContacts
-      .map((contact, index) => vcContactToPoint(contact, index))
+      .filter((contact) => vcPassesHardFilters(contact, vcFilters))
+      .map((contact, index) => {
+        const point = vcContactToPoint(contact, index);
+        if (!point) return null;
+        // Soft-weight the heat by sector fit: matching VCs glow hotter, the
+        // rest cool down (never hidden) so the map reads as a fit map.
+        if (vcFilters.sectors.length) {
+          point.intensity = vcMatchesSectors(contact, vcFilters.sectors)
+            ? Math.min(99, point.intensity + 22)
+            : Math.max(28, Math.round(point.intensity * 0.65));
+        }
+        return point;
+      })
       .filter(Boolean) as HeatMapPoint[];
 
     const ecosystemVCPoints = ecosystemPoints.filter((point) => point.kind === 'vc');
     const points = vcOnly ? [...vcContactPoints, ...ecosystemVCPoints] : [...apparentBuilders, ...vcContactPoints, ...ecosystemPoints];
 
     return points.map(offsetByKind);
-  }, [publishedLaunches, vcContacts, vcOnly]);
+  }, [publishedLaunches, vcContacts, vcOnly, vcFilters]);
 
   const filteredPoints = useMemo(
     () => heatPoints.filter((point) => mode === 'all' || point.kind === mode.slice(0, -1)),
@@ -517,6 +648,129 @@ export const HeatMap = ({ includeVCContacts = false, vcOnly = false, fullBleed =
           >
             <ApparentHeatmapLayers points={filteredPoints} selectedId={selectedVisiblePoint?.id} onPointSelect={setSelectedPoint} />
           </Map>
+
+          {/* Founder VC filters — narrow by stage/type/contactability, heat by sector fit */}
+          {vcOnly && (
+            <div className="absolute left-1/2 top-4 z-20 flex w-[calc(100%-2rem)] max-w-sm -translate-x-1/2 flex-col items-center md:top-6">
+              <div className="flex items-center gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => setFiltersOpen((open) => !open)}
+                  className="flex items-center gap-1.5 rounded-full bg-white/92 px-3 py-1.5 text-xs font-semibold text-black shadow-[0_10px_34px_rgba(0,0,0,0.12)] backdrop-blur transition-colors hover:bg-white"
+                >
+                  <SlidersHorizontal className="h-3.5 w-3.5 text-[#42520d]" />
+                  Filters
+                  {activeFilterCount > 0 && (
+                    <span className="rounded-full bg-[#42520d] px-1.5 text-[10px] font-bold text-white">{activeFilterCount}</span>
+                  )}
+                </button>
+                {canMatchProfile && (
+                  <button
+                    type="button"
+                    onClick={matchMyProfile}
+                    className="rounded-full bg-[#42520d] px-3 py-1.5 text-[11px] font-semibold text-white shadow-[0_10px_34px_rgba(0,0,0,0.12)] transition-opacity hover:opacity-90"
+                  >
+                    Match my profile
+                  </button>
+                )}
+              </div>
+
+              {filtersOpen && (
+                <div className="mt-2 w-full rounded-[16px] bg-white/95 p-3 shadow-[0_14px_44px_rgba(0,0,0,0.16)] backdrop-blur">
+                  <div className="space-y-2.5">
+                    <div>
+                      <p className="mb-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-black/40">Stage</p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {STAGE_OPTIONS.map((option) => {
+                          const active = vcFilters.stages.includes(option.key);
+                          return (
+                            <button
+                              key={option.key}
+                              type="button"
+                              onClick={() => toggleFilterKey('stages', option.key)}
+                              className={`rounded-full px-2.5 py-1 text-[11px] font-medium transition-colors ${active ? 'bg-[#42520d] text-white' : 'bg-[#f4f1eb] text-black/60 hover:bg-[#dcefc7]'}`}
+                            >
+                              {option.key}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    <div>
+                      <p className="mb-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-black/40">
+                        Sector <span className="font-normal normal-case tracking-normal text-black/35">· heats matches</span>
+                      </p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {SECTOR_OPTIONS.map((option) => {
+                          const active = vcFilters.sectors.includes(option.key);
+                          return (
+                            <button
+                              key={option.key}
+                              type="button"
+                              onClick={() => toggleFilterKey('sectors', option.key)}
+                              className={`rounded-full px-2.5 py-1 text-[11px] font-medium transition-colors ${active ? 'bg-[#42520d] text-white' : 'bg-[#f4f1eb] text-black/60 hover:bg-[#dcefc7]'}`}
+                            >
+                              {option.key}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    <div>
+                      <p className="mb-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-black/40">Type</p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {FUND_TYPE_OPTIONS.map((option) => {
+                          const active = vcFilters.fundTypes.includes(option.key);
+                          return (
+                            <button
+                              key={option.key}
+                              type="button"
+                              onClick={() => toggleFilterKey('fundTypes', option.key)}
+                              className={`rounded-full px-2.5 py-1 text-[11px] font-medium transition-colors ${active ? 'bg-[#42520d] text-white' : 'bg-[#f4f1eb] text-black/60 hover:bg-[#dcefc7]'}`}
+                            >
+                              {option.key}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    <div className="flex flex-wrap gap-1.5">
+                      <button
+                        type="button"
+                        onClick={() => setVcFilters((current) => ({ ...current, contactableOnly: !current.contactableOnly }))}
+                        className={`rounded-full px-2.5 py-1 text-[11px] font-semibold transition-colors ${vcFilters.contactableOnly ? 'bg-[#42520d] text-white' : 'bg-[#f4f1eb] text-black/60 hover:bg-[#dcefc7]'}`}
+                      >
+                        Has email
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setVcFilters((current) => ({ ...current, activeOnly: !current.activeOnly }))}
+                        className={`rounded-full px-2.5 py-1 text-[11px] font-semibold transition-colors ${vcFilters.activeOnly ? 'bg-[#42520d] text-white' : 'bg-[#f4f1eb] text-black/60 hover:bg-[#dcefc7]'}`}
+                      >
+                        Active only
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="mt-2.5 flex items-center justify-between border-t border-black/10 pt-2">
+                    <p className="text-[10px] text-black/45">{vcContactCount} of {totalVcContacts} VCs match</p>
+                    {activeFilterCount > 0 && (
+                      <button
+                        type="button"
+                        onClick={() => setVcFilters(emptyVcFilters())}
+                        className="text-[10px] font-semibold text-[#42520d] hover:underline"
+                      >
+                        Reset all
+                      </button>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
 
           <div className="absolute left-4 top-4 z-10 flex w-[calc(100%-2rem)] max-w-[19rem] flex-col items-start gap-3 md:left-6 md:top-6">
           <Card className="w-[13.5rem] max-w-full border-0 bg-white/90 shadow-[0_10px_34px_rgba(0,0,0,0.12)] backdrop-blur">

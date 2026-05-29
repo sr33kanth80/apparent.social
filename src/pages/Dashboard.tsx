@@ -6385,7 +6385,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
                 exit={{ opacity: 0, y: -8, filter: 'blur(2px)' }}
                 transition={{ duration: 0.22, ease: 'easeOut' }}
               >
-                <HeatMap includeVCContacts vcOnly fullBleed />
+                <HeatMap includeVCContacts vcOnly fullBleed founderStage={intakeValues.stage} founderSectors={intakeValues.category} />
               </motion.div>
             ) : activeView === 'overview' ? (
               <motion.div
