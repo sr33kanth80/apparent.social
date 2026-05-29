@@ -509,7 +509,8 @@ export const HeatMap = ({ includeVCContacts = false, vcOnly = false, fullBleed =
             <ApparentHeatmapLayers points={filteredPoints} onPointSelect={setSelectedPoint} />
           </Map>
 
-          <Card className="absolute left-4 top-4 z-10 w-[calc(100%-2rem)] max-w-[13.5rem] border-0 bg-white/90 shadow-[0_10px_34px_rgba(0,0,0,0.12)] backdrop-blur md:left-6 md:top-6">
+          <div className="absolute left-4 top-4 z-10 flex w-[calc(100%-2rem)] max-w-[19rem] flex-col items-start gap-3 md:left-6 md:top-6">
+          <Card className="w-[13.5rem] max-w-full border-0 bg-white/90 shadow-[0_10px_34px_rgba(0,0,0,0.12)] backdrop-blur">
             <CardHeader className="p-3 pb-2">
               <div className="flex items-start justify-between gap-2">
                 <CardTitle className="text-xs font-semibold tracking-[-0.01em]">
@@ -563,6 +564,13 @@ export const HeatMap = ({ includeVCContacts = false, vcOnly = false, fullBleed =
             </CardContent>
           </Card>
 
+          {selectedVisiblePoint && (
+            <div className="w-full">
+              <HeatMapDetailPanel point={selectedVisiblePoint} onClose={() => setSelectedPoint(null)} />
+            </div>
+          )}
+          </div>
+
           <div className="absolute bottom-4 left-4 right-4 z-10 grid gap-2 md:bottom-6 md:left-6 md:right-6 md:grid-cols-[minmax(0,1fr)_auto] md:items-end">
             <div className="max-w-md rounded-[14px] bg-white/90 p-3 shadow-[0_10px_34px_rgba(0,0,0,0.1)] backdrop-blur">
               <div className="flex items-start gap-2">
@@ -589,12 +597,6 @@ export const HeatMap = ({ includeVCContacts = false, vcOnly = false, fullBleed =
             </div>
           </div>
 
-          {/* Blueprint detail panel — slides in on the right when a point is selected */}
-          {selectedVisiblePoint && (
-            <div className="absolute right-4 top-4 z-20 w-[calc(100%-2rem)] max-w-[19rem] md:right-6 md:top-6 md:w-[19rem]">
-              <HeatMapDetailPanel point={selectedVisiblePoint} onClose={() => setSelectedPoint(null)} />
-            </div>
-          )}
         </div>
       </section>
     </main>
