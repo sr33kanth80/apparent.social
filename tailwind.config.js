@@ -8,6 +8,7 @@ export default {
     extend: {
       fontFamily: {
         sans: ['TT Norms Pro', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+        serif: ['Georgia', '"Times New Roman"', 'serif'],
       },
     },
   },

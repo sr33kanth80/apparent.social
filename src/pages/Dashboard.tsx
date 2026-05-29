@@ -2971,7 +2971,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
           {isInvestor ? (
             <>
               {/* Header — mirrors founder avatar/name card exactly */}
-              <section className="border-y border-black/10 bg-white">
+              <section className="rounded-[20px] border border-black/10 bg-white shadow-[0_10px_34px_rgba(0,0,0,0.04)]">
                 <div className="px-5 py-5">
                   <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                     <div className="flex items-center gap-4">
@@ -2979,7 +2979,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
                         {getInitials(user.email.split('@')[0].replace(/[._-]+/g, ' '))}
                       </div>
                       <div className="pb-1">
-                        <h2 className="text-2xl font-semibold tracking-[-0.03em]">
+                        <h2 className="text-2xl font-normal tracking-[-0.03em] font-serif">
                           {user.email.split('@')[0].replace(/[._-]+/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())}
                         </h2>
                         <p className="mt-2 max-w-2xl text-sm leading-6 text-gray-600">Investor profile on Apparent</p>
@@ -2999,7 +2999,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
               </section>
 
               {/* Thesis fields — same divide-y card as founder "Your Profile" */}
-              <section className="border-y border-black/10 bg-white">
+              <section className="rounded-[20px] border border-black/10 bg-white shadow-[0_10px_34px_rgba(0,0,0,0.04)]">
                 <div className="flex flex-col gap-3 border-b border-black/10 px-5 py-4 md:flex-row md:items-center md:justify-between">
                   <div>
                     <h3 className="text-sm font-semibold">Your Thesis</h3>
@@ -3042,7 +3042,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
               </section>
 
               {/* Public profile visibility controls */}
-              <section className="border-y border-black/10 bg-white">
+              <section className="rounded-[20px] border border-black/10 bg-white shadow-[0_10px_34px_rgba(0,0,0,0.04)]">
                 <div className="flex flex-col gap-3 border-b border-black/10 px-5 py-4 md:flex-row md:items-center md:justify-between">
                   <div>
                     <h3 className="text-sm font-semibold">Public profile</h3>
@@ -3116,7 +3116,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
 
               {/* Bottom grid — mirrors founder "Products + Past products" layout */}
               <section className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">
-                <div className="border-y border-black/10 bg-white">
+                <div className="rounded-[20px] border border-black/10 bg-white shadow-[0_10px_34px_rgba(0,0,0,0.04)]">
                   <div className="flex items-center justify-between border-b border-black/10 px-5 py-4">
                     <div>
                       <h3 className="text-sm font-semibold">Top ranked signals</h3>
@@ -3154,7 +3154,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
                   </div>
                 </div>
 
-                <aside className="border-y border-black/10 bg-white">
+                <aside className="rounded-[20px] border border-black/10 bg-white shadow-[0_10px_34px_rgba(0,0,0,0.04)]">
                   <div className="border-b border-black/10 px-5 py-4">
                     <h3 className="text-sm font-semibold">Portfolio calibration</h3>
                     <p className="mt-1 text-xs text-gray-500">Companies from your taste list, used to calibrate signal ranking.</p>
@@ -3172,7 +3172,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
             </>
           ) : (
             <>
-              <section className="border-y border-black/10 bg-white">
+              <section className="rounded-[20px] border border-black/10 bg-white shadow-[0_10px_34px_rgba(0,0,0,0.04)]">
                 <div className="px-5 py-5">
                   <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                     <div className="flex items-center gap-4">
@@ -3184,7 +3184,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
                         )}
                       </div>
                       <div className="pb-1">
-                        <h2 className="text-2xl font-semibold tracking-[-0.03em]">{profileName}</h2>
+                        <h2 className="text-2xl font-normal tracking-[-0.03em] font-serif">{profileName}</h2>
                         <p className="mt-2 max-w-2xl text-sm leading-6 text-gray-600">{profileHeadline}</p>
                         <a
                           href={`/@${user.username ?? user.email.split('@')[0].toLowerCase().replace(/[^a-z0-9]/g, '')}`}
@@ -3211,7 +3211,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
               </section>
 
               {/* Investor interest — the come-back-next-week loop */}
-              <section className="border-y border-black/10 bg-white">
+              <section className="rounded-[20px] border border-black/10 bg-white shadow-[0_10px_34px_rgba(0,0,0,0.04)]">
                 <div className="flex items-center justify-between gap-3 px-5 py-4">
                   <div>
                     <h3 className="text-sm font-semibold">Investor interest</h3>
@@ -3240,7 +3240,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
               </section>
 
               {/* Fundraising intent — the opt-in signal pure scrapers can't have */}
-              <section className="border-y border-black/10 bg-white">
+              <section className="rounded-[20px] border border-black/10 bg-white shadow-[0_10px_34px_rgba(0,0,0,0.04)]">
                 <div className="border-b border-black/10 px-5 py-4">
                   <h3 className="text-sm font-semibold">Fundraising status</h3>
                   <p className="mt-1 text-xs text-gray-500">Tell thesis-fit investors whether you&apos;re raising — this is what surfaces you in their &ldquo;Raising now&rdquo; view.</p>
@@ -3295,7 +3295,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
                 </div>
               </section>
 
-              <section className="border-y border-black/10 bg-white">
+              <section className="rounded-[20px] border border-black/10 bg-white shadow-[0_10px_34px_rgba(0,0,0,0.04)]">
                 <div className="flex flex-col gap-3 border-b border-black/10 px-5 py-4 md:flex-row md:items-center md:justify-between">
                   <div>
                     <h3 className="text-sm font-semibold">Your Profile</h3>
@@ -3333,7 +3333,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
               </section>
 
               <section className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">
-                <div className="border-y border-black/10 bg-white">
+                <div className="rounded-[20px] border border-black/10 bg-white shadow-[0_10px_34px_rgba(0,0,0,0.04)]">
                   <div className="flex items-center justify-between border-b border-black/10 px-5 py-4">
                     <div>
                       <h3 className="text-sm font-semibold">Products launched on Apparent</h3>
@@ -3368,7 +3368,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
                   </div>
                 </div>
 
-                <aside className="border-y border-black/10 bg-white">
+                <aside className="rounded-[20px] border border-black/10 bg-white shadow-[0_10px_34px_rgba(0,0,0,0.04)]">
                   <div className="border-b border-black/10 px-5 py-4">
                     <h3 className="text-sm font-semibold">Past products</h3>
                     <p className="mt-1 text-xs text-gray-500">Projects you list on your profile, even if they were not launched here.</p>
@@ -3403,14 +3403,14 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
         transition={{ duration: 0.22, ease: 'easeOut' }}
       >
         <div id="products" className="mx-auto max-w-[1292px] scroll-mt-24 space-y-6">
-          <section className="border-y border-black/10 bg-white">
+          <section className="rounded-[20px] border border-black/10 bg-white shadow-[0_10px_34px_rgba(0,0,0,0.04)]">
             <div className="flex flex-col gap-4 px-5 py-5 md:flex-row md:items-center md:justify-between">
               <div className="flex items-start gap-3">
                 <span className={`mt-1 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${accentSurface} ${accentForeground}`}>
                   <Rocket className="h-5 w-5" />
                 </span>
                 <div>
-                  <h2 className="mt-1 text-2xl font-semibold tracking-[-0.03em]">Launch into Apparent</h2>
+                  <h2 className="mt-1 text-2xl font-normal tracking-[-0.03em] font-serif">Launch into Apparent</h2>
                   <p className="mt-2 max-w-2xl text-sm leading-6 text-gray-600">
                     Add the product, proof, and traction investors need to evaluate the launch. Once it is live, the launch can be discovered, upvoted, commented on, and connected back to your founder profile.
                   </p>
@@ -3428,7 +3428,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
           </section>
 
           <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
-            <section className="border-y border-black/10 bg-white">
+            <section className="rounded-[20px] border border-black/10 bg-white shadow-[0_10px_34px_rgba(0,0,0,0.04)]">
               <div className="flex items-center justify-between border-b border-black/10 px-5 py-4">
                 <div>
                   <h3 className="text-sm font-semibold">Launch details</h3>
@@ -3818,7 +3818,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
             </section>
 
             <aside className="space-y-6">
-              <section className="border-y border-black/10 bg-white">
+              <section className="rounded-[20px] border border-black/10 bg-white shadow-[0_10px_34px_rgba(0,0,0,0.04)]">
                 <div className="border-b border-black/10 px-5 py-4">
                   <h3 className="text-sm font-semibold">Public preview</h3>
                   <p className="mt-1 text-xs text-gray-500">How the launch card starts to feel in discovery.</p>
@@ -3920,7 +3920,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
                 </div>
               </section>
 
-              <section className="border-y border-black/10 bg-white">
+              <section className="rounded-[20px] border border-black/10 bg-white shadow-[0_10px_34px_rgba(0,0,0,0.04)]">
                 <div className="border-b border-black/10 px-5 py-4">
                   <h3 className="text-sm font-semibold">Launch readiness</h3>
                 </div>
@@ -3936,7 +3936,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
             </aside>
           </div>
 
-          <section className="border-y border-black/10 bg-white">
+          <section className="rounded-[20px] border border-black/10 bg-white shadow-[0_10px_34px_rgba(0,0,0,0.04)]">
             <div className="flex flex-col gap-2 border-b border-black/10 px-5 py-4 md:flex-row md:items-center md:justify-between">
               <div>
                 <h3 className="text-sm font-semibold">Live launches</h3>
@@ -4057,7 +4057,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
           </section>
 
           {liveLaunch && liveEngagement && (
-            <section className="overflow-hidden border-y border-black/10 bg-white">
+            <section className="overflow-hidden rounded-[20px] border border-black/10 bg-white shadow-[0_10px_34px_rgba(0,0,0,0.04)]">
               {liveLaunch.bannerUrl && (
                 <div className="aspect-[5/1] min-h-32 bg-[#fbfaf7]">
                   <img src={liveLaunch.bannerUrl} alt="" className="h-full w-full object-cover" />
@@ -4153,14 +4153,14 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
   };
 
   const renderLaunchesSection = () => (
-    <section id="launches" className="scroll-mt-24 border-y border-black/10 bg-white">
+    <section id="launches" className="scroll-mt-24 rounded-[20px] border border-black/10 bg-white shadow-[0_10px_34px_rgba(0,0,0,0.04)]">
       <div className="flex items-center justify-between border-b border-black/10 px-5 py-3">
         <div className="flex items-center gap-2">
           <Calendar className="h-4 w-4 text-gray-500" />
           <h3 className="text-sm font-semibold">Recent product launches</h3>
         </div>
         <button
-          className="rounded-md border border-black/10 p-1.5 hover:bg-[#fbf8f3]"
+          className="rounded-xl border border-black/10 p-1.5 hover:bg-[#fbf8f3]"
           onClick={() => {
             setActiveView('products');
             navigate('/dashboard/founder/products');
@@ -4212,13 +4212,13 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
   );
 
   const renderMeetupsSection = () => (
-    <section id="meetups" className="scroll-mt-24 border-y border-black/10 bg-white py-4">
+    <section id="meetups" className="scroll-mt-24 rounded-[20px] border border-black/10 bg-white shadow-[0_10px_34px_rgba(0,0,0,0.04)] py-4">
       <div className="flex items-center justify-between px-4">
         <div className="flex items-center gap-2">
           <Calendar className="h-4 w-4 text-gray-500" />
           <h3 className="text-sm font-semibold">Meetups</h3>
         </div>
-        <button className="rounded-md border border-black/10 p-1.5 hover:bg-[#fbf8f3]" onClick={() => setIsMeetupFormOpen((current) => !current)} aria-label="Create meetup">
+        <button className="rounded-xl border border-black/10 p-1.5 hover:bg-[#fbf8f3]" onClick={() => setIsMeetupFormOpen((current) => !current)} aria-label="Create meetup">
           <Plus className="h-4 w-4" />
         </button>
       </div>
@@ -4321,7 +4321,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
 
     return (
       <div className="mx-auto mb-8 max-w-[1292px]">
-      <section className="border-y border-black/10 bg-white">
+      <section className="rounded-[20px] border border-black/10 bg-white shadow-[0_10px_34px_rgba(0,0,0,0.04)]">
         <div className="flex items-start justify-between gap-3 px-5 py-4">
           <div>
             <h3 className="text-sm font-semibold">{isInvestor ? 'Get started sourcing' : 'Get discovered on Apparent'}</h3>
@@ -4393,7 +4393,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
     ).slice(0, 6);
 
     return (
-    <section id="map" className="scroll-mt-24 border-y border-black/10 bg-white py-4">
+    <section id="map" className="scroll-mt-24 rounded-[20px] border border-black/10 bg-white shadow-[0_10px_34px_rgba(0,0,0,0.04)] py-4">
       <div className="flex items-center gap-2 px-4">
         <MapPin className="h-4 w-4 text-gray-500" />
         <div>
@@ -4585,7 +4585,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
         onSelectCity={handleSelectBuilderCity}
         onSelectBuilder={handleSelectBuilderFromMap}
         onViewportBuildersChange={handleViewportBuildersChange}
-        className="mx-4 mt-4 h-96 rounded-md"
+        className="mx-4 mt-4 h-96 rounded-xl"
       />
       {(selectedClusterBuilders.length > 0 || selectedClusterMeetups.length > 0) && (
         <div className="px-4 pt-4">
@@ -4781,7 +4781,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
   };
 
   const renderInvestorDealFlowSection = () => (
-    <section id="deals" className="scroll-mt-24 border-y border-black/10 bg-white">
+    <section id="deals" className="scroll-mt-24 rounded-[20px] border border-black/10 bg-white shadow-[0_10px_34px_rgba(0,0,0,0.04)]">
       <div className="flex items-center justify-between border-b border-black/10 px-5 py-3">
         <div className="flex items-center gap-2">
           <FileText className="h-4 w-4 text-gray-500" />
@@ -4824,7 +4824,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
                   draggable
                   onDragStart={(event) => handleInvestorSignalDragStart(event, signalStorageId(signal))}
                   onDragEnd={clearInvestorSignalDrag}
-                  className={`rounded-md border border-black/10 bg-white p-3 shadow-sm shadow-black/[0.03] transition-all ${
+                  className={`rounded-xl border border-black/10 bg-white p-3 shadow-sm shadow-black/[0.03] transition-all ${
                     draggedSignalCompany === signalStorageId(signal)
                       ? 'scale-[0.98] cursor-grabbing opacity-50'
                       : 'cursor-grab hover:-translate-y-0.5 hover:border-black/20 hover:shadow-md hover:shadow-black/[0.06]'
@@ -4852,7 +4852,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
                   </button>
                   <button
                     type="button"
-                    className="mt-3 flex w-full cursor-grab items-center justify-center rounded-md border border-dashed border-black/10 py-1.5 text-[11px] font-medium uppercase tracking-wide text-gray-400 hover:border-black/20 hover:text-black active:cursor-grabbing"
+                    className="mt-3 flex w-full cursor-grab items-center justify-center rounded-xl border border-dashed border-black/10 py-1.5 text-[11px] font-medium uppercase tracking-wide text-gray-400 hover:border-black/20 hover:text-black active:cursor-grabbing"
                     onPointerDown={(event) => handleInvestorSignalPointerDragStart(event, signal)}
                   >
                     Drag to move
@@ -4868,13 +4868,13 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
   );
 
   const renderTermsReviewSection = () => (
-    <section id="terms" className="scroll-mt-24 border-y border-black/10 bg-white py-4">
+    <section id="terms" className="scroll-mt-24 rounded-[20px] border border-black/10 bg-white shadow-[0_10px_34px_rgba(0,0,0,0.04)] py-4">
       <div className="flex items-center justify-between px-4">
         <div className="flex items-center gap-2">
           <FileText className="h-4 w-4 text-gray-500" />
           <h3 className="text-sm font-semibold">Terms review</h3>
         </div>
-        <button className="rounded-md border border-black/10 p-1.5 hover:bg-[#fbf8f3]" onClick={() => setIsTermFormOpen((current) => !current)} aria-label="Add terms review">
+        <button className="rounded-xl border border-black/10 p-1.5 hover:bg-[#fbf8f3]" onClick={() => setIsTermFormOpen((current) => !current)} aria-label="Add terms review">
           <Plus className="h-4 w-4" />
         </button>
       </div>
@@ -4932,10 +4932,10 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
       transition={{ duration: 0.22, ease: 'easeOut' }}
     >
       <div id="deals" className="mx-auto max-w-[1292px] scroll-mt-24 space-y-6">
-        <section className="border-y border-black/10 bg-white px-5 py-5">
+        <section className="rounded-[20px] border border-black/10 bg-white shadow-[0_10px_34px_rgba(0,0,0,0.04)] px-5 py-5">
           <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
             <div>
-              <h2 className="text-2xl font-semibold tracking-[-0.03em]">
+              <h2 className="text-2xl font-normal tracking-[-0.03em] font-serif">
                 {isInvestor ? 'Deal Flow' : 'Deal Terms'}
               </h2>
               <p className="mt-2 max-w-2xl text-sm leading-6 text-gray-600">
@@ -4963,7 +4963,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
             {renderInvestorDealFlowSection()}
             <div className="grid gap-6 xl:grid-cols-3">
               {signalRows.slice(0, 3).map((signal) => (
-                <section key={signalStorageId(signal)} className="border-y border-black/10 bg-white py-4">
+                <section key={signalStorageId(signal)} className="rounded-[20px] border border-black/10 bg-white shadow-[0_10px_34px_rgba(0,0,0,0.04)] py-4">
                   <div className="flex items-center gap-2 px-4">
                     <MessageCircle className="h-4 w-4 text-gray-500" />
                     <h3 className="text-sm font-semibold">Outreach draft</h3>
@@ -4992,7 +4992,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
           <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_320px]">
             {renderTermsReviewSection()}
             <aside className="space-y-6">
-              <section className="border-y border-black/10 bg-white p-5">
+              <section className="rounded-[20px] border border-black/10 bg-white shadow-[0_10px_34px_rgba(0,0,0,0.04)] p-5">
                 <h3 className="text-sm font-semibold">Round snapshot</h3>
                 <div className="mt-4 grid gap-3">
                   {[
@@ -5007,7 +5007,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
                   ))}
                 </div>
               </section>
-              <section className="border-y border-black/10 bg-white p-5">
+              <section className="rounded-[20px] border border-black/10 bg-white shadow-[0_10px_34px_rgba(0,0,0,0.04)] p-5">
                 <h3 className="text-sm font-semibold">Founder checklist</h3>
                 <div className="mt-4 space-y-3 text-sm text-gray-600">
                   {['Compare valuation cap against dilution', 'Check pro rata and information rights', 'Capture investor decision deadline'].map((item) => (
@@ -5034,8 +5034,8 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
       transition={{ duration: 0.22, ease: 'easeOut' }}
     >
       <div className="mx-auto max-w-[1292px] space-y-6">
-        <section className="border-y border-black/10 bg-white px-5 py-5">
-          <h2 className="text-2xl font-semibold tracking-[-0.03em]">Terms Review</h2>
+        <section className="rounded-[20px] border border-black/10 bg-white shadow-[0_10px_34px_rgba(0,0,0,0.04)] px-5 py-5">
+          <h2 className="text-2xl font-normal tracking-[-0.03em] font-serif">Terms Review</h2>
           <p className="mt-2 max-w-2xl text-sm leading-6 text-gray-600">
             Capture the terms that need review: instrument, amount, valuation, rights, concerns, and follow-up asks.
           </p>
@@ -5068,9 +5068,9 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
         exit={{ opacity: 0, y: -8, filter: 'blur(2px)' }}
         transition={{ duration: 0.22, ease: 'easeOut' }}
       >
-        <section id="knowledge" className="mx-auto max-w-[1292px] scroll-mt-24 border-y border-black/10 bg-white">
+        <section id="knowledge" className="mx-auto max-w-[1292px] scroll-mt-24 rounded-[20px] border border-black/10 bg-white shadow-[0_10px_34px_rgba(0,0,0,0.04)]">
           <div className="border-b border-black/10 px-5 py-5">
-            <h2 className="text-2xl font-semibold tracking-[-0.03em]">Knowledge Base</h2>
+            <h2 className="text-2xl font-normal tracking-[-0.03em] font-serif">Knowledge Base</h2>
             <p className="mt-2 max-w-2xl text-sm leading-6 text-gray-600">
               {isInvestor
                 ? 'Reference notes and operating checklists for sourcing, diligence, and follow-up.'
@@ -5106,9 +5106,9 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
       exit={{ opacity: 0, y: -8, filter: 'blur(2px)' }}
       transition={{ duration: 0.22, ease: 'easeOut' }}
     >
-      <section id="feedback" className="mx-auto max-w-[1292px] scroll-mt-24 border-y border-black/10 bg-white">
+      <section id="feedback" className="mx-auto max-w-[1292px] scroll-mt-24 rounded-[20px] border border-black/10 bg-white shadow-[0_10px_34px_rgba(0,0,0,0.04)]">
         <div className="border-b border-black/10 px-5 py-5">
-          <h2 className="text-2xl font-semibold tracking-[-0.03em]">Feedback</h2>
+          <h2 className="text-2xl font-normal tracking-[-0.03em] font-serif">Feedback</h2>
           <p className="mt-2 max-w-2xl text-sm leading-6 text-gray-600">
             Send the Apparent team a bug report, feature request, confusing workflow, or general product note.
           </p>
@@ -5188,7 +5188,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
         <section id="for-you" className="scroll-mt-24">
           <div className="mx-auto max-w-[1292px]">
             <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_21rem]">
-              <section className="border-y border-black/10 bg-white">
+              <section className="rounded-[20px] border border-black/10 bg-white shadow-[0_10px_34px_rgba(0,0,0,0.04)]">
                 <div className="grid gap-3 border-b border-black/10 px-5 py-4 md:grid-cols-[minmax(12rem,16rem)_minmax(0,1fr)] md:items-center">
                   <div className="min-w-0">
                     <p className="text-base font-semibold text-black">Today&apos;s launches</p>
@@ -5331,7 +5331,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
                   </div>
                 </div>
 
-                <div className="border-y border-black/10 bg-white p-5">
+                <div className="rounded-[20px] border border-black/10 bg-white shadow-[0_10px_34px_rgba(0,0,0,0.04)] p-5">
                   <div className="flex items-center justify-between">
                     <p className="text-sm font-semibold text-[#42520d]">Selected project</p>
                     <Bookmark className="h-5 w-5 text-black/50" />
@@ -5454,7 +5454,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
   };
 
   const renderInvestorSignalInboxSection = (sectionId = 'matches') => (
-    <section id={sectionId} className="scroll-mt-24 border-y border-black/10 bg-white">
+    <section id={sectionId} className="scroll-mt-24 rounded-[20px] border border-black/10 bg-white shadow-[0_10px_34px_rgba(0,0,0,0.04)]">
       <div className="flex flex-col gap-3 border-b border-black/10 px-5 py-3 md:flex-row md:items-center md:justify-between">
         <div className="flex items-center gap-2">
           <Search className="h-4 w-4 text-gray-500" />
@@ -5535,7 +5535,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
   );
 
   const renderMessagesSection = () => (
-    <section id="messages" className="h-full min-h-0 w-full scroll-mt-24 overflow-hidden border-y border-black/10 bg-white">
+    <section id="messages" className="h-full min-h-0 w-full scroll-mt-24 overflow-hidden rounded-[20px] border border-black/10 bg-white shadow-[0_10px_34px_rgba(0,0,0,0.04)]">
       <div className="grid h-full min-h-0 lg:grid-cols-[360px_minmax(0,1fr)]">
         <aside className="flex min-h-0 flex-col border-b border-black/10 bg-white lg:border-b-0 lg:border-r">
           <div className="flex h-14 shrink-0 items-center justify-between border-b border-black/10 px-4">
@@ -5546,7 +5546,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
             <div className="flex items-center gap-1">
               <button
                 type="button"
-                className="rounded-md border border-black/10 p-2 text-gray-500 transition-colors hover:bg-[#fbf8f3] hover:text-black"
+                className="rounded-xl border border-black/10 p-2 text-gray-500 transition-colors hover:bg-[#fbf8f3] hover:text-black"
                 onClick={handleStartNewMessage}
                 aria-label="New message"
                 title="New message"
@@ -5555,7 +5555,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
               </button>
               <button
                 type="button"
-                className="rounded-md border border-black/10 p-2 text-gray-500 transition-colors hover:bg-[#fbf8f3] hover:text-black"
+                className="rounded-xl border border-black/10 p-2 text-gray-500 transition-colors hover:bg-[#fbf8f3] hover:text-black"
                 onClick={handleCycleMessageFilter}
                 aria-label="Filter messages"
                 title={`Filter: ${messageStatusFilter}`}
@@ -5598,8 +5598,8 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
                   onClick={() => handleSelectMessageThread(thread)}
                 >
                   <div className="flex gap-3">
-                    <Avatar className="size-10 rounded-md">
-                      <AvatarFallback className={`rounded-md text-xs font-semibold ${accentSurface} ${accentForeground}`}>
+                    <Avatar className="size-10 rounded-xl">
+                      <AvatarFallback className={`rounded-xl text-xs font-semibold ${accentSurface} ${accentForeground}`}>
                         {getInitials(thread.recipient)}
                       </AvatarFallback>
                     </Avatar>
@@ -5640,8 +5640,8 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
         <div className="flex min-h-0 flex-col">
           <div className="flex h-16 shrink-0 items-center justify-between border-b border-black/10 bg-white px-4">
             <div className="flex min-w-0 items-center gap-3">
-              <Avatar className="size-11 rounded-md">
-                <AvatarFallback className={`rounded-md text-xs font-semibold ${accentSurface} ${accentForeground}`}>
+              <Avatar className="size-11 rounded-xl">
+                <AvatarFallback className={`rounded-xl text-xs font-semibold ${accentSurface} ${accentForeground}`}>
                   {getInitials(activeMessageThread?.recipient ?? messageDraft.recipient)}
                 </AvatarFallback>
               </Avatar>
@@ -5657,13 +5657,13 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
               </div>
             </div>
             <div className="flex items-center gap-1 text-gray-500">
-              <button type="button" className="rounded-md p-2 transition-colors hover:bg-[#fbf8f3] hover:text-black" aria-label="Video call">
+              <button type="button" className="rounded-xl p-2 transition-colors hover:bg-[#fbf8f3] hover:text-black" aria-label="Video call">
                 <Video className="h-4 w-4" />
               </button>
-              <button type="button" className="rounded-md p-2 transition-colors hover:bg-[#fbf8f3] hover:text-black" aria-label="Phone call">
+              <button type="button" className="rounded-xl p-2 transition-colors hover:bg-[#fbf8f3] hover:text-black" aria-label="Phone call">
                 <Phone className="h-4 w-4" />
               </button>
-              <button type="button" className="rounded-md p-2 transition-colors hover:bg-[#fbf8f3] hover:text-black" aria-label="Search conversation">
+              <button type="button" className="rounded-xl p-2 transition-colors hover:bg-[#fbf8f3] hover:text-black" aria-label="Search conversation">
                 <Search className="h-4 w-4" />
               </button>
             </div>
@@ -5715,10 +5715,10 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
 
           <form className="shrink-0 border-t border-black/10 bg-white" onSubmit={handleMessageSubmit}>
             <div className="flex items-center gap-2 px-3 py-3">
-              <button type="button" className="rounded-md p-2 text-gray-500 transition-colors hover:bg-[#fbf8f3] hover:text-black" aria-label="Emoji">
+              <button type="button" className="rounded-xl p-2 text-gray-500 transition-colors hover:bg-[#fbf8f3] hover:text-black" aria-label="Emoji">
                 <Smile className="h-4 w-4" />
               </button>
-              <button type="button" className="rounded-md p-2 text-gray-500 transition-colors hover:bg-[#fbf8f3] hover:text-black" aria-label="Attach">
+              <button type="button" className="rounded-xl p-2 text-gray-500 transition-colors hover:bg-[#fbf8f3] hover:text-black" aria-label="Attach">
                 <Paperclip className="h-4 w-4" />
               </button>
               <input
@@ -5782,7 +5782,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
         transition={{ duration: 0.22, ease: 'easeOut' }}
       >
         <div id="matches" className="mx-auto max-w-[1292px] scroll-mt-24 space-y-6">
-          <section className="border-y border-black/10 bg-white">
+          <section className="rounded-[20px] border border-black/10 bg-white shadow-[0_10px_34px_rgba(0,0,0,0.04)]">
             <div className="grid gap-0 lg:grid-cols-[minmax(0,1fr)_360px]">
               <div className="px-5 py-5">
                 <div className="flex items-center gap-2">
@@ -5848,7 +5848,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
               {renderInvestorSignalInboxSection('signal-inbox')}
             </div>
             <aside className="space-y-6">
-              <section className="border-y border-black/10 bg-white py-4">
+              <section className="rounded-[20px] border border-black/10 bg-white shadow-[0_10px_34px_rgba(0,0,0,0.04)] py-4">
                 <p className="px-4 text-xs font-medium uppercase tracking-wide text-gray-500">Highest-fit builders</p>
                 <div className="mt-3 divide-y divide-black/10">
                   {topBuilders.map((builder) => {
@@ -5885,7 +5885,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
                 </div>
               </section>
 
-              <section className="border-y border-black/10 bg-white py-4">
+              <section className="rounded-[20px] border border-black/10 bg-white shadow-[0_10px_34px_rgba(0,0,0,0.04)] py-4">
                 <p className="px-4 text-xs font-medium uppercase tracking-wide text-gray-500">Fast actions</p>
                 <div className="mt-3 space-y-2 px-4">
                   <button
@@ -5941,7 +5941,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
         transition={{ duration: 0.22, ease: 'easeOut' }}
       >
         <div id="matches" className="mx-auto max-w-[1292px] scroll-mt-24 space-y-6">
-          <section className="border-y border-black/10 bg-white">
+          <section className="rounded-[20px] border border-black/10 bg-white shadow-[0_10px_34px_rgba(0,0,0,0.04)]">
             <div className="grid gap-0 md:grid-cols-[minmax(0,1fr)_320px]">
               <div className="px-5 py-5">
                 <div className="flex items-center gap-2">
@@ -5967,7 +5967,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
             </div>
           </section>
 
-          <section className="border-y border-black/10 bg-white">
+          <section className="rounded-[20px] border border-black/10 bg-white shadow-[0_10px_34px_rgba(0,0,0,0.04)]">
             <div className="flex flex-col gap-3 border-b border-black/10 px-5 py-3 md:flex-row md:items-center md:justify-between">
               <div className="flex items-center gap-2">
                 <Search className="h-4 w-4 text-gray-500" />
@@ -6072,7 +6072,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
           </section>
 
           <section className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
-            <div className="border-y border-black/10 bg-white">
+            <div className="rounded-[20px] border border-black/10 bg-white shadow-[0_10px_34px_rgba(0,0,0,0.04)]">
               <div className="flex items-center gap-2 border-b border-black/10 px-5 py-3">
                 <Target className="h-4 w-4 text-gray-500" />
                 <h3 className="text-sm font-semibold">Proof gaps to improve matches</h3>
@@ -6105,7 +6105,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
               </div>
             </div>
 
-            <div className="border-y border-black/10 bg-white">
+            <div className="rounded-[20px] border border-black/10 bg-white shadow-[0_10px_34px_rgba(0,0,0,0.04)]">
               <div className="flex items-center gap-2 border-b border-black/10 px-5 py-3">
                 <Bookmark className="h-4 w-4 text-gray-500" />
                 <h3 className="text-sm font-semibold">Saved investors</h3>
@@ -6354,7 +6354,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
           )}
 
           {isDashboardLoading && (
-            <div className="mb-4 border-y border-black/10 bg-white px-5 py-3 text-sm text-gray-500">
+            <div className="mb-4 rounded-[20px] border border-black/10 bg-white shadow-[0_10px_34px_rgba(0,0,0,0.04)] px-5 py-3 text-sm text-gray-500">
               Loading workspace data...
             </div>
           )}
@@ -6408,7 +6408,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
 
                 {isInvestor && (
                   <aside className="space-y-6">
-                    <section id="digest" className="scroll-mt-24 border-y border-black/10 bg-white py-4">
+                    <section id="digest" className="scroll-mt-24 rounded-[20px] border border-black/10 bg-white shadow-[0_10px_34px_rgba(0,0,0,0.04)] py-4">
                       <div className="flex items-center gap-2 px-4">
                         <Calendar className="h-4 w-4 text-gray-500" />
                         <h3 className="text-sm font-semibold">Daily digest</h3>
@@ -6452,7 +6452,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
               >
               <section id="for-you" className="scroll-mt-24">
                 <div className="grid items-start gap-8 xl:grid-cols-[minmax(0,960px)_300px] xl:justify-center">
-                  <div className="overflow-hidden border-y border-black/10 bg-white">
+                  <div className="overflow-hidden rounded-[20px] border border-black/10 bg-white shadow-[0_10px_34px_rgba(0,0,0,0.04)]">
                     <div className="flex items-center justify-between border-b border-black/10 px-5 py-3">
                       <div className="flex items-center gap-2 text-sm text-gray-500">
                         <span className={`h-2 w-2 rounded-full ${accentSurface}`} />
@@ -6475,7 +6475,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
                           >
                             <div className="flex items-start gap-3">
                               <div
-                                className={`mt-1 flex h-9 w-9 shrink-0 items-center justify-center rounded-md text-xs font-semibold ${
+                                className={`mt-1 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-xs font-semibold ${
                                   item.source === 'For you' ? `${accentSurface} ${accentForeground}` : 'bg-black text-white'
                                 }`}
                               >
@@ -6540,7 +6540,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
                   </div>
 
                   <aside className="hidden space-y-6 xl:block">
-                    <section className="border-y border-black/10 bg-white py-4">
+                    <section className="rounded-[20px] border border-black/10 bg-white shadow-[0_10px_34px_rgba(0,0,0,0.04)] py-4">
                       <p className="px-4 text-xs font-medium uppercase tracking-wide text-gray-500">Trending signals</p>
                       <div className="mt-3 divide-y divide-black/10">
                         {feedItems.filter((item) => item.source === 'Front page').slice(0, 3).map((item) => (
@@ -6556,7 +6556,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
                       </div>
                     </section>
 
-                    <section className="border-y border-black/10 bg-white py-4">
+                    <section className="rounded-[20px] border border-black/10 bg-white shadow-[0_10px_34px_rgba(0,0,0,0.04)] py-4">
                       <p className="px-4 text-xs font-medium uppercase tracking-wide text-gray-500">
                         {isInvestor ? 'Builders to watch' : 'Investors to watch'}
                       </p>
@@ -6615,7 +6615,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
 
                     <div className="mx-auto mt-8 grid max-w-[1292px] gap-8 xl:grid-cols-3">
                       {signalRows.slice(0, 3).map((signal) => (
-                        <section key={signalStorageId(signal)} className="scroll-mt-24 border-y border-black/10 bg-white py-4">
+                        <section key={signalStorageId(signal)} className="scroll-mt-24 rounded-[20px] border border-black/10 bg-white shadow-[0_10px_34px_rgba(0,0,0,0.04)] py-4">
                           <div className="flex items-center gap-2 px-4">
                             <MessageCircle className="h-4 w-4 text-gray-500" />
                             <h3 className="text-sm font-semibold">Outreach draft</h3>
@@ -6668,7 +6668,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
 
       {pointerDrag && (
         <div
-          className={`pointer-events-none fixed z-[60] rounded-md ${accentSurface} px-3 py-2 text-xs font-medium ${accentForeground} shadow-xl`}
+          className={`pointer-events-none fixed z-[60] rounded-xl ${accentSurface} px-3 py-2 text-xs font-medium ${accentForeground} shadow-xl`}
           style={{ left: pointerDrag.x + 12, top: pointerDrag.y + 12 }}
         >
           {pointerDrag.label}
