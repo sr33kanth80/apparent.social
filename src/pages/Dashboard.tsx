@@ -4293,6 +4293,11 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
                             {builder.fitScore}%
                           </span>
                           {state.saved && <span className="rounded-full bg-[#f4f1eb] px-2 py-0.5 text-xs text-gray-600">saved</span>}
+                          {builder.origin === 'ingested' && (
+                            <span className="rounded-full bg-[#f3e9df] px-2 py-0.5 text-xs font-medium text-[#8a5a3b]">
+                              {builder.sourceLabel || 'Ingested'}
+                            </span>
+                          )}
                         </div>
                         <p className="mt-2 text-sm leading-relaxed text-gray-600">{builder.buildSummary}</p>
                         <p className="mt-2 text-xs text-gray-500">{builder.category || 'Builder'} | {builder.stage || 'Stage n/a'} | {builder.location} | {builder.latestActivityLabel}</p>
@@ -4310,10 +4315,19 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <p className="text-xs font-medium uppercase tracking-wide text-gray-500">
-                    {selectedBuilder.isCurrentUser ? 'Your builder node' : 'Builder detail'}
+                    {selectedBuilder.isCurrentUser
+                      ? 'Your builder node'
+                      : selectedBuilder.origin === 'ingested'
+                        ? `Ingested signal · ${selectedBuilder.sourceLabel ?? 'public source'}`
+                        : 'Builder on Apparent'}
                   </p>
                   <h4 className="mt-1 text-base font-semibold">{selectedBuilder.company}</h4>
                   <p className="mt-1 text-xs text-gray-500">{selectedBuilder.founderName} | {selectedBuilder.location}</p>
+                  {selectedBuilder.origin === 'ingested' && (
+                    <p className="mt-2 rounded-lg bg-[#f3e9df] px-2.5 py-1.5 text-[11px] leading-relaxed text-[#8a5a3b]">
+                      Sourced from {selectedBuilder.sourceLabel ?? 'a public launch surface'} — not yet on Apparent.
+                    </p>
+                  )}
                 </div>
                 <span className={`rounded-full ${accentSurface} px-2.5 py-1 text-xs font-medium ${accentForeground}`}>
                   {selectedBuilder.fitScore}%
@@ -4340,10 +4354,12 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
                 ))}
                 <a
                   href={selectedBuilder.profileUrl}
+                  target={selectedBuilder.origin === 'ingested' ? '_blank' : undefined}
+                  rel={selectedBuilder.origin === 'ingested' ? 'noreferrer' : undefined}
                   className="rounded-full border border-black/10 px-3 py-1.5 text-xs font-medium hover:bg-[#fbf8f3]"
-                  onClick={() => addActivity(`Opened profile: ${selectedBuilder.company}`)}
+                  onClick={() => addActivity(`Opened ${selectedBuilder.origin === 'ingested' ? 'source' : 'profile'}: ${selectedBuilder.company}`)}
                 >
-                  Profile
+                  {selectedBuilder.origin === 'ingested' ? 'View source' : 'Profile'}
                 </a>
               </div>
 

@@ -259,6 +259,18 @@ a.rounded-full:hover {
   transform: scale(1.18);
 }
 
+/* Ingested builders (public signals not yet on Apparent): hollow + dashed ring. */
+.builder-radar-builder-dot--ingested {
+  background: #ffffff;
+  border-style: dashed;
+  border-color: #b08968;
+  color: #8a5a3b;
+}
+
+.builder-radar-builder-dot--ingested::after {
+  border-color: rgb(176 137 104 / 45%);
+}
+
 .builder-radar-pin {
   height: 38px;
   position: relative;

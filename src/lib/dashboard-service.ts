@@ -558,6 +558,7 @@ const mapBuilderProfileRows = (
         launchUrl,
         rawTags: mergeUnique([category, stage, String(profile.looking_for ?? ''), ...launches.map((launch) => launch.category)], 8),
         isCurrentUser: founderId === currentUserId,
+        origin: 'apparent' as const,
       };
     })
     .filter((builder) =>
@@ -621,7 +622,96 @@ const localFounderBuilderNode = (
     launchUrl: latestLaunch?.launchUrl ?? '',
     rawTags: mergeUnique([founderProfile.category, founderProfile.stage, founderProfile.lookingFor], 8),
     isCurrentUser: true,
+    origin: 'apparent' as const,
   };
+};
+
+// ── Ingested public signals → Builder Radar nodes ───────────────────────────────
+// Turns rows from public.source_signals (YC / GitHub / Product Hunt / Hacker News)
+// into builders that plot on the radar alongside real Apparent users.
+
+const githubHandle = (url: string): string => {
+  const match = url.match(/github\.com\/([^/?#]+)/i);
+  return match ? match[1].toLowerCase() : '';
+};
+
+const isKnownRadarCity = (city: string) =>
+  Object.prototype.hasOwnProperty.call(cityGeoCoordinates, city) && city !== 'Remote';
+
+const signalToBuilderNode = (row: Record<string, unknown>, index: number): BuilderNode | null => {
+  const company = String(row.company ?? '').trim();
+  const founder = String(row.founder ?? '').trim();
+  const sourceType = String(row.source_type ?? 'Ingested signal');
+  const sourceUrl = String(row.source_url ?? '');
+  const profileUrl = String(row.profile_url ?? '');
+  const githubUrl = String(row.github_url ?? '');
+  const detail = String(row.detail ?? '');
+  const stage = String(row.stage ?? '');
+  const city = normalizeCity(String(row.location ?? ''));
+
+  // Only plot ingested builders we can place on the curated city map. Locationless
+  // signals (e.g. most GitHub repos) still flow into the investor signal feed.
+  if (!company || !isKnownRadarCity(city)) return null;
+
+  const coords = cityGeoCoordinates[city];
+  const latestActivity = String(row.freshness_at ?? row.created_at ?? nowIso());
+  const tags = Array.isArray(row.raw_tags) ? (row.raw_tags as string[]) : [];
+  const proofLinks: BuilderProofLink[] = [
+    githubUrl ? { label: 'GitHub', url: githubUrl, type: 'github' } : null,
+    sourceUrl ? { label: sourceType, url: sourceUrl, type: 'launch' } : null,
+    profileUrl && profileUrl !== sourceUrl ? { label: 'Profile', url: profileUrl, type: 'profile' } : null,
+  ].filter(Boolean) as BuilderProofLink[];
+
+  return {
+    id: `signal:${String(row.id)}`,
+    founderId: `signal:${String(row.id)}`,
+    founderName: founder || company,
+    company,
+    displayLabel: company,
+    buildSummary: detail || `${company} surfaced from ${sourceType}.`,
+    category: tags[0] ?? '',
+    stage,
+    location: city,
+    // Jitter so multiple signals in one city don't stack on the exact point.
+    latitude: coords.latitude + Math.sin((index + 1) * 1.7) * 0.06,
+    longitude: coords.longitude + Math.cos((index + 1) * 1.3) * 0.06,
+    proofLinks,
+    traction: '',
+    launchCount: 0,
+    latestActivity,
+    latestActivityLabel: formatFreshness(latestActivity),
+    fitScore: 50,
+    matchReasons: [],
+    profileUrl: sourceUrl || profileUrl || githubUrl || '#',
+    githubUrl,
+    pressUrl: sourceUrl,
+    launchUrl: sourceUrl,
+    rawTags: mergeUnique([...tags, stage, sourceType], 8),
+    origin: 'ingested',
+    sourceLabel: sourceType,
+  };
+};
+
+/** Build identity keys (company name, github handle) for dedup against ingested signals. */
+const builderIdentityKeys = (builder: BuilderNode): string[] => {
+  const keys: string[] = [];
+  if (builder.company) keys.push(builder.company.toLowerCase().trim());
+  const gh = githubHandle(builder.githubUrl);
+  if (gh) keys.push(`gh:${gh}`);
+  return keys;
+};
+
+/** Drop ingested nodes that collide with a native Apparent builder or an earlier ingested one. */
+const dedupeIngestedNodes = (ingested: BuilderNode[], nativeNodes: BuilderNode[]): BuilderNode[] => {
+  const seen = new Set<string>();
+  nativeNodes.forEach((node) => builderIdentityKeys(node).forEach((key) => seen.add(key)));
+
+  return ingested.filter((node) => {
+    const keys = builderIdentityKeys(node);
+    if (keys.some((key) => seen.has(key))) return false;
+    keys.forEach((key) => seen.add(key));
+    return true;
+  });
 };
 
 const calculateBuilderFit = (
@@ -961,16 +1051,27 @@ export const loadBuilderNetwork = async (
     };
   }
 
-  const [{ data: profileRows }, { data: launchRows }, { data: stateRows }] = await Promise.all([
+  const [{ data: profileRows }, { data: launchRows }, { data: stateRows }, { data: signalRows }] = await Promise.all([
     supabase.from('founder_profiles').select('*').order('updated_at', { ascending: false }),
     supabase.from('product_launches').select('*').order('updated_at', { ascending: false }),
     supabase.from('builder_discovery_states').select('*').eq('user_id', user.id),
+    supabase.from('source_signals').select('*').order('freshness_at', { ascending: false }).limit(1000),
   ]);
 
   const allLaunches = (launchRows ?? []).map((row) => mapProductLaunchRow(row));
   const mappedBuilders = mapBuilderProfileRows((profileRows ?? []) as Record<string, unknown>[], allLaunches, user.id);
-  const baseBuilders = mappedBuilders.length ? mappedBuilders : seedBuilderNodes;
-  const builderNodes = baseBuilders
+  const nativeBuilders = mappedBuilders.length ? mappedBuilders : seedBuilderNodes;
+
+  // Merge ingested public-signal builders (YC / GitHub / Product Hunt / Hacker News)
+  // onto the radar, deduped against the native Apparent builders.
+  const ingestedBuilders = dedupeIngestedNodes(
+    ((signalRows ?? []) as Record<string, unknown>[])
+      .map((row, index) => signalToBuilderNode(row, index))
+      .filter((node): node is BuilderNode => node !== null),
+    nativeBuilders,
+  );
+
+  const builderNodes = [...nativeBuilders, ...ingestedBuilders]
     .map((builder) => calculateBuilderFit(builder, role, values))
     .sort((a, b) => b.fitScore - a.fitScore);
   const builderDiscoveryStates = (stateRows ?? []).map((row) => mapBuilderDiscoveryRow(row));

@@ -230,6 +230,10 @@ export interface BuilderNode {
   launchUrl: string;
   rawTags: string[];
   isCurrentUser?: boolean;
+  /** Where this builder came from: a real Apparent user/launch, or an ingested public signal. */
+  origin?: 'apparent' | 'ingested';
+  /** For ingested builders, the source surface (e.g. "YC Directory", "GitHub Trending", "Product Hunt"). */
+  sourceLabel?: string;
 }
 
 export interface BuilderMapCluster {

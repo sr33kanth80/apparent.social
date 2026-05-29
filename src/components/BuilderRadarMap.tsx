@@ -39,11 +39,15 @@ const markerHtml = (cluster: BuilderMapCluster, role: DashboardRole, selected: b
   </div>
 `;
 
-const builderDotHtml = (builder: BuilderNode, role: DashboardRole, selected: boolean) => `
-  <div class="builder-radar-builder-dot builder-radar-builder-dot--${role}${selected ? ' builder-radar-builder-dot--selected' : ''}" title="${escapeHtml(`${builder.company} - ${builder.location}`)}">
+const builderDotHtml = (builder: BuilderNode, role: DashboardRole, selected: boolean) => {
+  const ingested = builder.origin === 'ingested';
+  const titleSuffix = ingested ? ` (${builder.sourceLabel ?? 'ingested signal'})` : '';
+  return `
+  <div class="builder-radar-builder-dot builder-radar-builder-dot--${role}${ingested ? ' builder-radar-builder-dot--ingested' : ''}${selected ? ' builder-radar-builder-dot--selected' : ''}" title="${escapeHtml(`${builder.company} - ${builder.location}${titleSuffix}`)}">
     <span>${escapeHtml(builder.company.slice(0, 1).toUpperCase())}</span>
   </div>
 `;
+};
 
 const pinHtml = (pin: NetworkInterestPin, role: DashboardRole) => `
   <div class="builder-radar-pin builder-radar-pin--${role}" title="${escapeHtml(pin.label)}">
