@@ -1201,12 +1201,22 @@ export const loadPublicProfile = async (username: string): Promise<PublicProfile
   }
 
   try {
-  // 1. Resolve username → user_id + role
-  const { data: profileRow } = await supabase
+  // 1. Resolve username → user_id + role.
+  //    First try username match; if the handle looks like a UUID try id match too.
+  let { data: profileRow } = await supabase
     .from('profiles')
     .select('id, role, display_name, email, username')
     .ilike('username', username)
     .maybeSingle();
+
+  if (!profileRow && isUuid(username)) {
+    const { data: uuidRow } = await supabase
+      .from('profiles')
+      .select('id, role, display_name, email, username')
+      .eq('id', username)
+      .maybeSingle();
+    profileRow = uuidRow;
+  }
 
   if (!profileRow) {
     // Not in Supabase — fall back to curated static profiles.
