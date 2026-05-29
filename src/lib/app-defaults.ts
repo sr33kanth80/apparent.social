@@ -41,6 +41,11 @@ export const defaultFounderProfile: FounderProfileValues = {
   linkedin: '',
   xProfile: '',
   pastProducts: '',
+  fundraisingStatus: 'not_raising',
+  raisingRound: '',
+  raisingAmount: '',
+  raisingAsk: '',
+  openToContact: 'true',
 };
 
 export const seedInvestorSignals: InvestorSignal[] = [

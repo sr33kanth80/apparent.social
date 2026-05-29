@@ -42,6 +42,14 @@ export interface FounderProfileValues {
   linkedin: string;
   xProfile: string;
   pastProducts: string;
+  // Fundraising intent (the opt-in layer scrapers can't have). Stored as strings
+  // for form consistency: fundraisingStatus ∈ 'raising' | 'open' | 'not_raising';
+  // openToContact ∈ 'true' | 'false'.
+  fundraisingStatus: string;
+  raisingRound: string;
+  raisingAmount: string;
+  raisingAsk: string;
+  openToContact: string;
 }
 
 export type IntakeValues = InvestorCriteriaValues | FounderProfileValues;
@@ -140,6 +148,11 @@ export interface PublicFounderProfile {
   linkedin: string;
   xProfile: string;
   pastProducts: string;
+  fundraisingStatus: string;
+  raisingRound: string;
+  raisingAmount: string;
+  raisingAsk: string;
+  openToContact: boolean;
   launches: ProductLaunch[];
 }
 
@@ -234,6 +247,11 @@ export interface BuilderNode {
   origin?: 'apparent' | 'ingested';
   /** For ingested builders, the source surface (e.g. "YC Directory", "GitHub Trending", "Product Hunt"). */
   sourceLabel?: string;
+  /** Opt-in fundraising intent (real Apparent founders only). */
+  fundraisingStatus?: 'raising' | 'open' | 'not_raising';
+  raisingRound?: string;
+  raisingAmount?: string;
+  openToContact?: boolean;
 }
 
 export interface BuilderMapCluster {
@@ -362,4 +380,6 @@ export interface DashboardData {
   savedInvestorMatchNames: string[];
   /** Per-launch upvote + comment state for the current user. */
   launchEngagement: Record<string, LaunchEngagementEntry>;
+  /** For founders: how many investors are tracking them (the come-back loop). */
+  founderInterest: { saveCount: number; recentSaverNames: string[] };
 }

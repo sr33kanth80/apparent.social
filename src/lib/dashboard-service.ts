@@ -215,6 +215,11 @@ const mapFounderRow = (row: Record<string, unknown> | null): FounderProfileValue
   linkedin: String(row?.linkedin ?? ''),
   xProfile: String(row?.x_profile ?? row?.xProfile ?? ''),
   pastProducts: String(row?.past_products ?? row?.pastProducts ?? ''),
+  fundraisingStatus: String(row?.fundraising_status ?? row?.fundraisingStatus ?? 'not_raising'),
+  raisingRound: String(row?.raising_round ?? row?.raisingRound ?? ''),
+  raisingAmount: String(row?.raising_amount ?? row?.raisingAmount ?? ''),
+  raisingAsk: String(row?.raising_ask ?? row?.raisingAsk ?? ''),
+  openToContact: (row?.open_to_contact ?? row?.openToContact ?? true) === false ? 'false' : 'true',
 });
 
 const completedLabels = (values: Record<string, string>, labelByKey: Record<string, string>) =>
@@ -387,6 +392,11 @@ const mapPublicFounderProfile = (
     linkedin: String(row.linkedin ?? ''),
     xProfile: String(row.x_profile ?? ''),
     pastProducts: String(row.past_products ?? ''),
+    fundraisingStatus: String(row.fundraising_status ?? 'not_raising'),
+    raisingRound: String(row.raising_round ?? ''),
+    raisingAmount: String(row.raising_amount ?? ''),
+    raisingAsk: String(row.raising_ask ?? ''),
+    openToContact: row.open_to_contact !== false,
     launches,
   };
 };
@@ -559,6 +569,10 @@ const mapBuilderProfileRows = (
         rawTags: mergeUnique([category, stage, String(profile.looking_for ?? ''), ...launches.map((launch) => launch.category)], 8),
         isCurrentUser: founderId === currentUserId,
         origin: 'apparent' as const,
+        fundraisingStatus: ((status) => (status === 'raising' || status === 'open' ? status : 'not_raising'))(String(profile.fundraising_status ?? 'not_raising')),
+        raisingRound: String(profile.raising_round ?? ''),
+        raisingAmount: String(profile.raising_amount ?? ''),
+        openToContact: profile.open_to_contact !== false,
       };
     })
     .filter((builder) =>
@@ -623,6 +637,10 @@ const localFounderBuilderNode = (
     rawTags: mergeUnique([founderProfile.category, founderProfile.stage, founderProfile.lookingFor], 8),
     isCurrentUser: true,
     origin: 'apparent' as const,
+    fundraisingStatus: (founderProfile.fundraisingStatus === 'raising' || founderProfile.fundraisingStatus === 'open' ? founderProfile.fundraisingStatus : 'not_raising') as 'raising' | 'open' | 'not_raising',
+    raisingRound: founderProfile.raisingRound,
+    raisingAmount: founderProfile.raisingAmount,
+    openToContact: founderProfile.openToContact !== 'false',
   };
 };
 
@@ -1499,6 +1517,7 @@ const loadLocalDashboard = async (user: AppUser, role: DashboardRole, labelByKey
       feedItems: buildFeedItems(role, profileSaved, signalRowsWithBuilders, meetups, productLaunches, feedActions),
       savedInvestorMatchNames: [],
       launchEngagement: {},
+      founderInterest: { saveCount: 0, recentSaverNames: [] },
     };
   }
 
@@ -1523,6 +1542,7 @@ const loadLocalDashboard = async (user: AppUser, role: DashboardRole, labelByKey
     feedItems: buildFeedItems(role, profileSaved, seedInvestorSignals, meetups, productLaunches, feedActions),
     savedInvestorMatchNames: [],
     launchEngagement: {},
+    founderInterest: { saveCount: 0, recentSaverNames: [] },
   };
 };
 
@@ -1671,6 +1691,7 @@ export const loadDashboardData = async (
       feedItems: buildFeedItems(role, profileSaved, signalRowsWithBuilders, effectiveMeetups, productLaunches, feedActions),
       savedInvestorMatchNames,
       launchEngagement,
+      founderInterest: { saveCount: 0, recentSaverNames: [] },
     };
   }
 
@@ -1684,6 +1705,21 @@ export const loadDashboardData = async (
   const profileSaved = completedLabels(intakeValues, labelByKey).length > 0;
   const builderNetwork = await loadBuilderNetwork(user, role, founderProfile, productLaunches);
   const effectiveMeetups = meetups.length ? meetups : seedMeetups;
+
+  // Come-back loop: how many investors are tracking this founder.
+  let founderInterest = { saveCount: 0, recentSaverNames: [] as string[] };
+  try {
+    const { data: interestRows } = await supabase.rpc('founder_interest_summary');
+    const row = Array.isArray(interestRows) ? interestRows[0] : interestRows;
+    if (row) {
+      founderInterest = {
+        saveCount: Number(row.save_count ?? 0),
+        recentSaverNames: Array.isArray(row.recent_saver_names) ? row.recent_saver_names.filter(Boolean) : [],
+      };
+    }
+  } catch {
+    // RPC missing / not authorized — leave default.
+  }
 
   return {
     intakeValues,
@@ -1702,6 +1738,7 @@ export const loadDashboardData = async (
     feedItems: buildFeedItems(role, profileSaved, seedInvestorSignals, effectiveMeetups, productLaunches, feedActions),
     savedInvestorMatchNames,
     launchEngagement,
+    founderInterest,
   };
 };
 
@@ -1764,6 +1801,12 @@ export const saveIntakeValues = async (
     linkedin: values.linkedin ?? '',
     x_profile: values.xProfile ?? '',
     past_products: values.pastProducts ?? '',
+    fundraising_status: values.fundraisingStatus || 'not_raising',
+    raising_round: values.raisingRound ?? '',
+    raising_amount: values.raisingAmount ?? '',
+    raising_ask: values.raisingAsk ?? '',
+    open_to_contact: values.openToContact !== 'false',
+    raising_updated_at: new Date().toISOString(),
   };
 
   const { error } = await supabase.from('founder_profiles').upsert(founderProfilePayload);
