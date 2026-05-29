@@ -41,7 +41,16 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
 type SourceSpec = { src: 'yc' | 'gh' | 'ph' | 'hn'; slug: string; input: JsonRecord }
 
 const SPECS: SourceSpec[] = [
-  { src: 'yc', slug: YC_ACTOR_SLUG, input: { proxyConfiguration: { useApifyProxy: true, apifyProxyGroups: [] } } },
+  {
+    src: 'yc',
+    slug: YC_ACTOR_SLUG,
+    input: {
+      scrapeAllCompanies: true,
+      scrapeAllFounders: true,
+      scrapeAllJobs: false,
+      proxyConfiguration: { useApifyProxy: true, apifyProxyGroups: [] },
+    },
+  },
   { src: 'gh', slug: GH_ACTOR_SLUG, input: { since: 'daily', languages: [] } },
   { src: 'ph', slug: PH_ACTOR_SLUG, input: { maxItems: 100, sort: 'newest' } },
   { src: 'hn', slug: HN_ACTOR_SLUG, input: { maxItems: 100, category: 'show' } },

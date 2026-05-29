@@ -4324,7 +4324,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
       {selectedBuilder && (
         <div className="mx-4 mt-4 border-t border-black/10 pt-4">
           <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_340px]">
-            <div className="divide-y divide-black/10 border-y border-black/10">
+            <div className="max-h-[30rem] overflow-y-auto divide-y divide-black/10 border-y border-black/10">
               {selectedClusterBuilders.map((builder) => {
                 const state = getBuilderState(builder);
                 return (
@@ -4585,7 +4585,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
           </button>
         </div>
       )}
-      <div className="mt-3 divide-y divide-black/10">
+      <div className="mt-3 max-h-[24rem] overflow-y-auto divide-y divide-black/10">
         {termReviews.map((review) => (
           <article key={review.id} className="px-4 py-3">
             <div className="flex items-start justify-between gap-3">
