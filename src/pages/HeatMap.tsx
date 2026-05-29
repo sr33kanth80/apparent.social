@@ -320,7 +320,7 @@ function HeatMapDetailPanel({ point, onClose }: { point: HeatMapPoint; onClose: 
 
   return (
     <div
-      className="relative overflow-hidden rounded-[12px] border border-[#8ec5ff]/40 text-[#dbeafe] shadow-[0_20px_60px_rgba(2,12,30,0.55)] backdrop-blur-sm"
+      className="relative flex max-h-[26rem] flex-col overflow-hidden rounded-[12px] border border-[#8ec5ff]/40 text-[#dbeafe] shadow-[0_20px_60px_rgba(2,12,30,0.55)] backdrop-blur-sm"
       style={{
         backgroundColor: 'rgba(8,29,58,0.94)',
         backgroundImage:
@@ -350,6 +350,7 @@ function HeatMapDetailPanel({ point, onClose }: { point: HeatMapPoint; onClose: 
         </button>
       </div>
 
+      <div className="flex-1 overflow-y-auto">
       {/* logo stamp */}
       {point.imageUrl && point.imageKind === 'logo' && (
         <div className="flex justify-center py-3" style={{ borderBottom: `1px solid ${BLUEPRINT_LINE}` }}>
@@ -426,6 +427,7 @@ function HeatMapDetailPanel({ point, onClose }: { point: HeatMapPoint; onClose: 
           ))}
         </div>
       )}
+      </div>
     </div>
   );
 }
@@ -599,7 +601,7 @@ export const HeatMap = ({ includeVCContacts = false, vcOnly = false, fullBleed =
 
           {/* Blueprint detail panel — slides in on the right when a point is selected */}
           {selectedVisiblePoint && (
-            <div className="absolute right-4 top-4 z-20 max-h-[calc(100%-2rem)] w-[calc(100%-2rem)] max-w-[19rem] overflow-y-auto md:right-6 md:top-6 md:w-[19rem]">
+            <div className="absolute right-4 top-4 z-20 w-[calc(100%-2rem)] max-w-[19rem] md:right-6 md:top-6 md:w-[19rem]">
               <HeatMapDetailPanel point={selectedVisiblePoint} onClose={() => setSelectedPoint(null)} />
             </div>
           )}
