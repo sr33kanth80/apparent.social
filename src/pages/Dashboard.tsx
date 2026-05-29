@@ -774,6 +774,7 @@ const defaultNetworkFilters = (): NetworkMapFilters => ({
   stage: '',
   freshness: 'any',
   matchOnly: false,
+  raisingOnly: false,
   radiusMiles: 50,
   pin: null,
 });
@@ -1504,6 +1505,14 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
         if (networkFilters.category && builder.category !== networkFilters.category) return false;
         if (networkFilters.stage && builder.stage !== networkFilters.stage) return false;
         if (networkFilters.matchOnly && builder.fitScore < 75) return false;
+        // "Raising now" = real Apparent founders who declared raising/open intent.
+        // This is the signal a pure scraper (Harmonic/Specter) structurally can't have.
+        if (
+          networkFilters.raisingOnly &&
+          !(builder.origin === 'apparent' && (builder.fundraisingStatus === 'raising' || builder.fundraisingStatus === 'open'))
+        ) {
+          return false;
+        }
 
         const ageMs = Date.now() - new Date(builder.latestActivity).getTime();
         if (ageMs > maxAgeByFreshness[networkFilters.freshness]) return false;
@@ -4343,6 +4352,18 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
           </button>
           <button
             type="button"
+            className={`h-9 flex-1 whitespace-nowrap rounded-full border px-3 text-xs font-medium transition-colors sm:flex-none ${
+              networkFilters.raisingOnly
+                ? 'border-transparent bg-[#42520d] text-white'
+                : 'border-black/10 text-gray-600 hover:bg-[#fbf8f3]'
+            }`}
+            onClick={() => setNetworkFilters((current) => ({ ...current, raisingOnly: !current.raisingOnly }))}
+            title="Show only real Apparent founders who declared they're raising"
+          >
+            Raising now
+          </button>
+          <button
+            type="button"
             className="h-9 flex-1 whitespace-nowrap rounded-full border border-black/10 px-3 text-xs font-medium text-gray-600 hover:bg-[#fbf8f3] sm:flex-none"
             onClick={handleClearNetworkFilters}
           >
@@ -4433,6 +4454,11 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
                             {builder.fitScore}%
                           </span>
                           {state.saved && <span className="rounded-full bg-[#f4f1eb] px-2 py-0.5 text-xs text-gray-600">saved</span>}
+                          {builder.origin === 'apparent' && (builder.fundraisingStatus === 'raising' || builder.fundraisingStatus === 'open') && (
+                            <span className="rounded-full bg-[#42520d] px-2 py-0.5 text-xs font-semibold text-white">
+                              {builder.fundraisingStatus === 'raising' ? `Raising${builder.raisingRound ? ` · ${builder.raisingRound}` : ''}` : 'Open to intros'}
+                            </span>
+                          )}
                           {builder.origin === 'ingested' && (
                             <span className="rounded-full bg-[#f3e9df] px-2 py-0.5 text-xs font-medium text-[#8a5a3b]">
                               {builder.sourceLabel || 'Ingested'}
@@ -4466,6 +4492,14 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
                   {selectedBuilder.origin === 'ingested' && (
                     <p className="mt-2 rounded-lg bg-[#f3e9df] px-2.5 py-1.5 text-[11px] leading-relaxed text-[#8a5a3b]">
                       Sourced from {selectedBuilder.sourceLabel ?? 'a public launch surface'} — not yet on Apparent.
+                    </p>
+                  )}
+                  {selectedBuilder.origin === 'apparent' && (selectedBuilder.fundraisingStatus === 'raising' || selectedBuilder.fundraisingStatus === 'open') && (
+                    <p className="mt-2 inline-flex items-center gap-1 rounded-lg bg-[#42520d] px-2.5 py-1.5 text-[11px] font-semibold leading-relaxed text-white">
+                      {selectedBuilder.fundraisingStatus === 'raising'
+                        ? `Raising${selectedBuilder.raisingRound ? ` ${selectedBuilder.raisingRound}` : ''}${selectedBuilder.raisingAmount ? ` · ${selectedBuilder.raisingAmount}` : ''}`
+                        : 'Open to investor intros'}
+                      {selectedBuilder.openToContact ? ' · open to contact' : ''}
                     </p>
                   )}
                 </div>

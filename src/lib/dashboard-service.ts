@@ -569,7 +569,9 @@ const mapBuilderProfileRows = (
         rawTags: mergeUnique([category, stage, String(profile.looking_for ?? ''), ...launches.map((launch) => launch.category)], 8),
         isCurrentUser: founderId === currentUserId,
         origin: 'apparent' as const,
-        fundraisingStatus: ((status) => (status === 'raising' || status === 'open' ? status : 'not_raising'))(String(profile.fundraising_status ?? 'not_raising')),
+        fundraisingStatus: (['raising', 'open'].includes(String(profile.fundraising_status))
+          ? String(profile.fundraising_status)
+          : 'not_raising') as 'raising' | 'open' | 'not_raising',
         raisingRound: String(profile.raising_round ?? ''),
         raisingAmount: String(profile.raising_amount ?? ''),
         openToContact: profile.open_to_contact !== false,

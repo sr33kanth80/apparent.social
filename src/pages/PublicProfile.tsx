@@ -78,8 +78,15 @@ const FounderProfilePage = ({ profile }: { profile: PublicFounderProfile }) => {
     <main className="overflow-x-hidden bg-[#fbfaf7] text-black">
       {/* ── Hero ── */}
       <section className="mx-auto max-w-[92rem] px-5 pb-10 pt-16 sm:px-8 md:pt-20">
-        <div className="mb-6 flex items-center gap-2">
+        <div className="mb-6 flex flex-wrap items-center gap-2">
           <span className="rounded-full bg-[#dcefc7] px-3 py-1 text-xs font-semibold text-[#42520d]">Founder on Apparent</span>
+          {(profile.fundraisingStatus === 'raising' || profile.fundraisingStatus === 'open') && (
+            <span className="rounded-full bg-[#42520d] px-3 py-1 text-xs font-semibold text-white">
+              {profile.fundraisingStatus === 'raising'
+                ? `Raising${profile.raisingRound ? ` ${profile.raisingRound}` : ''}${profile.raisingAmount ? ` · ${profile.raisingAmount}` : ''}`
+                : 'Open to investor intros'}
+            </span>
+          )}
           {profile.location && (
             <span className="flex items-center gap-1 text-xs text-black/50">
               <MapPin className="h-3 w-3" />
@@ -216,6 +223,22 @@ const FounderProfilePage = ({ profile }: { profile: PublicFounderProfile }) => {
           </ul>
         </section>
       )}
+
+      {/* ── Raising ── */}
+      {(profile.fundraisingStatus === 'raising' || profile.fundraisingStatus === 'open') &&
+        (profile.raisingAsk || profile.raisingRound || profile.raisingAmount) && (
+          <section className="mx-auto max-w-[92rem] border-t border-black/10 px-5 py-16 sm:px-8">
+            <SectionLabel>{profile.fundraisingStatus === 'raising' ? 'Raising now' : 'Open to investor intros'}</SectionLabel>
+            <div className="flex flex-wrap items-center gap-2">
+              {profile.raisingRound && <Tag accent>{profile.raisingRound}</Tag>}
+              {profile.raisingAmount && <Tag>{profile.raisingAmount}</Tag>}
+              {profile.openToContact && <Tag>Open to contact</Tag>}
+            </div>
+            {profile.raisingAsk && (
+              <p className="mt-6 max-w-2xl text-lg leading-8 text-black/65">{profile.raisingAsk}</p>
+            )}
+          </section>
+        )}
 
       {/* ── Looking for ── */}
       {profile.lookingFor && (

@@ -148,11 +148,11 @@ export interface PublicFounderProfile {
   linkedin: string;
   xProfile: string;
   pastProducts: string;
-  fundraisingStatus: string;
-  raisingRound: string;
-  raisingAmount: string;
-  raisingAsk: string;
-  openToContact: boolean;
+  fundraisingStatus?: string;
+  raisingRound?: string;
+  raisingAmount?: string;
+  raisingAsk?: string;
+  openToContact?: boolean;
   launches: ProductLaunch[];
 }
 
@@ -314,6 +314,8 @@ export interface NetworkMapFilters {
   stage: string;
   freshness: 'any' | '24h' | '7d' | '30d';
   matchOnly: boolean;
+  /** Show only real Apparent founders who declared they're raising / open to intros. */
+  raisingOnly: boolean;
   radiusMiles: number;
   pin: NetworkInterestPin | null;
 }
