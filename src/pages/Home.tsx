@@ -549,11 +549,12 @@ export const Home = () => {
                   className="h-12 w-12 rounded-[16px] bg-[#fbfaf7] object-contain p-2 transition-opacity hover:opacity-75"
                 />
               </Link>
-              <div>
+              <div className="flex flex-col items-start gap-1.5">
+                {/* Project name — block so the pill sits on its own line below */}
                 <Link to={selectedLaunch.projectPath} className="text-xl font-semibold tracking-[-0.02em] transition-colors hover:text-[#42520d]">
                   {selectedLaunch.name}
                 </Link>
-                {/* Founder avatar chip — links to their Apparent profile */}
+                {/* Founder avatar pill */}
                 {(() => {
                   const slug = selectedLaunch.founderProfilePath.replace('/profile/', '');
                   const photoUrl = getFounderPhotoUrl(slug);
@@ -561,17 +562,17 @@ export const Home = () => {
                   return (
                     <Link
                       to={selectedLaunch.founderProfilePath}
-                      className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-[#f4f1eb] px-2 py-1 text-xs font-semibold text-black/65 transition-colors hover:bg-[#dcefc7] hover:text-black"
+                      className="inline-flex items-center gap-1 rounded-full bg-[#f4f1eb] py-0.5 pl-0.5 pr-2.5 text-[11px] font-semibold text-black/55 transition-colors hover:bg-[#dcefc7] hover:text-black"
                     >
                       {photoUrl ? (
                         <img
                           src={photoUrl}
                           alt=""
-                          className="h-5 w-5 rounded-full object-cover"
+                          className="h-[18px] w-[18px] rounded-full object-cover"
                           onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
                         />
                       ) : (
-                        <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[#dcefc7] text-[8px] font-bold text-[#42520d]">
+                        <span className="flex h-[18px] w-[18px] items-center justify-center rounded-full bg-[#dcefc7] text-[7px] font-bold text-[#42520d]">
                           {initials}
                         </span>
                       )}
