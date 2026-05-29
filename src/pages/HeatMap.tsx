@@ -317,7 +317,7 @@ function HeatMapDetailPanel({ point, onClose }: { point: HeatMapPoint; onClose: 
   ].filter(Boolean) as Array<[string, string]>;
 
   return (
-    <div className="flex max-h-[34rem] flex-col overflow-hidden rounded-[18px] border border-black/10 bg-[#f0eee6] text-[#1f1e1d] shadow-[0_20px_60px_rgba(0,0,0,0.16)]">
+    <div className="overflow-hidden rounded-[18px] border border-black/10 bg-[#f0eee6] text-[#1f1e1d] shadow-[0_20px_60px_rgba(0,0,0,0.16)]">
       {/* header */}
       <div className="flex items-start justify-between gap-3 border-b border-black/10 px-5 pb-4 pt-5">
         <div className="min-w-0">
@@ -338,7 +338,7 @@ function HeatMapDetailPanel({ point, onClose }: { point: HeatMapPoint; onClose: 
         </button>
       </div>
 
-      <div className="flex-1 overflow-y-auto">
+      <div>
         {/* logo */}
         {point.imageUrl && point.imageKind === 'logo' && (
           <div className="flex justify-center border-b border-black/10 py-4">
@@ -359,7 +359,9 @@ function HeatMapDetailPanel({ point, onClose }: { point: HeatMapPoint; onClose: 
         </div>
 
         {point.label && (
-          <p className="border-t border-black/10 px-5 py-4 text-sm leading-6 text-black/60">{point.label}</p>
+          <div className="max-h-[10rem] overflow-y-auto border-t border-black/10 px-5 py-4">
+            <p className="text-sm leading-6 text-black/60">{point.label}</p>
+          </div>
         )}
 
         {point.email && (
