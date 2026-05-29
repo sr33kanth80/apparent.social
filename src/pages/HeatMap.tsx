@@ -1,8 +1,8 @@
 import { useEffect, useId, useMemo, useState } from 'react';
-import { ArrowUpRight, Building2, Flame, Globe2, Layers3, LocateFixed, MapPin, Star, Users } from 'lucide-react';
+import { ArrowUpRight, Building2, Flame, Globe2, Layers3, LocateFixed, Users, X } from 'lucide-react';
 import type { GeoJSONSource, MapLayerMouseEvent } from 'maplibre-gl';
 import { Link } from 'react-router-dom';
-import { Map, MapPopup, useMap } from '@/components/ui/map';
+import { Map, useMap } from '@/components/ui/map';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { cityGeoCoordinates, seedBuilderNodes } from '@/lib/app-defaults';
 import { loadFounderVCContacts, loadPublicProductLaunches } from '@/lib/dashboard-service';
@@ -296,106 +296,136 @@ function ApparentHeatmapLayers({
   return null;
 }
 
-function HeatMapPopupCard({ point }: { point: HeatMapPoint }) {
+// Blueprint-style detail panel: a drafting-sheet aesthetic (blueprint blue,
+// grid lines, corner ticks, mono labels) shown on the side of the map.
+const BLUEPRINT_LINE = 'rgba(142,197,255,0.25)';
+
+function HeatMapDetailPanel({ point, onClose }: { point: HeatMapPoint; onClose: () => void }) {
   const sourceLabel =
     point.source === 'vc_database'
       ? 'Cold-pitch VC contact'
       : point.source === 'apparent'
         ? 'On Apparent'
         : 'Ecosystem signal';
+  const kindLabel = point.kind === 'vc' ? 'VC density' : 'Builder density';
+
+  const specRows = [
+    ['Signal', String(point.intensity)],
+    ['City', point.city],
+    point.partnerName ? ['Partner', point.partnerName] : null,
+    point.fundStage ? ['Stage', point.fundStage] : null,
+  ].filter(Boolean) as Array<[string, string]>;
+
+  const corner = 'pointer-events-none absolute h-2.5 w-2.5 border-[#8ec5ff]/60';
 
   return (
-    <div className="overflow-hidden rounded-[18px] bg-white">
-      {point.imageUrl && (
-        point.imageKind === 'logo' ? (
-          <div className="flex h-24 items-center justify-center border-b border-black/10 bg-[#fbfaf7]">
-            <img src={point.imageUrl} alt={`${point.name} logo`} className="h-14 w-14 rounded-[14px] object-contain" />
+    <div
+      className="relative overflow-hidden rounded-[12px] border border-[#8ec5ff]/40 text-[#dbeafe] shadow-[0_20px_60px_rgba(2,12,30,0.55)] backdrop-blur-sm"
+      style={{
+        backgroundColor: 'rgba(8,29,58,0.94)',
+        backgroundImage:
+          'linear-gradient(rgba(142,197,255,0.10) 1px, transparent 1px), linear-gradient(90deg, rgba(142,197,255,0.10) 1px, transparent 1px)',
+        backgroundSize: '18px 18px',
+      }}
+    >
+      {/* corner ticks */}
+      <span className={`${corner} left-1.5 top-1.5 border-l border-t`} />
+      <span className={`${corner} right-1.5 top-1.5 border-r border-t`} />
+      <span className={`${corner} bottom-1.5 left-1.5 border-b border-l`} />
+      <span className={`${corner} bottom-1.5 right-1.5 border-b border-r`} />
+
+      {/* header */}
+      <div className="flex items-start justify-between gap-2 px-4 pb-3 pt-4" style={{ borderBottom: `1px solid ${BLUEPRINT_LINE}` }}>
+        <div className="min-w-0">
+          <p className="font-mono text-[9px] uppercase tracking-[0.2em] text-[#8ec5ff]">{sourceLabel} · {kindLabel}</p>
+          <h3 className="mt-1 truncate font-mono text-base font-semibold leading-tight text-white">{point.name}</h3>
+        </div>
+        <button
+          type="button"
+          onClick={onClose}
+          className="shrink-0 rounded border border-[#8ec5ff]/30 p-1 text-[#8ec5ff] transition-colors hover:bg-[#8ec5ff]/10"
+          aria-label="Close detail panel"
+        >
+          <X className="h-3.5 w-3.5" />
+        </button>
+      </div>
+
+      {/* logo stamp */}
+      {point.imageUrl && point.imageKind === 'logo' && (
+        <div className="flex justify-center py-3" style={{ borderBottom: `1px solid ${BLUEPRINT_LINE}` }}>
+          <div className="flex h-12 w-12 items-center justify-center rounded border border-[#8ec5ff]/40 bg-white/95">
+            <img src={point.imageUrl} alt={`${point.name} logo`} className="h-8 w-8 object-contain" />
           </div>
-        ) : (
-          <div className="relative h-32 overflow-hidden">
-            <img src={point.imageUrl} alt="" className="h-full w-full object-cover" />
-            <div className="absolute inset-0 bg-black/10" />
-          </div>
-        )
+        </div>
       )}
-      <div className="p-4">
-        <p className="pb-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#42520d]">
-          {sourceLabel} - {point.kind === 'vc' ? 'VC density' : 'Builder density'}
-        </p>
-        <h3 className="text-lg font-semibold leading-tight tracking-[-0.02em] text-black">{point.name}</h3>
-        <div className="mt-3 flex items-center gap-3 text-sm">
-          <div className="flex items-center gap-1">
-            <Star className="h-3.5 w-3.5 fill-[#dcefc7] text-[#42520d]" />
-            <span className="font-semibold">{point.intensity}</span>
-            <span className="text-black/50">signal score</span>
+
+      {/* spec rows with dotted leaders */}
+      <div className="px-4 py-3 font-mono text-[11px]">
+        {specRows.map(([label, value]) => (
+          <div key={label} className="flex items-baseline gap-2 py-1">
+            <span className="shrink-0 uppercase tracking-[0.15em] text-[#8ec5ff]/70">{label}</span>
+            <span className="mb-[3px] flex-1 self-end border-b border-dashed border-[#8ec5ff]/30" />
+            <span className="max-w-[58%] truncate text-right text-white">{value}</span>
           </div>
-        </div>
-        <div className="mt-2 flex items-center gap-1.5 text-sm text-black/55">
-          <MapPin className="h-3.5 w-3.5" />
-          <span>{point.city}</span>
-        </div>
-        {point.partnerName && (
-          <p className="mt-2 text-sm text-black/60">
-            {point.partnerName}
-            {point.fundStage ? ` - ${point.fundStage}` : ''}
-          </p>
-        )}
-        <p className="mt-3 text-sm leading-6 text-black/60">{point.label}</p>
-        {point.email && <p className="mt-2 break-all text-sm font-semibold text-black">{point.email}</p>}
-        <div className="mt-4 flex gap-2">
-          <a
-            href={point.email ? `mailto:${point.email}` : point.websiteUrl || '#'}
-            target={point.email ? undefined : '_blank'}
-            rel={point.email ? undefined : 'noreferrer'}
-            className="flex flex-1 items-center justify-center gap-1.5 rounded-full bg-[#42520d] px-3 py-2 text-sm font-semibold text-white"
+        ))}
+      </div>
+
+      {point.label && (
+        <p className="px-4 py-3 text-[11px] leading-5 text-[#dbeafe]/80" style={{ borderTop: `1px solid ${BLUEPRINT_LINE}` }}>
+          {point.label}
+        </p>
+      )}
+
+      {point.email && (
+        <p className="break-all px-4 pb-1 font-mono text-[11px] text-[#8ec5ff]">{point.email}</p>
+      )}
+
+      <div className="flex gap-2 px-4 pb-4 pt-2">
+        <a
+          href={point.email ? `mailto:${point.email}` : point.websiteUrl || '#'}
+          target={point.email ? undefined : '_blank'}
+          rel={point.email ? undefined : 'noreferrer'}
+          className="flex flex-1 items-center justify-center gap-1.5 rounded border border-[#8ec5ff]/50 bg-[#8ec5ff]/10 px-3 py-2 font-mono text-[11px] font-semibold uppercase tracking-wide text-white transition-colors hover:bg-[#8ec5ff]/20"
+        >
+          <LocateFixed className="h-3.5 w-3.5" />
+          {point.email ? 'Email' : 'Focus'}
+        </a>
+        {point.profilePath ? (
+          <Link
+            to={point.profilePath}
+            className="flex h-9 w-9 items-center justify-center rounded border border-[#8ec5ff]/40 text-[#8ec5ff] transition-colors hover:bg-[#8ec5ff]/10"
+            aria-label={`Open ${point.name}`}
           >
-            <LocateFixed className="h-3.5 w-3.5" />
-            {point.email ? 'Email' : 'Focus'}
+            <ArrowUpRight className="h-3.5 w-3.5" />
+          </Link>
+        ) : point.websiteUrl ? (
+          <a
+            href={point.websiteUrl}
+            target="_blank"
+            rel="noreferrer"
+            className="flex h-9 w-9 items-center justify-center rounded border border-[#8ec5ff]/40 text-[#8ec5ff] transition-colors hover:bg-[#8ec5ff]/10"
+            aria-label={`Open ${point.name}`}
+          >
+            <ArrowUpRight className="h-3.5 w-3.5" />
           </a>
-          {point.profilePath ? (
-            <Link
-              to={point.profilePath}
-              className="flex h-9 w-9 items-center justify-center rounded-full border border-black/10 text-black transition-colors hover:bg-[#fbfaf7]"
-              aria-label={`Open ${point.name}`}
-            >
-              <ArrowUpRight className="h-3.5 w-3.5" />
-            </Link>
-          ) : point.websiteUrl ? (
+        ) : null}
+      </div>
+
+      {point.socialLinks && point.socialLinks.length > 0 && (
+        <div className="flex flex-wrap gap-1.5 px-4 pb-4">
+          {point.socialLinks.map((link) => (
             <a
-              href={point.websiteUrl}
+              key={link.url}
+              href={link.url}
               target="_blank"
               rel="noreferrer"
-              className="flex h-9 w-9 items-center justify-center rounded-full border border-black/10 text-black transition-colors hover:bg-[#fbfaf7]"
-              aria-label={`Open ${point.name}`}
+              className="rounded border border-[#8ec5ff]/30 px-2 py-0.5 font-mono text-[10px] uppercase tracking-wide text-[#8ec5ff]/80 transition-colors hover:bg-[#8ec5ff]/10 hover:text-white"
             >
-              <ArrowUpRight className="h-3.5 w-3.5" />
+              {link.label}
             </a>
-          ) : (
-            <button
-              type="button"
-              className="flex h-9 w-9 items-center justify-center rounded-full border border-black/10 text-black"
-              aria-label={`${point.name} is an ecosystem signal`}
-            >
-              <ArrowUpRight className="h-3.5 w-3.5" />
-            </button>
-          )}
+          ))}
         </div>
-        {point.socialLinks && point.socialLinks.length > 0 && (
-          <div className="mt-3 flex flex-wrap gap-2">
-            {point.socialLinks.map((link) => (
-              <a
-                key={link.url}
-                href={link.url}
-                target="_blank"
-                rel="noreferrer"
-                className="rounded-full border border-black/10 px-2.5 py-1 text-[11px] font-semibold text-black/60 transition-colors hover:bg-[#fbfaf7] hover:text-black"
-              >
-                {link.label}
-              </a>
-            ))}
-          </div>
-        )}
-      </div>
+      )}
     </div>
   );
 }
@@ -485,17 +515,6 @@ export const HeatMap = ({ includeVCContacts = false, vcOnly = false, fullBleed =
             theme="light"
           >
             <ApparentHeatmapLayers points={filteredPoints} onPointSelect={setSelectedPoint} />
-            {selectedVisiblePoint && (
-              <MapPopup
-                longitude={selectedVisiblePoint.longitude}
-                latitude={selectedVisiblePoint.latitude}
-                className="w-72 overflow-hidden rounded-[18px] border-0 bg-white p-0 shadow-2xl"
-                closeButton
-                onClose={() => setSelectedPoint(null)}
-              >
-                <HeatMapPopupCard point={selectedVisiblePoint} />
-              </MapPopup>
-            )}
           </Map>
 
           <Card className="absolute left-4 top-4 z-10 w-[calc(100%-2rem)] max-w-[13.5rem] border-0 bg-white/90 shadow-[0_10px_34px_rgba(0,0,0,0.12)] backdrop-blur md:left-6 md:top-6">
@@ -577,6 +596,13 @@ export const HeatMap = ({ includeVCContacts = false, vcOnly = false, fullBleed =
               </div>
             </div>
           </div>
+
+          {/* Blueprint detail panel — slides in on the right when a point is selected */}
+          {selectedVisiblePoint && (
+            <div className="absolute right-4 top-4 z-20 max-h-[calc(100%-2rem)] w-[calc(100%-2rem)] max-w-[19rem] overflow-y-auto md:right-6 md:top-6 md:w-[19rem]">
+              <HeatMapDetailPanel point={selectedVisiblePoint} onClose={() => setSelectedPoint(null)} />
+            </div>
+          )}
         </div>
       </section>
     </main>
