@@ -155,7 +155,7 @@ const vcContactToPoint = (contact: VCContact, index: number): HeatMapPoint | nul
   };
 };
 
-const buildFeatureCollection = (points: HeatMapPoint[]) => ({
+const buildFeatureCollection = (points: HeatMapPoint[], selectedId?: string) => ({
   type: 'FeatureCollection' as const,
   features: points.map((point) => ({
     type: 'Feature' as const,
@@ -168,6 +168,7 @@ const buildFeatureCollection = (points: HeatMapPoint[]) => ({
       city: point.city,
       name: point.name,
       label: point.label,
+      selected: point.id === selectedId,
     },
     geometry: {
       type: 'Point' as const,
@@ -178,9 +179,11 @@ const buildFeatureCollection = (points: HeatMapPoint[]) => ({
 
 function ApparentHeatmapLayers({
   points,
+  selectedId,
   onPointSelect,
 }: {
   points: HeatMapPoint[];
+  selectedId?: string;
   onPointSelect: (point: HeatMapPoint) => void;
 }) {
   const { map, isLoaded } = useMap();
@@ -188,7 +191,7 @@ function ApparentHeatmapLayers({
   const sourceId = `apparent-heatmap-source-${id}`;
   const heatLayerId = `apparent-heatmap-layer-${id}`;
   const pointLayerId = `apparent-heatmap-point-layer-${id}`;
-  const geoJson = useMemo(() => buildFeatureCollection(points), [points]);
+  const geoJson = useMemo(() => buildFeatureCollection(points, selectedId), [points, selectedId]);
   const pointById = useMemo(() => new globalThis.Map(points.map((point) => [point.id, point])), [points]);
 
   useEffect(() => {
@@ -233,17 +236,22 @@ function ApparentHeatmapLayers({
         paint: {
           'circle-radius': ['interpolate', ['linear'], ['get', 'mag'], 1, 1.8, 6, 5.5],
           'circle-color': [
-            'interpolate',
-            ['linear'],
-            ['get', 'mag'],
-            1,
-            HEATMAP_GRADIENT_COLORS[1],
-            2.5,
-            HEATMAP_GRADIENT_COLORS[2],
-            4,
-            HEATMAP_GRADIENT_COLORS[3],
-            6,
-            HEATMAP_GRADIENT_COLORS[4],
+            'case',
+            ['boolean', ['get', 'selected'], false],
+            '#22c55e',
+            [
+              'interpolate',
+              ['linear'],
+              ['get', 'mag'],
+              1,
+              HEATMAP_GRADIENT_COLORS[1],
+              2.5,
+              HEATMAP_GRADIENT_COLORS[2],
+              4,
+              HEATMAP_GRADIENT_COLORS[3],
+              6,
+              HEATMAP_GRADIENT_COLORS[4],
+            ],
           ],
           'circle-stroke-width': 1,
           'circle-stroke-color': 'rgba(255,255,255,0.8)',
@@ -507,7 +515,7 @@ export const HeatMap = ({ includeVCContacts = false, vcOnly = false, fullBleed =
             maxZoom={12}
             theme="light"
           >
-            <ApparentHeatmapLayers points={filteredPoints} onPointSelect={setSelectedPoint} />
+            <ApparentHeatmapLayers points={filteredPoints} selectedId={selectedVisiblePoint?.id} onPointSelect={setSelectedPoint} />
           </Map>
 
           <div className="absolute left-4 top-4 z-10 flex w-[calc(100%-2rem)] max-w-[19rem] flex-col items-start gap-3 md:left-6 md:top-6">
