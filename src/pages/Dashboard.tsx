@@ -4908,7 +4908,17 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
             </div>
           </article>
         ))}
-        {termReviews.length === 0 && <p className="px-4 py-4 text-xs leading-relaxed text-gray-500">Add a term sheet or deal note to track instrument, amount, rights, and review status.</p>}
+        {termReviews.length === 0 && (
+          <EmptyState
+            icon={<FileText className="h-5 w-5" />}
+            title="Track your deal terms"
+            body={isInvestor
+              ? 'Log instrument, amount, valuation cap, pro-rata, and notes for each deal you’re reviewing — all in one place.'
+              : 'Capture investor offers — SAFE notes, valuation caps, rights, and decision notes — so your fundraise stays organized.'}
+            ctaLabel="Add terms"
+            onCta={() => setIsTermFormOpen(true)}
+          />
+        )}
       </div>
     </section>
   );
@@ -5512,7 +5522,13 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
           </article>
         ))}
         {filteredInvestorSignals.length === 0 && (
-          <div className="px-5 py-8 text-sm text-gray-500">No source signals match this search.</div>
+          <EmptyState
+            icon={<Search className="h-5 w-5" />}
+            title="No matching signals"
+            body="Set your thesis to rank incoming founder signals, or clear filters to widen the pool. Ingested founders from YC, GitHub, Product Hunt and Hacker News land here automatically."
+            ctaLabel="Set your thesis"
+            onCta={() => setActiveView('profile')}
+          />
         )}
       </div>
     </section>
@@ -6044,7 +6060,13 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
               })}
 
               {filteredMatches.length === 0 && (
-                <div className="px-5 py-8 text-sm text-gray-500">No investors match this search yet.</div>
+                <EmptyState
+                  icon={<Search className="h-5 w-5" />}
+                  title="No investor matches yet"
+                  body="Complete your profile and set your fundraising status so Apparent can match you to thesis-fit investors — then they’ll appear here."
+                  ctaLabel="Complete your profile"
+                  onCta={() => setActiveView('profile')}
+                />
               )}
             </div>
           </section>
@@ -6101,7 +6123,11 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
                   </button>
                 ))}
                 {savedMatches.length === 0 && (
-                  <div className="px-5 py-8 text-sm text-gray-500">Save investors to build your outreach shortlist.</div>
+                  <EmptyState
+                    icon={<Bookmark className="h-5 w-5" />}
+                    title="No saved investors yet"
+                    body="Save investors from your matches to build a focused outreach shortlist you can work through."
+                  />
                 )}
               </div>
             </div>
