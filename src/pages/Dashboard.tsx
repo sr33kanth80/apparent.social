@@ -1025,6 +1025,10 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
   const [launchEngagement, setLaunchEngagement] = useState<
     Record<string, { upvoted: boolean; upvotes: number; comments: string[] }>
   >({});
+  const [founderInterest, setFounderInterest] = useState<{ saveCount: number; recentSaverNames: string[] }>({
+    saveCount: 0,
+    recentSaverNames: [],
+  });
   const [meetupDraft, setMeetupDraft] = useState(emptyMeetupDraft);
   const [termDraft, setTermDraft] = useState(emptyTermDraft);
   const [messageDraft, setMessageDraft] = useState(emptyMessageDraft);
@@ -1254,6 +1258,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
         setFeedRows(data.feedItems);
         setSavedInvestorMatchNames(data.savedInvestorMatchNames);
         setLaunchEngagement(data.launchEngagement);
+        setFounderInterest(data.founderInterest);
         setSelectedClusterCity((current) =>
           data.builderClusters.some((cluster) => cluster.city === current)
             ? current
@@ -3144,6 +3149,91 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
                   <div className="mt-5">
                     <input value={intakeValues.profilePhotoUrl ?? ''} onChange={(event) => handleIntakeChange('profilePhotoUrl', event.target.value)} placeholder="Profile photo URL" className="h-9 border border-black/10 bg-white px-3 text-sm outline-none placeholder:text-gray-400 focus:border-black/30" />
                   </div>
+                </div>
+              </section>
+
+              {/* Investor interest — the come-back-next-week loop */}
+              <section className="border-y border-black/10 bg-white">
+                <div className="flex items-center justify-between gap-3 px-5 py-4">
+                  <div>
+                    <h3 className="text-sm font-semibold">Investor interest</h3>
+                    <p className="mt-1 text-xs text-gray-500">Who&apos;s tracking you on Apparent right now.</p>
+                  </div>
+                  <span className="shrink-0 rounded-full bg-[#dcefc7] px-3 py-1.5 text-xs font-semibold text-[#42520d]">
+                    {founderInterest.saveCount} tracking
+                  </span>
+                </div>
+                <div className="px-5 pb-5">
+                  {founderInterest.saveCount > 0 ? (
+                    <p className="text-sm leading-relaxed text-gray-600">
+                      {founderInterest.saveCount} investor{founderInterest.saveCount === 1 ? '' : 's'} saved your profile
+                      {founderInterest.recentSaverNames.length > 0 && (
+                        <> — including {founderInterest.recentSaverNames.slice(0, 3).join(', ')}</>
+                      )}
+                      .
+                    </p>
+                  ) : (
+                    <p className="text-sm leading-relaxed text-gray-500">
+                      No investors are tracking you yet. Set your status to{' '}
+                      <span className="font-medium text-[#42520d]">Raising now</span> and complete your profile so thesis-fit investors surface you.
+                    </p>
+                  )}
+                </div>
+              </section>
+
+              {/* Fundraising intent — the opt-in signal pure scrapers can't have */}
+              <section className="border-y border-black/10 bg-white">
+                <div className="border-b border-black/10 px-5 py-4">
+                  <h3 className="text-sm font-semibold">Fundraising status</h3>
+                  <p className="mt-1 text-xs text-gray-500">Tell thesis-fit investors whether you&apos;re raising — this is what surfaces you in their &ldquo;Raising now&rdquo; view.</p>
+                </div>
+                <div className="space-y-4 px-5 py-4">
+                  <div className="flex flex-wrap gap-2">
+                    {([['raising', 'Raising now'], ['open', 'Open to intros'], ['not_raising', 'Not raising']] as const).map(([value, label]) => {
+                      const active = (intakeValues.fundraisingStatus ?? 'not_raising') === value;
+                      return (
+                        <button
+                          key={value}
+                          type="button"
+                          onClick={() => handleIntakeChange('fundraisingStatus', value)}
+                          className={`rounded-full px-4 py-2 text-xs font-semibold transition-colors ${active ? 'bg-[#42520d] text-white' : 'bg-[#f4f1eb] text-gray-600 hover:bg-[#dcefc7]'}`}
+                        >
+                          {label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  {(intakeValues.fundraisingStatus === 'raising' || intakeValues.fundraisingStatus === 'open') && (
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      <label className="grid gap-1">
+                        <span className="text-xs font-medium text-gray-500">Round</span>
+                        <input value={intakeValues.raisingRound ?? ''} onChange={(event) => handleIntakeChange('raisingRound', event.target.value)} placeholder="Pre-seed / Seed / Series A" className="h-9 border border-black/10 bg-white px-3 text-sm outline-none placeholder:text-gray-400 focus:border-black/30" />
+                      </label>
+                      <label className="grid gap-1">
+                        <span className="text-xs font-medium text-gray-500">Amount</span>
+                        <input value={intakeValues.raisingAmount ?? ''} onChange={(event) => handleIntakeChange('raisingAmount', event.target.value)} placeholder="$1.5M" className="h-9 border border-black/10 bg-white px-3 text-sm outline-none placeholder:text-gray-400 focus:border-black/30" />
+                      </label>
+                      <label className="grid gap-1 sm:col-span-2">
+                        <span className="text-xs font-medium text-gray-500">What you&apos;re looking for</span>
+                        <textarea value={intakeValues.raisingAsk ?? ''} onChange={(event) => handleIntakeChange('raisingAsk', event.target.value)} placeholder="A lead for our pre-seed; investors who understand devtools GTM." className="min-h-16 resize-none border border-black/10 bg-white px-3 py-2 text-sm outline-none placeholder:text-gray-400 focus:border-black/30" />
+                      </label>
+                    </div>
+                  )}
+                  <label className="flex items-center justify-between gap-3 rounded-xl bg-[#fbf8f3] px-4 py-3">
+                    <span className="text-sm">
+                      <span className="font-medium">Open to investor contact</span>
+                      <span className="mt-0.5 block text-xs text-gray-500">Let thesis-fit investors reach out to you directly through Apparent.</span>
+                    </span>
+                    <button
+                      type="button"
+                      role="switch"
+                      aria-checked={(intakeValues.openToContact ?? 'true') !== 'false'}
+                      onClick={() => handleIntakeChange('openToContact', (intakeValues.openToContact ?? 'true') !== 'false' ? 'false' : 'true')}
+                      className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors ${(intakeValues.openToContact ?? 'true') !== 'false' ? 'bg-[#42520d]' : 'bg-gray-200'}`}
+                    >
+                      <span className={`inline-block h-3.5 w-3.5 translate-x-0.5 rounded-full bg-white shadow transition-transform ${(intakeValues.openToContact ?? 'true') !== 'false' ? 'translate-x-[1.125rem]' : ''}`} />
+                    </button>
+                  </label>
                 </div>
               </section>
 
