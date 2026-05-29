@@ -4817,7 +4817,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
               <p className="text-xs font-medium uppercase tracking-wide text-gray-500">{column.stage}</p>
               <span className="text-xs text-gray-400">{column.items.length}</span>
             </div>
-            <div className="min-h-44 space-y-3 p-3">
+            <div className="min-h-44 max-h-[26rem] space-y-3 overflow-y-auto p-3">
               {column.items.map((signal) => (
                 <div
                   key={signalStorageId(signal)}
