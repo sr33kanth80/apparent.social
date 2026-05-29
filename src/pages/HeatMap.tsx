@@ -33,6 +33,8 @@ type HeatMapPoint = {
 interface HeatMapProps {
   includeVCContacts?: boolean;
   vcOnly?: boolean;
+  /** Fill the available space edge-to-edge (no max-width section or rounded card). */
+  fullBleed?: boolean;
 }
 
 const HEATMAP_GRADIENT_COLORS = ['#fff7bc', '#fee391', '#fec44f', '#fe9929', '#d7301f'];
@@ -398,7 +400,7 @@ function HeatMapPopupCard({ point }: { point: HeatMapPoint }) {
   );
 }
 
-export const HeatMap = ({ includeVCContacts = false, vcOnly = false }: HeatMapProps) => {
+export const HeatMap = ({ includeVCContacts = false, vcOnly = false, fullBleed = false }: HeatMapProps) => {
   const [publishedLaunches, setPublishedLaunches] = useState<ProductLaunch[]>([]);
   const [vcContacts, setVcContacts] = useState<VCContact[]>([]);
   const [mode, setMode] = useState<HeatMapMode>('all');
@@ -470,9 +472,9 @@ export const HeatMap = ({ includeVCContacts = false, vcOnly = false }: HeatMapPr
       ];
 
   return (
-    <main className="min-h-screen overflow-x-hidden bg-[#fbfaf7] text-black">
-      <section className="mx-auto max-w-[92rem] px-5 pb-5 pt-5 sm:px-8">
-        <div className="relative h-[calc(100vh-8.5rem)] min-h-[620px] overflow-hidden rounded-[32px] bg-[#e8e5dc] shadow-[0_18px_60px_rgba(0,0,0,0.06)]">
+    <main className={fullBleed ? 'h-screen w-full overflow-hidden bg-[#e8e5dc] text-black' : 'min-h-screen overflow-x-hidden bg-[#fbfaf7] text-black'}>
+      <section className={fullBleed ? 'h-full w-full' : 'mx-auto max-w-[92rem] px-5 pb-5 pt-5 sm:px-8'}>
+        <div className={`relative bg-[#e8e5dc] ${fullBleed ? 'h-full w-full overflow-hidden' : 'h-[calc(100vh-8.5rem)] min-h-[620px] overflow-hidden rounded-[32px] shadow-[0_18px_60px_rgba(0,0,0,0.06)]'}`}>
           <Map
             center={[-74, 38]}
             zoom={2.15}
