@@ -1,136 +1,177 @@
 // Supabase Edge Function: start_daily_scrapes
-// Triggers Apify actors for YC Directory and GitHub Trending, with secure webhooks back to apify_ingest.
-// Schedule this function daily at 3:00 AM Central Time (set cron in UTC: 08:00 during DST, 09:00 in winter).
+// Runs each source actor SYNCHRONOUSLY via Apify's run-sync-get-dataset-items,
+// maps the returned items, and upserts them straight into public.source_signals
+// (logging each run to public.scrape_runs). No webhooks / callbacks — the whole
+// pipeline happens in one invocation, which is far easier to operate and debug.
+//
+// Trigger: daily via pg_cron (see migration) or manually with X-Cron-Secret.
 //
 // Secrets required:
 // - APIFY_TOKEN
-// - APIFY_WEBHOOK_SECRET
-// - CRON_SECRET (required in X-Cron-Secret header to start runs)
+// - CRON_SECRET (X-Cron-Secret header to authorize)
+// - SUPABASE_URL
+// - SUPABASE_SERVICE_ROLE_KEY
 //
-// Optional env to override actor slugs:
-// - YC_ACTOR_SLUG (default: clearpath~ycombinator-api-scraper)
-// - GH_ACTOR_SLUG (default: viralanalyzer~github-trending-scraper)
-// - INGEST_BASE_URL (if not auto-detecting the functions domain)
+// Optional env to override actor slugs (verify on the Apify marketplace):
+// - YC_ACTOR_SLUG, GH_ACTOR_SLUG, PH_ACTOR_SLUG, HN_ACTOR_SLUG
 
 import { serve } from 'https://deno.land/std@0.177.0/http/server.ts'
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { mapItemsForSource, sourceName, type JsonRecord, type SignalRow } from '../_shared/mappers.ts'
 
 const APIFY_TOKEN = Deno.env.get('APIFY_TOKEN') as string
-const APIFY_WEBHOOK_SECRET = Deno.env.get('APIFY_WEBHOOK_SECRET') as string
 const CRON_SECRET = Deno.env.get('CRON_SECRET') as string
+const SUPABASE_URL = Deno.env.get('SUPABASE_URL') as string
+const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') as string
+
 const YC_ACTOR_SLUG = Deno.env.get('YC_ACTOR_SLUG') || 'clearpath~ycombinator-api-scraper'
 const GH_ACTOR_SLUG = Deno.env.get('GH_ACTOR_SLUG') || 'viralanalyzer~github-trending-scraper'
-// NOTE: verify these slugs on the Apify marketplace and override via env if needed.
-const PH_ACTOR_SLUG = Deno.env.get('PH_ACTOR_SLUG') || 'bebity~product-hunt-scraper'
-const HN_ACTOR_SLUG = Deno.env.get('HN_ACTOR_SLUG') || 'lhotanok~hacker-news-scraper'
+// NOTE: verify these on the Apify marketplace and override via env.
+const PH_ACTOR_SLUG = Deno.env.get('PH_ACTOR_SLUG') || 'danpoletaev~product-hunt-scraper'
+const HN_ACTOR_SLUG = Deno.env.get('HN_ACTOR_SLUG') || 'epctex~hackernews-scraper'
 
-function baseUrlFromRequest(req: Request): string {
-  // Explicit override wins (e.g. INGEST_BASE_URL=https://<ref>.supabase.co/functions/v1).
-  const explicit = Deno.env.get('INGEST_BASE_URL')
-  if (explicit) return explicit.replace(/\/+$/, '')
+// Max seconds to wait for each actor run (Apify caps run-sync at 300s; keep
+// under the edge function wall-clock budget).
+const RUN_TIMEOUT_SECONDS = 110
 
-  const url = new URL(req.url)
-  // Preserve any path prefix this function was reached through so sibling
-  // functions resolve correctly under BOTH hostname styles:
-  //   - https://<ref>.functions.supabase.co/start_daily_scrapes      → prefix ""
-  //   - https://<ref>.supabase.co/functions/v1/start_daily_scrapes   → prefix "/functions/v1"
-  const match = url.pathname.match(/^(.*)\/start_daily_scrapes\/?$/)
-  const prefix = match ? match[1] : ''
-  return `${url.protocol}//${url.host}${prefix}`
-}
+const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
+  auth: { persistSession: false },
+})
 
-// Apify ad-hoc webhooks must be passed as a base64-encoded `webhooks` QUERY
-// parameter, and the POST body must be the actor input itself (NOT a wrapper).
-function buildWebhooksParam(webhookUrl: string): string {
-  const webhooks = [
-    {
-      eventTypes: ['ACTOR.RUN.SUCCEEDED'],
-      requestUrl: webhookUrl,
-      // Custom header so apify_ingest can authenticate the callback.
-      headersTemplate: JSON.stringify({ 'X-Hook-Secret': APIFY_WEBHOOK_SECRET }),
-      payloadTemplate:
-        '{"datasetId":"{{resource.defaultDatasetId}}","startedAt":"{{resource.startedAt}}","finishedAt":"{{resource.finishedAt}}","itemsTotal":"{{resource.stats.itemsTotal}}","runId":"{{resource.id}}"}',
-    },
-  ]
-  return btoa(JSON.stringify(webhooks))
-}
+type SourceSpec = { src: 'yc' | 'gh' | 'ph' | 'hn'; slug: string; input: JsonRecord }
 
-async function startActorRun(actorSlug: string, input: unknown, webhookUrl: string) {
-  const webhooksParam = buildWebhooksParam(webhookUrl)
-  const startUrl =
-    `https://api.apify.com/v2/acts/${encodeURIComponent(actorSlug)}/runs` +
-    `?token=${encodeURIComponent(APIFY_TOKEN)}` +
-    `&webhooks=${encodeURIComponent(webhooksParam)}`
+const SPECS: SourceSpec[] = [
+  { src: 'yc', slug: YC_ACTOR_SLUG, input: { proxyConfiguration: { useApifyProxy: true, apifyProxyGroups: [] } } },
+  { src: 'gh', slug: GH_ACTOR_SLUG, input: { since: 'daily', languages: [] } },
+  { src: 'ph', slug: PH_ACTOR_SLUG, input: { maxItems: 100, sort: 'newest' } },
+  { src: 'hn', slug: HN_ACTOR_SLUG, input: { maxItems: 100, category: 'show' } },
+]
 
-  const res = await fetch(startUrl, {
-    method: 'POST',
-    headers: { 'content-type': 'application/json' },
-    body: JSON.stringify(input),
+async function logRun(meta: {
+  source_name: string
+  status: string
+  item_count: number
+  started_at?: string
+  finished_at?: string
+  input_json?: unknown
+  error_text?: string
+}) {
+  const { error } = await supabase.from('scrape_runs').insert({
+    source_name: meta.source_name,
+    actor_id: '',
+    run_id: '',
+    dataset_id: '',
+    status: meta.status,
+    item_count: meta.item_count,
+    started_at: meta.started_at ?? null,
+    finished_at: meta.finished_at ?? null,
+    input_json: meta.input_json ?? null,
+    error_text: meta.error_text ?? '',
   })
-  if (!res.ok) {
-    const txt = await res.text()
-    return { ok: false as const, status: res.status, error: txt }
+  if (error) console.error('scrape_runs insert error', error)
+}
+
+function errText(err: unknown): string {
+  if (err instanceof Error) return err.message
+  if (err && typeof err === 'object') {
+    const e = err as Record<string, unknown>
+    const msg = [e.message, e.details, e.hint, e.code].filter(Boolean).join(' | ')
+    if (msg) return msg
+    try {
+      return JSON.stringify(err)
+    } catch {
+      return String(err)
+    }
   }
-  const json = await res.json().catch(() => ({}))
-  return { ok: true as const, data: json }
+  return String(err)
+}
+
+type SourceResult = { src: string; status: string; count: number; error?: string }
+
+async function runSource(spec: SourceSpec): Promise<SourceResult> {
+  const startedAt = new Date().toISOString()
+  const name = sourceName(spec.src)
+  try {
+    const url =
+      `https://api.apify.com/v2/acts/${encodeURIComponent(spec.slug)}/run-sync-get-dataset-items` +
+      `?token=${encodeURIComponent(APIFY_TOKEN)}&format=json&clean=true&timeout=${RUN_TIMEOUT_SECONDS}`
+
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(spec.input),
+    })
+
+    if (!res.ok) {
+      const txt = await res.text().catch(() => '')
+      await logRun({
+        source_name: name,
+        status: 'run_failed',
+        item_count: 0,
+        started_at: startedAt,
+        finished_at: new Date().toISOString(),
+        input_json: spec.input,
+        error_text: `HTTP ${res.status}: ${txt.slice(0, 300)}`,
+      })
+      return { src: spec.src, status: `error ${res.status}`, count: 0 }
+    }
+
+    const data = await res.json().catch(() => [])
+    const items: JsonRecord[] = Array.isArray(data) ? data : []
+    const rows: SignalRow[] = mapItemsForSource(spec.src, items, new Date().toISOString())
+
+    if (rows.length) {
+      const { error } = await supabase
+        .from('source_signals')
+        .upsert(rows, { onConflict: 'source_type,source_url', ignoreDuplicates: false })
+      if (error) throw error
+    }
+
+    await logRun({
+      source_name: name,
+      status: 'succeeded',
+      item_count: rows.length,
+      started_at: startedAt,
+      finished_at: new Date().toISOString(),
+      input_json: spec.input,
+    })
+    return { src: spec.src, status: 'ok', count: rows.length }
+  } catch (err) {
+    await logRun({
+      source_name: name,
+      status: 'error',
+      item_count: 0,
+      started_at: startedAt,
+      finished_at: new Date().toISOString(),
+      input_json: spec.input,
+      error_text: errText(err).slice(0, 300),
+    })
+    return { src: spec.src, status: 'error', count: 0, error: errText(err) }
+  }
 }
 
 serve(async (req) => {
-  if (!APIFY_TOKEN || !APIFY_WEBHOOK_SECRET || !CRON_SECRET) {
+  if (!APIFY_TOKEN || !CRON_SECRET || !SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
     return new Response('missing secrets', { status: 500 })
   }
-
   if (req.headers.get('x-cron-secret') !== CRON_SECRET) {
     return new Response('unauthorized', { status: 401 })
   }
 
-  const base = baseUrlFromRequest(req)
-  // Secret also passed as a query param so apify_ingest can authenticate even if
-  // the actor/webhook strips custom headers.
-  const hook = encodeURIComponent(APIFY_WEBHOOK_SECRET)
-  const ycWebhook = `${base}/apify_ingest?src=yc&hook=${hook}`
-  const ghWebhook = `${base}/apify_ingest?src=gh&hook=${hook}`
-  const phWebhook = `${base}/apify_ingest?src=ph&hook=${hook}`
-  const hnWebhook = `${base}/apify_ingest?src=hn&hook=${hook}`
+  // Optional: limit to specific sources via ?only=yc,gh
+  const only = new URL(req.url).searchParams.get('only')
+  const specs = only
+    ? SPECS.filter((s) => only.split(',').map((x) => x.trim()).includes(s.src))
+    : SPECS
 
-  // YC input (proxy enabled)
-  const ycInput = {
-    proxyConfiguration: { useApifyProxy: true, apifyProxyGroups: [] as string[] },
-  }
-  // GitHub trending input (daily, all languages)
-  const ghInput = {
-    since: 'daily',
-    languages: [] as string[],
-  }
-  // Product Hunt input (most-recent daily launches). Shape varies by actor —
-  // verify against your chosen actor's input schema.
-  const phInput = {
-    maxItems: 100,
-    sort: 'newest',
-  }
-  // Hacker News input (front page + Show HN). Shape varies by actor —
-  // verify against your chosen actor's input schema.
-  const hnInput = {
-    maxItems: 100,
-    category: 'show',
-  }
+  // Run all sources, but keep the work alive even if the caller disconnects.
+  const work = Promise.all(specs.map(runSource))
+  // deno-lint-ignore no-explicit-any
+  const edge = (globalThis as any).EdgeRuntime
+  if (edge && typeof edge.waitUntil === 'function') edge.waitUntil(work)
 
-  const [yc, gh, ph, hn] = await Promise.all([
-    startActorRun(YC_ACTOR_SLUG, ycInput, ycWebhook),
-    startActorRun(GH_ACTOR_SLUG, ghInput, ghWebhook),
-    startActorRun(PH_ACTOR_SLUG, phInput, phWebhook),
-    startActorRun(HN_ACTOR_SLUG, hnInput, hnWebhook),
-  ])
-
-  const result = {
-    yc: yc.ok ? 'started' : `error ${yc.status}`,
-    gh: gh.ok ? 'started' : `error ${gh.status}`,
-    ph: ph.ok ? 'started' : `error ${ph.status}`,
-    hn: hn.ok ? 'started' : `error ${hn.status}`,
-  }
-
-  if (!yc.ok || !gh.ok || !ph.ok || !hn.ok) {
-    return new Response(JSON.stringify(result), { status: 502, headers: { 'content-type': 'application/json' } })
-  }
-
-  return new Response(JSON.stringify(result), { headers: { 'content-type': 'application/json' } })
+  const results = await work
+  return new Response(JSON.stringify({ results }), {
+    headers: { 'content-type': 'application/json' },
+  })
 })
