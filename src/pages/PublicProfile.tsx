@@ -58,31 +58,6 @@ const SectionLabel = ({ children }: { children: React.ReactNode }) => (
   <p className="mb-8 text-sm font-semibold uppercase tracking-[0.12em] text-[#42520d]">{children}</p>
 );
 
-// ─── top nav ───────────────────────────────────────────────────────────────────
-
-const ProfileNav = ({ role }: { role?: 'founder' | 'investor' }) => (
-  <header className="sticky top-0 z-30 flex items-center justify-between border-b border-black/8 bg-[#fbfaf7]/90 px-5 py-3 backdrop-blur-sm sm:px-8">
-    <Link to="/" className="flex items-center gap-2">
-      <LogoIcon className="h-6 w-6 text-black" />
-      <img src="/apparent-wordmark.png" alt="Apparent" className="h-6 w-auto object-contain" />
-    </Link>
-    <div className="flex items-center gap-3">
-      <Link
-        to={`/login?role=${role ?? 'founder'}`}
-        className="rounded-full border border-black/15 bg-white px-4 py-2 text-sm font-medium text-black transition hover:bg-black hover:text-white"
-      >
-        Sign in
-      </Link>
-      <Link
-        to="/login"
-        className="rounded-full bg-[#42520d] px-4 py-2 text-sm font-medium text-white transition hover:opacity-90"
-      >
-        Join Apparent
-      </Link>
-    </div>
-  </header>
-);
-
 // ─── founder profile ──────────────────────────────────────────────────────────
 
 const FounderProfilePage = ({ profile }: { profile: PublicFounderProfile }) => {
@@ -101,8 +76,6 @@ const FounderProfilePage = ({ profile }: { profile: PublicFounderProfile }) => {
 
   return (
     <main className="overflow-x-hidden bg-[#fbfaf7] text-black">
-      <ProfileNav role="founder" />
-
       {/* ── Hero ── */}
       <section className="mx-auto max-w-[92rem] px-5 pb-10 pt-16 sm:px-8 md:pt-20">
         <div className="mb-6 flex items-center gap-2">
@@ -290,8 +263,6 @@ const InvestorProfilePage = ({ profile }: { profile: PublicInvestorProfile }) =>
 
   return (
     <main className="overflow-x-hidden bg-[#fbfaf7] text-black">
-      <ProfileNav role="investor" />
-
       {/* ── Hero ── */}
       <section className="mx-auto max-w-[92rem] px-5 pb-10 pt-16 sm:px-8 md:pt-20">
         <div className="mb-6 flex items-center gap-2">
@@ -394,7 +365,6 @@ const InvestorProfilePage = ({ profile }: { profile: PublicInvestorProfile }) =>
 
 const InvestorRestrictedPage = ({ username }: { username: string }) => (
   <main className="min-h-screen overflow-x-hidden bg-[#fbfaf7] text-black">
-    <ProfileNav role="founder" />
     <section className="mx-auto flex min-h-[70vh] max-w-[92rem] flex-col items-start justify-center px-5 sm:px-8">
       <p className="mb-6 text-sm font-semibold uppercase tracking-[0.12em] text-[#42520d]">Apparent investor</p>
       <h1 className="max-w-3xl text-5xl font-normal leading-none tracking-[-0.045em] md:text-7xl" style={serif}>
@@ -479,7 +449,6 @@ export const PublicProfile = () => {
   if (!result || result.kind === 'not_found') {
     return (
       <main className="min-h-screen overflow-x-hidden bg-[#fbfaf7] text-black">
-        <ProfileNav />
         <section className="mx-auto flex min-h-[70vh] max-w-[92rem] flex-col items-start justify-center px-5 sm:px-8">
           <LogoIcon className="mb-10 h-8 w-8 text-black" />
           <h1 className="max-w-3xl text-5xl font-normal leading-none tracking-[-0.045em] md:text-7xl" style={serif}>

@@ -166,7 +166,13 @@ function App() {
               parser), so we use /:handle and strip the @ in the component. */}
           <Route
             path="/:handle"
-            element={<PublicProfile />}
+            element={
+              <>
+                <EditorialNavbar />
+                <PublicProfile />
+                <Footer />
+              </>
+            }
           />
           {/* Legacy /profile/:profileId — kept for backward compat */}
           <Route
