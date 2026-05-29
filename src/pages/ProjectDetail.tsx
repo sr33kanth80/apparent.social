@@ -168,13 +168,20 @@ export const ProjectDetail = () => {
           <aside className="rounded-[24px] bg-white/75 p-5 shadow-[0_14px_44px_rgba(0,0,0,0.05)]">
             <p className="text-sm font-semibold text-[#42520d]">Launched by</p>
             <div className="mt-4 flex items-center gap-3">
-              {founder?.profilePhotoUrl ? (
-                <img src={founder.profilePhotoUrl} alt="" className="h-12 w-12 rounded-2xl object-cover" />
-              ) : (
-                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#dcefc7] text-sm font-semibold">
-                  {founderName.slice(0, 2).toUpperCase()}
-                </div>
-              )}
+              {/* Avatar — wrapping the photo in the same Link makes the whole avatar clickable */}
+              <Link to={`/profile/${founder?.userId || launch.ownerId}`} className="shrink-0">
+                {founder?.profilePhotoUrl ? (
+                  <img
+                    src={founder.profilePhotoUrl}
+                    alt={founderName}
+                    className="h-12 w-12 rounded-2xl object-cover ring-2 ring-transparent transition hover:ring-[#42520d]/20"
+                  />
+                ) : (
+                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#dcefc7] text-sm font-semibold transition hover:bg-[#c5e8a5]">
+                    {founderName.slice(0, 2).toUpperCase()}
+                  </div>
+                )}
+              </Link>
               <div>
                 <Link to={`/profile/${founder?.userId || launch.ownerId}`} className="text-base font-semibold hover:text-[#42520d]">
                   {founderName}

@@ -338,3 +338,16 @@ export const STATIC_FOUNDER_PROFILES: Record<string, PublicProfileResult> = {
  */
 export const getStaticFounderProfile = (slug: string): PublicProfileResult | null =>
   STATIC_FOUNDER_PROFILES[slug.toLowerCase()] ?? null;
+
+/**
+ * Return the public profile-photo URL for a curated founder slug, or ''
+ * when the slug is unknown (caller should render an initials avatar).
+ *
+ * slug is the segment after /profile/ in founderProfilePath, e.g.
+ * "michael-truell" from "/profile/michael-truell".
+ */
+export const getFounderPhotoUrl = (slug: string): string => {
+  const result = STATIC_FOUNDER_PROFILES[slug.toLowerCase()];
+  if (result?.kind === 'founder') return result.profile.profilePhotoUrl;
+  return '';
+};

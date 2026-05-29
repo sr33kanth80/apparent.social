@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { EditorialNavbar } from '../components/EditorialNavbar';
 import { loadPublicProductLaunches } from '../lib/dashboard-service';
+import { getFounderPhotoUrl } from '../lib/static-founder-profiles';
 import type { ProductLaunch as WorkspaceProductLaunch } from '../lib/apparent-types';
 
 const serifDisplay = {
@@ -552,7 +553,32 @@ export const Home = () => {
                 <Link to={selectedLaunch.projectPath} className="text-xl font-semibold tracking-[-0.02em] transition-colors hover:text-[#42520d]">
                   {selectedLaunch.name}
                 </Link>
-                <p className="mt-2 text-sm font-semibold text-black/55">by {selectedLaunch.founder}</p>
+                {/* Founder avatar chip — links to their Apparent profile */}
+                {(() => {
+                  const slug = selectedLaunch.founderProfilePath.replace('/profile/', '');
+                  const photoUrl = getFounderPhotoUrl(slug);
+                  const initials = selectedLaunch.founder.split(' ').map((w) => w[0]).join('').slice(0, 2).toUpperCase();
+                  return (
+                    <Link
+                      to={selectedLaunch.founderProfilePath}
+                      className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-[#f4f1eb] px-2 py-1 text-xs font-semibold text-black/65 transition-colors hover:bg-[#dcefc7] hover:text-black"
+                    >
+                      {photoUrl ? (
+                        <img
+                          src={photoUrl}
+                          alt=""
+                          className="h-5 w-5 rounded-full object-cover"
+                          onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
+                        />
+                      ) : (
+                        <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[#dcefc7] text-[8px] font-bold text-[#42520d]">
+                          {initials}
+                        </span>
+                      )}
+                      {selectedLaunch.founder}
+                    </Link>
+                  );
+                })()}
               </div>
             </div>
 
