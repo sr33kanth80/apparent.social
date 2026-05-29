@@ -19,6 +19,9 @@ const APIFY_WEBHOOK_SECRET = Deno.env.get('APIFY_WEBHOOK_SECRET') as string
 const CRON_SECRET = Deno.env.get('CRON_SECRET') as string
 const YC_ACTOR_SLUG = Deno.env.get('YC_ACTOR_SLUG') || 'clearpath~ycombinator-api-scraper'
 const GH_ACTOR_SLUG = Deno.env.get('GH_ACTOR_SLUG') || 'viralanalyzer~github-trending-scraper'
+// NOTE: verify these slugs on the Apify marketplace and override via env if needed.
+const PH_ACTOR_SLUG = Deno.env.get('PH_ACTOR_SLUG') || 'bebity~product-hunt-scraper'
+const HN_ACTOR_SLUG = Deno.env.get('HN_ACTOR_SLUG') || 'lhotanok~hacker-news-scraper'
 
 function baseUrlFromRequest(req: Request): string {
   const url = new URL(req.url)
@@ -66,6 +69,8 @@ serve(async (req) => {
   const base = baseUrlFromRequest(req)
   const ycWebhook = `${base}/apify_ingest?src=yc`
   const ghWebhook = `${base}/apify_ingest?src=gh`
+  const phWebhook = `${base}/apify_ingest?src=ph`
+  const hnWebhook = `${base}/apify_ingest?src=hn`
 
   // YC input (proxy enabled)
   const ycInput = {
@@ -76,18 +81,34 @@ serve(async (req) => {
     since: 'daily',
     languages: [] as string[],
   }
+  // Product Hunt input (most-recent daily launches). Shape varies by actor —
+  // verify against your chosen actor's input schema.
+  const phInput = {
+    maxItems: 100,
+    sort: 'newest',
+  }
+  // Hacker News input (front page + Show HN). Shape varies by actor —
+  // verify against your chosen actor's input schema.
+  const hnInput = {
+    maxItems: 100,
+    category: 'show',
+  }
 
-  const [yc, gh] = await Promise.all([
+  const [yc, gh, ph, hn] = await Promise.all([
     startActorRun(YC_ACTOR_SLUG, ycInput, ycWebhook),
     startActorRun(GH_ACTOR_SLUG, ghInput, ghWebhook),
+    startActorRun(PH_ACTOR_SLUG, phInput, phWebhook),
+    startActorRun(HN_ACTOR_SLUG, hnInput, hnWebhook),
   ])
 
   const result = {
     yc: yc.ok ? 'started' : `error ${yc.status}`,
     gh: gh.ok ? 'started' : `error ${gh.status}`,
+    ph: ph.ok ? 'started' : `error ${ph.status}`,
+    hn: hn.ok ? 'started' : `error ${hn.status}`,
   }
 
-  if (!yc.ok || !gh.ok) {
+  if (!yc.ok || !gh.ok || !ph.ok || !hn.ok) {
     return new Response(JSON.stringify(result), { status: 502, headers: { 'content-type': 'application/json' } })
   }
 

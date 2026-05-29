@@ -134,6 +134,87 @@ function mapGithubTrendingItemToSignal(item: JsonRecord): SignalRow {
   }
 }
 
+function mapProductHuntItemToSignal(item: JsonRecord): SignalRow {
+  const name = text(item.name ?? item.title)
+  const tagline = text(item.tagline ?? item.subtitle)
+  const description = text(item.description ?? item.text)
+  const url = text(item.url ?? item.postUrl ?? item.link)
+  const website = text(item.website ?? item.websiteUrl ?? item.redirectUrl)
+  const votesRaw = item.votesCount ?? item.votes ?? item.votesCountTotal
+  const votes = typeof votesRaw === 'number' ? votesRaw : Number(votesRaw ?? 0)
+  const topics = asArray<unknown>(item.topics ?? item.tags)
+    .map((t) => (typeof t === 'string' ? t : text((t as JsonRecord).name)))
+    .filter(Boolean) as string[]
+  const makers = asArray<JsonRecord>(item.makers ?? item.hunters)
+  const firstMaker = (makers[0] || {}) as JsonRecord
+  const makerName = text(firstMaker.name ?? firstMaker.username)
+  const makerUrl = text(firstMaker.profileUrl ?? firstMaker.url)
+  const createdAt = text(item.createdAt ?? item.featuredAt ?? item.scrapedAt)
+
+  const parts: string[] = []
+  if (tagline) parts.push(tagline)
+  if (description && description !== tagline) parts.push(description)
+  const meta: string[] = []
+  if (Number.isFinite(votes) && votes > 0) meta.push(`▲ ${votes} upvotes`)
+  if (topics.length) meta.push(topics.slice(0, 3).join(', '))
+  if (meta.length) parts.push(meta.join(' • '))
+
+  return {
+    company: name || '',
+    founder: makerName || '',
+    detail: parts.join(' — ').trim() || name || 'Product Hunt launch',
+    source_type: 'Product Hunt',
+    source_url: url || website || '',
+    profile_url: makerUrl || website || '',
+    stage: 'Launch',
+    location: undefined,
+    freshness_at: safeIso(createdAt),
+    github_url: undefined,
+    raw_tags: topics.length ? topics : undefined,
+    raw: item,
+  }
+}
+
+function mapHackerNewsItemToSignal(item: JsonRecord): SignalRow {
+  const rawTitle = text(item.title)
+  // Strip Show HN / Ask HN / Tell HN prefixes, then take the project name
+  // before a dash/colon separator.
+  const cleanedTitle = rawTitle.replace(/^(show|ask|tell)\s+hn:?\s*/i, '').trim()
+  const company = (cleanedTitle.split(/\s+[–—:-]\s+/)[0] || cleanedTitle).slice(0, 80)
+  const author = text(item.author ?? item.by)
+  const pointsRaw = item.points ?? item.score
+  const points = typeof pointsRaw === 'number' ? pointsRaw : Number(pointsRaw ?? 0)
+  const commentsRaw = item.num_comments ?? item.descendants ?? item.numComments
+  const numComments = typeof commentsRaw === 'number' ? commentsRaw : Number(commentsRaw ?? 0)
+  const externalUrl = text(item.url ?? item.story_url ?? item.storyUrl)
+  const objectId = text(item.objectID ?? item.id ?? item.storyId)
+  const hnItemUrl = objectId ? `https://news.ycombinator.com/item?id=${objectId}` : ''
+  const createdAt = text(item.created_at ?? item.createdAt)
+  const isGithub = /github\.com/i.test(externalUrl)
+
+  const parts: string[] = []
+  if (cleanedTitle) parts.push(cleanedTitle)
+  const meta: string[] = []
+  if (Number.isFinite(points) && points > 0) meta.push(`▲ ${points}`)
+  if (Number.isFinite(numComments) && numComments > 0) meta.push(`${numComments} comments`)
+  if (meta.length) parts.push(meta.join(' • '))
+
+  return {
+    company: company || '',
+    founder: author || '',
+    detail: parts.join(' — ').trim() || cleanedTitle || 'Hacker News post',
+    source_type: 'Hacker News',
+    source_url: hnItemUrl || externalUrl || '',
+    profile_url: author ? `https://news.ycombinator.com/user?id=${author}` : '',
+    stage: 'Show HN',
+    location: undefined,
+    freshness_at: safeIso(createdAt),
+    github_url: isGithub ? externalUrl : undefined,
+    raw_tags: ['hacker-news', 'show-hn'],
+    raw: item,
+  }
+}
+
 async function upsertSignals(rows: SignalRow[]) {
   if (!rows.length) return { count: 0 }
   const { error } = await supabase
@@ -173,8 +254,19 @@ async function logRun(meta: {
 serve(async (req) => {
   try {
     const url = new URL(req.url)
-    const src = url.searchParams.get('src') // 'yc' | 'gh'
+    const src = url.searchParams.get('src') // 'yc' | 'gh' | 'ph' | 'hn'
     if (!src) return new Response('missing src', { status: 400 })
+
+    const sourceName =
+      src === 'yc'
+        ? 'yc'
+        : src === 'gh'
+          ? 'github_trending'
+          : src === 'ph'
+            ? 'product_hunt'
+            : src === 'hn'
+              ? 'hacker_news'
+              : src
 
     const hookHeader = req.headers.get('x-hook-secret') || ''
     if (!APIFY_WEBHOOK_SECRET || hookHeader !== APIFY_WEBHOOK_SECRET) {
@@ -202,7 +294,7 @@ serve(async (req) => {
     const dsRes = await fetch(dsUrl)
     if (!dsRes.ok) {
       await logRun({
-        source_name: src === 'yc' ? 'yc' : 'github_trending',
+        source_name: sourceName,
         status: 'fetch_failed',
         run_id: runId,
         dataset_id: datasetId,
@@ -222,16 +314,23 @@ serve(async (req) => {
       rows = items.map((it) => mapYcItemToSignal(it, finishedAt))
     } else if (src === 'gh') {
       rows = items.map((it) => mapGithubTrendingItemToSignal(it))
+    } else if (src === 'ph') {
+      rows = items.map((it) => mapProductHuntItemToSignal(it))
+    } else if (src === 'hn') {
+      rows = items.map((it) => mapHackerNewsItemToSignal(it))
     } else {
       return new Response('unsupported src', { status: 400 })
     }
+
+    // Drop rows without a usable source_url (keeps the dedup index meaningful)
+    rows = rows.filter((row) => row.source_url && row.company)
 
     // Upsert
     await upsertSignals(rows)
 
     // Log success
     await logRun({
-      source_name: src === 'yc' ? 'yc' : 'github_trending',
+      source_name: sourceName,
       status: 'succeeded',
       run_id: runId,
       dataset_id: datasetId,

@@ -1,19 +1,35 @@
-Apify integration (V1) — YC Directory + GitHub Trending
+Apify integration (V2) — YC Directory + GitHub Trending + Product Hunt + Hacker News
 
 Edge Functions
 1) apify_ingest
-   - Webhook target for Apify runs (YC / GitHub Trending)
+   - Webhook target for Apify runs. Source discriminator via ?src=
+     * ?src=yc  → YC Directory
+     * ?src=gh  → GitHub Trending
+     * ?src=ph  → Product Hunt
+     * ?src=hn  → Hacker News (Show HN)
    - Validates X-Hook-Secret header (APIFY_WEBHOOK_SECRET)
    - Fetches dataset items via Apify REST (APIFY_TOKEN)
    - Maps items into public.source_signals, upserting by (source_type, source_url)
-   - Logs to public.scrape_runs
+   - Drops rows with no source_url/company; logs to public.scrape_runs
 
 2) start_daily_scrapes
-   - Starts two Apify actors with per-run webhooks back to apify_ingest
-   - Inputs
+   - Starts four Apify actors with per-run webhooks back to apify_ingest
+   - Inputs (verify each against your chosen actor's input schema)
      * YC: { proxyConfiguration: { useApifyProxy: true, apifyProxyGroups: [] } }
      * GH: { since: 'daily', languages: [] }
-   - Returns JSON status { yc: 'started'|'error ...', gh: 'started'|'error ...' }
+     * PH: { maxItems: 100, sort: 'newest' }
+     * HN: { maxItems: 100, category: 'show' }
+   - Returns JSON status { yc, gh, ph, hn: 'started'|'error ...' }
+
+IMPORTANT — verify actor slugs before going live
+   The default actor slugs are best-guess marketplace handles and MUST be
+   confirmed (and likely overridden) on apify.com:
+     * YC_ACTOR_SLUG (default clearpath~ycombinator-api-scraper)
+     * GH_ACTOR_SLUG (default viralanalyzer~github-trending-scraper)
+     * PH_ACTOR_SLUG (default bebity~product-hunt-scraper)
+     * HN_ACTOR_SLUG (default lhotanok~hacker-news-scraper)
+   Each actor's output field names also vary — the mappers in apify_ingest
+   read several common aliases, but check the dataset shape after a test run.
 
 Required secrets (never commit these; set via Supabase CLI):
   supabase secrets set \
