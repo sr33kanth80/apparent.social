@@ -498,39 +498,37 @@ export const HeatMap = ({ includeVCContacts = false, vcOnly = false, fullBleed =
             )}
           </Map>
 
-          <Card className="absolute left-4 top-4 z-10 w-[calc(100%-2rem)] max-w-sm border-0 bg-white/88 shadow-[0_18px_60px_rgba(0,0,0,0.12)] backdrop-blur md:left-6 md:top-6">
-            <CardHeader className="p-5 pb-3">
-              <div className="flex items-start justify-between gap-4">
-                <div>
-                  <CardTitle className="text-2xl font-semibold tracking-[-0.025em]">
-                    {vcOnly ? 'VCs by density.' : 'Builders and VCs by density.'}
-                  </CardTitle>
-                </div>
-                <Flame className="h-5 w-5 shrink-0 text-[#42520d]" />
+          <Card className="absolute left-4 top-4 z-10 w-[calc(100%-2rem)] max-w-[13.5rem] border-0 bg-white/90 shadow-[0_10px_34px_rgba(0,0,0,0.12)] backdrop-blur md:left-6 md:top-6">
+            <CardHeader className="p-3 pb-2">
+              <div className="flex items-start justify-between gap-2">
+                <CardTitle className="text-xs font-semibold tracking-[-0.01em]">
+                  {vcOnly ? 'VCs by density' : 'Builders & VCs by density'}
+                </CardTitle>
+                <Flame className="h-3.5 w-3.5 shrink-0 text-[#42520d]" />
               </div>
             </CardHeader>
-            <CardContent className="p-5 pt-0">
-              <div className="grid grid-cols-5 gap-1.5">
+            <CardContent className="p-3 pt-0">
+              <div className="grid grid-cols-5 gap-1">
                 {HEATMAP_GRADIENT_COLORS.map((color) => (
-                  <span key={color} className="h-2.5 rounded-full" style={{ backgroundColor: color }} />
+                  <span key={color} className="h-1.5 rounded-full" style={{ backgroundColor: color }} />
                 ))}
               </div>
-              <div className="flex items-center justify-between pt-3 text-xs text-black/50">
+              <div className="flex items-center justify-between pt-1.5 text-[10px] text-black/50">
                 <span>Low</span>
                 <span>High</span>
               </div>
 
-              <div className={`mt-5 grid gap-2 text-center ${vcOnly ? 'grid-cols-2' : 'grid-cols-3'}`}>
+              <div className={`mt-3 grid gap-1.5 text-center ${vcOnly ? 'grid-cols-2' : 'grid-cols-3'}`}>
                 {stats.map(({ value, label, icon: Icon }) => (
-                  <div key={label} className="rounded-[16px] bg-[#fbfaf7] px-3 py-3">
-                    <Icon className="mx-auto mb-2 h-4 w-4 text-[#42520d]" />
-                    <p className="text-base font-semibold">{value}</p>
-                    <p className="mt-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-black/40">{label}</p>
+                  <div key={label} className="rounded-[10px] bg-[#fbfaf7] px-1.5 py-1.5">
+                    <Icon className="mx-auto mb-1 h-3 w-3 text-[#42520d]" />
+                    <p className="text-xs font-semibold">{value}</p>
+                    <p className="mt-0.5 text-[9px] font-semibold uppercase tracking-[0.1em] text-black/40">{label}</p>
                   </div>
                 ))}
               </div>
 
-              <div className="mt-5 flex flex-wrap gap-2">
+              <div className="mt-2.5 flex flex-wrap gap-1.5">
                 {(vcOnly
                   ? [['vcs', 'VCs']]
                   : [
@@ -543,7 +541,7 @@ export const HeatMap = ({ includeVCContacts = false, vcOnly = false, fullBleed =
                     key={value}
                     type="button"
                     onClick={() => setMode(value as HeatMapMode)}
-                    className={`rounded-full px-3 py-1.5 text-xs font-semibold transition-colors ${
+                    className={`rounded-full px-2.5 py-1 text-[11px] font-semibold transition-colors ${
                       mode === value ? 'bg-[#42520d] text-white' : 'bg-[#fbfaf7] text-black/60 hover:bg-[#dcefc7]'
                     }`}
                   >
@@ -554,27 +552,27 @@ export const HeatMap = ({ includeVCContacts = false, vcOnly = false, fullBleed =
             </CardContent>
           </Card>
 
-          <div className="absolute bottom-4 left-4 right-4 z-10 grid gap-3 md:bottom-6 md:left-6 md:right-6 md:grid-cols-[minmax(0,1fr)_auto] md:items-end">
-            <div className="rounded-[24px] bg-white/86 p-5 shadow-[0_18px_60px_rgba(0,0,0,0.1)] backdrop-blur">
-              <div className="flex items-start gap-3">
-                <Globe2 className="mt-0.5 h-5 w-5 shrink-0 text-[#42520d]" />
+          <div className="absolute bottom-4 left-4 right-4 z-10 grid gap-2 md:bottom-6 md:left-6 md:right-6 md:grid-cols-[minmax(0,1fr)_auto] md:items-end">
+            <div className="max-w-md rounded-[14px] bg-white/90 p-3 shadow-[0_10px_34px_rgba(0,0,0,0.1)] backdrop-blur">
+              <div className="flex items-start gap-2">
+                <Globe2 className="mt-0.5 h-4 w-4 shrink-0 text-[#42520d]" />
                 <div>
-                  <h1 className="text-2xl font-semibold tracking-[-0.025em]">Heat Map</h1>
-                  <p className="mt-2 max-w-3xl text-sm leading-6 text-black/60">
+                  <h1 className="text-sm font-semibold tracking-[-0.01em]">Heat Map</h1>
+                  <p className="mt-1 text-[11px] leading-4 text-black/60">
                     {vcOnly
-                      ? 'A live density view of cold-pitch friendly VC contacts and venture hubs. Zoom in to reveal firm points.'
-                      : 'A live density view for Apparent builders, founder launches, VC hubs, and outside ecosystem signal. Zoom in to reveal city points.'}
+                      ? 'Live density of cold-pitch-friendly VC contacts and hubs. Zoom in for firm points.'
+                      : 'Live density of Apparent builders, launches, VC hubs, and ecosystem signal. Zoom in for city points.'}
                   </p>
                 </div>
               </div>
             </div>
 
-            <div className="rounded-[24px] bg-[#1a1a1a] p-5 text-white shadow-[0_18px_60px_rgba(0,0,0,0.18)]">
-              <div className="flex items-center gap-3">
-                <Layers3 className="h-5 w-5 text-[#dcefc7]" />
+            <div className="rounded-[14px] bg-[#1a1a1a] p-3 text-white shadow-[0_10px_34px_rgba(0,0,0,0.18)]">
+              <div className="flex items-center gap-2">
+                <Layers3 className="h-4 w-4 shrink-0 text-[#dcefc7]" />
                 <div>
-                  <p className="text-sm font-semibold">{filteredPoints.length} visible signals</p>
-                  <p className="mt-1 text-xs text-white/55">Heat uses weighted density, not just raw count.</p>
+                  <p className="text-xs font-semibold">{filteredPoints.length} visible signals</p>
+                  <p className="mt-0.5 text-[10px] text-white/55">Weighted density, not raw count.</p>
                 </div>
               </div>
             </div>
