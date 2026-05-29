@@ -2448,6 +2448,56 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
     setSelectedClusterCity(meetup.city);
   };
 
+  const deriveClaimLogo = (builder: BuilderNode) => {
+    try {
+      const target = builder.launchUrl || builder.githubUrl || builder.profileUrl;
+      const hostname = new URL(target).hostname;
+      return `https://www.google.com/s2/favicons?domain=${hostname}&sz=128`;
+    } catch {
+      return '';
+    }
+  };
+
+  // Claim an ingested public signal as the founder's own Apparent launch.
+  // Creates a real product_launch under the user; the radar dedup then
+  // automatically suppresses the ingested dot (company name collides).
+  const handleClaimBuilder = async (builder: BuilderNode) => {
+    setSavingWorkflow('claim');
+    setDashboardError('');
+
+    try {
+      const savedLaunch = await saveProductLaunch(user, {
+        name: builder.company,
+        tagline: builder.buildSummary.slice(0, 140),
+        intro: builder.buildSummary,
+        category: builder.category,
+        stage: builder.stage || 'Live',
+        location: builder.location,
+        launchUrl: builder.launchUrl || builder.profileUrl || '',
+        proofUrl: '',
+        logoUrl: deriveClaimLogo(builder),
+        metrics: builder.traction,
+        founderSignals: builder.rawTags,
+        lookingFor: '',
+        publicProfileEnabled: true,
+      });
+
+      setProductLaunches((current) => [savedLaunch, ...current.filter((launch) => launch.id !== savedLaunch.id)]);
+
+      // Drop the ingested node locally so the dashed dot disappears immediately.
+      const nextNodes = builderNodes.filter((node) => node.id !== builder.id);
+      setBuilderNodes(nextNodes);
+      setBuilderClusters(buildBuilderMapClusters(nextNodes, meetups));
+      setSelectedBuilderId((current) => (current === builder.id ? nextNodes[0]?.id ?? '' : current));
+
+      addActivity(`Claimed ${builder.company} — now your launch on Apparent`);
+    } catch (error) {
+      setDashboardError(error instanceof Error ? error.message : 'Unable to claim this builder.');
+    } finally {
+      setSavingWorkflow(null);
+    }
+  };
+
   const handleSaveProductLaunch = async () => {
     if (!launchDraft.name.trim()) {
       setDashboardError('Product name is required.');
@@ -4391,7 +4441,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
                 </div>
               )}
 
-              {!isInvestor && !selectedBuilder.isCurrentUser && (
+              {!isInvestor && !selectedBuilder.isCurrentUser && selectedBuilder.origin !== 'ingested' && (
                 <div className="mt-4 flex flex-wrap gap-2">
                   <button className="rounded-full border border-black/10 px-3 py-1.5 text-xs font-medium hover:bg-[#fbf8f3]" onClick={() => handleSaveBuilder(selectedBuilder)}>
                     {selectedState?.saved ? 'Saved peer' : 'Save peer'}
@@ -4408,6 +4458,21 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
                   >
                     Nearby meetups
                   </button>
+                </div>
+              )}
+
+              {!isInvestor && selectedBuilder.origin === 'ingested' && (
+                <div className="mt-4">
+                  <button
+                    className={`rounded-full ${accentSurface} px-3 py-1.5 text-xs font-medium ${accentForeground} disabled:opacity-50`}
+                    disabled={savingWorkflow === 'claim'}
+                    onClick={() => handleClaimBuilder(selectedBuilder)}
+                  >
+                    {savingWorkflow === 'claim' ? 'Claiming…' : 'This is my project — claim it'}
+                  </button>
+                  <p className="mt-2 text-[11px] leading-relaxed text-gray-500">
+                    Claiming creates a launch under your Apparent profile and replaces this ingested signal.
+                  </p>
                 </div>
               )}
             </aside>
