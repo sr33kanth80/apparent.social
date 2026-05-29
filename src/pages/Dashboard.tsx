@@ -3,6 +3,7 @@ import {
   Bell,
   Bookmark,
   Calendar,
+  Check,
   ChevronLeft,
   ChevronRight,
   ChevronUp,
@@ -1030,6 +1031,22 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
     saveCount: 0,
     recentSaverNames: [],
   });
+  const onboardingKey = `apparent:${user.id}:onboarding-dismissed`;
+  const [onboardingDismissed, setOnboardingDismissed] = useState<boolean>(() => {
+    try {
+      return window.localStorage.getItem(onboardingKey) === '1';
+    } catch {
+      return false;
+    }
+  });
+  const dismissOnboarding = () => {
+    setOnboardingDismissed(true);
+    try {
+      window.localStorage.setItem(onboardingKey, '1');
+    } catch {
+      /* ignore */
+    }
+  };
   const [meetupDraft, setMeetupDraft] = useState(emptyMeetupDraft);
   const [termDraft, setTermDraft] = useState(emptyTermDraft);
   const [messageDraft, setMessageDraft] = useState(emptyMessageDraft);
@@ -4209,6 +4226,126 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
     </section>
   );
 
+  const renderOnboardingChecklist = () => {
+    if (onboardingDismissed) return null;
+
+    const steps = isInvestor
+      ? [
+          {
+            label: 'Set your investment thesis',
+            hint: 'Sectors, stage, and what you back — this ranks every founder you see.',
+            done: Boolean((intakeValues.thesis ?? '').trim() || (intakeValues.sectors ?? '').trim()),
+            cta: 'Set thesis',
+            onClick: () => setActiveView('profile'),
+          },
+          {
+            label: 'Find founders who are raising now',
+            hint: 'Open Builder Radar and hit “Raising now” to see contactable, thesis-fit founders.',
+            done: builderDiscoveryStates.some((state) => state.saved),
+            cta: 'Open Builder Radar',
+            onClick: () => {
+              setActiveView('overview');
+              window.setTimeout(() => scrollToSection('map'), 80);
+            },
+          },
+          {
+            label: 'Move one into your deal flow',
+            hint: 'Save a founder, draft outreach, and track them from discovery to meeting.',
+            done: builderDiscoveryStates.some((state) => Boolean(state.stage)) || messages.length > 0,
+            cta: 'View deal flow',
+            onClick: () => setActiveView('deals'),
+          },
+        ]
+      : [
+          {
+            label: 'Complete your founder profile',
+            hint: 'Name, headline, and bio — this is what investors see first.',
+            done: Boolean((intakeValues.profileName ?? '').trim() && (intakeValues.headline ?? '').trim() && (intakeValues.bio ?? '').trim()),
+            cta: 'Edit profile',
+            onClick: () => setActiveView('profile'),
+          },
+          {
+            label: 'Set your fundraising status',
+            hint: '“Raising now” is what surfaces you to thesis-fit investors.',
+            done: intakeValues.fundraisingStatus === 'raising' || intakeValues.fundraisingStatus === 'open',
+            cta: 'Set status',
+            onClick: () => setActiveView('profile'),
+          },
+          {
+            label: 'Launch your first product',
+            hint: 'Add proof and traction so investors can evaluate you fast.',
+            done: productLaunches.length > 0,
+            cta: 'Launch product',
+            onClick: () => setActiveView('products'),
+          },
+        ];
+
+    const doneCount = steps.filter((step) => step.done).length;
+    if (doneCount === steps.length) return null; // fully activated — get out of the way
+
+    return (
+      <div className="mx-auto mb-8 max-w-[1292px]">
+      <section className="border-y border-black/10 bg-white">
+        <div className="flex items-start justify-between gap-3 px-5 py-4">
+          <div>
+            <h3 className="text-sm font-semibold">{isInvestor ? 'Get started sourcing' : 'Get discovered on Apparent'}</h3>
+            <p className="mt-1 text-xs text-gray-500">
+              {doneCount} of {steps.length} done · finish these to {isInvestor ? 'see contactable, thesis-fit founders' : 'get in front of thesis-fit investors'}.
+            </p>
+          </div>
+          <button
+            onClick={dismissOnboarding}
+            className="shrink-0 rounded-full p-1.5 text-gray-400 transition-colors hover:bg-[#fbf8f3] hover:text-black"
+            aria-label="Dismiss getting-started checklist"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+        <div className="px-5">
+          <div className="h-1.5 w-full overflow-hidden rounded-full bg-[#f4f1eb]">
+            <div className="h-full rounded-full bg-[#42520d] transition-all" style={{ width: `${(doneCount / steps.length) * 100}%` }} />
+          </div>
+        </div>
+        <div className="mt-3 divide-y divide-black/10">
+          {steps.map((step, index) => (
+            <div key={step.label} className="flex items-center gap-3 px-5 py-3">
+              <span
+                className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-semibold ${
+                  step.done ? 'bg-[#42520d] text-white' : 'border border-black/15 text-gray-400'
+                }`}
+              >
+                {step.done ? <Check className="h-3.5 w-3.5" /> : index + 1}
+              </span>
+              <div className="min-w-0 flex-1">
+                <p className={`text-sm font-medium ${step.done ? 'text-gray-400 line-through' : ''}`}>{step.label}</p>
+                {!step.done && <p className="mt-0.5 text-xs leading-relaxed text-gray-500">{step.hint}</p>}
+              </div>
+              {!step.done && (
+                <button
+                  onClick={step.onClick}
+                  className="shrink-0 rounded-full bg-[#42520d] px-3 py-1.5 text-xs font-semibold text-white transition-opacity hover:opacity-90"
+                >
+                  {step.cta}
+                </button>
+              )}
+            </div>
+          ))}
+        </div>
+        {!isInvestor && (
+          <div className="px-5 py-3">
+            <button
+              onClick={() => setActiveView('vc-heatmap')}
+              className="inline-flex items-center gap-1 text-xs font-semibold text-[#42520d] hover:underline"
+            >
+              Explore 1,800 thesis-fit VCs on the Heat Map <ArrowUpRight className="h-3 w-3" />
+            </button>
+          </div>
+        )}
+      </section>
+      </div>
+    );
+  };
+
   const renderNetworkMapSection = () => {
     const selectedState = selectedBuilder ? getBuilderState(selectedBuilder) : null;
     const shouldShowPlaceSuggestions =
@@ -6183,6 +6320,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
                 exit={{ opacity: 0, y: -8, filter: 'blur(2px)' }}
                 transition={{ duration: 0.22, ease: 'easeOut' }}
               >
+              {renderOnboardingChecklist()}
               <div
                 id="overview"
                 className={`grid scroll-mt-24 items-start gap-8 xl:justify-center ${
