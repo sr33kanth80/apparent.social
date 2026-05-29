@@ -427,6 +427,7 @@ export const HeatMap = ({ includeVCContacts = false, vcOnly = false, fullBleed =
   const [vcContacts, setVcContacts] = useState<VCContact[]>([]);
   const [mode, setMode] = useState<HeatMapMode>('all');
   const [selectedPoint, setSelectedPoint] = useState<HeatMapPoint | null>(null);
+  const [infoDismissed, setInfoDismissed] = useState(false);
 
   useEffect(() => {
     let isMounted = true;
@@ -572,19 +573,31 @@ export const HeatMap = ({ includeVCContacts = false, vcOnly = false, fullBleed =
           </div>
 
           <div className="absolute bottom-4 left-4 right-4 z-10 grid gap-2 md:bottom-6 md:left-6 md:right-6 md:grid-cols-[minmax(0,1fr)_auto] md:items-end">
-            <div className="max-w-md rounded-[14px] bg-white/90 p-3 shadow-[0_10px_34px_rgba(0,0,0,0.1)] backdrop-blur">
-              <div className="flex items-start gap-2">
-                <Globe2 className="mt-0.5 h-4 w-4 shrink-0 text-[#42520d]" />
-                <div>
-                  <h1 className="text-sm font-semibold tracking-[-0.01em]">Heat Map</h1>
-                  <p className="mt-1 text-[11px] leading-4 text-black/60">
-                    {vcOnly
-                      ? 'Live density of cold-pitch-friendly VC contacts and hubs. Zoom in for firm points.'
-                      : 'Live density of Apparent builders, launches, VC hubs, and ecosystem signal. Zoom in for city points.'}
-                  </p>
+            {!infoDismissed ? (
+              <div className="relative max-w-md rounded-[14px] bg-white/90 p-3 pr-8 shadow-[0_10px_34px_rgba(0,0,0,0.1)] backdrop-blur">
+                <div className="flex items-start gap-2">
+                  <Globe2 className="mt-0.5 h-4 w-4 shrink-0 text-[#42520d]" />
+                  <div>
+                    <h1 className="text-sm font-semibold tracking-[-0.01em]">Heat Map</h1>
+                    <p className="mt-1 text-[11px] leading-4 text-black/60">
+                      {vcOnly
+                        ? 'Live density of cold-pitch-friendly VC contacts and hubs. Zoom in for firm points.'
+                        : 'Live density of Apparent builders, launches, VC hubs, and ecosystem signal. Zoom in for city points.'}
+                    </p>
+                  </div>
                 </div>
+                <button
+                  type="button"
+                  onClick={() => setInfoDismissed(true)}
+                  className="absolute right-2 top-2 rounded-full p-1 text-black/30 transition-colors hover:bg-black/5 hover:text-black/60"
+                  aria-label="Dismiss Heat Map info"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
               </div>
-            </div>
+            ) : (
+              <div />
+            )}
 
             <div className="rounded-[14px] bg-[#1a1a1a] p-3 text-white shadow-[0_10px_34px_rgba(0,0,0,0.18)]">
               <div className="flex items-center gap-2">
