@@ -6,6 +6,7 @@ import { GitHubIcon } from '@/components/GitHubIcon';
 import { productLaunches } from '@/pages/Home';
 import type { PublicProjectDetail } from '@/lib/apparent-types';
 import { loadPublicProjectDetail } from '@/lib/dashboard-service';
+import { getStaticFounderProfile } from '@/lib/static-founder-profiles';
 
 const serifDisplay = {
   fontFamily: 'Georgia, "Times New Roman", serif',
@@ -23,10 +24,16 @@ const fallbackProjectDetail = (projectId: string): PublicProjectDetail | null =>
   const launch = productLaunches.find((item) => item.id === projectId);
   if (!launch) return null;
 
+  const slug = launch.founderProfilePath.replace('/profile/', '');
+  // Pull rich data from the static profiles map so the "Launched by"
+  // card gets the real photo, headline, and social links.
+  const staticResult = getStaticFounderProfile(slug);
+  const sf = staticResult?.kind === 'founder' ? staticResult.profile : null;
+
   return {
     launch: {
       id: launch.id,
-      ownerId: launch.founderProfilePath.replace('/profile/', ''),
+      ownerId: slug,
       slug: launch.id,
       name: launch.name,
       tagline: launch.tagline,
@@ -42,37 +49,37 @@ const fallbackProjectDetail = (projectId: string): PublicProjectDetail | null =>
       updatedAt: new Date().toISOString(),
     },
     founder: {
-      userId: launch.founderProfilePath.replace('/profile/', ''),
-      username: launch.founderProfilePath.replace('/profile/', ''),
-      profileName: launch.founder,
-      headline: `${launch.founder} launched ${launch.name}.`,
-      bio: launch.description,
-      profilePhotoUrl: '',
-      currentBuild: launch.name,
-      category: launch.category,
-      stage: launch.stage,
-      github: '',
-      traction: launch.momentum,
-      lookingFor: launch.investors.join(', '),
-      location: launch.location,
-      press: launch.website,
-      website: launch.website,
-      linkedin: '',
-      xProfile: '',
-      pastProducts: '',
+      userId: slug,
+      username: slug,
+      profileName: sf?.profileName || launch.founder,
+      headline: sf?.headline || `${launch.founder} · ${launch.name}`,
+      bio: sf?.bio || launch.description,
+      profilePhotoUrl: sf?.profilePhotoUrl || '',
+      currentBuild: sf?.currentBuild || launch.name,
+      category: sf?.category || launch.category,
+      stage: sf?.stage || launch.stage,
+      github: sf?.github || '',
+      traction: sf?.traction || launch.momentum,
+      lookingFor: sf?.lookingFor || launch.investors.join(', '),
+      location: sf?.location || launch.location,
+      press: sf?.press || launch.website,
+      website: sf?.website || launch.website,
+      linkedin: sf?.linkedin || '',
+      xProfile: sf?.xProfile || '',
+      pastProducts: sf?.pastProducts || '',
       launches: [],
     },
     teamMembers: [
       {
-        name: launch.founder,
+        name: sf?.profileName || launch.founder,
         role: 'Founder',
-        bio: `Leading ${launch.name}.`,
-        location: launch.location,
-        avatarUrl: '',
+        bio: sf?.bio || `Leading ${launch.name}.`,
+        location: sf?.location || launch.location,
+        avatarUrl: sf?.profilePhotoUrl || '',
         profileUrl: launch.founderProfilePath,
-        linkedinUrl: '',
-        xProfileUrl: '',
-        githubUrl: '',
+        linkedinUrl: sf?.linkedin || '',
+        xProfileUrl: sf?.xProfile || '',
+        githubUrl: sf?.github || '',
         sortOrder: 0,
       },
     ],
@@ -167,28 +174,40 @@ export const ProjectDetail = () => {
 
           <aside className="rounded-[24px] bg-white/75 p-5 shadow-[0_14px_44px_rgba(0,0,0,0.05)]">
             <p className="text-sm font-semibold text-[#42520d]">Launched by</p>
-            <div className="mt-4 flex items-center gap-3">
-              {/* Avatar — wrapping the photo in the same Link makes the whole avatar clickable */}
-              <Link to={`/profile/${founder?.userId || launch.ownerId}`} className="shrink-0">
+
+            {/* Founder card — entire row is one clickable link */}
+            <Link
+              to={`/profile/${founder?.userId || launch.ownerId}`}
+              className="mt-4 flex items-center gap-3 rounded-[18px] p-2 -mx-2 transition-colors hover:bg-[#f4f1eb] group"
+            >
+              {/* Avatar */}
+              <div className="shrink-0">
                 {founder?.profilePhotoUrl ? (
                   <img
                     src={founder.profilePhotoUrl}
                     alt={founderName}
-                    className="h-12 w-12 rounded-2xl object-cover ring-2 ring-transparent transition hover:ring-[#42520d]/20"
+                    className="h-12 w-12 rounded-2xl object-cover"
                   />
                 ) : (
-                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#dcefc7] text-sm font-semibold transition hover:bg-[#c5e8a5]">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#dcefc7] text-sm font-semibold text-[#42520d]">
                     {founderName.slice(0, 2).toUpperCase()}
                   </div>
                 )}
-              </Link>
-              <div>
-                <Link to={`/profile/${founder?.userId || launch.ownerId}`} className="text-base font-semibold hover:text-[#42520d]">
-                  {founderName}
-                </Link>
-                <p className="mt-1 text-sm text-black/50">{founder?.headline || founder?.currentBuild || launch.tagline}</p>
               </div>
-            </div>
+
+              {/* Name + headline */}
+              <div className="min-w-0 flex-1">
+                <p className="text-base font-semibold leading-tight group-hover:text-[#42520d] transition-colors">
+                  {founderName}
+                </p>
+                <p className="mt-1 truncate text-sm text-black/50">
+                  {founder?.headline || founder?.currentBuild || launch.tagline}
+                </p>
+              </div>
+
+              {/* Arrow hint */}
+              <ArrowUpRight className="h-4 w-4 shrink-0 text-black/25 transition-colors group-hover:text-[#42520d]" />
+            </Link>
             <div className="mt-5 grid gap-3">
               {launch.launchUrl && (
                 <a href={launch.launchUrl} target="_blank" rel="noreferrer" className="inline-flex justify-center rounded-full bg-[#42520d] px-5 py-3 text-sm font-semibold text-white hover:bg-[#34420a]">
