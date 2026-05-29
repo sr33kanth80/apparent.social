@@ -296,9 +296,9 @@ function ApparentHeatmapLayers({
   return null;
 }
 
-// Blueprint-style detail panel: a drafting-sheet aesthetic (blueprint blue,
-// grid lines, corner ticks, mono labels) shown on the side of the map.
-const BLUEPRINT_LINE = 'rgba(142,197,255,0.25)';
+// Anthropic / Claude-themed detail panel: warm cream ground, clay-coral accent,
+// serif name, clean key/value rows — shown on the side of the map.
+const CLAUDE_CLAY = '#cc785c';
 
 function HeatMapDetailPanel({ point, onClose }: { point: HeatMapPoint; onClose: () => void }) {
   const sourceLabel =
@@ -310,123 +310,111 @@ function HeatMapDetailPanel({ point, onClose }: { point: HeatMapPoint; onClose: 
   const kindLabel = point.kind === 'vc' ? 'VC density' : 'Builder density';
 
   const specRows = [
-    ['Signal', String(point.intensity)],
+    ['Signal score', String(point.intensity)],
     ['City', point.city],
     point.partnerName ? ['Partner', point.partnerName] : null,
     point.fundStage ? ['Stage', point.fundStage] : null,
   ].filter(Boolean) as Array<[string, string]>;
 
-  const corner = 'pointer-events-none absolute h-2.5 w-2.5 border-[#8ec5ff]/60';
-
   return (
-    <div
-      className="relative flex max-h-[26rem] flex-col overflow-hidden rounded-[12px] border border-[#8ec5ff]/40 text-[#dbeafe] shadow-[0_20px_60px_rgba(2,12,30,0.55)] backdrop-blur-sm"
-      style={{
-        backgroundColor: 'rgba(8,29,58,0.94)',
-        backgroundImage:
-          'linear-gradient(rgba(142,197,255,0.10) 1px, transparent 1px), linear-gradient(90deg, rgba(142,197,255,0.10) 1px, transparent 1px)',
-        backgroundSize: '18px 18px',
-      }}
-    >
-      {/* corner ticks */}
-      <span className={`${corner} left-1.5 top-1.5 border-l border-t`} />
-      <span className={`${corner} right-1.5 top-1.5 border-r border-t`} />
-      <span className={`${corner} bottom-1.5 left-1.5 border-b border-l`} />
-      <span className={`${corner} bottom-1.5 right-1.5 border-b border-r`} />
-
+    <div className="flex max-h-[34rem] flex-col overflow-hidden rounded-[18px] border border-black/10 bg-[#f0eee6] text-[#1f1e1d] shadow-[0_20px_60px_rgba(0,0,0,0.16)]">
       {/* header */}
-      <div className="flex items-start justify-between gap-2 px-4 pb-3 pt-4" style={{ borderBottom: `1px solid ${BLUEPRINT_LINE}` }}>
+      <div className="flex items-start justify-between gap-3 border-b border-black/10 px-5 pb-4 pt-5">
         <div className="min-w-0">
-          <p className="font-mono text-[9px] uppercase tracking-[0.2em] text-[#8ec5ff]">{sourceLabel} · {kindLabel}</p>
-          <h3 className="mt-1 truncate font-mono text-base font-semibold leading-tight text-white">{point.name}</h3>
+          <p className="text-[10px] font-semibold uppercase tracking-[0.16em]" style={{ color: CLAUDE_CLAY }}>
+            {sourceLabel} · {kindLabel}
+          </p>
+          <h3 className="mt-1.5 font-serif text-xl font-normal leading-tight tracking-[-0.01em] text-[#1a1a1a]">
+            {point.name}
+          </h3>
         </div>
         <button
           type="button"
           onClick={onClose}
-          className="shrink-0 rounded border border-[#8ec5ff]/30 p-1 text-[#8ec5ff] transition-colors hover:bg-[#8ec5ff]/10"
+          className="shrink-0 rounded-full p-1.5 text-black/40 transition-colors hover:bg-black/5 hover:text-black/70"
           aria-label="Close detail panel"
         >
-          <X className="h-3.5 w-3.5" />
+          <X className="h-4 w-4" />
         </button>
       </div>
 
       <div className="flex-1 overflow-y-auto">
-      {/* logo stamp */}
-      {point.imageUrl && point.imageKind === 'logo' && (
-        <div className="flex justify-center py-3" style={{ borderBottom: `1px solid ${BLUEPRINT_LINE}` }}>
-          <div className="flex h-12 w-12 items-center justify-center rounded border border-[#8ec5ff]/40 bg-white/95">
-            <img src={point.imageUrl} alt={`${point.name} logo`} className="h-8 w-8 object-contain" />
+        {/* logo */}
+        {point.imageUrl && point.imageKind === 'logo' && (
+          <div className="flex justify-center border-b border-black/10 py-4">
+            <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-black/10 bg-white">
+              <img src={point.imageUrl} alt={`${point.name} logo`} className="h-9 w-9 object-contain" />
+            </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* spec rows with dotted leaders */}
-      <div className="px-4 py-3 font-mono text-[11px]">
-        {specRows.map(([label, value]) => (
-          <div key={label} className="flex items-baseline gap-2 py-1">
-            <span className="shrink-0 uppercase tracking-[0.15em] text-[#8ec5ff]/70">{label}</span>
-            <span className="mb-[3px] flex-1 self-end border-b border-dashed border-[#8ec5ff]/30" />
-            <span className="max-w-[58%] truncate text-right text-white">{value}</span>
-          </div>
-        ))}
-      </div>
-
-      {point.label && (
-        <p className="px-4 py-3 text-[11px] leading-5 text-[#dbeafe]/80" style={{ borderTop: `1px solid ${BLUEPRINT_LINE}` }}>
-          {point.label}
-        </p>
-      )}
-
-      {point.email && (
-        <p className="break-all px-4 pb-1 font-mono text-[11px] text-[#8ec5ff]">{point.email}</p>
-      )}
-
-      <div className="flex gap-2 px-4 pb-4 pt-2">
-        <a
-          href={point.email ? `mailto:${point.email}` : point.websiteUrl || '#'}
-          target={point.email ? undefined : '_blank'}
-          rel={point.email ? undefined : 'noreferrer'}
-          className="flex flex-1 items-center justify-center gap-1.5 rounded border border-[#8ec5ff]/50 bg-[#8ec5ff]/10 px-3 py-2 font-mono text-[11px] font-semibold uppercase tracking-wide text-white transition-colors hover:bg-[#8ec5ff]/20"
-        >
-          <LocateFixed className="h-3.5 w-3.5" />
-          {point.email ? 'Email' : 'Focus'}
-        </a>
-        {point.profilePath ? (
-          <Link
-            to={point.profilePath}
-            className="flex h-9 w-9 items-center justify-center rounded border border-[#8ec5ff]/40 text-[#8ec5ff] transition-colors hover:bg-[#8ec5ff]/10"
-            aria-label={`Open ${point.name}`}
-          >
-            <ArrowUpRight className="h-3.5 w-3.5" />
-          </Link>
-        ) : point.websiteUrl ? (
-          <a
-            href={point.websiteUrl}
-            target="_blank"
-            rel="noreferrer"
-            className="flex h-9 w-9 items-center justify-center rounded border border-[#8ec5ff]/40 text-[#8ec5ff] transition-colors hover:bg-[#8ec5ff]/10"
-            aria-label={`Open ${point.name}`}
-          >
-            <ArrowUpRight className="h-3.5 w-3.5" />
-          </a>
-        ) : null}
-      </div>
-
-      {point.socialLinks && point.socialLinks.length > 0 && (
-        <div className="flex flex-wrap gap-1.5 px-4 pb-4">
-          {point.socialLinks.map((link) => (
-            <a
-              key={link.url}
-              href={link.url}
-              target="_blank"
-              rel="noreferrer"
-              className="rounded border border-[#8ec5ff]/30 px-2 py-0.5 font-mono text-[10px] uppercase tracking-wide text-[#8ec5ff]/80 transition-colors hover:bg-[#8ec5ff]/10 hover:text-white"
-            >
-              {link.label}
-            </a>
+        {/* key / value rows */}
+        <div className="divide-y divide-black/[0.07] px-5">
+          {specRows.map(([label, value]) => (
+            <div key={label} className="flex items-baseline justify-between gap-3 py-2.5 text-sm">
+              <span className="shrink-0 text-black/45">{label}</span>
+              <span className="max-w-[62%] truncate text-right font-medium text-[#1a1a1a]">{value}</span>
+            </div>
           ))}
         </div>
-      )}
+
+        {point.label && (
+          <p className="border-t border-black/10 px-5 py-4 text-sm leading-6 text-black/60">{point.label}</p>
+        )}
+
+        {point.email && (
+          <p className="break-all px-5 pt-3 text-sm font-medium" style={{ color: CLAUDE_CLAY }}>
+            {point.email}
+          </p>
+        )}
+
+        <div className="flex gap-2 px-5 pb-4 pt-3">
+          <a
+            href={point.email ? `mailto:${point.email}` : point.websiteUrl || '#'}
+            target={point.email ? undefined : '_blank'}
+            rel={point.email ? undefined : 'noreferrer'}
+            className="flex flex-1 items-center justify-center gap-1.5 rounded-full px-4 py-2.5 text-sm font-semibold text-white transition-opacity hover:opacity-90"
+            style={{ backgroundColor: CLAUDE_CLAY }}
+          >
+            <LocateFixed className="h-3.5 w-3.5" />
+            {point.email ? 'Email' : 'Focus'}
+          </a>
+          {point.profilePath ? (
+            <Link
+              to={point.profilePath}
+              className="flex h-10 w-10 items-center justify-center rounded-full border border-black/15 text-black/70 transition-colors hover:bg-black/5"
+              aria-label={`Open ${point.name}`}
+            >
+              <ArrowUpRight className="h-4 w-4" />
+            </Link>
+          ) : point.websiteUrl ? (
+            <a
+              href={point.websiteUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="flex h-10 w-10 items-center justify-center rounded-full border border-black/15 text-black/70 transition-colors hover:bg-black/5"
+              aria-label={`Open ${point.name}`}
+            >
+              <ArrowUpRight className="h-4 w-4" />
+            </a>
+          ) : null}
+        </div>
+
+        {point.socialLinks && point.socialLinks.length > 0 && (
+          <div className="flex flex-wrap gap-1.5 px-5 pb-5">
+            {point.socialLinks.map((link) => (
+              <a
+                key={link.url}
+                href={link.url}
+                target="_blank"
+                rel="noreferrer"
+                className="rounded-full border border-black/15 px-3 py-1 text-xs font-medium text-black/60 transition-colors hover:bg-black/5 hover:text-black"
+              >
+                {link.label}
+              </a>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
