@@ -42,7 +42,7 @@ const fallbackProjectDetail = (projectId: string): PublicProjectDetail | null =>
       stage: launch.stage,
       location: launch.location,
       launchUrl: launch.website,
-      proofUrl: launch.website,
+      proofUrl: '', // no separate proof URL for curated static launches
       metrics: launch.momentum,
       founderSignals: launch.proof,
       lookingFor: launch.investors.join(', '),
