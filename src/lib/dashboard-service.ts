@@ -35,6 +35,7 @@ import type {
   UserSettings,
 } from '@/lib/apparent-types';
 import { isSupabaseConfigured, supabase } from '@/lib/supabase';
+import { getStaticFounderProfile } from '@/lib/static-founder-profiles';
 
 const settingsDefault: UserSettings = {
   dailyDigestEnabled: true,
@@ -1195,7 +1196,8 @@ export const loadPublicFounderProfile = async (profileId: string): Promise<Publi
  */
 export const loadPublicProfile = async (username: string): Promise<PublicProfileResult> => {
   if (!isSupabaseConfigured || !supabase) {
-    return { kind: 'not_found' };
+    // No DB — serve curated static profiles as the sole source.
+    return getStaticFounderProfile(username) ?? { kind: 'not_found' };
   }
 
   try {
@@ -1207,7 +1209,8 @@ export const loadPublicProfile = async (username: string): Promise<PublicProfile
     .maybeSingle();
 
   if (!profileRow) {
-    return { kind: 'not_found' };
+    // Not in Supabase — fall back to curated static profiles.
+    return getStaticFounderProfile(username) ?? { kind: 'not_found' };
   }
 
   const userId = String(profileRow.id);
@@ -1322,7 +1325,7 @@ export const loadPublicProfile = async (username: string): Promise<PublicProfile
     },
   };
   } catch {
-    return { kind: 'not_found' };
+    return getStaticFounderProfile(username) ?? { kind: 'not_found' };
   }
 };
 
