@@ -238,22 +238,12 @@ function ApparentHeatmapLayers({
           'circle-sort-key': ['case', ['boolean', ['get', 'selected'], false], 1, 0],
         },
         paint: {
+          // Plain zoom interpolations (no nesting) so they evaluate reliably.
           'circle-radius': [
             'case',
             ['boolean', ['get', 'selected'], false],
-            // Selected dot grows with zoom so it stays prominent up close.
-            ['interpolate', ['linear'], ['zoom'], 4, 9, 12, 20],
-            // Regular dots grow with zoom (and by signal weight) so they're
-            // clearly visible when zoomed into a city, not just at mid-zoom.
-            [
-              'interpolate',
-              ['linear'],
-              ['zoom'],
-              4,
-              ['interpolate', ['linear'], ['get', 'mag'], 1, 2, 6, 4],
-              12,
-              ['interpolate', ['linear'], ['get', 'mag'], 1, 7, 6, 13],
-            ],
+            ['interpolate', ['linear'], ['zoom'], 4, 9, 10, 16, 16, 24],
+            ['interpolate', ['linear'], ['zoom'], 4, 3, 8, 7, 16, 14],
           ],
           'circle-color': [
             'case',
@@ -280,7 +270,7 @@ function ApparentHeatmapLayers({
             ['boolean', ['get', 'selected'], false],
             1,
             // Fade in as the heatmap fades out, then stay solid when zoomed in.
-            ['interpolate', ['linear'], ['zoom'], 4.5, 0, 6.5, 0.8, 12, 0.95],
+            ['interpolate', ['linear'], ['zoom'], 4.5, 0.15, 6, 0.85, 16, 1],
           ],
         },
       });
