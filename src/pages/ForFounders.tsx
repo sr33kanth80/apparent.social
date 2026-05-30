@@ -1,4 +1,4 @@
-import { ArrowUpRight, CheckCircle2, Map, Rocket, Search, Users } from 'lucide-react';
+import { ArrowUpRight, CheckCircle2, Map, MapPin, Rocket, Search, Users } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { GitHubIcon } from '../components/GitHubIcon';
 
@@ -92,51 +92,50 @@ export const ForFounders = () => {
           </button>
         </div>
 
-        {/* Mock proof profile — what an investor actually sees first. */}
+        {/* Mock founder profile — mirrors the real public profile an investor sees. */}
         <div className="relative flex min-h-[520px] flex-col justify-between overflow-hidden rounded-[32px] bg-[#1c1c1a] p-7 text-white">
-          <div className="flex items-center justify-between">
-            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#bcd99a]">Proof profile</p>
-            <Rocket className="h-5 w-5 text-[#02A070]" />
-          </div>
           <div>
-            <div className="flex items-center gap-3">
-              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#42520d] text-base font-semibold">AK</div>
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="rounded-full bg-[#dcefc7] px-3 py-1 text-xs font-semibold text-[#42520d]">Founder on Apparent</span>
+              <span className="rounded-full bg-[#42520d] px-3 py-1 text-xs font-semibold text-white">Raising Seed · $1.5M</span>
+              <span className="flex items-center gap-1 text-xs text-white/50"><MapPin className="h-3 w-3" /> San Francisco</span>
+            </div>
+            <div className="mt-6 flex items-center gap-3">
+              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#dcefc7] text-base font-semibold text-[#42520d]">AK</div>
               <div className="min-w-0">
                 <p className="text-lg font-semibold">Aria Kim</p>
-                <p className="text-sm text-white/55">@ariakim · San Francisco</p>
+                <p className="text-sm text-white/55">@ariakim</p>
               </div>
-              <span className="ml-auto rounded-full bg-[#dcefc7] px-3 py-1 text-xs font-semibold text-black">92% fit</span>
             </div>
-            <div className="mt-5 flex flex-wrap gap-2">
-              {['AI agents', 'Seed', 'Open source'].map((tag) => (
-                <span key={tag} className="rounded-full border border-white/15 px-3 py-1 text-xs font-medium text-white/70">{tag}</span>
+            <p className="mt-4 text-sm leading-6 text-white/70">Building AgentKit, open-source agents teams actually ship to production.</p>
+            <div className="mt-6 grid grid-cols-2 gap-3 border-t border-white/10 pt-6">
+              {[
+                ['Current build', 'AgentKit v2'],
+                ['Category', 'AI agents'],
+                ['Stage', 'Seed'],
+                ['Traction', '4.2k GitHub stars'],
+              ].map(([label, value]) => (
+                <div key={label}>
+                  <p className="text-[0.65rem] font-semibold uppercase tracking-[0.12em] text-white/40">{label}</p>
+                  <p className="mt-1 text-sm font-medium text-white/85">{value}</p>
+                </div>
               ))}
             </div>
-            <div className="mt-6 grid gap-4 border-t border-white/10 pt-6">
-              <div className="flex items-start gap-3">
-                <GitHubIcon className="mt-0.5 h-4 w-4 shrink-0 text-[#bcd99a]" />
-                <div>
-                  <p className="text-sm font-medium">github.com/ariakim/agentkit</p>
-                  <p className="text-xs text-white/45">4.2k stars · shipping weekly</p>
-                </div>
-              </div>
-              <div className="flex items-start gap-3">
-                <Rocket className="mt-0.5 h-4 w-4 shrink-0 text-[#bcd99a]" />
-                <div>
-                  <p className="text-sm font-medium">Launched AgentKit v2</p>
-                  <p className="text-xs text-white/45">1,100 upvotes on launch day</p>
-                </div>
-              </div>
-              <div className="flex items-start gap-3">
-                <Users className="mt-0.5 h-4 w-4 shrink-0 text-[#bcd99a]" />
-                <div>
-                  <p className="text-sm font-medium">38 design partners</p>
-                  <p className="text-xs text-white/45">using it in production</p>
-                </div>
-              </div>
-            </div>
           </div>
-          <p className="text-xs text-white/40">Investors see the whole picture. What you&apos;ve shipped counts most.</p>
+          <div className="mt-7">
+            <div className="flex flex-wrap gap-2">
+              {[
+                ['Website', Rocket],
+                ['GitHub', GitHubIcon],
+                ['LinkedIn', Users],
+              ].map(([label, Icon]) => (
+                <span key={label as string} className="flex items-center gap-1.5 rounded-full bg-white/[0.06] px-3 py-1.5 text-xs font-medium text-white/75">
+                  <Icon className="h-3.5 w-3.5" /> {label as string}
+                </span>
+              ))}
+            </div>
+            <p className="mt-6 text-xs text-white/40">Investors see the whole picture. What you&apos;ve shipped counts most.</p>
+          </div>
         </div>
       </section>
 
