@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import { LogoIcon } from '@/components/LogoIcon';
 import { GitHubIcon } from '@/components/GitHubIcon';
+import { GitHubPanel } from '@/components/GitHubPanel';
 import { loadPublicProfile, saveMessage } from '@/lib/dashboard-service';
 import { getCurrentAppUser } from '@/lib/auth-service';
 import type { AppUser, PublicFounderProfile, PublicInvestorProfile, PublicProfileResult } from '@/lib/apparent-types';
@@ -408,6 +409,9 @@ const FounderProfilePage = ({
           })()}
         </div>
       </section>
+
+      {/* ── GitHub (live public stats + contribution graph) ── */}
+      {profile.github && <GitHubPanel github={profile.github} />}
 
       {/* ── Product launches ── */}
       {profile.launches.length > 0 && (
