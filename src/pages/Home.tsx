@@ -1,25 +1,7 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import {
-  ArrowUpRight,
-  Bookmark,
-  Check,
-  ChevronLeft,
-  ChevronRight,
-  ChevronUp,
-  FileText,
-  MapPin,
-  MessageSquare,
-  Radar,
-  Send,
-  Star,
-  Zap,
-} from 'lucide-react';
+import { ArrowUpRight, Check, MapPin, Radar, Send, Zap } from 'lucide-react';
 import { EditorialNavbar } from '../components/EditorialNavbar';
 import { HeatMap } from './HeatMap';
-import { loadPublicProductLaunches } from '../lib/dashboard-service';
-import { getFounderPhotoUrl } from '../lib/static-founder-profiles';
-import type { ProductLaunch as WorkspaceProductLaunch } from '../lib/apparent-types';
 
 const serifDisplay = {
   fontFamily: 'Georgia, "Times New Roman", serif',
@@ -267,9 +249,7 @@ export const productLaunches: FrontPageLaunch[] = [
   },
 ];
 
-const filters = ['Today', 'Trending', 'AI', 'Devtools', 'Fintech', 'Data', 'Infra', 'Productivity', 'Audio', 'Security', 'Open Source', 'Climate', 'Health', 'Nearby'];
-
-// Recognizable funds for the hero trust pill — logos pulled via the favicon
+// Recognizable funds for the hero trust pill. Logos come from the favicon
 // service already used for launch logos, so they stay reliable (no hotlinking).
 const heroInvestors: { name: string; domain: string }[] = [
   { name: 'Y Combinator', domain: 'ycombinator.com' },
@@ -279,103 +259,8 @@ const heroInvestors: { name: string; domain: string }[] = [
   { name: 'Antler', domain: 'antler.co' },
 ];
 
-const getDomain = (url: string) => {
-  try {
-    return new URL(url).hostname.replace('www.', '');
-  } catch {
-    return 'apparent.dev';
-  }
-};
-
-const workspaceLaunchToFrontPageLaunch = (launch: WorkspaceProductLaunch, index: number): FrontPageLaunch => ({
-  id: `workspace-${launch.id}`,
-  name: launch.name,
-  founder: launch.ownerId === 'dev-founder' ? 'Apparent founder' : 'Founder on Apparent',
-  tagline: launch.tagline || 'New product launched into Apparent.',
-  description: launch.intro || launch.metrics || launch.tagline || 'This founder has launched a new product for investor and builder discovery.',
-  category: launch.category || 'Builder product',
-  location: launch.location || 'Apparent',
-  stage: launch.stage || 'Launched',
-  launched: 'Today',
-  fit: Math.max(72, 94 - index * 3),
-  saves: Math.max(18, launch.name.length * 5),
-  comments: Math.max(3, launch.category.length || 3),
-  momentum: launch.metrics || 'Fresh founder launch',
-  website: launch.launchUrl || launch.proofUrl || 'https://apparent.dev/',
-  projectPath: `/projects/${launch.slug || launch.id}`,
-  founderProfilePath: `/profile/${launch.ownerId}`,
-  logoUrl: launch.logoUrl,
-  bannerUrl: launch.bannerUrl,
-  demoVideoUrl: launch.demoVideoUrl,
-  pitchVideoUrl: launch.pitchVideoUrl,
-  pitchDeckUrl: launch.pitchDeckUrl,
-  pitchBookNote: launch.pitchBookNote,
-  pitchVisibility: launch.pitchVisibility,
-  founderSignals: launch.founderSignals,
-  proof: [launch.metrics, launch.proofUrl ? 'Proof link attached' : '', launch.stage].filter(
-    (item): item is string => Boolean(item),
-  ),
-  investors: [launch.category || 'Builder proof', launch.stage || 'Fresh launch', 'Founder profile'],
-});
-
 export const Home = () => {
   const navigate = useNavigate();
-  const [activeFilter, setActiveFilter] = useState('Today');
-  const [selectedId, setSelectedId] = useState(productLaunches[0].id);
-  const [publishedLaunches, setPublishedLaunches] = useState<WorkspaceProductLaunch[]>([]);
-  const filterScrollRef = useRef<HTMLDivElement | null>(null);
-
-  useEffect(() => {
-    let isMounted = true;
-
-    loadPublicProductLaunches().then((launches) => {
-      if (isMounted) {
-        setPublishedLaunches(launches);
-      }
-    });
-
-    return () => {
-      isMounted = false;
-    };
-  }, []);
-
-  const launchRows = useMemo(
-    () => [
-      ...publishedLaunches.map((launch, index) => workspaceLaunchToFrontPageLaunch(launch, index)),
-      ...productLaunches,
-    ],
-    [publishedLaunches],
-  );
-
-  const visibleLaunches = useMemo(() => {
-    if (activeFilter === 'Today') {
-      return launchRows;
-    }
-
-    if (activeFilter === 'Trending') {
-      return [...launchRows].sort((a, b) => b.saves + b.comments - (a.saves + a.comments));
-    }
-
-    if (activeFilter === 'Nearby') {
-      return launchRows.filter((launch) => ['San Francisco', 'New York', 'Apparent'].includes(launch.location));
-    }
-
-    return launchRows.filter((launch) => launch.category.toLowerCase().includes(activeFilter.toLowerCase()));
-  }, [activeFilter, launchRows]);
-
-  const selectedLaunch = launchRows.find((launch) => launch.id === selectedId) ?? launchRows[0];
-  const selectedDomain = getDomain(selectedLaunch.website);
-
-  const handleSelectLaunch = (launch: FrontPageLaunch) => {
-    setSelectedId(launch.id);
-  };
-
-  const scrollFilters = (direction: -1 | 1) => {
-    filterScrollRef.current?.scrollBy({
-      left: direction * 140,
-      behavior: 'smooth',
-    });
-  };
 
   return (
     <main className="min-h-screen overflow-x-hidden bg-[#fbfaf7] text-black">
@@ -406,7 +291,7 @@ export const Home = () => {
           Stop cold-emailing investors. Let them find you.
         </h1>
         <p className="mt-5 max-w-2xl text-base leading-7 text-black/65 md:text-lg">
-          Apparent turns what you ship — launches, commits, traction — into investor discovery.
+          Apparent turns your launches, commits, and traction into investor discovery.
           Browse the live VC map, get matched on thesis fit, and signal when you&apos;re raising.
           No spreadsheets, no cold outreach.
         </p>
@@ -470,7 +355,7 @@ export const Home = () => {
             <ul className="mt-5 grid gap-3 text-sm leading-6 text-black/65">
               {[
                 'Turn launches, commits, and traction into a profile investors actually browse.',
-                'See exactly which investors are tracking you — and follow up when it counts.',
+                'See exactly which investors are tracking you, and follow up when it counts.',
                 'Flip on “raising now” and surface to thesis-fit funds. No mass cold emails.',
               ].map((item) => (
                 <li key={item} className="flex items-start gap-2.5">
@@ -491,7 +376,7 @@ export const Home = () => {
           {/* Investors */}
           <div className="flex flex-col rounded-[24px] bg-[#1c1c1a] p-7 text-white">
             <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#bcd99a]">For investors</p>
-            <h3 className="mt-3 text-2xl font-semibold tracking-[-0.02em]">See who&apos;s shipping — live.</h3>
+            <h3 className="mt-3 text-2xl font-semibold tracking-[-0.02em]">See who&apos;s shipping, live.</h3>
             <ul className="mt-5 grid gap-3 text-sm leading-6 text-white/70">
               {[
                 'A live map of builders who are actually shipping, not a static directory.',
@@ -513,264 +398,6 @@ export const Home = () => {
             </button>
           </div>
         </div>
-      </section>
-
-      <section id="signals" className="mx-auto max-w-[78rem] border-t border-black/10 px-5 pt-12 sm:px-8">
-        <h2 className="max-w-2xl text-3xl font-normal leading-tight tracking-[-0.035em] md:text-4xl" style={serifDisplay}>
-          The kind of momentum investors track.
-        </h2>
-        <p className="mt-3 max-w-2xl text-sm leading-6 text-black/60">
-          Real builder signal, ranked by proof and thesis fit — the feed your profile joins the day you ship.
-        </p>
-      </section>
-
-      <section className="mx-auto grid max-w-[78rem] gap-6 px-5 pb-6 pt-6 sm:px-8 lg:grid-cols-[minmax(0,1fr)_21rem]">
-        <div>
-          <div className="mb-4 grid gap-3 md:grid-cols-[minmax(12rem,16rem)_minmax(0,1fr)] md:items-center">
-            <div className="min-w-0">
-              <p className="text-base font-semibold text-black">Trending now</p>
-            </div>
-            <div className="flex min-w-0 max-w-full items-center gap-1.5">
-              <button
-                type="button"
-                onClick={() => scrollFilters(-1)}
-                className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-white/85 text-black/60 transition-colors hover:bg-white hover:text-black"
-                aria-label="Scroll filters left"
-              >
-                <ChevronLeft className="h-3.5 w-3.5" />
-              </button>
-              <div ref={filterScrollRef} className="launch-filter-scroll flex min-w-0 flex-1 gap-1.5 overflow-x-auto px-1 pb-1">
-                {filters.map((filter) => (
-                  <button
-                    key={filter}
-                    type="button"
-                    onClick={() => setActiveFilter(filter)}
-                    className={`shrink-0 rounded-full px-2.5 py-1.5 text-xs font-semibold transition-colors ${
-                      activeFilter === filter ? 'bg-black text-white' : 'bg-white/80 text-black/60 hover:bg-white'
-                    }`}
-                  >
-                    {filter}
-                  </button>
-                ))}
-              </div>
-              <button
-                type="button"
-                onClick={() => scrollFilters(1)}
-                className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-white/85 text-black/60 transition-colors hover:bg-white hover:text-black"
-                aria-label="Scroll filters right"
-              >
-                <ChevronRight className="h-3.5 w-3.5" />
-              </button>
-            </div>
-          </div>
-
-          <div className="grid gap-3">
-            {visibleLaunches.map((launch, index) => {
-              const isSelected = selectedLaunch.id === launch.id;
-              const domain = getDomain(launch.website);
-
-              return (
-                <button
-                  key={launch.id}
-                  type="button"
-                  onClick={() => handleSelectLaunch(launch)}
-                  className={`group grid gap-4 rounded-[22px] bg-white/78 p-4 text-left shadow-[0_10px_34px_rgba(0,0,0,0.04)] transition-all hover:-translate-y-0.5 hover:bg-white md:grid-cols-[3.25rem_1fr_auto] md:items-center ${
-                    isSelected ? 'ring-2 ring-[#42520d]/20' : ''
-                  }`}
-                >
-                  <div className="flex items-center gap-3 md:block">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-[16px] bg-[#fbfaf7]">
-                      <img
-                        src={launch.logoUrl || `https://www.google.com/s2/favicons?domain=${domain}&sz=128`}
-                        alt=""
-                        className="h-7 w-7 object-contain"
-                      />
-                    </div>
-                    <span className="text-xs font-semibold uppercase tracking-[0.16em] text-black/35 md:mt-4 md:block">
-                      0{index + 1}
-                    </span>
-                  </div>
-
-                  <div>
-                    <div className="flex flex-wrap items-center gap-2">
-                      <h2 className="text-xl font-semibold tracking-[-0.02em]">
-                        {launch.name}
-                      </h2>
-                      <span className="rounded-full bg-[#dcefc7] px-2.5 py-0.5 text-xs font-semibold text-black">
-                        {launch.fit}% thesis fit
-                      </span>
-                    </div>
-                    <p className="mt-1.5 text-sm leading-6 text-black/70">{launch.tagline}</p>
-                    <div className="mt-3 flex flex-wrap gap-2 text-xs font-semibold text-black/45">
-                      <span>{launch.category}</span>
-                      <span>-</span>
-                      <span>{launch.location}</span>
-                      <span>-</span>
-                      <span>{launch.stage}</span>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-4 text-sm font-semibold text-black/60 md:w-44 md:justify-end">
-                    <span className="inline-flex items-center gap-1.5">
-                      <ChevronUp className="h-4 w-4 text-[#42520d]" />
-                      {launch.saves}
-                    </span>
-                    <span className="inline-flex items-center gap-1.5 text-black/45">
-                      <MessageSquare className="h-4 w-4" />
-                      {launch.comments}
-                    </span>
-                    <span className="ml-auto rounded-full bg-[#f4f1eb] px-3.5 py-2 text-xs font-semibold text-black/70 transition-colors group-hover:bg-[#42520d] group-hover:text-white md:ml-0">
-                      View
-                    </span>
-                  </div>
-                </button>
-              );
-            })}
-          </div>
-        </div>
-
-        <aside className="lg:sticky lg:top-28 lg:self-start">
-          <div className="rounded-[24px] bg-white/80 p-5 shadow-[0_14px_44px_rgba(0,0,0,0.05)]">
-            <div className="flex items-center justify-between">
-              <p className="text-sm font-semibold text-[#42520d]">Selected project</p>
-              <Bookmark className="h-5 w-5 text-black/50" />
-            </div>
-            {selectedLaunch.bannerUrl && (
-              <div className="mt-5 aspect-[16/7] overflow-hidden rounded-[18px] bg-[#fbfaf7]">
-                <img src={selectedLaunch.bannerUrl} alt="" className="h-full w-full object-cover" />
-              </div>
-            )}
-
-            <div className="mt-5 flex items-center gap-3">
-              <Link to={selectedLaunch.projectPath} aria-label={`Open ${selectedLaunch.name} project profile`}>
-                <img
-                  src={selectedLaunch.logoUrl || `https://www.google.com/s2/favicons?domain=${selectedDomain}&sz=128`}
-                  alt=""
-                  className="h-12 w-12 rounded-[16px] bg-[#fbfaf7] object-contain p-2 transition-opacity hover:opacity-75"
-                />
-              </Link>
-              <div className="flex flex-col items-start gap-1.5">
-                {/* Project name — block so the pill sits on its own line below */}
-                <Link to={selectedLaunch.projectPath} className="text-xl font-semibold tracking-[-0.02em] transition-colors hover:text-[#42520d]">
-                  {selectedLaunch.name}
-                </Link>
-                {/* Founder avatar pill */}
-                {(() => {
-                  const slug = selectedLaunch.founderProfilePath.replace('/profile/', '');
-                  const photoUrl = getFounderPhotoUrl(slug);
-                  const initials = selectedLaunch.founder.split(' ').map((w) => w[0]).join('').slice(0, 2).toUpperCase();
-                  return (
-                    <Link
-                      to={selectedLaunch.founderProfilePath}
-                      className="inline-flex items-center gap-1 rounded-full bg-[#f4f1eb] py-0.5 pl-0.5 pr-2.5 text-[11px] font-semibold text-black/55 transition-colors hover:bg-[#dcefc7] hover:text-black"
-                    >
-                      {photoUrl ? (
-                        <img
-                          src={photoUrl}
-                          alt=""
-                          className="h-[18px] w-[18px] rounded-full object-cover"
-                          onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
-                        />
-                      ) : (
-                        <span className="flex h-[18px] w-[18px] items-center justify-center rounded-full bg-[#dcefc7] text-[7px] font-bold text-[#42520d]">
-                          {initials}
-                        </span>
-                      )}
-                      {selectedLaunch.founder}
-                    </Link>
-                  );
-                })()}
-              </div>
-            </div>
-
-            <p className="mt-5 text-sm leading-7 text-black/60">{selectedLaunch.description}</p>
-
-            {(selectedLaunch.demoVideoUrl || selectedLaunch.pitchVideoUrl) && (
-              <div className="mt-5 grid gap-3">
-                {selectedLaunch.demoVideoUrl && (
-                  <video className="aspect-video w-full rounded-[16px] bg-black object-cover" src={selectedLaunch.demoVideoUrl} controls />
-                )}
-                {selectedLaunch.pitchVideoUrl && (
-                  <video className="aspect-video w-full rounded-[16px] bg-black object-cover" src={selectedLaunch.pitchVideoUrl} controls />
-                )}
-              </div>
-            )}
-
-            {selectedLaunch.pitchVisibility !== 'investors' && (selectedLaunch.pitchDeckUrl || selectedLaunch.pitchBookNote) && (
-              <div className="mt-5 rounded-[16px] bg-[#fbfaf7] p-4">
-                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#42520d]">Pitch Book</p>
-                {selectedLaunch.pitchBookNote && (
-                  <p className="mt-3 text-sm leading-6 text-black/60">{selectedLaunch.pitchBookNote}</p>
-                )}
-                {selectedLaunch.pitchDeckUrl && (
-                  <a
-                    href={selectedLaunch.pitchDeckUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-white px-3 py-1.5 text-xs font-semibold text-[#42520d]"
-                  >
-                    <FileText className="h-3.5 w-3.5" />
-                    Pitch deck
-                  </a>
-                )}
-              </div>
-            )}
-
-            <div className="mt-5 grid grid-cols-2 gap-3">
-              <div className="rounded-[16px] bg-[#fbfaf7] p-4">
-                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-black/40">Location</p>
-                <p className="mt-2 text-sm font-semibold">{selectedLaunch.location}</p>
-              </div>
-              <div className="rounded-[16px] bg-[#fbfaf7] p-4">
-                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-black/40">Momentum</p>
-                <p className="mt-2 text-sm font-semibold">{selectedLaunch.momentum}</p>
-              </div>
-            </div>
-
-            <div className="mt-5">
-              <p className="mb-3 text-xs font-semibold uppercase tracking-[0.14em] text-[#42520d]">Proof signals</p>
-              <div className="grid gap-2">
-                {selectedLaunch.proof.map((signal) => (
-                  <div key={signal} className="flex items-start gap-2 text-sm leading-6 text-black/60">
-                    <Star className="mt-1 h-3.5 w-3.5 shrink-0 text-[#42520d]" />
-                    <span>{signal}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div className="mt-5 flex flex-wrap gap-2">
-              {selectedLaunch.investors.map((investor) => (
-                <span key={investor} className="rounded-full bg-[#dcefc7] px-3 py-1.5 text-xs font-semibold text-black">
-                  {investor}
-                </span>
-              ))}
-            </div>
-
-            <div className="mt-6 grid gap-3">
-              <Link
-                to={selectedLaunch.projectPath}
-                className="inline-flex items-center justify-center rounded-full bg-[#42520d] px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-[#34420a]"
-              >
-                Open project <ArrowUpRight className="ml-2 h-4 w-4" />
-              </Link>
-              <button
-                type="button"
-                onClick={() => navigate('/login?role=investor')}
-                className="rounded-full bg-[#dcefc7] px-5 py-3 text-sm font-semibold text-black transition-colors hover:bg-[#cce8ae]"
-              >
-                Save to investor workspace
-              </button>
-            </div>
-          </div>
-
-          <div className="mt-4 rounded-[22px] bg-[#fbfaf7] p-5">
-            <p className="text-sm font-semibold">Why this is here</p>
-            <p className="mt-3 text-sm leading-7 text-black/55">
-              Apparent ranks products by public proof, launch freshness, founder context, and thesis fit so investors can browse real builder momentum.
-            </p>
-          </div>
-        </aside>
       </section>
 
       {/* THE WEDGE — challenge the spreadsheet-of-cold-contacts model head-on. */}
@@ -815,7 +442,7 @@ export const Home = () => {
             {[
               { icon: Zap, title: 'Show your work', text: 'Launches, commits, and traction become a profile that proves itself.' },
               { icon: Radar, title: 'Land on the map', text: 'You surface to thesis-fit investors by stage, sector, and location.' },
-              { icon: Send, title: 'Get the intro', text: 'Signal you’re raising and let investors reach out — no cold emails.' },
+              { icon: Send, title: 'Get the intro', text: 'Signal you’re raising and let investors reach out. No cold emails.' },
             ].map((item) => (
               <article key={item.title} className="rounded-[22px] bg-white/70 p-5">
                 <item.icon className="mb-5 h-4 w-4 text-[#42520d]" />
