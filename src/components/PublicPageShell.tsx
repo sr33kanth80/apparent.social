@@ -56,16 +56,19 @@ export const PublicPageShell = ({ children }: { children: ReactNode }) => {
         <EditorialNavbar />
       ) : null}
 
-      <div className="mx-auto max-w-[92rem] px-5 pt-5 sm:px-8">
-        <button
-          type="button"
-          onClick={handleBack}
-          className="inline-flex items-center gap-1.5 rounded-full border border-black/10 bg-white px-3.5 py-1.5 text-sm font-medium text-black/70 shadow-sm transition-colors hover:bg-black/5 hover:text-black"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          Back
-        </button>
-      </div>
+      {/* Back button only for signed-in users (visitors get the marketing nav). */}
+      {user && (
+        <div className="mx-auto max-w-[92rem] px-5 pt-5 sm:px-8">
+          <button
+            type="button"
+            onClick={handleBack}
+            className="inline-flex items-center gap-1.5 rounded-full border border-black/10 bg-white px-3.5 py-1.5 text-sm font-medium text-black/70 shadow-sm transition-colors hover:bg-black/5 hover:text-black"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Back
+          </button>
+        </div>
+      )}
 
       {children}
 

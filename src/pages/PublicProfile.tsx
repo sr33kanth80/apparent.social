@@ -325,34 +325,22 @@ const FounderProfilePage = ({
       {/* ── Profile card hero ── */}
       <section className="mx-auto max-w-[82rem] px-5 pb-10 pt-12 sm:px-8 md:pt-16">
         <div className="overflow-hidden rounded-[32px] border border-black/10 bg-white/80 shadow-[0_18px_60px_rgba(0,0,0,0.06)]">
-          {/* Status row */}
-          <div className="flex flex-wrap items-center gap-2 border-b border-black/5 px-6 py-4 sm:px-8">
-            <span className="rounded-full bg-[#dcefc7] px-3 py-1 text-xs font-semibold text-[#42520d]">Founder on Apparent</span>
-            {(profile.fundraisingStatus === 'raising' || profile.fundraisingStatus === 'open') && (
-              <span className="rounded-full bg-[#42520d] px-3 py-1 text-xs font-semibold text-white">
-                {profile.fundraisingStatus === 'raising'
-                  ? `Raising${profile.raisingRound ? ` ${profile.raisingRound}` : ''}${profile.raisingAmount ? ` · ${profile.raisingAmount}` : ''}`
-                  : 'Open to investor intros'}
-              </span>
-            )}
-            {profile.location && (
-              <span className="ml-auto flex items-center gap-1 text-xs font-medium text-black/50">
-                <MapPin className="h-3 w-3" /> {profile.location}
-              </span>
-            )}
-          </div>
+          {/* Banner */}
+          <div className="h-24 bg-gradient-to-r from-[#42520d] via-[#6b8222] to-[#42520d] sm:h-28" />
 
-          {/* Identity + actions */}
-          <div className="px-6 py-7 sm:px-8">
-            <div className="flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
-              <div className="flex items-center gap-4">
-                <Avatar src={profile.profilePhotoUrl} name={profile.profileName || profile.username} bg="#dcefc7" />
-                <div className="min-w-0">
-                  <h1 className="text-3xl font-normal leading-tight tracking-[-0.03em] sm:text-4xl" style={serif}>
-                    {profile.profileName || profile.username || 'Apparent Builder'}
-                  </h1>
-                  <p className="mt-1 text-sm font-semibold text-black/55">@{profile.username}</p>
-                </div>
+          <div className="px-6 pb-7 sm:px-8">
+            {/* Avatar overlaps the banner */}
+            <div className="-mt-12 w-fit rounded-[26px] ring-4 ring-white sm:-mt-14">
+              <Avatar src={profile.profilePhotoUrl} name={profile.profileName || profile.username} bg="#dcefc7" />
+            </div>
+
+            {/* Name + actions */}
+            <div className="mt-4 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+              <div className="min-w-0">
+                <h1 className="text-3xl font-normal leading-tight tracking-[-0.03em] sm:text-[2.6rem]" style={serif}>
+                  {profile.profileName || profile.username || 'Apparent Builder'}
+                </h1>
+                <p className="mt-1 text-sm font-semibold text-black/55">@{profile.username}</p>
               </div>
               <div className="flex flex-wrap items-center gap-2">
                 <MessageButton viewer={viewer} name={profile.profileName || profile.username} onMessage={onMessage} />
@@ -360,6 +348,23 @@ const FounderProfilePage = ({
                   <ShareButton username={profile.username} name={profile.profileName || profile.username} />
                 )}
               </div>
+            </div>
+
+            {/* Status pills + location */}
+            <div className="mt-5 flex flex-wrap items-center gap-2">
+              <span className="rounded-full bg-[#dcefc7] px-3 py-1 text-xs font-semibold text-[#42520d]">Founder on Apparent</span>
+              {(profile.fundraisingStatus === 'raising' || profile.fundraisingStatus === 'open') && (
+                <span className="rounded-full bg-[#42520d] px-3 py-1 text-xs font-semibold text-white">
+                  {profile.fundraisingStatus === 'raising'
+                    ? `Raising${profile.raisingRound ? ` ${profile.raisingRound}` : ''}${profile.raisingAmount ? ` · ${profile.raisingAmount}` : ''}`
+                    : 'Open to investor intros'}
+                </span>
+              )}
+              {profile.location && (
+                <span className="flex items-center gap-1 text-xs font-semibold text-black/65">
+                  <MapPin className="h-4 w-4 text-[#e7483d]" fill="currentColor" /> {profile.location}
+                </span>
+              )}
             </div>
 
             {profile.headline && (
@@ -539,22 +544,22 @@ const InvestorProfilePage = ({
       {/* ── Profile card hero ── */}
       <section className="mx-auto max-w-[82rem] px-5 pb-10 pt-12 sm:px-8 md:pt-16">
         <div className="overflow-hidden rounded-[32px] border border-black/10 bg-white/80 shadow-[0_18px_60px_rgba(0,0,0,0.06)]">
-          {/* Status row */}
-          <div className="flex flex-wrap items-center gap-2 border-b border-black/5 px-6 py-4 sm:px-8">
-            <span className="rounded-full bg-[#42520d] px-3 py-1 text-xs font-semibold text-white">Investor on Apparent</span>
-          </div>
+          {/* Banner */}
+          <div className="h-24 bg-gradient-to-r from-[#42520d] via-[#6b8222] to-[#42520d] sm:h-28" />
 
-          {/* Identity + actions */}
-          <div className="px-6 py-7 sm:px-8">
-            <div className="flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
-              <div className="flex items-center gap-4">
-                <Avatar src={profile.profilePhotoUrl} name={profile.displayName || profile.username} bg="#42520d" />
-                <div className="min-w-0">
-                  <h1 className="text-3xl font-normal leading-tight tracking-[-0.03em] sm:text-4xl" style={serif}>
-                    {profile.displayName || profile.username}
-                  </h1>
-                  <p className="mt-1 text-sm font-semibold text-black/55">@{profile.username}</p>
-                </div>
+          <div className="px-6 pb-7 sm:px-8">
+            {/* Avatar overlaps the banner */}
+            <div className="-mt-12 w-fit rounded-[26px] ring-4 ring-white sm:-mt-14">
+              <Avatar src={profile.profilePhotoUrl} name={profile.displayName || profile.username} bg="#42520d" />
+            </div>
+
+            {/* Name + actions */}
+            <div className="mt-4 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+              <div className="min-w-0">
+                <h1 className="text-3xl font-normal leading-tight tracking-[-0.03em] sm:text-[2.6rem]" style={serif}>
+                  {profile.displayName || profile.username}
+                </h1>
+                <p className="mt-1 text-sm font-semibold text-black/55">@{profile.username}</p>
               </div>
               <div className="flex flex-wrap items-center gap-2">
                 <MessageButton viewer={viewer} name={profile.displayName || profile.username} onMessage={onMessage} />
@@ -562,6 +567,16 @@ const InvestorProfilePage = ({
                   <ShareButton username={profile.username} name={profile.displayName || profile.username} />
                 )}
               </div>
+            </div>
+
+            {/* Status pills + geography */}
+            <div className="mt-5 flex flex-wrap items-center gap-2">
+              <span className="rounded-full bg-[#42520d] px-3 py-1 text-xs font-semibold text-white">Investor on Apparent</span>
+              {visible('geography') && profile.geography && (
+                <span className="flex items-center gap-1 text-xs font-semibold text-black/65">
+                  <MapPin className="h-4 w-4 text-[#e7483d]" fill="currentColor" /> {profile.geography}
+                </span>
+              )}
             </div>
 
             {visible('thesis') && profile.thesis && (
