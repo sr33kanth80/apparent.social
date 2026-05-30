@@ -126,7 +126,7 @@ function App() {
             element={
               <>
                 <EditorialNavbar />
-                <HeatMap />
+                <HeatMap includeVCContacts vcOnly />
                 <Footer />
               </>
             }

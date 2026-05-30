@@ -1210,11 +1210,13 @@ export const loadFounderVCContacts = async (): Promise<VCContact[]> => {
     .order('number_of_investments', { ascending: false })
     .limit(2500);
 
-  if (error) {
+  // On error OR empty (e.g. logged-out visitors blocked by RLS on the public
+  // /heat-map), fall back to the bundled VC seed so the map is never sparse.
+  if (error || !data || data.length === 0) {
     return loadSeedContacts();
   }
 
-  return (data ?? []).map((row) => mapVCContactRow(row));
+  return data.map((row) => mapVCContactRow(row));
 };
 
 export const loadPublicProjectDetail = async (projectId: string): Promise<PublicProjectDetail | null> => {
