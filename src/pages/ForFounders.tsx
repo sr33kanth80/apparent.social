@@ -6,15 +6,36 @@ const serifDisplay = {
   fontFamily: 'Georgia, "Times New Roman", serif',
 };
 
-// GitHub-style contribution grid for the mock profile. Deterministic so it
-// never reflows: 18 weeks x 7 days, each cell an intensity level 0-4.
+// GitHub-style contribution grid for the mock profile. Seeded PRNG so it's
+// deterministic (never reflows) yet realistic: 52 weeks x 7 days with quiet
+// weeks, lighter weekends, and clustered activity.
 const COMMIT_LEVELS = ['bg-white/[0.05]', 'bg-[#1e3a1e]', 'bg-[#2e6b2e]', 'bg-[#37a04a]', 'bg-[#58d39a]'];
-const commitColumns = Array.from({ length: 18 }, (_, w) =>
-  Array.from({ length: 7 }, (_, d) => {
-    const h = ((w * 7 + d) * 2654435761) % 101;
-    return h < 34 ? 0 : h < 58 ? 1 : h < 78 ? 2 : h < 92 ? 3 : 4;
-  }),
-);
+const mulberry32 = (seed: number) => () => {
+  seed |= 0;
+  seed = (seed + 0x6d2b79f5) | 0;
+  let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+  t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+  return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+};
+const commitColumns = (() => {
+  const rand = mulberry32(20260530);
+  return Array.from({ length: 52 }, () => {
+    const quietWeek = rand() < 0.14; // occasional dead weeks
+    const busyWeek = rand() < 0.22; // occasional sprint weeks
+    return Array.from({ length: 7 }, (_, d) => {
+      const weekend = d === 0 || d === 6;
+      if (quietWeek && rand() < 0.8) return 0;
+      let r = rand();
+      if (busyWeek) r = r * 0.6 + 0.4;
+      if (weekend) r *= 0.55;
+      if (r < 0.4) return 0;
+      if (r < 0.6) return 1;
+      if (r < 0.78) return 2;
+      if (r < 0.91) return 3;
+      return 4;
+    });
+  });
+})();
 
 const founderRows = [
   ['01', 'Make proof legible', 'Products, GitHub, press, traction, launches, location, and capital goals sit in one focused profile.'],
@@ -126,7 +147,7 @@ export const ForFounders = () => {
             {/* GitHub contribution graph */}
             <div className="mt-6 border-t border-white/10 pt-6">
               <div className="mb-3 flex items-center justify-between">
-                <p className="text-[0.65rem] font-semibold uppercase tracking-[0.12em] text-white/40">1,284 commits · last 18 weeks</p>
+                <p className="text-[0.65rem] font-semibold uppercase tracking-[0.12em] text-white/40">1,284 commits · last year</p>
                 <span className="flex items-center gap-1 text-[0.6rem] text-white/35">
                   Less
                   <span className="flex gap-0.5">
@@ -135,14 +156,14 @@ export const ForFounders = () => {
                   More
                 </span>
               </div>
-              <div className="flex gap-1 overflow-hidden">
+              <div className="flex gap-1 overflow-x-auto pb-1 [scrollbar-width:thin] [&::-webkit-scrollbar]:h-1 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-white/15">
                 {commitColumns.map((col, w) => (
                   <div key={w} className="flex flex-col gap-1">
                     {col.map((lvl, d) => (
                       <span
                         key={d}
                         title={lvl ? `${lvl * 4 + (w % 4)} commits` : 'No commits'}
-                        className={`h-2.5 w-2.5 rounded-[3px] ${COMMIT_LEVELS[lvl]} transition-transform duration-150 hover:scale-[1.6]`}
+                        className={`h-2.5 w-2.5 shrink-0 rounded-[3px] ${COMMIT_LEVELS[lvl]} transition-transform duration-150 hover:scale-[1.6]`}
                       />
                     ))}
                   </div>
@@ -164,27 +185,41 @@ export const ForFounders = () => {
               ))}
             </div>
 
-            {/* Pitch deck + mock video player */}
+            {/* Pitch: compact video player + slide deck side by side */}
             <div className="mt-6 border-t border-white/10 pt-6">
               <p className="mb-3 text-[0.65rem] font-semibold uppercase tracking-[0.12em] text-white/40">Pitch</p>
-              <button
-                type="button"
-                className="group relative block aspect-video w-full overflow-hidden rounded-2xl bg-gradient-to-br from-[#42520d] via-[#1c1c1a] to-[#02402f]"
-                aria-label="Play AgentKit pitch video"
-              >
-                <span className="absolute inset-0 flex items-center justify-center">
-                  <span className="flex h-12 w-12 items-center justify-center rounded-full bg-white/90 text-[#1c1c1a] shadow-lg transition-transform duration-200 group-hover:scale-110">
-                    <Play className="ml-0.5 h-5 w-5 fill-current" />
+              <div className="grid grid-cols-2 gap-3">
+                {/* Mock video player */}
+                <button
+                  type="button"
+                  className="group relative flex aspect-video w-full overflow-hidden rounded-xl bg-gradient-to-br from-[#42520d] via-[#1c1c1a] to-[#02402f]"
+                  aria-label="Play AgentKit pitch video"
+                >
+                  <span className="absolute inset-0 flex items-center justify-center">
+                    <span className="flex h-9 w-9 items-center justify-center rounded-full bg-white/90 text-[#1c1c1a] shadow-lg transition-transform duration-200 group-hover:scale-110">
+                      <Play className="ml-0.5 h-4 w-4 fill-current" />
+                    </span>
                   </span>
-                </span>
-                <span className="absolute bottom-3 left-3 right-3 flex items-center justify-between">
-                  <span className="text-xs font-semibold text-white">AgentKit · Seed pitch</span>
-                  <span className="rounded bg-black/55 px-1.5 py-0.5 text-[0.65rem] font-medium text-white/90">2:14</span>
-                </span>
-              </button>
-              <span className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-white/[0.06] px-3 py-1.5 text-xs font-medium text-white/75">
-                <FileText className="h-3.5 w-3.5" /> Pitch deck · 12 slides
-              </span>
+                  <span className="absolute bottom-2 left-2 right-2 flex items-center justify-between">
+                    <span className="text-[0.6rem] font-semibold text-white">Seed pitch</span>
+                    <span className="rounded bg-black/55 px-1 py-0.5 text-[0.55rem] font-medium text-white/90">2:14</span>
+                  </span>
+                </button>
+
+                {/* Mock slide deck */}
+                <div className="relative">
+                  <div aria-hidden className="absolute right-0 top-0 h-full w-full -translate-y-1 translate-x-1 rounded-xl border border-white/10 bg-white/[0.03]" />
+                  <div className="relative flex aspect-video flex-col rounded-xl border border-white/10 bg-white/[0.06] p-3">
+                    <div className="h-1.5 w-2/3 rounded-full bg-white/30" />
+                    <div className="mt-2 h-1 w-full rounded-full bg-white/10" />
+                    <div className="mt-1.5 h-1 w-4/5 rounded-full bg-white/10" />
+                    <div className="mt-auto flex items-center justify-between">
+                      <span className="flex items-center gap-1 text-[0.6rem] text-white/45"><FileText className="h-3 w-3" /> Deck</span>
+                      <span className="rounded bg-black/40 px-1 py-0.5 text-[0.55rem] font-medium text-white/70">12 slides</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
           <div className="mt-7">
