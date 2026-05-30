@@ -23,6 +23,8 @@ export interface InvestorCriteriaValues {
   publicProfileEnabled: string;
   /** JSON-stringified string[] of visible field keys */
   publicFields: string;
+  /** 'true' | 'false' — show the public "Share profile" button. */
+  shareable: string;
 }
 
 export interface FounderProfileValues {
@@ -50,6 +52,8 @@ export interface FounderProfileValues {
   raisingAmount: string;
   raisingAsk: string;
   openToContact: string;
+  /** 'true' | 'false' — show the public "Share profile" button. */
+  shareable: string;
 }
 
 export type IntakeValues = InvestorCriteriaValues | FounderProfileValues;
@@ -153,6 +157,7 @@ export interface PublicFounderProfile {
   raisingAmount?: string;
   raisingAsk?: string;
   openToContact?: boolean;
+  shareable?: boolean;
   launches: ProductLaunch[];
 }
 
@@ -172,6 +177,7 @@ export interface PublicInvestorProfile {
   publicFields: string[];
   /** True when the investor hasn't enabled public visibility — logged-out visitors see a gate. */
   restricted: boolean;
+  shareable?: boolean;
 }
 
 export type PublicProfileResult =

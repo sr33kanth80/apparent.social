@@ -2325,6 +2325,20 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
     }
   };
 
+  const handleToggleShareable = async () => {
+    const next = intakeValues.shareable === 'false' ? 'true' : 'false';
+    const nextValues = { ...intakeValues, shareable: next };
+    setIntakeValues(nextValues);
+    setDashboardError('');
+    try {
+      await saveIntakeValues(user, role, nextValues);
+      addActivity(`Profile share button ${next === 'true' ? 'enabled' : 'disabled'}`);
+    } catch (error) {
+      setIntakeValues((current) => ({ ...current, shareable: next === 'true' ? 'false' : 'true' }));
+      setDashboardError(error instanceof Error ? error.message : 'Unable to update sharing.');
+    }
+  };
+
   const handleActionSubmit = () => {
     if (!actionMode) {
       return;
@@ -5297,6 +5311,40 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
                   <span className={knobClass(slackAlertsEnabled)} />
                 </button>
               </div>
+            </div>
+          </section>
+
+          {/* Public profile */}
+          <section className="overflow-hidden rounded-[20px] border border-black/10 bg-white shadow-[0_10px_34px_rgba(0,0,0,0.04)]">
+            <div className="border-b border-black/10 px-5 py-4">
+              <h3 className="text-sm font-semibold">Public profile</h3>
+            </div>
+            <div className="flex items-center justify-between gap-4 px-5 py-4">
+              <div>
+                <p className="text-sm font-medium">Share button</p>
+                <p className="mt-0.5 max-w-md text-xs text-gray-500">
+                  Show a &ldquo;Share profile&rdquo; button on your public profile so anyone can copy and share your link. Your profile stays public either way.
+                </p>
+              </div>
+              <button
+                type="button"
+                role="switch"
+                aria-checked={intakeValues.shareable !== 'false'}
+                onClick={handleToggleShareable}
+                className={toggleClass(intakeValues.shareable !== 'false')}
+              >
+                <span className={knobClass(intakeValues.shareable !== 'false')} />
+              </button>
+            </div>
+            <div className="border-t border-black/10 px-5 py-4">
+              <a
+                href={`/@${username}`}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center gap-1.5 rounded-full bg-[#42520d] px-4 py-2 text-xs font-semibold text-white transition-opacity hover:opacity-90"
+              >
+                <ArrowUpRight className="h-3.5 w-3.5" /> View &amp; share my profile
+              </a>
             </div>
           </section>
 

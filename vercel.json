@@ -1,5 +1,38 @@
 {
   "rewrites": [
+    {
+      "source": "/@:handle",
+      "has": [
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": ".*(facebookexternalhit|Facebot|Twitterbot|LinkedInBot|Slackbot|Slack-ImgProxy|WhatsApp|Discordbot|TelegramBot|Pinterest|redditbot|Googlebot|bingbot|Applebot|Embedly|vkShare|W3C_Validator|Nuzzel|Skype|Qwantify|Yeti|Iframely|SkypeUriPreview).*"
+        }
+      ],
+      "destination": "/api/og?type=profile&handle=:handle"
+    },
+    {
+      "source": "/profile/:id",
+      "has": [
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": ".*(facebookexternalhit|Facebot|Twitterbot|LinkedInBot|Slackbot|Slack-ImgProxy|WhatsApp|Discordbot|TelegramBot|Pinterest|redditbot|Googlebot|bingbot|Applebot|Embedly|vkShare|W3C_Validator|Nuzzel|Skype|Qwantify|Yeti|Iframely|SkypeUriPreview).*"
+        }
+      ],
+      "destination": "/api/og?type=profile&id=:id"
+    },
+    {
+      "source": "/projects/:id",
+      "has": [
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": ".*(facebookexternalhit|Facebot|Twitterbot|LinkedInBot|Slackbot|Slack-ImgProxy|WhatsApp|Discordbot|TelegramBot|Pinterest|redditbot|Googlebot|bingbot|Applebot|Embedly|vkShare|W3C_Validator|Nuzzel|Skype|Qwantify|Yeti|Iframely|SkypeUriPreview).*"
+        }
+      ],
+      "destination": "/api/og?type=project&id=:id"
+    },
     { "source": "/(.*)", "destination": "/index.html" }
   ]
 }

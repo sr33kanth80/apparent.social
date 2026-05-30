@@ -195,6 +195,7 @@ const mapCriteriaRow = (row: Record<string, unknown> | null): InvestorCriteriaVa
   publicFields: JSON.stringify(
     Array.isArray(row?.public_fields) ? row.public_fields : ['thesis', 'sectors', 'stage', 'geography'],
   ),
+  shareable: (row?.shareable ?? true) === false ? 'false' : 'true',
 });
 
 const mapFounderRow = (row: Record<string, unknown> | null): FounderProfileValues => ({
@@ -220,6 +221,7 @@ const mapFounderRow = (row: Record<string, unknown> | null): FounderProfileValue
   raisingAmount: String(row?.raising_amount ?? row?.raisingAmount ?? ''),
   raisingAsk: String(row?.raising_ask ?? row?.raisingAsk ?? ''),
   openToContact: (row?.open_to_contact ?? row?.openToContact ?? true) === false ? 'false' : 'true',
+  shareable: (row?.shareable ?? true) === false ? 'false' : 'true',
 });
 
 const completedLabels = (values: Record<string, string>, labelByKey: Record<string, string>) =>
@@ -397,6 +399,7 @@ const mapPublicFounderProfile = (
     raisingAmount: String(row.raising_amount ?? ''),
     raisingAsk: String(row.raising_ask ?? ''),
     openToContact: row.open_to_contact !== false,
+    shareable: row.shareable !== false,
     launches,
   };
 };
@@ -1393,6 +1396,7 @@ export const loadPublicProfile = async (username: string): Promise<PublicProfile
           founderSignals: '',
           publicFields: [],
           restricted: true,
+          shareable: true,
         },
       };
     }
@@ -1421,6 +1425,7 @@ export const loadPublicProfile = async (username: string): Promise<PublicProfile
         founderSignals: vis('founderSignals', 'founder_signals'),
         publicFields,
         restricted: !isPublic,
+        shareable: criteriaRow.shareable !== false,
       },
     };
   }
@@ -1803,6 +1808,7 @@ export const saveIntakeValues = async (
       portfolio_examples: values.portfolioExamples ?? '',
       public_profile_enabled: values.publicProfileEnabled === 'true',
       public_fields: safePublicFields,
+      shareable: values.shareable !== 'false',
     });
 
     if (error) throw error;
@@ -1832,6 +1838,7 @@ export const saveIntakeValues = async (
     raising_amount: values.raisingAmount ?? '',
     raising_ask: values.raisingAsk ?? '',
     open_to_contact: values.openToContact !== 'false',
+    shareable: values.shareable !== 'false',
     raising_updated_at: new Date().toISOString(),
   };
 

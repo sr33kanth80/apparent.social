@@ -4,6 +4,7 @@ import {
   ArrowUpRight,
   BookOpen,
   Briefcase,
+  Check,
   ChevronRight,
   Globe,
   Link as LinkIcon,
@@ -11,6 +12,7 @@ import {
   MessageSquare,
   Rocket,
   Send,
+  Share2,
   Target,
   Users,
   X,
@@ -78,6 +80,75 @@ const MessageButton = ({ viewer, name, onMessage }: { viewer: AppUser | null; na
     <Link to="/login" className={cls}>
       <MessageSquare className="h-4 w-4" /> Log in to message
     </Link>
+  );
+};
+
+// Share-profile button: copy link, native share, and one-click X / LinkedIn.
+const ShareButton = ({ username, name }: { username: string; name: string }) => {
+  const [open, setOpen] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const url = typeof window !== 'undefined' ? `${window.location.origin}/@${username}` : `/@${username}`;
+  const shareText = `${name} on Apparent`;
+
+  const copy = async () => {
+    try {
+      await navigator.clipboard.writeText(url);
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 1800);
+    } catch {
+      /* clipboard blocked */
+    }
+  };
+
+  const nativeShare = async () => {
+    if (typeof navigator !== 'undefined' && 'share' in navigator) {
+      try {
+        await navigator.share({ title: shareText, url });
+      } catch {
+        /* cancelled */
+      }
+    } else {
+      await copy();
+    }
+    setOpen(false);
+  };
+
+  const xUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(url)}`;
+  const liUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}`;
+  const itemCls = 'flex w-full items-center gap-2 rounded-xl px-3 py-2 text-sm text-black transition-colors hover:bg-[#fbf8f3]';
+
+  return (
+    <div className="relative inline-block">
+      <button
+        type="button"
+        onClick={() => setOpen((value) => !value)}
+        className="inline-flex items-center gap-1.5 rounded-full border border-black/15 bg-white px-5 py-2.5 text-sm font-semibold text-black transition hover:bg-black/5"
+      >
+        <Share2 className="h-4 w-4" /> Share
+      </button>
+      {open && (
+        <>
+          <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
+          <div className="absolute left-0 top-full z-50 mt-2 w-60 rounded-2xl border border-black/10 bg-white p-2 shadow-xl">
+            <button type="button" onClick={copy} className={itemCls}>
+              {copied ? <Check className="h-4 w-4 text-[#42520d]" /> : <LinkIcon className="h-4 w-4" />}
+              {copied ? 'Link copied!' : 'Copy link'}
+            </button>
+            <a href={xUrl} target="_blank" rel="noreferrer" onClick={() => setOpen(false)} className={itemCls}>
+              <ArrowUpRight className="h-4 w-4" /> Share on X
+            </a>
+            <a href={liUrl} target="_blank" rel="noreferrer" onClick={() => setOpen(false)} className={itemCls}>
+              <LinkIcon className="h-4 w-4" /> Share on LinkedIn
+            </a>
+            {typeof navigator !== 'undefined' && 'share' in navigator && (
+              <button type="button" onClick={nativeShare} className={itemCls}>
+                <Share2 className="h-4 w-4" /> More…
+              </button>
+            )}
+          </div>
+        </>
+      )}
+    </div>
   );
 };
 
@@ -296,8 +367,11 @@ const FounderProfilePage = ({
           <p className="mt-8 max-w-3xl text-lg leading-8 text-black/65 md:text-xl">{profile.bio}</p>
         )}
 
-        <div className="mt-8">
+        <div className="mt-8 flex flex-wrap items-center gap-2">
           <MessageButton viewer={viewer} name={profile.profileName || profile.username} onMessage={onMessage} />
+          {profile.shareable !== false && (
+            <ShareButton username={profile.username} name={profile.profileName || profile.username} />
+          )}
         </div>
 
         {links.length > 0 && (
@@ -483,8 +557,11 @@ const InvestorProfilePage = ({
           </div>
         </div>
 
-        <div className="mt-8">
+        <div className="mt-8 flex flex-wrap items-center gap-2">
           <MessageButton viewer={viewer} name={profile.displayName || profile.username} onMessage={onMessage} />
+          {profile.shareable !== false && (
+            <ShareButton username={profile.username} name={profile.displayName || profile.username} />
+          )}
         </div>
       </section>
 

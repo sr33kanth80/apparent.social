@@ -22,6 +22,7 @@ export const defaultInvestorCriteria: InvestorCriteriaValues = {
   portfolioExamples: '',
   publicProfileEnabled: 'false',
   publicFields: JSON.stringify(['thesis', 'sectors', 'stage', 'geography']),
+  shareable: 'true',
 };
 
 export const defaultFounderProfile: FounderProfileValues = {
@@ -46,6 +47,7 @@ export const defaultFounderProfile: FounderProfileValues = {
   raisingAmount: '',
   raisingAsk: '',
   openToContact: 'true',
+  shareable: 'true',
 };
 
 export const seedInvestorSignals: InvestorSignal[] = [
