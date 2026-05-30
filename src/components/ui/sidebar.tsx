@@ -140,7 +140,7 @@ const roleConfig = {
         { label: 'Deal Terms', href: '#deals', icon: Layout },
       ],
       [
-        { label: 'Knowledge Base', href: '#knowledge', icon: GraduationCap },
+        { label: 'How to Use Apparent?', href: '#knowledge', icon: GraduationCap },
         { label: 'Feedback', href: '#feedback', icon: MessageSquareText },
       ],
     ] as NavItem[][],
@@ -165,7 +165,7 @@ const roleConfig = {
         { label: 'Terms Review', href: '#terms', icon: FileClock },
       ],
       [
-        { label: 'Knowledge Base', href: '#knowledge', icon: GraduationCap },
+        { label: 'How to Use Apparent?', href: '#knowledge', icon: GraduationCap },
         { label: 'Feedback', href: '#feedback', icon: MessageSquareText },
       ],
     ] as NavItem[][],

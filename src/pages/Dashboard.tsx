@@ -85,11 +85,12 @@ import {
   toggleMeetupRsvp,
 } from '@/lib/dashboard-service';
 import { cityGeoCoordinates } from '@/lib/app-defaults';
+import { signOut } from '@/lib/auth-service';
 
 type DashboardRole = 'founder' | 'investor';
 type ActionMode = 'profile' | 'launch' | 'thesis' | 'meetup';
 type FieldKind = 'input' | 'textarea' | 'select';
-type ViewMode = 'overview' | 'profile' | 'products' | 'matches' | 'messages' | 'deals' | 'terms' | 'knowledge' | 'feedback' | 'for-you' | 'vc-heatmap';
+type ViewMode = 'overview' | 'profile' | 'products' | 'matches' | 'messages' | 'deals' | 'terms' | 'knowledge' | 'feedback' | 'settings' | 'for-you' | 'vc-heatmap';
 type InvestorDealStage = 'New' | 'Reviewing' | 'Reached Out' | 'Meeting' | 'Watchlist';
 
 interface DashboardProps {
@@ -626,6 +627,10 @@ const viewFromHash = (hash: string): ViewMode => {
     return 'feedback';
   }
 
+  if (hash === '#settings') {
+    return 'settings';
+  }
+
   if (hash === '#for-you') {
     return 'for-you';
   }
@@ -678,6 +683,10 @@ const viewFromSectionId = (id: string): ViewMode => {
     return 'feedback';
   }
 
+  if (id === 'settings') {
+    return 'settings';
+  }
+
   if (id === 'for-you') {
     return 'for-you';
   }
@@ -728,6 +737,10 @@ const sectionIdFromView = (view: ViewMode) => {
 
   if (view === 'feedback') {
     return 'feedback';
+  }
+
+  if (view === 'settings') {
+    return 'settings';
   }
 
   return 'overview';
@@ -2479,6 +2492,22 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
       { dailyDigestEnabled: nextValue, slackAlertsEnabled },
       `Daily digest ${nextValue ? 'enabled' : 'paused'}`,
     );
+  };
+
+  const toggleSlackAlerts = () => {
+    const nextValue = !slackAlertsEnabled;
+    void persistSettings(
+      { dailyDigestEnabled, slackAlertsEnabled: nextValue },
+      `Slack alerts ${nextValue ? 'enabled' : 'paused'}`,
+    );
+  };
+
+  const handleSignOut = async () => {
+    try {
+      await signOut();
+    } finally {
+      navigate('/login');
+    }
   };
 
   const handleOutreachDraftChange = (signal: InvestorSignal, body: string) => {
@@ -5048,18 +5077,60 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
   );
 
   const renderKnowledgePage = () => {
-    const items = isInvestor
+    const steps: { title: string; text: string; cta?: { label: string; view: ViewMode } }[] = isInvestor
       ? [
-          ['Thesis notes', 'Keep reusable investment criteria and market patterns close to sourcing.'],
-          ['Diligence checklist', 'Review founder proof, market pull, technical wedge, and terms before moving forward.'],
-          ['Outreach playbook', 'Turn saved builders into concise, context-rich first messages.'],
-          ['Market maps', 'Organize categories, competitors, and gaps around the builders you are tracking.'],
+          {
+            title: 'Set your investment thesis',
+            text: 'Capture your sectors, stage, geography, check size, and the founder signals you back. This is what ranks every founder Apparent shows you — so it’s the first thing to do.',
+            cta: { label: 'Open your thesis', view: 'profile' },
+          },
+          {
+            title: 'Discover builders by what they ship',
+            text: 'Builder Discovery surfaces founders ranked against your thesis — real Apparent founders plus ingested signals from YC, GitHub, Product Hunt, and Hacker News. Flip on “Raising now” to see contactable, thesis-fit founders who are actively raising.',
+            cta: { label: 'Open Builder Discovery', view: 'matches' },
+          },
+          {
+            title: 'Build your deal flow',
+            text: 'Save the founders you like, then drag them across your Deal Flow pipeline — Discovery → Reviewing → Reached out → Meeting → Watchlist.',
+            cta: { label: 'Open Deal Flow', view: 'deals' },
+          },
+          {
+            title: 'Reach out with context',
+            text: 'Apparent drafts a context-rich first message for every saved builder. Tweak it and send a stronger, more personal intro instead of a cold template.',
+            cta: { label: 'Open Builder Discovery', view: 'matches' },
+          },
+          {
+            title: 'Track terms',
+            text: 'Log term sheets, instruments, valuation caps, pro-rata, and decision notes in Terms Review so nothing slips through the cracks.',
+            cta: { label: 'Open Terms Review', view: 'terms' },
+          },
         ]
       : [
-          ['Launch checklist', 'Prepare product assets, intro copy, proof links, demo video, and pitch video.'],
-          ['Investor update template', 'Summarize shipped product, usage proof, asks, and next milestones.'],
-          ['Fundraising prep', 'Track targets, terms, objections, and proof that should be visible on your profile.'],
-          ['Founder profile guide', 'Keep bio, links, products, and location current for discovery.'],
+          {
+            title: 'Build your founder profile',
+            text: 'Add your name, headline, bio, links, and what you’re building. This is the first thing investors see when they find you — make it count.',
+            cta: { label: 'Edit your profile', view: 'profile' },
+          },
+          {
+            title: 'Set your fundraising status',
+            text: 'Flip on “Raising now” or “Open to intros” and add your round, amount, and ask. This is what surfaces you to thesis-fit investors — and it’s a signal pure scrapers can’t see.',
+            cta: { label: 'Set your status', view: 'profile' },
+          },
+          {
+            title: 'Launch your products',
+            text: 'Publish each product with proof, traction, a demo, and a pitch. Launches put you on the Builder Radar and in investors’ discovery feeds.',
+            cta: { label: 'Launch a product', view: 'products' },
+          },
+          {
+            title: 'Find your investors',
+            text: 'Open the VC Heat Map, filter by stage and sector, or hit “Match my profile” to light up the thesis-fit VCs you can actually pitch — with their contact details.',
+            cta: { label: 'Open VC Heat Map', view: 'vc-heatmap' },
+          },
+          {
+            title: 'Track interest & manage terms',
+            text: 'See which investors are tracking your profile, and log investor offers, SAFEs, and valuation caps in Deal Terms.',
+            cta: { label: 'Open Deal Terms', view: 'deals' },
+          },
         ];
 
     return (
@@ -5070,32 +5141,169 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
         exit={{ opacity: 0, y: -8, filter: 'blur(2px)' }}
         transition={{ duration: 0.22, ease: 'easeOut' }}
       >
-        <section id="knowledge" className="mx-auto max-w-[1292px] scroll-mt-24 rounded-[20px] border border-black/10 bg-white shadow-[0_10px_34px_rgba(0,0,0,0.04)]">
-          <div className="border-b border-black/10 px-5 py-5">
-            <h2 className="text-2xl font-normal tracking-[-0.03em] font-serif">Knowledge Base</h2>
+        <div id="knowledge" className="mx-auto max-w-[1292px] scroll-mt-24 space-y-6">
+          <section className="rounded-[20px] border border-black/10 bg-white px-5 py-5 shadow-[0_10px_34px_rgba(0,0,0,0.04)]">
+            <h2 className="text-2xl font-normal tracking-[-0.03em] font-serif">How to Use Apparent?</h2>
             <p className="mt-2 max-w-2xl text-sm leading-6 text-gray-600">
               {isInvestor
-                ? 'Reference notes and operating checklists for sourcing, diligence, and follow-up.'
-                : 'Practical launch, profile, fundraising, and investor-update material for founders.'}
+                ? 'Apparent is your founder-sourcing desk: capture your thesis, discover builders by what they ship, and run outreach and deal flow in one place. Here’s the flow.'
+                : 'Apparent gets your work in front of thesis-fit investors who are actively hunting. Build your profile, signal that you’re raising, and find the right VCs to pitch. Here’s the flow.'}
             </p>
-          </div>
-          <div className="grid divide-y divide-black/10 md:grid-cols-2 md:divide-x md:divide-y-0">
-            {items.map(([title, text]) => (
-              <article key={title} className="p-5">
-                <p className="text-sm font-semibold">{title}</p>
-                <p className="mt-3 text-sm leading-6 text-gray-600">{text}</p>
-              </article>
+          </section>
+
+          <section className="divide-y divide-black/10 overflow-hidden rounded-[20px] border border-black/10 bg-white shadow-[0_10px_34px_rgba(0,0,0,0.04)]">
+            {steps.map((step, index) => (
+              <div key={step.title} className="flex flex-col gap-3 px-5 py-5 sm:flex-row sm:items-start sm:justify-between">
+                <div className="flex gap-4">
+                  <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${accentSurface} text-sm font-semibold ${accentForeground}`}>
+                    {index + 1}
+                  </span>
+                  <div>
+                    <p className="text-base font-semibold">{step.title}</p>
+                    <p className="mt-1.5 max-w-2xl text-sm leading-6 text-gray-600">{step.text}</p>
+                  </div>
+                </div>
+                {step.cta && (
+                  <button
+                    type="button"
+                    onClick={() => handleDashboardViewChange(step.cta!.view)}
+                    className="shrink-0 self-start rounded-full border border-black/10 px-4 py-2 text-xs font-semibold hover:bg-[#fbf8f3] sm:ml-4"
+                  >
+                    {step.cta.label}
+                  </button>
+                )}
+              </div>
             ))}
-          </div>
-          <div className="flex flex-wrap gap-3 border-t border-black/10 px-5 py-4">
-            <button className="rounded-full border border-black/10 px-4 py-2 text-sm font-semibold hover:bg-[#fbf8f3]" onClick={() => handleDashboardViewChange(isInvestor ? 'matches' : 'products')}>
-              {isInvestor ? 'Open builder discovery' : 'Open product launcher'}
-            </button>
-            <button className="rounded-full border border-black/10 px-4 py-2 text-sm font-semibold hover:bg-[#fbf8f3]" onClick={() => handleDashboardViewChange('terms')}>
-              Open terms review
-            </button>
-          </div>
-        </section>
+          </section>
+
+          <section className="rounded-[20px] border border-black/10 bg-[#fbfaf7] px-5 py-4">
+            <p className="text-sm text-gray-600">
+              Stuck or something feels off?{' '}
+              <button type="button" onClick={() => handleDashboardViewChange('feedback')} className="font-semibold text-[#42520d] hover:underline">
+                Send us feedback
+              </button>{' '}
+              — we read every note.
+            </p>
+          </section>
+        </div>
+      </motion.div>
+    );
+  };
+
+  const renderSettingsPage = () => {
+    const username = user.username ?? user.email.split('@')[0].toLowerCase().replace(/[^a-z0-9]/g, '');
+    const toggleClass = (on: boolean) =>
+      `relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors ${on ? 'bg-[#42520d]' : 'bg-gray-200'}`;
+    const knobClass = (on: boolean) =>
+      `inline-block h-3.5 w-3.5 translate-x-0.5 rounded-full bg-white shadow transition-transform ${on ? 'translate-x-[1.125rem]' : ''}`;
+
+    return (
+      <motion.div
+        key="settings-main"
+        initial={{ opacity: 0, y: 10, filter: 'blur(2px)' }}
+        animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+        exit={{ opacity: 0, y: -8, filter: 'blur(2px)' }}
+        transition={{ duration: 0.22, ease: 'easeOut' }}
+      >
+        <div id="settings" className="mx-auto max-w-[1292px] scroll-mt-24 space-y-6">
+          <section className="rounded-[20px] border border-black/10 bg-white px-5 py-5 shadow-[0_10px_34px_rgba(0,0,0,0.04)]">
+            <h2 className="text-2xl font-normal tracking-[-0.03em] font-serif">Settings</h2>
+            <p className="mt-2 max-w-2xl text-sm leading-6 text-gray-600">
+              Manage your account, notifications, and how Apparent reaches you.
+            </p>
+          </section>
+
+          {/* Account */}
+          <section className="overflow-hidden rounded-[20px] border border-black/10 bg-white shadow-[0_10px_34px_rgba(0,0,0,0.04)]">
+            <div className="border-b border-black/10 px-5 py-4">
+              <h3 className="text-sm font-semibold">Account</h3>
+            </div>
+            <div className="divide-y divide-black/10">
+              <div className="flex items-center justify-between gap-4 px-5 py-4">
+                <div>
+                  <p className="text-sm font-medium">Email</p>
+                  <p className="mt-0.5 text-xs text-gray-500">{user.email}</p>
+                </div>
+                <span className="rounded-full bg-[#f4f1eb] px-3 py-1 text-xs font-medium text-gray-500">Sign-in</span>
+              </div>
+              <div className="flex items-center justify-between gap-4 px-5 py-4">
+                <div>
+                  <p className="text-sm font-medium">Username</p>
+                  <p className="mt-0.5 text-xs text-gray-500">@{username}</p>
+                </div>
+                <a
+                  href={`/@${username}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center gap-1 rounded-full border border-black/10 px-3 py-1.5 text-xs font-semibold hover:bg-[#fbf8f3]"
+                >
+                  <ArrowUpRight className="h-3.5 w-3.5" /> View public profile
+                </a>
+              </div>
+              <div className="flex items-center justify-between gap-4 px-5 py-4">
+                <div>
+                  <p className="text-sm font-medium">Workspace</p>
+                  <p className="mt-0.5 text-xs text-gray-500">{isInvestor ? 'Investor' : 'Founder'} workspace</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => handleDashboardViewChange('profile')}
+                  className="rounded-full border border-black/10 px-3 py-1.5 text-xs font-semibold hover:bg-[#fbf8f3]"
+                >
+                  {isInvestor ? 'Edit thesis' : 'Edit profile'}
+                </button>
+              </div>
+            </div>
+          </section>
+
+          {/* Notifications */}
+          <section className="overflow-hidden rounded-[20px] border border-black/10 bg-white shadow-[0_10px_34px_rgba(0,0,0,0.04)]">
+            <div className="border-b border-black/10 px-5 py-4">
+              <h3 className="text-sm font-semibold">Notifications</h3>
+            </div>
+            <div className="divide-y divide-black/10">
+              <div className="flex items-center justify-between gap-4 px-5 py-4">
+                <div>
+                  <p className="text-sm font-medium">Daily digest</p>
+                  <p className="mt-0.5 max-w-md text-xs text-gray-500">
+                    {isInvestor
+                      ? 'A daily summary of fresh, thesis-fit founder signals.'
+                      : 'A daily summary of investor interest and new matches.'}
+                  </p>
+                </div>
+                <button type="button" role="switch" aria-checked={dailyDigestEnabled} onClick={toggleDailyDigest} className={toggleClass(dailyDigestEnabled)}>
+                  <span className={knobClass(dailyDigestEnabled)} />
+                </button>
+              </div>
+              <div className="flex items-center justify-between gap-4 px-5 py-4">
+                <div>
+                  <p className="text-sm font-medium">Slack alerts</p>
+                  <p className="mt-0.5 max-w-md text-xs text-gray-500">Real-time alerts for high-signal activity in your workspace.</p>
+                </div>
+                <button type="button" role="switch" aria-checked={slackAlertsEnabled} onClick={toggleSlackAlerts} className={toggleClass(slackAlertsEnabled)}>
+                  <span className={knobClass(slackAlertsEnabled)} />
+                </button>
+              </div>
+            </div>
+          </section>
+
+          {/* Session */}
+          <section className="overflow-hidden rounded-[20px] border border-black/10 bg-white shadow-[0_10px_34px_rgba(0,0,0,0.04)]">
+            <div className="flex items-center justify-between gap-4 px-5 py-4">
+              <div>
+                <p className="text-sm font-medium">Sign out</p>
+                <p className="mt-0.5 text-xs text-gray-500">End your session on this device.</p>
+              </div>
+              <button
+                type="button"
+                onClick={handleSignOut}
+                className="rounded-full border border-red-200 bg-red-50 px-4 py-2 text-xs font-semibold text-red-700 transition-colors hover:bg-red-100"
+              >
+                Sign out
+              </button>
+            </div>
+          </section>
+        </div>
       </motion.div>
     );
   };
@@ -6378,6 +6586,8 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
               renderKnowledgePage()
             ) : activeView === 'feedback' ? (
               renderFeedbackPage()
+            ) : activeView === 'settings' ? (
+              renderSettingsPage()
             ) : activeView === 'vc-heatmap' ? (
               <motion.div
                 key="vc-heatmap-main"
