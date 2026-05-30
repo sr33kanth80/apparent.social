@@ -337,6 +337,10 @@ export interface UserMessage {
   id: string;
   ownerId: string;
   recipient: string;
+  /** The recipient's Apparent user id, when they're a real member (enables delivery). */
+  recipientId?: string;
+  /** The sender's display name, shown to the recipient in their inbox. */
+  senderName?: string;
   subject: string;
   body: string;
   status: 'draft' | 'sent' | 'replied';

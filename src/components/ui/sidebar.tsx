@@ -137,7 +137,7 @@ const roleConfig = {
         { label: 'Messages', href: '#messages', icon: MessagesSquare },
       ],
       [
-        { label: 'Deal Terms', href: '#deals', icon: Layout },
+        { label: 'Fundraise Tracker', href: '#deals', icon: Layout },
       ],
       [
         { label: 'How to Use Apparent?', href: '#knowledge', icon: GraduationCap },

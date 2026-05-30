@@ -185,6 +185,7 @@ type FeedbackType = 'Bug report' | 'Feature request' | 'Workflow confusion' | 'G
 interface MessageThread {
   id: string;
   recipient: string;
+  counterpartyId?: string;
   latest: UserMessage;
   messages: UserMessage[];
 }
@@ -1233,14 +1234,21 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
     const threads = new Map<string, MessageThread>();
 
     messages.forEach((message) => {
-      const recipient = message.recipient.trim() || 'Unknown contact';
-      const id = recipient.toLowerCase();
+      // Incoming = addressed to me by someone else; outgoing = composed by me.
+      const isIncoming = Boolean(message.recipientId && message.recipientId === user.id && message.ownerId !== user.id);
+      const counterpartyName = (isIncoming
+        ? message.senderName || 'Someone on Apparent'
+        : message.recipient || 'Unknown contact'
+      ).trim();
+      const counterpartyId = isIncoming ? message.ownerId : message.recipientId || '';
+      const id = counterpartyId || counterpartyName.toLowerCase();
       const currentThread = threads.get(id);
 
       if (!currentThread) {
         threads.set(id, {
           id,
-          recipient,
+          recipient: counterpartyName,
+          counterpartyId: counterpartyId || undefined,
           latest: message,
           messages: [message],
         });
@@ -1248,6 +1256,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
       }
 
       currentThread.messages.push(message);
+      if (!currentThread.counterpartyId && counterpartyId) currentThread.counterpartyId = counterpartyId;
       if (new Date(message.updatedAt).getTime() > new Date(currentThread.latest.updatedAt).getTime()) {
         currentThread.latest = message;
       }
@@ -1261,7 +1270,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
         ),
       }))
       .sort((a, b) => new Date(b.latest.updatedAt).getTime() - new Date(a.latest.updatedAt).getTime());
-  }, [messages]);
+  }, [messages, user.id]);
 
   const filteredMessageThreads = useMemo(() => {
     const normalizedQuery = messageSearch.trim().toLowerCase();
@@ -2817,6 +2826,8 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
 
   const handleSaveMessage = async (status: UserMessage['status']) => {
     const recipient = messageDraft.recipient.trim() || activeMessageThread?.recipient.trim() || '';
+    const recipientId = activeMessageThread?.counterpartyId || '';
+    const senderName = (intakeValues.profileName || '').trim() || user.username || user.email.split('@')[0];
     const subject = messageDraft.subject.trim() || activeMessageThread?.latest.subject || (isInvestor ? 'Investor follow-up' : 'Founder follow-up');
     const body = messageDraft.body.trim();
     const context = messageDraft.context || activeMessageThread?.latest.context || '';
@@ -2837,6 +2848,8 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
     try {
       const savedMessage = await saveMessage(user, {
         recipient,
+        recipientId,
+        senderName,
         subject,
         body,
         context,
@@ -2850,7 +2863,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
         status: 'draft',
         context: savedMessage.context,
       });
-      setSelectedMessageThreadId(savedMessage.recipient.toLowerCase());
+      setSelectedMessageThreadId(activeMessageThread?.id ?? (savedMessage.recipientId || savedMessage.recipient.toLowerCase()));
       setIsMessageFormOpen(false);
       addActivity(`${status === 'sent' ? 'Sent' : 'Saved'} message to ${savedMessage.recipient}`);
     } catch (error) {
@@ -4940,7 +4953,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
         {termReviews.length === 0 && (
           <EmptyState
             icon={<FileText className="h-5 w-5" />}
-            title="Track your deal terms"
+            title={isInvestor ? 'Track your deal terms' : 'Track and compare your offers'}
             body={isInvestor
               ? 'Log instrument, amount, valuation cap, pro-rata, and notes for each deal you’re reviewing — all in one place.'
               : 'Capture investor offers — SAFE notes, valuation caps, rights, and decision notes — so your fundraise stays organized.'}
@@ -4965,12 +4978,12 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
           <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
             <div>
               <h2 className="text-2xl font-normal tracking-[-0.03em] font-serif">
-                {isInvestor ? 'Deal Flow' : 'Deal Terms'}
+                {isInvestor ? 'Deal Flow' : 'Your Fundraise Tracker'}
               </h2>
               <p className="mt-2 max-w-2xl text-sm leading-6 text-gray-600">
                 {isInvestor
                   ? 'Track sourced companies as they move from discovery to review, outreach, meetings, and watchlist.'
-                  : 'Track investor offers, SAFE notes, valuation caps, rights, and decision notes in one fundraising workspace.'}
+                  : 'Log and compare the investor offers you receive — instrument, valuation cap, amount, pro-rata, and deadlines — all in one place.'}
               </p>
             </div>
             <button
@@ -4984,7 +4997,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
                 }
               }}
             >
-              {isInvestor ? 'Add term note' : 'Add investor terms'}
+              {isInvestor ? 'Add term note' : 'Log an offer'}
             </button>
           </div>
         </section>
@@ -5127,9 +5140,9 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
             cta: { label: 'Open VC Heat Map', view: 'vc-heatmap' },
           },
           {
-            title: 'Track interest & manage terms',
-            text: 'See which investors are tracking your profile, and log investor offers, SAFEs, and valuation caps in Deal Terms.',
-            cta: { label: 'Open Deal Terms', view: 'deals' },
+            title: 'Track interest & compare offers',
+            text: 'See which investors are tracking your profile, and log every offer you receive — instrument, cap, amount, and deadline — in your Fundraise Tracker to compare them side by side.',
+            cta: { label: 'Open Fundraise Tracker', view: 'deals' },
           },
         ];
 
@@ -5905,20 +5918,31 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
 
             {activeMessageThread && (
               <div className="mx-auto mt-auto flex w-full max-w-4xl flex-col gap-3">
-                {activeThreadMessages.map((message) => (
-                  <div key={message.id} className="flex justify-end">
-                    <div className={`max-w-[82%] rounded-[22px] rounded-br-md border ${dmAccentBorder} ${accentSurface} px-4 py-3 ${accentForeground} shadow-sm shadow-black/[0.05] md:max-w-[72%]`}>
-                      <div className="mb-2 flex items-center justify-between gap-3">
-                        <p className={`truncate text-xs font-semibold ${isInvestor ? 'text-white/75' : 'text-black/55'}`}>{message.subject || 'Apparent message'}</p>
-                        <span className={`shrink-0 text-[11px] ${isInvestor ? 'text-white/60' : 'text-black/45'}`}>{formatMessageTime(message.updatedAt)}</span>
-                      </div>
-                      <p className="whitespace-pre-wrap text-sm leading-relaxed">{message.body}</p>
-                      <div className="mt-3 flex justify-end">
-                        <span className={`rounded-full px-2 py-0.5 text-[11px] ${dmBubbleMeta}`}>{message.status}</span>
+                {activeThreadMessages.map((message) => {
+                  const outgoing = message.ownerId === user.id;
+                  return (
+                    <div key={message.id} className={`flex ${outgoing ? 'justify-end' : 'justify-start'}`}>
+                      <div
+                        className={
+                          outgoing
+                            ? `max-w-[82%] rounded-[22px] rounded-br-md border ${dmAccentBorder} ${accentSurface} px-4 py-3 ${accentForeground} shadow-sm shadow-black/[0.05] md:max-w-[72%]`
+                            : 'max-w-[82%] rounded-[22px] rounded-bl-md border border-black/10 bg-white px-4 py-3 text-black shadow-sm shadow-black/[0.05] md:max-w-[72%]'
+                        }
+                      >
+                        <div className="mb-2 flex items-center justify-between gap-3">
+                          <p className={`truncate text-xs font-semibold ${outgoing && isInvestor ? 'text-white/75' : 'text-black/55'}`}>{message.subject || 'Apparent message'}</p>
+                          <span className={`shrink-0 text-[11px] ${outgoing && isInvestor ? 'text-white/60' : 'text-black/45'}`}>{formatMessageTime(message.updatedAt)}</span>
+                        </div>
+                        <p className="whitespace-pre-wrap text-sm leading-relaxed">{message.body}</p>
+                        <div className="mt-3 flex justify-end">
+                          <span className={`rounded-full px-2 py-0.5 text-[11px] ${outgoing ? dmBubbleMeta : 'bg-[#f4f1eb] text-gray-500'}`}>
+                            {outgoing ? message.status : 'received'}
+                          </span>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </div>

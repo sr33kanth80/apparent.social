@@ -449,6 +449,8 @@ const mapMessageRow = (row: Record<string, unknown>): UserMessage => ({
   id: String(row.id),
   ownerId: String(row.owner_id ?? row.ownerId ?? ''),
   recipient: String(row.recipient ?? ''),
+  recipientId: String(row.recipient_id ?? row.recipientId ?? ''),
+  senderName: String(row.sender_name ?? row.senderName ?? ''),
   subject: String(row.subject ?? ''),
   body: String(row.body ?? ''),
   status: row.status === 'sent' || row.status === 'replied' ? row.status : 'draft',
@@ -1596,7 +1598,11 @@ export const loadDashboardData = async (
     supabase.from('meetups').select('*').order('starts_at', { ascending: true }),
     supabase.from('meetup_rsvps').select('*'),
     supabase.from('term_reviews').select('*').eq('user_id', user.id).order('updated_at', { ascending: false }),
-    supabase.from('user_messages').select('*').eq('owner_id', user.id).order('updated_at', { ascending: false }),
+    supabase
+      .from('user_messages')
+      .select('*')
+      .or(`owner_id.eq.${user.id},recipient_id.eq.${user.id}`)
+      .order('updated_at', { ascending: false }),
     supabase.from('feed_item_actions').select('*').eq('user_id', user.id),
     supabase.from('launch_upvotes').select('launch_id').eq('user_id', user.id),
     supabase.from('launch_comments').select('launch_id, body').order('created_at', { ascending: false }),
@@ -2148,10 +2154,15 @@ export const saveMessage = async (
   message: Omit<UserMessage, 'id' | 'ownerId' | 'updatedAt'> & Partial<Pick<UserMessage, 'id'>>,
 ): Promise<UserMessage> => {
   const id = message.id ?? (isSupabaseConfigured && supabase && !user.isDev ? crypto.randomUUID() : localId('message'));
+  // Only address to a real member (uuid) so delivery works; otherwise it stays
+  // a sender-side note (e.g. messaging a curated profile that isn't on Apparent).
+  const recipientId = message.recipientId && isUuid(message.recipientId) ? message.recipientId : '';
   const nextMessage: UserMessage = {
     id,
     ownerId: user.id,
     recipient: message.recipient,
+    recipientId,
+    senderName: message.senderName ?? '',
     subject: message.subject,
     body: message.body,
     status: message.status,
@@ -2174,6 +2185,8 @@ export const saveMessage = async (
       id: nextMessage.id,
       owner_id: user.id,
       recipient: nextMessage.recipient,
+      recipient_id: recipientId || null,
+      sender_name: nextMessage.senderName,
       subject: nextMessage.subject,
       body: nextMessage.body,
       status: nextMessage.status,

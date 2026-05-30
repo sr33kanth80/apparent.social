@@ -151,7 +151,7 @@ const ProfileMessageModal = ({
   onClose,
 }: {
   viewer: AppUser;
-  target: { name: string; username: string };
+  target: { name: string; username: string; userId: string };
   onClose: () => void;
 }) => {
   const [subject, setSubject] = useState('');
@@ -164,7 +164,9 @@ const ProfileMessageModal = ({
     try {
       await saveMessage(viewer, {
         recipient: target.name || `@${target.username}`,
-        subject: subject.trim() || `Message from ${viewer.email.split('@')[0]}`,
+        recipientId: target.userId,
+        senderName: viewer.username || viewer.email.split('@')[0],
+        subject: subject.trim() || `Message from ${viewer.username || viewer.email.split('@')[0]}`,
         body: body.trim(),
         status: 'sent',
         context: `dm:${target.username}`,
@@ -581,7 +583,7 @@ export const PublicProfile = () => {
   const [result, setResult] = useState<PublicProfileResult | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [viewer, setViewer] = useState<AppUser | null>(null);
-  const [dmFor, setDmFor] = useState<{ name: string; username: string } | null>(null);
+  const [dmFor, setDmFor] = useState<{ name: string; username: string; userId: string } | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -664,7 +666,7 @@ export const PublicProfile = () => {
       <FounderProfilePage
         profile={p}
         viewer={viewer}
-        onMessage={() => setDmFor({ name: p.profileName || p.username, username: p.username })}
+        onMessage={() => setDmFor({ name: p.profileName || p.username, username: p.username, userId: p.userId })}
       />
     );
   } else if (result.profile.restricted) {
@@ -675,7 +677,7 @@ export const PublicProfile = () => {
       <InvestorProfilePage
         profile={p}
         viewer={viewer}
-        onMessage={() => setDmFor({ name: p.displayName || p.username, username: p.username })}
+        onMessage={() => setDmFor({ name: p.displayName || p.username, username: p.username, userId: p.userId })}
       />
     );
   }
