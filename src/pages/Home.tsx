@@ -288,12 +288,12 @@ export const Home = () => {
           className="max-w-3xl text-4xl font-normal leading-[1.05] tracking-[-0.04em] md:text-6xl"
           style={serifDisplay}
         >
-          Stop cold-emailing investors. Let them find you.
+          Find the investors who actually fit.
         </h1>
         <p className="mt-5 max-w-2xl text-base leading-7 text-black/65 md:text-lg">
-          Apparent turns your launches, commits, and traction into investor discovery.
-          Browse the live VC map, get matched on thesis fit, and signal when you&apos;re raising.
-          No spreadsheets, no cold outreach.
+          Apparent matches founders and investors by thesis, stage, and sector.
+          Founders reach the funds that back what they&apos;re building. Investors meet the
+          founders who fit their thesis. Less noise on both sides, better conversations.
         </p>
         <div className="mt-7 flex flex-wrap items-center gap-3">
           <button
@@ -324,10 +324,10 @@ export const Home = () => {
         <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
           <div>
             <h2 className="text-2xl font-normal tracking-[-0.03em] md:text-3xl" style={serifDisplay}>
-              See where the money is. Free.
+              See which investors fit. Free.
             </h2>
             <p className="mt-2 max-w-xl text-sm leading-6 text-black/60">
-              A living map of active investors by city, stage, and thesis. No login to look around.
+              A living map of active investors by city, stage, and thesis. Find the funds that fit what you&apos;re building. No login to look around.
             </p>
           </div>
           <Link
@@ -351,12 +351,12 @@ export const Home = () => {
           {/* Founders */}
           <div className="flex flex-col rounded-[24px] border border-black/10 bg-white/70 p-7">
             <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#42520d]">For founders</p>
-            <h3 className="mt-3 text-2xl font-semibold tracking-[-0.02em]">Get discovered for what you build.</h3>
+            <h3 className="mt-3 text-2xl font-semibold tracking-[-0.02em]">Reach the investors who fit your raise.</h3>
             <ul className="mt-5 grid gap-3 text-sm leading-6 text-black/65">
               {[
-                'Turn launches, commits, and traction into a profile investors actually browse.',
-                'See exactly which investors are tracking you, and follow up when it counts.',
-                'Flip on “raising now” and surface to thesis-fit funds. No mass cold emails.',
+                'Match to funds by thesis, stage, and sector, not a generic list of thousands.',
+                'See which investors fit your raise and which are already tracking you.',
+                'Flip on “raising now” so the right funds know you’re open, and approach them with context.',
               ].map((item) => (
                 <li key={item} className="flex items-start gap-2.5">
                   <Check className="mt-0.5 h-4 w-4 shrink-0 text-[#42520d]" />
@@ -376,12 +376,12 @@ export const Home = () => {
           {/* Investors */}
           <div className="flex flex-col rounded-[24px] bg-[#1c1c1a] p-7 text-white">
             <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#bcd99a]">For investors</p>
-            <h3 className="mt-3 text-2xl font-semibold tracking-[-0.02em]">See who&apos;s shipping, live.</h3>
+            <h3 className="mt-3 text-2xl font-semibold tracking-[-0.02em]">Meet the founders who fit your thesis.</h3>
             <ul className="mt-5 grid gap-3 text-sm leading-6 text-white/70">
               {[
-                'A live map of builders who are actually shipping, not a static directory.',
-                'Filter by thesis fit, stage, location, and who’s raising right now.',
-                'Message a founder in one click the moment the signal is fresh.',
+                'A live map of builders who fit your stage, sector, and geography.',
+                'Filter by thesis fit and who’s raising right now, not a static directory.',
+                'Approach the founders who actually fit, the moment the signal is fresh.',
               ].map((item) => (
                 <li key={item} className="flex items-start gap-2.5">
                   <Check className="mt-0.5 h-4 w-4 shrink-0 text-[#bcd99a]" />
@@ -400,30 +400,30 @@ export const Home = () => {
         </div>
       </section>
 
-      {/* THE WEDGE — challenge the spreadsheet-of-cold-contacts model head-on. */}
+      {/* THE WEDGE — fit beats volume, on both sides. */}
       <section className="mx-auto max-w-[78rem] border-t border-black/10 px-5 py-12 sm:px-8">
         <div className="grid gap-8 md:grid-cols-2 md:items-center">
           <div>
             <h2 className="max-w-xl text-3xl font-normal leading-tight tracking-[-0.035em] md:text-4xl" style={serifDisplay}>
-              Fundraising isn&apos;t a spreadsheet of 20,000 strangers.
+              The right match beats a hundred wrong ones.
             </h2>
             <p className="mt-4 max-w-xl text-sm leading-7 text-black/60">
-              The old way hands you a static list and tells you to cold-email your way through it.
-              Apparent flips it: your work is the pitch, the map does the matchmaking, and the
-              right investors come to you.
+              A generic list of thousands wastes everyone&apos;s time. Apparent matches founders
+              and investors on thesis, stage, and sector first, so the conversations that happen
+              are the ones that should.
             </p>
           </div>
           <div className="grid gap-3">
             <div className="rounded-[18px] border border-black/10 bg-white/50 p-5">
               <p className="text-xs font-semibold uppercase tracking-[0.16em] text-black/35">The old way</p>
               <p className="mt-2 text-sm leading-6 text-black/55">
-                Export a list. Cold-email hundreds. Hope someone opens the deck.
+                Work a list of thousands. Guess at fit. Hope something sticks.
               </p>
             </div>
             <div className="rounded-[18px] border border-[#42520d]/20 bg-[#dcefc7]/40 p-5">
               <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#42520d]">On Apparent</p>
               <p className="mt-2 text-sm leading-6 text-black/65">
-                Ship. Get matched on thesis fit. Get messaged while the signal is fresh.
+                Match on thesis and stage. Talk to the few who fit. Skip the rest.
               </p>
             </div>
           </div>
@@ -435,14 +435,14 @@ export const Home = () => {
         <div className="grid gap-6 lg:grid-cols-[0.8fr_1.2fr] lg:items-start">
           <div>
             <h2 className="max-w-xl text-3xl font-normal leading-tight tracking-[-0.035em] md:text-4xl" style={serifDisplay}>
-              Ship. Get matched. Get funded.
+              Show up. Match on fit. Connect.
             </h2>
           </div>
           <div className="grid gap-4 sm:grid-cols-3">
             {[
               { icon: Zap, title: 'Show your work', text: 'Launches, commits, and traction become a profile that proves itself.' },
-              { icon: Radar, title: 'Land on the map', text: 'You surface to thesis-fit investors by stage, sector, and location.' },
-              { icon: Send, title: 'Get the intro', text: 'Signal you’re raising and let investors reach out. No cold emails.' },
+              { icon: Radar, title: 'Match on fit', text: 'See the investors whose thesis, stage, and sector actually fit your raise.' },
+              { icon: Send, title: 'Start the right conversation', text: 'Approach the funds that fit, or signal you’re raising and let them come to you.' },
             ].map((item) => (
               <article key={item.title} className="rounded-[22px] bg-white/70 p-5">
                 <item.icon className="mb-5 h-4 w-4 text-[#42520d]" />
@@ -461,10 +461,10 @@ export const Home = () => {
           <div>
             <MapPin className="mb-5 h-5 w-5 text-[#42520d]" />
             <h2 className="max-w-2xl text-3xl font-normal leading-tight tracking-[-0.035em] md:text-4xl" style={serifDisplay}>
-              Put yourself on the map.
+              Find your fit.
             </h2>
             <p className="mt-4 max-w-2xl text-sm leading-7 text-black/55">
-              Founders raise by being seen. Investors win by seeing first. Pick your side and start in under a minute.
+              Founders find the investors who fit their raise. Investors find the founders who fit their thesis. Pick your side and start in under a minute.
             </p>
           </div>
           <div className="flex flex-col gap-3 sm:flex-row md:flex-col">
