@@ -156,7 +156,7 @@ export const ForFounders = () => {
                   More
                 </span>
               </div>
-              <div className="flex gap-1 overflow-x-auto pb-1 [scrollbar-width:thin] [&::-webkit-scrollbar]:h-1 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-white/15">
+              <div className="flex gap-1 overflow-x-auto pb-2.5 [scrollbar-color:rgba(188,217,154,0.35)_transparent] [scrollbar-width:thin] [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-[#bcd99a]/30 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar]:h-1.5 hover:[&::-webkit-scrollbar-thumb]:bg-[#bcd99a]/55">
                 {commitColumns.map((col, w) => (
                   <div key={w} className="flex flex-col gap-1">
                     {col.map((lvl, d) => (
