@@ -414,14 +414,14 @@ export const Home = () => {
           <button
             type="button"
             onClick={() => navigate('/login?role=founder')}
-            className="inline-flex items-center gap-2 rounded-full bg-[#42520d] px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-[#34420a]"
+            className="inline-flex items-center gap-2 rounded-full bg-[#dcefc7] px-6 py-3 text-sm font-semibold text-black transition-colors hover:bg-[#cce8ae]"
           >
             I&apos;m a founder <ArrowUpRight className="h-4 w-4" />
           </button>
           <button
             type="button"
             onClick={() => navigate('/login?role=investor')}
-            className="inline-flex items-center gap-2 rounded-full bg-[#dcefc7] px-6 py-3 text-sm font-semibold text-black transition-colors hover:bg-[#cce8ae]"
+            className="inline-flex items-center gap-2 rounded-full bg-[#42520d] px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-[#34420a]"
           >
             I&apos;m an investor
           </button>
