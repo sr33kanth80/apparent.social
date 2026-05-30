@@ -435,7 +435,7 @@ a.rounded-full:hover {
   position: relative;
   z-index: 2;
   display: inline-block;
-  padding: 0.06em 0.54em 0.16em 0.42em;
+  padding: 0.06em 0.22em 0.16em 0.42em;
   background: #dcefc7;
   color: #20300a;
   border-radius: 0.32em 0.12em 0.12em 0.32em;
@@ -446,9 +446,9 @@ a.rounded-full:hover {
   position: absolute;
   z-index: 1;
   top: 50%;
-  right: -0.27em;
-  width: 0.54em;
-  height: 0.54em;
+  right: -0.25em;
+  width: 0.5em;
+  height: 0.5em;
   transform: translateY(-50%);
   background: #dcefc7;
   border-radius: 50%;
@@ -471,7 +471,7 @@ a.rounded-full:hover {
   position: relative;
   z-index: 1;
   display: inline-block;
-  padding: 0.06em 0.34em 0.16em 0.42em;
+  padding: 0.06em 0.34em 0.16em 0.36em;
   background: #42520d;
   color: #f4f1eb;
   border-radius: 0.12em 0.32em 0.32em 0.12em;
@@ -485,9 +485,9 @@ a.rounded-full:hover {
   content: '';
   position: absolute;
   top: 50%;
-  left: -0.32em;
-  width: 0.66em;
-  height: 0.66em;
+  left: -0.27em;
+  width: 0.56em;
+  height: 0.56em;
   transform: translateY(-50%);
   background: #fbfaf7;
   border-radius: 50%;
