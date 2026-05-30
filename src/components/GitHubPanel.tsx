@@ -5,11 +5,7 @@ import { GitHubIcon } from './GitHubIcon';
 type GitHubData = {
   profile: { login: string; name: string; avatarUrl: string; htmlUrl: string };
   stats: { publicRepos: number; followers: number; stars: number; topLanguages: string[] };
-  contributions: { total: number; weeks: { c: number; l: number; d: string }[][] } | null;
 };
-
-// GitHub light-theme contribution colours (level 0–4).
-const LEVEL_COLORS = ['#ebedf0', '#9be9a8', '#40c463', '#30a14e', '#216e39'];
 
 const compact = (n: number) =>
   n >= 1000 ? `${(n / 1000).toFixed(n >= 10000 ? 0 : 1).replace(/\.0$/, '')}k` : String(n);
@@ -54,7 +50,7 @@ export const GitHubPanel = ({ github }: { github: string }) => {
 
   if (!login || !data) return null;
 
-  const { stats, contributions } = data;
+  const { stats } = data;
   const statItems = [
     { icon: Star, label: 'Stars', value: compact(stats.stars) },
     { icon: FolderGit2, label: 'Repos', value: compact(stats.publicRepos) },
@@ -95,28 +91,6 @@ export const GitHubPanel = ({ github }: { github: string }) => {
             </div>
           ))}
         </div>
-
-        {contributions && (
-          <div className="mt-6 border-t border-black/5 pt-6">
-            <p className="mb-3 text-xs font-semibold uppercase tracking-[0.12em] text-black/40">
-              {compact(contributions.total)} contributions in the last year
-            </p>
-            <div className="flex gap-1 overflow-x-auto pb-2.5 [scrollbar-color:rgba(66,82,13,0.35)_transparent] [scrollbar-width:thin] [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-[#42520d]/25 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar]:h-1.5 hover:[&::-webkit-scrollbar-thumb]:bg-[#42520d]/45">
-              {contributions.weeks.map((week, w) => (
-                <div key={w} className="flex flex-col gap-1">
-                  {week.map((day, d) => (
-                    <span
-                      key={d}
-                      title={`${day.c} contributions on ${day.d}`}
-                      className="h-2.5 w-2.5 shrink-0 rounded-[2px] transition-transform duration-150 hover:scale-[1.6]"
-                      style={{ backgroundColor: LEVEL_COLORS[day.l] }}
-                    />
-                  ))}
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
       </div>
     </section>
   );

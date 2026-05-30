@@ -1,11 +1,8 @@
-// Live GitHub stats + contribution calendar for a founder profile.
+// Live public GitHub stats for a founder profile.
 //
-// Public profile, repos, stars, and top languages come from the REST API
-// (works unauthenticated, but a token raises the rate limit). The contribution
-// calendar comes from the GraphQL API, which REQUIRES a token. Set GITHUB_TOKEN
-// in the Vercel project (a read-only Personal Access Token is enough — no
-// GitHub App / OAuth needed). Without a token, stats still work and the
-// calendar is simply omitted.
+// Public profile, repos, stars, and top languages come from the REST API. Works
+// unauthenticated; setting an optional read-only GITHUB_TOKEN in the Vercel
+// project just raises the rate limit (no GitHub App / OAuth needed).
 
 const GH_TOKEN = process.env.GITHUB_TOKEN || process.env.GH_TOKEN || '';
 
@@ -23,35 +20,6 @@ async function ghRest(path) {
     const res = await fetch(`https://api.github.com${path}`, { headers: baseHeaders() });
     if (!res.ok) return null;
     return await res.json();
-  } catch {
-    return null;
-  }
-}
-
-const LEVELS = { NONE: 0, FIRST_QUARTILE: 1, SECOND_QUARTILE: 2, THIRD_QUARTILE: 3, FOURTH_QUARTILE: 4 };
-
-async function ghContributions(login) {
-  if (!GH_TOKEN) return null;
-  const query =
-    'query($login:String!){user(login:$login){contributionsCollection{contributionCalendar{totalContributions weeks{contributionDays{contributionCount date contributionLevel}}}}}}';
-  try {
-    const res = await fetch('https://api.github.com/graphql', {
-      method: 'POST',
-      headers: { authorization: `Bearer ${GH_TOKEN}`, 'content-type': 'application/json', 'user-agent': 'apparent-app' },
-      body: JSON.stringify({ query, variables: { login } }),
-    });
-    if (!res.ok) return null;
-    const json = await res.json();
-    const cal = json && json.data && json.data.user && json.data.user.contributionsCollection
-      ? json.data.user.contributionsCollection.contributionCalendar
-      : null;
-    if (!cal) return null;
-    return {
-      total: cal.totalContributions,
-      weeks: cal.weeks.map((w) =>
-        w.contributionDays.map((d) => ({ c: d.contributionCount, l: LEVELS[d.contributionLevel] ?? 0, d: d.date })),
-      ),
-    };
   } catch {
     return null;
   }
@@ -83,8 +51,6 @@ export default async function handler(req, res) {
     .slice(0, 4)
     .map(([name]) => name);
 
-  const contributions = await ghContributions(username);
-
   res.setHeader('Content-Type', 'application/json; charset=utf-8');
   res.setHeader('Cache-Control', 'public, s-maxage=3600, stale-while-revalidate=86400');
   res.status(200).json({
@@ -103,6 +69,5 @@ export default async function handler(req, res) {
       stars,
       topLanguages,
     },
-    contributions,
   });
 }
