@@ -331,6 +331,31 @@ export const STATIC_FOUNDER_PROFILES: Record<string, PublicProfileResult> = {
       ],
     },
   },
+
+  // ─── ApparentVC (test investor profile) ──────────────────────────────────────
+  // Fictional fund used to preview the investor profile UI. Visit /@apparentvc.
+  apparentvc: {
+    kind: 'investor',
+    profile: {
+      userId: 'apparentvc',
+      username: 'apparentvc',
+      displayName: 'Marcus Bell',
+      profilePhotoUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=160&h=160&q=80',
+      thesis:
+        'General Partner at ApparentVC. We lead pre-seed and seed rounds in AI infrastructure, developer tools, and vertical SaaS, backing technical founders who ship before they pitch. We write first checks, move fast off real proof, and stay close through the messy early months.',
+      sectors: 'AI infrastructure, Developer tools, Vertical SaaS, Fintech infrastructure',
+      stage: 'Pre-seed, Seed',
+      checkSize: '$250K – $2M',
+      geography: 'US & Europe (remote-friendly)',
+      portfolioExamples:
+        'Ledgerline, Northwind, AgentKit, Cortex Labs, Beacon Health, Forge, Tidewall, Cadence',
+      founderSignals:
+        'Ships in public, has design partners before a deck, writes clearly, and obsesses over one specific user. We pass on momentum without a wedge.',
+      publicFields: ['thesis', 'sectors', 'stage', 'geography', 'checkSize', 'portfolioExamples', 'founderSignals'],
+      restricted: false,
+      shareable: true,
+    },
+  },
 };
 
 /**
