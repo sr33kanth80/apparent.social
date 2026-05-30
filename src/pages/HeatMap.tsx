@@ -35,6 +35,9 @@ interface HeatMapProps {
   vcOnly?: boolean;
   /** Fill the available space edge-to-edge (no max-width section or rounded card). */
   fullBleed?: boolean;
+  /** With fullBleed: fill the flex parent (flex-1) instead of forcing h-screen.
+      Used on the public page so the map fits below the fixed navbar. */
+  fillParent?: boolean;
   /** Founder's own stage/sectors — powers the "Match my profile" shortcut. */
   founderStage?: string;
   founderSectors?: string;
@@ -517,6 +520,7 @@ export const HeatMap = ({
   includeVCContacts = false,
   vcOnly = false,
   fullBleed = false,
+  fillParent = false,
   founderStage = '',
   founderSectors = '',
 }: HeatMapProps) => {
@@ -634,7 +638,13 @@ export const HeatMap = ({
       ];
 
   return (
-    <main className={fullBleed ? 'h-screen w-full overflow-hidden bg-[#e8e5dc] text-black' : 'min-h-screen overflow-x-hidden bg-[#fbfaf7] text-black'}>
+    <main
+      className={
+        fullBleed
+          ? `${fillParent ? 'min-h-0 flex-1' : 'h-screen'} w-full overflow-hidden bg-[#e8e5dc] text-black`
+          : 'min-h-screen overflow-x-hidden bg-[#fbfaf7] text-black'
+      }
+    >
       <section className={fullBleed ? 'h-full w-full' : 'mx-auto max-w-[92rem] px-5 pb-5 pt-5 sm:px-8'}>
         <div className={`relative bg-[#e8e5dc] ${fullBleed ? 'h-full w-full overflow-hidden' : 'h-[calc(100vh-8.5rem)] min-h-[620px] overflow-hidden rounded-[32px] shadow-[0_18px_60px_rgba(0,0,0,0.06)]'}`}>
           <Map

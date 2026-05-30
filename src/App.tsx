@@ -124,11 +124,10 @@ function App() {
           <Route
             path="/heat-map"
             element={
-              <>
+              <div className="flex h-screen flex-col overflow-hidden">
                 <EditorialNavbar />
-                <HeatMap includeVCContacts vcOnly />
-                <Footer />
-              </>
+                <HeatMap includeVCContacts vcOnly fullBleed fillParent />
+              </div>
             }
           />
           <Route
