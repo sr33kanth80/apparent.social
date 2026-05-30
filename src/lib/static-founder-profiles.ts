@@ -332,6 +332,41 @@ export const STATIC_FOUNDER_PROFILES: Record<string, PublicProfileResult> = {
     },
   },
 
+  // ─── Aria Kim (test founder profile) ─────────────────────────────────────────
+  // Fictional founder used to preview the founder profile UI. Visit /@ariakim.
+  ariakim: {
+    kind: 'founder',
+    profile: {
+      userId: 'ariakim',
+      username: 'ariakim',
+      profileName: 'Aria Kim',
+      headline: 'Co-founder & CEO at AgentKit',
+      bio: 'Aria builds AgentKit, an open-source framework for agents teams actually ship to production. Previously an ML engineer at Stripe and a CS grad from MIT, she started AgentKit after watching teams struggle to take agent prototypes past the demo. The project crossed 4.2k GitHub stars in its first year and is used in production by 38 design partners.',
+      profilePhotoUrl: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=160&h=160&q=80',
+      currentBuild: 'AgentKit v2 — open-source agent framework',
+      category: 'AI agents',
+      stage: 'Seed',
+      github: 'https://github.com/ariakim/agentkit',
+      traction: '4.2k GitHub stars · 38 design partners · $24K MRR (+22% MoM)',
+      lookingFor: 'Seed investors who back technical, open-source-first founders. Also hiring founding engineers who love developer tooling.',
+      location: 'San Francisco',
+      press: '',
+      website: 'https://agentkit.dev',
+      linkedin: 'https://www.linkedin.com/in/ariakim',
+      xProfile: 'https://x.com/ariakim',
+      pastProducts: 'Stripe (ML engineer)\nMIT (Computer Science)',
+      fundraisingStatus: 'raising',
+      raisingRound: 'Seed',
+      raisingAmount: '$1.5M',
+      raisingAsk: 'Raising a $1.5M seed to grow the AgentKit team and ship the hosted platform. Looking for investors who understand developer tools and open source.',
+      openToContact: true,
+      shareable: true,
+      launches: [
+        launch('agentkit', 'AgentKit', 'Open-source framework for agents teams ship to production.', 'AI agents', 'Seed', 'https://agentkit.dev', '4.2k stars · 38 design partners', 'San Francisco', logo('agentkit.dev')),
+      ],
+    },
+  },
+
   // ─── ApparentVC (test investor profile) ──────────────────────────────────────
   // Fictional fund used to preview the investor profile UI. Visit /@apparentvc.
   apparentvc: {
