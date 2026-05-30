@@ -399,6 +399,32 @@ a.rounded-full:hover {
   transform-origin: center bottom;
 }
 
+/* Sweeping highlight for the MRR figure on the founder mock card. */
+@keyframes mrrShimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+.mrr-shimmer {
+  background-image: linear-gradient(
+    100deg,
+    #ffffff 0%,
+    #ffffff 38%,
+    #bcd99a 50%,
+    #ffffff 62%,
+    #ffffff 100%
+  );
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: mrrShimmer 2.8s linear infinite;
+}
+
 .launch-filter-scroll {
   -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 10px, #000 calc(100% - 18px), transparent 100%);
   mask-image: linear-gradient(90deg, transparent 0, #000 10px, #000 calc(100% - 18px), transparent 100%);
