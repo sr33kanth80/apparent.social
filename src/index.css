@@ -108,6 +108,12 @@
   font-display: swap;
 }
 
+html {
+  /* Always reserve the scrollbar gutter so the fixed navbar doesn't shift
+     when navigating between scrolling pages and the full-screen heat map. */
+  scrollbar-gutter: stable;
+}
+
 body {
   font-family: 'Inter', sans-serif;
 }
