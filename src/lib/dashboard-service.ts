@@ -420,6 +420,18 @@ const mapMeetupRow = (
   isJoined,
 });
 
+// Collapse duplicate meetups (same title/city/venue) — seed meetups got
+// inserted more than once, so the same event would otherwise list repeatedly.
+const dedupeMeetups = (items: Meetup[]): Meetup[] => {
+  const seen = new Set<string>();
+  return items.filter((meetup) => {
+    const key = `${meetup.title}|${meetup.city}|${meetup.venue}`.toLowerCase().trim();
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+};
+
 const mapTermReviewRow = (row: Record<string, unknown>): TermReview => ({
   id: String(row.id),
   ownerId: String(row.user_id ?? row.ownerId ?? ''),
@@ -1467,11 +1479,13 @@ const loadLocalDashboard = async (user: AppUser, role: DashboardRole, labelByKey
   const productLaunches = readLocal<ProductLaunch[]>(storageKey(user, 'product-launches'), []);
   const userMeetups = readLocal<Meetup[]>(storageKey(user, 'meetups'), []);
   const meetupRsvps = readLocal<Record<string, boolean>>(storageKey(user, 'meetup-rsvps'), {});
-  const meetups = [...userMeetups, ...seedMeetups].map((meetup) => ({
-    ...meetup,
-    attendeeCount: meetup.attendeeCount + (meetupRsvps[meetup.id] && !meetup.isJoined ? 1 : 0),
-    isJoined: Boolean(meetupRsvps[meetup.id] ?? meetup.isJoined),
-  }));
+  const meetups = dedupeMeetups(
+    [...userMeetups, ...seedMeetups].map((meetup) => ({
+      ...meetup,
+      attendeeCount: meetup.attendeeCount + (meetupRsvps[meetup.id] && !meetup.isJoined ? 1 : 0),
+      isJoined: Boolean(meetupRsvps[meetup.id] ?? meetup.isJoined),
+    })),
+  );
   const termReviews = readLocal<TermReview[]>(storageKey(user, 'term-reviews'), []);
   const messages = readLocal<UserMessage[]>(storageKey(user, 'messages'), []);
   const feedActions = readLocal<Record<string, Partial<FeedItem>>>(storageKey(user, 'feed-actions'), {});
@@ -1597,8 +1611,10 @@ export const loadDashboardData = async (
     }
   });
   const productLaunches = (productLaunchRows ?? []).map((row) => mapProductLaunchRow(row));
-  const meetups = ((meetupRows?.length ? meetupRows : []) as Record<string, unknown>[]).map((row) =>
-    mapMeetupRow(row, rsvpCounts.get(String(row.id)) ?? Number(row.attendee_count ?? 0), joinedMeetups.has(String(row.id))),
+  const meetups = dedupeMeetups(
+    ((meetupRows?.length ? meetupRows : []) as Record<string, unknown>[]).map((row) =>
+      mapMeetupRow(row, rsvpCounts.get(String(row.id)) ?? Number(row.attendee_count ?? 0), joinedMeetups.has(String(row.id))),
+    ),
   );
   const termReviews = (termRows ?? []).map((row) => mapTermReviewRow(row));
   const messages = (messageRows ?? []).map((row) => mapMessageRow(row));
