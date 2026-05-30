@@ -4949,8 +4949,10 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
               className={`rounded-full ${accentSurface} px-4 py-2 text-sm font-semibold ${accentForeground}`}
               onClick={() => {
                 setIsTermFormOpen(true);
-                setActiveView('terms');
-                navigate(`${dashboardBasePath}#terms`);
+                if (isInvestor) {
+                  setActiveView('terms');
+                  navigate(`${dashboardBasePath}#terms`);
+                }
               }}
             >
               {isInvestor ? 'Add term note' : 'Add investor terms'}

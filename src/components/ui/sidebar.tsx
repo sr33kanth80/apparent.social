@@ -138,7 +138,6 @@ const roleConfig = {
       ],
       [
         { label: 'Deal Terms', href: '#deals', icon: Layout },
-        { label: 'Terms Review', href: '#terms', icon: FileClock },
       ],
       [
         { label: 'Knowledge Base', href: '#knowledge', icon: GraduationCap },
