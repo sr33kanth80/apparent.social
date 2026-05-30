@@ -1,21 +1,20 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import type { AppUser } from '@/lib/apparent-types';
 import { getCurrentAppUser } from '@/lib/auth-service';
 import { SessionNavBar } from '@/components/ui/sidebar';
 import { EditorialNavbar } from '@/components/EditorialNavbar';
 import { Footer } from '@/components/Footer';
-import { PublicProfile } from '@/pages/PublicProfile';
 
 /**
- * Auth-aware chrome for public profile routes.
- * - Logged in: keep the user in their dashboard shell (sidebar) so visiting a
- *   founder/VC profile doesn't feel like being signed out.
+ * Auth-aware chrome for public content pages (profiles, project detail, …).
+ * - Logged in: keep the user in their dashboard shell (sidebar) so opening a
+ *   profile or project never feels like being signed out.
  * - Logged out: the marketing navbar + footer (public visitor experience).
  *
- * A single stable root <div> wraps <PublicProfile> in both states so the
- * profile content never remounts (and never double-fetches) when auth resolves.
+ * A single stable root <div> wraps {children} in both states so the page
+ * content never remounts (or double-fetches) when auth resolves.
  */
-export const ProfileShell = () => {
+export const PublicPageShell = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<AppUser | null>(null);
 
@@ -44,7 +43,7 @@ export const ProfileShell = () => {
         <EditorialNavbar />
       ) : null}
 
-      <PublicProfile />
+      {children}
 
       {!user && !loading && <Footer />}
     </div>
