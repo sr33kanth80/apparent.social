@@ -288,7 +288,7 @@ export const Home = () => {
           className="max-w-3xl text-4xl font-normal leading-[1.05] tracking-[-0.04em] md:text-5xl lg:max-w-none lg:whitespace-nowrap lg:text-6xl"
           style={serifDisplay}
         >
-          Find the investors who actually <span className="puzzle-piece">fit.</span>
+          <span className="puzzle-base">Find the investors who actually</span><span className="puzzle-piece">fit.</span>
         </h1>
         <p className="mt-5 max-w-2xl text-base leading-7 text-black/65 md:text-lg">
           Apparent matches founders and investors by thesis, stage, and sector.

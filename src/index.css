@@ -429,9 +429,31 @@ a.rounded-full:hover {
    line. The left edge carries a jigsaw tab (em-based so it scales with the
    responsive headline), and it slides in from the right, overshoots, and
    settles like a piece clicking into place. */
-.puzzle-piece {
+.puzzle-base {
   display: inline-block;
-  padding: 0 0.26em 0.05em 0.5em;
+  padding: 0 0.34em 0.1em 0.32em;
+  background: #dcefc7;
+  color: #20300a;
+  /* Socket carved into the right edge for the final piece to plug into. */
+  clip-path: polygon(
+    0 0,
+    100% 0,
+    100% 34%,
+    calc(100% - 0.4em) 34%,
+    calc(100% - 0.4em) 66%,
+    100% 66%,
+    100% 100%,
+    0 100%
+  );
+}
+
+.puzzle-piece {
+  position: relative;
+  z-index: 1;
+  display: inline-block;
+  /* Overlap into the base's socket so the tab seats inside it. */
+  margin-left: -0.4em;
+  padding: 0 0.26em 0.1em 0.5em;
   background: #42520d;
   color: #f4f1eb;
   clip-path: polygon(
