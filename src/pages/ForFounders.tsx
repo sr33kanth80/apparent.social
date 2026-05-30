@@ -136,7 +136,7 @@ export const ForFounders = () => {
               </div>
             </div>
           </div>
-          <p className="text-xs text-white/40">This is what an investor sees first. Not your résumé.</p>
+          <p className="text-xs text-white/40">Investors see the whole picture. What you&apos;ve shipped counts most.</p>
         </div>
       </section>
 
