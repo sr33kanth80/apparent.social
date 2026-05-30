@@ -321,15 +321,7 @@ export const Home = () => {
 
       {/* HEATMAP MAGNET — the free front door, mirrors OpenVC's investor list but alive. */}
       <section className="mx-auto max-w-[78rem] px-5 pb-12 sm:px-8">
-        <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
-          <div>
-            <h2 className="text-2xl font-normal tracking-[-0.03em] md:text-3xl" style={serifDisplay}>
-              See which investors fit. Free.
-            </h2>
-            <p className="mt-2 max-w-xl text-sm leading-6 text-black/60">
-              A living map of active investors by city, stage, and thesis. Find the funds that fit what you&apos;re building. No login to look around.
-            </p>
-          </div>
+        <div className="mb-4 flex justify-end">
           <Link
             to="/heat-map"
             className="inline-flex items-center gap-1.5 rounded-full border border-black/15 bg-white px-5 py-2.5 text-sm font-semibold text-black transition hover:bg-black/5"
