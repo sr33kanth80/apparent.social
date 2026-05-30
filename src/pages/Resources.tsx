@@ -95,12 +95,16 @@ export const Resources = () => {
       </section>
 
       <section className="mx-auto max-w-[92rem] px-5 py-10 sm:px-8">
-        <div className="h-[320px] overflow-hidden rounded-[32px] bg-[#d7d0c0] md:h-[420px]">
-          <img
-            src="https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1800&q=85"
-            alt="Open landscape representing a broader view of builder signal"
-            className="h-full w-full object-cover"
-          />
+        <div className="flex min-h-[320px] items-center overflow-hidden rounded-[32px] bg-[#1c1c1a] px-8 py-14 text-white md:min-h-[420px] md:px-16">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#bcd99a]">How to win here</p>
+            <h2 className="mt-5 max-w-4xl text-4xl font-normal leading-[1.05] tracking-[-0.04em] md:text-6xl" style={serifDisplay}>
+              The clearest proof gets the meeting.
+            </h2>
+            <p className="mt-6 max-w-xl text-base leading-7 text-white/55">
+              These guides show founders how to make their work legible, and investors how to turn taste into a searchable thesis.
+            </p>
+          </div>
         </div>
       </section>
 
@@ -139,12 +143,10 @@ export const Resources = () => {
       </section>
 
       <section className="mx-auto grid max-w-[92rem] border-t border-black/10 px-5 py-16 sm:px-8 lg:grid-cols-[0.95fr_1.05fr]">
-        <div className="min-h-[580px] overflow-hidden rounded-[32px] bg-[#d8c7a3] lg:rounded-r-none">
-          <img
-            src="https://images.unsplash.com/photo-1497366754035-f200968a6e72?auto=format&fit=crop&w=1400&q=85"
-            alt="Workspace desk representing practical product walkthroughs"
-            className="h-full w-full object-cover"
-          />
+        <div className="flex min-h-[420px] items-center overflow-hidden rounded-[32px] bg-[#42520d] p-10 text-white lg:min-h-[580px] lg:rounded-r-none lg:p-14">
+          <blockquote className="max-w-md text-3xl font-normal leading-tight tracking-[-0.03em] md:text-4xl" style={serifDisplay}>
+            “The fastest way to learn Apparent is to put your proof in it.”
+          </blockquote>
         </div>
         <div className="bg-[#fbfaf7] px-0 py-10 lg:px-14 lg:py-16">
           <PlayCircle className="mb-10 h-6 w-6 text-[#02A070]" />

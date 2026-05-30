@@ -48,11 +48,11 @@ export const ForFounders = () => {
         >
           Let your <span className="block sm:inline">work</span>
           <br />
-          find believers.
+          find its fit.
         </h1>
         <div className="mt-10 grid gap-6 md:grid-cols-[minmax(0,1fr)_auto] md:items-end">
           <p className="max-w-2xl text-lg leading-8 text-black/65 md:text-xl">
-            Apparent gives builders a proof profile, product launch surface, network map, investor matching feed, DMs, and deal workflow without relying on warm intros.
+            Apparent turns what you&apos;ve shipped into a proof profile, then matches you to the investors whose thesis, stage, and sector actually fit your raise. No warm intro required.
           </p>
           <button
             type="button"
@@ -92,22 +92,51 @@ export const ForFounders = () => {
           </button>
         </div>
 
-        <div className="relative min-h-[520px] overflow-hidden rounded-[32px] bg-[#d8c7a3]">
-          <img
-            src="https://images.unsplash.com/photo-1497366754035-f200968a6e72?auto=format&fit=crop&w=1400&q=85"
-            alt="Workspace representing a founder proof profile"
-            className="h-full w-full object-cover"
-          />
-          <div className="absolute inset-0 bg-[#42520d]/10" />
-          <div className="absolute bottom-6 left-6 right-6 rounded-[24px] bg-white/82 p-5 backdrop-blur">
-            <div className="flex items-center justify-between gap-4">
-              <div>
-                <p className="text-sm font-semibold">Proof profile</p>
-                <p className="mt-1 text-sm text-black/55">Launches, GitHub, traction, press, and location.</p>
+        {/* Mock proof profile — what an investor actually sees first. */}
+        <div className="relative flex min-h-[520px] flex-col justify-between overflow-hidden rounded-[32px] bg-[#1c1c1a] p-7 text-white">
+          <div className="flex items-center justify-between">
+            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#bcd99a]">Proof profile</p>
+            <Rocket className="h-5 w-5 text-[#02A070]" />
+          </div>
+          <div>
+            <div className="flex items-center gap-3">
+              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#42520d] text-base font-semibold">AK</div>
+              <div className="min-w-0">
+                <p className="text-lg font-semibold">Aria Kim</p>
+                <p className="text-sm text-white/55">@ariakim · San Francisco</p>
               </div>
-              <Rocket className="h-5 w-5 shrink-0 text-[#02A070]" />
+              <span className="ml-auto rounded-full bg-[#dcefc7] px-3 py-1 text-xs font-semibold text-black">92% fit</span>
+            </div>
+            <div className="mt-5 flex flex-wrap gap-2">
+              {['AI agents', 'Seed', 'Open source'].map((tag) => (
+                <span key={tag} className="rounded-full border border-white/15 px-3 py-1 text-xs font-medium text-white/70">{tag}</span>
+              ))}
+            </div>
+            <div className="mt-6 grid gap-4 border-t border-white/10 pt-6">
+              <div className="flex items-start gap-3">
+                <GitHubIcon className="mt-0.5 h-4 w-4 shrink-0 text-[#bcd99a]" />
+                <div>
+                  <p className="text-sm font-medium">github.com/ariakim/agentkit</p>
+                  <p className="text-xs text-white/45">4.2k stars · shipping weekly</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3">
+                <Rocket className="mt-0.5 h-4 w-4 shrink-0 text-[#bcd99a]" />
+                <div>
+                  <p className="text-sm font-medium">Launched AgentKit v2</p>
+                  <p className="text-xs text-white/45">1,100 upvotes on launch day</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3">
+                <Users className="mt-0.5 h-4 w-4 shrink-0 text-[#bcd99a]" />
+                <div>
+                  <p className="text-sm font-medium">38 design partners</p>
+                  <p className="text-xs text-white/45">using it in production</p>
+                </div>
+              </div>
             </div>
           </div>
+          <p className="text-xs text-white/40">This is what an investor sees first. Not your résumé.</p>
         </div>
       </section>
 
@@ -132,28 +161,28 @@ export const ForFounders = () => {
       </section>
 
       <section className="mx-auto max-w-[92rem] px-5 py-10 sm:px-8">
-        <div className="h-[320px] overflow-hidden rounded-[32px] bg-[#d7d0c0] md:h-[420px]">
-          <img
-            src="https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1800&q=85"
-            alt="Landscape representing nearby builder network"
-            className="h-full w-full object-cover"
-          />
+        <div className="flex min-h-[320px] items-center overflow-hidden rounded-[32px] bg-[#1c1c1a] px-8 py-14 text-white md:min-h-[420px] md:px-16">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#bcd99a]">The shift</p>
+            <h2 className="mt-5 max-w-4xl text-4xl font-normal leading-[1.05] tracking-[-0.04em] md:text-6xl" style={serifDisplay}>
+              Your GitHub is a better pitch than your network.
+            </h2>
+            <p className="mt-6 max-w-xl text-base leading-7 text-white/55">
+              Apparent reads the evidence you already have and puts it in front of the investors it actually fits.
+            </p>
+          </div>
         </div>
       </section>
 
       <section className="mx-auto grid max-w-[92rem] border-t border-black/10 px-5 py-16 sm:px-8 lg:grid-cols-[0.95fr_1.05fr]">
-        <div className="min-h-[580px] overflow-hidden rounded-[32px] bg-[#d8c7a3] lg:rounded-r-none">
-          <img
-            src="https://images.unsplash.com/photo-1518005020951-eccb494ad742?auto=format&fit=crop&w=1400&q=85"
-            alt="Architectural forms representing structured founder proof"
-            className="h-full w-full object-cover"
-          />
-        </div>
-        <div className="bg-[#fbfaf7] px-0 py-10 lg:px-14 lg:py-16">
-          <blockquote className="max-w-3xl text-4xl font-normal leading-tight tracking-[-0.04em] md:text-5xl" style={serifDisplay}>
+        <div className="flex min-h-[420px] items-center overflow-hidden rounded-[32px] bg-[#42520d] p-10 text-white lg:min-h-[520px] lg:rounded-r-none lg:p-14">
+          <blockquote className="max-w-md text-3xl font-normal leading-tight tracking-[-0.03em] md:text-4xl" style={serifDisplay}>
             “Your work should speak before your network does.”
           </blockquote>
-          <div className="mt-12 grid gap-6">
+        </div>
+        <div className="bg-[#fbfaf7] px-0 py-10 lg:px-14 lg:py-16">
+          <p className="text-sm font-semibold text-[#42520d]">From profile to deal</p>
+          <div className="mt-8 grid gap-6">
             {[
               ['Launch', 'List products, metrics, links, and proof for each build.'],
               ['Match', 'See investors ranked by thesis fit and founder signal.'],

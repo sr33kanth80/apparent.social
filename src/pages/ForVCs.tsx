@@ -51,7 +51,7 @@ export const ForVCs = () => {
         </h1>
         <div className="mt-10 grid gap-6 md:grid-cols-[minmax(0,1fr)_auto] md:items-end">
           <p className="max-w-2xl text-lg leading-8 text-black/65 md:text-xl">
-            Apparent gives investors a private founder-sourcing workspace: thesis capture, Builder Radar, ranked signal inbox, outreach drafts, daily digest, and draggable deal flow.
+            Apparent gives investors a private sourcing desk. Capture your thesis once, then meet the founders who fit it, ranked by proof, stage, and freshness.
           </p>
           <button
             type="button"
@@ -91,22 +91,29 @@ export const ForVCs = () => {
           </button>
         </div>
 
-        <div className="relative min-h-[520px] overflow-hidden rounded-[32px] bg-[#d8c7a3]">
-          <img
-            src="https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1400&q=85"
-            alt="Landscape representing early founder discovery"
-            className="h-full w-full object-cover"
-          />
-          <div className="absolute inset-0 bg-[#42520d]/15" />
-          <div className="absolute bottom-6 left-6 right-6 rounded-[24px] bg-white/82 p-5 backdrop-blur">
-            <div className="flex items-center justify-between gap-4">
-              <div>
-                <p className="text-sm font-semibold">Builder Radar</p>
-                <p className="mt-1 text-sm text-black/55">Apparent builders by proof, location, stage, and fit.</p>
-              </div>
-              <Radar className="h-5 w-5 shrink-0 text-[#02A070]" />
-            </div>
+        {/* Mock ranked inbox — founders sorted by thesis fit. */}
+        <div className="relative flex min-h-[520px] flex-col justify-between overflow-hidden rounded-[32px] bg-[#1c1c1a] p-7 text-white">
+          <div className="flex items-center justify-between">
+            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#bcd99a]">Ranked by fit</p>
+            <Radar className="h-5 w-5 text-[#02A070]" />
           </div>
+          <div className="grid gap-3">
+            {[
+              ['AgentKit', 'AI agents · Seed · SF', '92%'],
+              ['Ledgerline', 'Fintech infra · Pre-seed · NYC', '88%'],
+              ['Northwind', 'Climate · Seed · Berlin', '81%'],
+            ].map(([name, meta, fit]) => (
+              <div key={name} className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#42520d] text-sm font-semibold">{name[0]}</div>
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold">{name}</p>
+                  <p className="text-xs text-white/45">{meta}</p>
+                </div>
+                <span className="ml-auto rounded-full bg-[#dcefc7] px-2.5 py-1 text-xs font-semibold text-black">{fit}</span>
+              </div>
+            ))}
+          </div>
+          <p className="text-xs text-white/40">Raising now · thesis-fit · contactable.</p>
         </div>
       </section>
 
@@ -131,28 +138,28 @@ export const ForVCs = () => {
       </section>
 
       <section id="deal-flow" className="mx-auto max-w-[92rem] px-5 py-10 sm:px-8">
-        <div className="h-[320px] overflow-hidden rounded-[32px] bg-[#d7d0c0] md:h-[420px]">
-          <img
-            src="https://images.unsplash.com/photo-1524758631624-e2822e304c36?auto=format&fit=crop&w=1800&q=85"
-            alt="Workspace representing investor sourcing operations"
-            className="h-full w-full object-cover"
-          />
+        <div className="flex min-h-[320px] items-center overflow-hidden rounded-[32px] bg-[#1c1c1a] px-8 py-14 text-white md:min-h-[420px] md:px-16">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#bcd99a]">The edge</p>
+            <h2 className="mt-5 max-w-4xl text-4xl font-normal leading-[1.05] tracking-[-0.04em] md:text-6xl" style={serifDisplay}>
+              By the time it&apos;s consensus, the round is full.
+            </h2>
+            <p className="mt-6 max-w-xl text-base leading-7 text-white/55">
+              Apparent surfaces founders who fit your thesis while they&apos;re still building, not after the deal turns competitive.
+            </p>
+          </div>
         </div>
       </section>
 
       <section className="mx-auto grid max-w-[92rem] border-t border-black/10 px-5 py-16 sm:px-8 lg:grid-cols-[0.95fr_1.05fr]">
-        <div className="min-h-[580px] overflow-hidden rounded-[32px] bg-[#d8c7a3] lg:rounded-r-none">
-          <img
-            src="https://images.unsplash.com/photo-1518005020951-eccb494ad742?auto=format&fit=crop&w=1400&q=85"
-            alt="Structured forms representing a deal-flow pipeline"
-            className="h-full w-full object-cover"
-          />
-        </div>
-        <div className="bg-[#fbfaf7] px-0 py-10 lg:px-14 lg:py-16">
-          <blockquote className="max-w-3xl text-4xl font-normal leading-tight tracking-[-0.04em] md:text-5xl" style={serifDisplay}>
+        <div className="flex min-h-[420px] items-center overflow-hidden rounded-[32px] bg-[#42520d] p-10 text-white lg:min-h-[580px] lg:rounded-r-none lg:p-14">
+          <blockquote className="max-w-md text-3xl font-normal leading-tight tracking-[-0.03em] md:text-4xl" style={serifDisplay}>
             “The best sourcing advantage is knowing which builders matter before the market agrees.”
           </blockquote>
-          <div className="mt-12 grid gap-6">
+        </div>
+        <div className="bg-[#fbfaf7] px-0 py-10 lg:px-14 lg:py-16">
+          <p className="text-sm font-semibold text-[#42520d]">From inbox to pipeline</p>
+          <div className="mt-8 grid gap-6">
             {[
               ['Inbox', 'Rank founder/company signals by thesis, proof, freshness, and geography.'],
               ['Outreach', 'Draft first messages from the thesis and signal context.'],

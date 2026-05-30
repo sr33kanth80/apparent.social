@@ -96,22 +96,28 @@ export const AboutUs = () => {
           </button>
         </div>
 
-        <div className="relative min-h-[520px] overflow-hidden rounded-[32px] bg-[#d8c7a3]">
-          <img
-            src="https://images.unsplash.com/photo-1524758631624-e2822e304c36?auto=format&fit=crop&w=1400&q=85"
-            alt="Warm workspace representing visible structure"
-            className="h-full w-full object-cover"
-          />
-          <div className="absolute inset-0 bg-[#42520d]/10" />
-          <div className="absolute bottom-6 left-6 right-6 rounded-[24px] bg-white/82 p-5 backdrop-blur">
-            <div className="flex items-center justify-between gap-4">
-              <div>
-                <p className="text-sm font-semibold">Network signal</p>
-                <p className="mt-1 text-sm text-black/55">Proof, place, thesis, and timing in one view.</p>
-              </div>
-              <MapPin className="h-5 w-5 shrink-0 text-[#02A070]" />
+        {/* The match, both ways — proof meeting thesis. */}
+        <div className="relative flex min-h-[520px] flex-col justify-between overflow-hidden rounded-[32px] bg-[#1c1c1a] p-7 text-white">
+          <div className="flex items-center justify-between">
+            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#bcd99a]">A fit, both ways</p>
+            <MapPin className="h-5 w-5 text-[#02A070]" />
+          </div>
+          <div className="grid gap-3">
+            <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-white/40">Founder</p>
+              <p className="mt-2 text-sm font-semibold">Aria Kim · AI agents · Seed</p>
+              <p className="text-xs text-white/45">4.2k GitHub stars · 38 design partners</p>
+            </div>
+            <div className="flex items-center justify-center">
+              <span className="rounded-full bg-[#dcefc7] px-3 py-1 text-xs font-semibold text-black">92% thesis fit</span>
+            </div>
+            <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-white/40">Investor</p>
+              <p className="mt-2 text-sm font-semibold">Northstar Ventures · Seed AI · US</p>
+              <p className="text-xs text-white/45">Backs technical founders, pre-revenue</p>
             </div>
           </div>
+          <p className="text-xs text-white/40">Proof meets thesis. The intro writes itself.</p>
         </div>
       </section>
 
@@ -136,21 +142,17 @@ export const AboutUs = () => {
       </section>
 
       <section className="mx-auto grid max-w-[92rem] border-t border-black/10 px-5 py-16 sm:px-8 lg:grid-cols-[0.95fr_1.05fr]">
-        <div className="min-h-[580px] overflow-hidden rounded-[32px] bg-[#d7d0c0] lg:rounded-r-none">
-          <img
-            src="https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1400&q=85"
-            alt="Open terrain representing an expanding builder network"
-            className="h-full w-full object-cover"
-          />
-        </div>
-        <div className="bg-[#fbfaf7] px-0 py-10 lg:px-14 lg:py-16">
-          <blockquote className="max-w-3xl text-4xl font-normal leading-tight tracking-[-0.04em] md:text-5xl" style={serifDisplay}>
+        <div className="flex min-h-[420px] items-center overflow-hidden rounded-[32px] bg-[#42520d] p-10 text-white lg:min-h-[580px] lg:rounded-r-none lg:p-14">
+          <blockquote className="max-w-md text-3xl font-normal leading-tight tracking-[-0.03em] md:text-4xl" style={serifDisplay}>
             “The best early companies are visible before they are famous. Apparent is designed for that exact window.”
           </blockquote>
-          <div className="mt-12">
-            <p className="text-sm font-semibold">Apparent thesis</p>
-            <p className="mt-2 text-xs font-semibold uppercase tracking-[0.16em] text-[#42520d]">Proof before consensus</p>
-          </div>
+        </div>
+        <div className="bg-[#fbfaf7] px-0 py-10 lg:px-14 lg:py-16">
+          <p className="text-sm font-semibold text-[#42520d]">What we believe</p>
+          <p className="mt-6 max-w-xl text-base leading-8 text-black/60">
+            The next great companies are already shipping in public. They just aren&apos;t easy to find yet. Apparent makes proof legible and thesis searchable, so the right founder and the right investor meet in that early window instead of missing it.
+          </p>
+          <p className="mt-8 text-xs font-semibold uppercase tracking-[0.16em] text-[#42520d]">Proof before consensus</p>
         </div>
       </section>
 
