@@ -219,6 +219,7 @@ const founderIntakeFields: IntakeField[] = [
   { key: 'headline', label: 'Headline', placeholder: 'Founder building AI tools for engineering teams.', kind: 'input' },
   { key: 'bio', label: 'Bio', placeholder: 'A short founder bio: what you care about, where you have built, and what kind of people you want to meet.', kind: 'textarea' },
   { key: 'currentBuild', label: 'What are you building or exploring?', placeholder: 'A GitHub-native analytics layer for engineering leaders.', kind: 'textarea' },
+  { key: 'mrr', label: 'MRR (optional)', placeholder: '$24K MRR · +22% MoM', kind: 'input' },
   { key: 'category', label: 'Primary interests', placeholder: 'Devtools, AI infra, SaaS, marketplace', kind: 'input' },
   { key: 'stage', label: 'Current stage', placeholder: 'Select stage', kind: 'select', options: founderStageOptions },
   { key: 'lookingFor', label: 'Who do you want to meet?', placeholder: 'Founders, investors, operators, design partners, collaborators.', kind: 'textarea' },

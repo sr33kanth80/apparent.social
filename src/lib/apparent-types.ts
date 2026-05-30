@@ -44,6 +44,8 @@ export interface FounderProfileValues {
   linkedin: string;
   xProfile: string;
   pastProducts: string;
+  /** Optional headline revenue metric, e.g. "$24K MRR · +22% MoM". */
+  mrr: string;
   // Fundraising intent (the opt-in layer scrapers can't have). Stored as strings
   // for form consistency: fundraisingStatus ∈ 'raising' | 'open' | 'not_raising';
   // openToContact ∈ 'true' | 'false'.
@@ -158,6 +160,8 @@ export interface PublicFounderProfile {
   raisingAsk?: string;
   openToContact?: boolean;
   shareable?: boolean;
+  /** Optional headline revenue metric, e.g. "$24K MRR · +22% MoM". */
+  mrr?: string;
   launches: ProductLaunch[];
 }
 

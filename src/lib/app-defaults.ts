@@ -42,6 +42,7 @@ export const defaultFounderProfile: FounderProfileValues = {
   linkedin: '',
   xProfile: '',
   pastProducts: '',
+  mrr: '',
   fundraisingStatus: 'not_raising',
   raisingRound: '',
   raisingAmount: '',

@@ -365,6 +365,12 @@ const FounderProfilePage = ({
                   <MapPin className="h-4 w-4 text-[#e7483d]" fill="currentColor" /> {profile.location}
                 </span>
               )}
+              {profile.mrr && (
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-[#1c1c1a] px-3 py-1 text-xs font-semibold text-white">
+                  <span className="text-[0.6rem] uppercase tracking-[0.14em] text-white/45">MRR</span>
+                  <span className="mrr-shimmer">{profile.mrr}</span>
+                </span>
+              )}
             </div>
 
             {profile.headline && (
