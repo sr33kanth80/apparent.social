@@ -325,8 +325,8 @@ const FounderProfilePage = ({
       {/* ── Profile card hero ── */}
       <section className="mx-auto max-w-[82rem] px-5 pb-10 pt-12 sm:px-8 md:pt-16">
         <div className="overflow-hidden rounded-[32px] border border-black/10 bg-white/80 shadow-[0_18px_60px_rgba(0,0,0,0.06)]">
-          {/* Banner */}
-          <div className="h-24 bg-gradient-to-r from-[#42520d] via-[#6b8222] to-[#42520d] sm:h-28" />
+          {/* Banner — founder green (matches the "I'm a founder" button) */}
+          <div className="h-24 bg-[#dcefc7] sm:h-28" />
 
           <div className="px-6 pb-7 sm:px-8">
             {/* Avatar overlaps the banner */}
