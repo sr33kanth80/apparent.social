@@ -384,9 +384,9 @@ export const OurThesis = () => {
             className="max-w-[70rem] text-[2.65rem] font-normal leading-[0.92] tracking-[-0.055em] sm:text-[4.6rem] sm:leading-[0.9] md:text-[5.4rem] lg:text-[6.1rem] xl:text-[6.7rem]"
             style={serifDisplay}
           >
-            Find the <span className="block sm:inline">builders</span>
+            Where proof
             <br />
-            before <span className="block sm:inline">everyone else.</span>
+            meets thesis.
           </h1>
 
           <div className="hidden bg-white/65 px-6 py-6 lg:block">
@@ -561,6 +561,20 @@ export const OurThesis = () => {
         </div>
       </section>
 
+      <section className="mx-auto max-w-[92rem] px-5 py-10 sm:px-8">
+        <div className="flex min-h-[300px] items-center overflow-hidden rounded-[32px] bg-[#1c1c1a] px-8 py-14 text-white md:min-h-[360px] md:px-16">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#bcd99a]">The window</p>
+            <h2 className="mt-5 max-w-4xl text-4xl font-normal leading-[1.05] tracking-[-0.04em] md:text-6xl" style={serifDisplay}>
+              The next great companies are already shipping. They&apos;re just hard to find.
+            </h2>
+            <p className="mt-6 max-w-2xl text-base leading-7 text-white/55">
+              Apparent makes proof legible and thesis searchable, so the right founder and the right investor meet in that early window instead of missing it.
+            </p>
+          </div>
+        </div>
+      </section>
+
       <section className="mx-auto max-w-[92rem] border-t border-black/10 px-5 py-16 sm:px-8">
         <div className="pt-2">
           <p className="mb-12 text-sm font-semibold text-[#42520d]">What gets connected</p>
@@ -685,11 +699,13 @@ export const OurThesis = () => {
           </div>
         </div>
 
-        <div className="bg-[#fbfaf7] px-0 py-10 lg:px-14 lg:py-16">
-          <blockquote className="max-w-3xl text-4xl font-normal leading-tight tracking-[-0.04em] md:text-5xl" style={serifDisplay}>
-            The best early companies are visible before they are famous. Apparent is designed for that exact window.
-          </blockquote>
-          <div className="mt-12 grid gap-6">
+        <div className="px-0 py-10 lg:px-14 lg:py-16">
+          <div className="rounded-[28px] bg-[#42520d] p-8 text-white md:p-10">
+            <blockquote className="text-3xl font-normal leading-tight tracking-[-0.03em] md:text-4xl" style={serifDisplay}>
+              “The best early companies are visible before they are famous. Apparent is designed for that exact window.”
+            </blockquote>
+          </div>
+          <div className="mt-10 grid gap-6">
             {[
               ['For founders', 'Your shipped work becomes the discovery surface.'],
               ['For investors', 'Your thesis becomes a repeatable sourcing system.'],
