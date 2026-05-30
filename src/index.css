@@ -507,20 +507,14 @@ a.rounded-full:hover {
 @keyframes puzzleSnap {
   0% {
     opacity: 0;
-    transform: translateX(0.9em) rotate(7deg) scale(1.05);
+    transform: translateX(1.4em);
   }
-  55% {
+  40% {
     opacity: 1;
-  }
-  72% {
-    transform: translateX(-0.1em) rotate(-2deg) scale(1);
-  }
-  86% {
-    transform: translateX(0.05em) rotate(0.8deg);
   }
   100% {
     opacity: 1;
-    transform: translateX(0) rotate(0) scale(1);
+    transform: translateX(0);
   }
 }
 
