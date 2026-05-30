@@ -59,11 +59,8 @@ The app reads these from import.meta.env (see src/lib/supabase.ts and map compon
    - Optionally, load supabase/seed.sql to import development/demo VC contacts. This is a large script that performs upserts; running it is safe to repeat.
 3) Environment
    - Set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY in .env
-4) Edge Functions (optional)
-   - The repo includes functions in supabase/functions/ (e.g., apify_ingest, start_daily_scrapes). If you plan to use them, deploy via the Supabase CLI:
-     - supabase functions deploy apify_ingest
-     - supabase functions deploy start_daily_scrapes
-   - You may need to configure environment variables/secrets for these functions in the Supabase dashboard.
+4) Builder Radar signals
+   - Builder Radar reads ingested signals from the public.source_signals table. Load that table by whatever means you prefer (manual import, a one-off script, the Supabase SQL editor, etc.).
 
 ## Routing and auth
 - React Router powers navigation in src/pages.
