@@ -429,52 +429,78 @@ a.rounded-full:hover {
    line. The left edge carries a jigsaw tab (em-based so it scales with the
    responsive headline), and it slides in from the right, overshoots, and
    settles like a piece clicking into place. */
-/* Long base piece: rounded outer end, square inner edge that meets the final
-   piece, with a round socket bitten out of that edge. */
+/* Long base piece (left). Rounded outer end; its right edge pushes a round knob
+   (outie) into the final piece, plus a decorative knob on the bottom edge. */
 .puzzle-base {
   position: relative;
+  z-index: 2;
   display: inline-block;
-  padding: 0.04em 0.5em 0.12em 0.36em;
+  padding: 0.06em 0.54em 0.16em 0.42em;
   background: #dcefc7;
   color: #20300a;
-  border-radius: 0.26em 0.08em 0.08em 0.26em;
+  border-radius: 0.32em 0.12em 0.12em 0.32em;
 }
 .puzzle-base::after {
+  /* right-edge knob (outie) that seats into the final piece's socket */
   content: '';
   position: absolute;
+  z-index: 1;
   top: 50%;
-  right: -0.25em;
-  width: 0.5em;
-  height: 0.5em;
+  right: -0.27em;
+  width: 0.54em;
+  height: 0.54em;
   transform: translateY(-50%);
-  background: #fbfaf7; /* page colour, to carve a round socket */
+  background: #dcefc7;
+  border-radius: 50%;
+}
+.puzzle-base::before {
+  /* decorative bottom-edge knob near the join */
+  content: '';
+  position: absolute;
+  right: 1.1em;
+  bottom: -0.18em;
+  width: 0.4em;
+  height: 0.4em;
+  background: #dcefc7;
   border-radius: 50%;
 }
 
-/* Final piece: rounded outer end, a round knob on its left that seats into the
-   base's socket, snapping in on load. */
+/* Final piece (right). Rounded outer end; a round socket (innie) on its left
+   receives the base's knob, with a decorative knob on the top edge. Snaps in. */
 .puzzle-piece {
   position: relative;
   z-index: 1;
   display: inline-block;
-  padding: 0.04em 0.3em 0.12em 0.34em;
+  padding: 0.06em 0.34em 0.16em 0.42em;
   background: #42520d;
   color: #f4f1eb;
-  border-radius: 0.08em 0.26em 0.26em 0.08em;
+  border-radius: 0.12em 0.32em 0.32em 0.12em;
   transform-origin: left center;
   will-change: transform, opacity;
   animation: puzzleSnap 0.95s cubic-bezier(0.32, 1.35, 0.5, 1) 0.35s both;
 }
 .puzzle-piece::before {
+  /* left-edge socket (innie): carve the page colour so a thin seam shows around
+     the base's knob, reading as an interlocking joint */
   content: '';
   position: absolute;
-  z-index: 1;
   top: 50%;
-  left: -0.25em;
-  width: 0.5em;
-  height: 0.5em;
+  left: -0.32em;
+  width: 0.66em;
+  height: 0.66em;
   transform: translateY(-50%);
-  background: #42520d; /* knob, fills the base socket */
+  background: #fbfaf7;
+  border-radius: 50%;
+}
+.puzzle-piece::after {
+  /* decorative top-edge knob */
+  content: '';
+  position: absolute;
+  left: 0.95em;
+  top: -0.18em;
+  width: 0.4em;
+  height: 0.4em;
+  background: #42520d;
   border-radius: 50%;
 }
 
