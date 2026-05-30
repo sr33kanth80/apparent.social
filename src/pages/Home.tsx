@@ -396,7 +396,7 @@ export const Home = () => {
                 />
               ))}
             </div>
-            <span>1,800+ investors mapped · free to explore</span>
+            <span>1,800+ investors mapped</span>
           </div>
         </div>
         <h1
