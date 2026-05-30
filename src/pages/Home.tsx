@@ -359,7 +359,7 @@ export const Home = () => {
             <button
               type="button"
               onClick={() => navigate('/login?role=founder')}
-              className="mt-7 inline-flex w-fit items-center gap-2 rounded-full bg-[#42520d] px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#34420a]"
+              className="mt-7 inline-flex w-fit items-center gap-2 rounded-full bg-[#dcefc7] px-5 py-2.5 text-sm font-semibold text-black transition-colors hover:bg-[#cce8ae]"
             >
               Create founder profile <ArrowUpRight className="h-4 w-4" />
             </button>
@@ -384,7 +384,7 @@ export const Home = () => {
             <button
               type="button"
               onClick={() => navigate('/login?role=investor')}
-              className="mt-7 inline-flex w-fit items-center gap-2 rounded-full bg-[#dcefc7] px-5 py-2.5 text-sm font-semibold text-black transition-colors hover:bg-[#cce8ae]"
+              className="mt-7 inline-flex w-fit items-center gap-2 rounded-full bg-[#42520d] px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#34420a]"
             >
               Create investor profile <ArrowUpRight className="h-4 w-4" />
             </button>
