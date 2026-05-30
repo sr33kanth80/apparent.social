@@ -10,7 +10,7 @@ import { HeatMap } from './pages/HeatMap';
 import { AboutUs } from './pages/AboutUs';
 import { Contact } from './pages/Contact';
 import { ProjectDetail } from './pages/ProjectDetail';
-import { PublicProfile } from './pages/PublicProfile';
+import { ProfileShell } from './components/ProfileShell';
 import { Resources } from './pages/Resources';
 import { Login } from './pages/Login';
 import { Dashboard } from './pages/Dashboard';
@@ -163,27 +163,9 @@ function App() {
           {/* /@username — canonical public profile URL.
               React Router v7 can't parse /@:param (@ breaks the segment
               parser), so we use /:handle and strip the @ in the component. */}
-          <Route
-            path="/:handle"
-            element={
-              <>
-                <EditorialNavbar />
-                <PublicProfile />
-                <Footer />
-              </>
-            }
-          />
+          <Route path="/:handle" element={<ProfileShell />} />
           {/* Legacy /profile/:profileId — kept for backward compat */}
-          <Route
-            path="/profile/:profileId"
-            element={
-              <>
-                <EditorialNavbar />
-                <PublicProfile />
-                <Footer />
-              </>
-            }
-          />
+          <Route path="/profile/:profileId" element={<ProfileShell />} />
           <Route
             path="/contact"
             element={
