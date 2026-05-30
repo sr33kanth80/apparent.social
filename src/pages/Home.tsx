@@ -285,7 +285,7 @@ export const Home = () => {
           </div>
         </div>
         <h1
-          className="max-w-3xl text-4xl font-normal leading-[1.05] tracking-[-0.04em] md:text-6xl"
+          className="max-w-3xl text-4xl font-normal leading-[1.05] tracking-[-0.04em] md:text-5xl lg:max-w-none lg:whitespace-nowrap lg:text-6xl"
           style={serifDisplay}
         >
           Find the investors who actually fit.
