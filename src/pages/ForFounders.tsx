@@ -1,10 +1,20 @@
-import { ArrowUpRight, CheckCircle2, Map, MapPin, Rocket, Search, Users } from 'lucide-react';
+import { ArrowUpRight, CheckCircle2, FileText, Map, MapPin, Play, Rocket, Search, Users } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { GitHubIcon } from '../components/GitHubIcon';
 
 const serifDisplay = {
   fontFamily: 'Georgia, "Times New Roman", serif',
 };
+
+// GitHub-style contribution grid for the mock profile. Deterministic so it
+// never reflows: 18 weeks x 7 days, each cell an intensity level 0-4.
+const COMMIT_LEVELS = ['bg-white/[0.05]', 'bg-[#1e3a1e]', 'bg-[#2e6b2e]', 'bg-[#37a04a]', 'bg-[#58d39a]'];
+const commitColumns = Array.from({ length: 18 }, (_, w) =>
+  Array.from({ length: 7 }, (_, d) => {
+    const h = ((w * 7 + d) * 2654435761) % 101;
+    return h < 34 ? 0 : h < 58 ? 1 : h < 78 ? 2 : h < 92 ? 3 : 4;
+  }),
+);
 
 const founderRows = [
   ['01', 'Make proof legible', 'Products, GitHub, press, traction, launches, location, and capital goals sit in one focused profile.'],
@@ -101,13 +111,45 @@ export const ForFounders = () => {
               <span className="flex items-center gap-1 text-xs text-white/50"><MapPin className="h-3 w-3" /> San Francisco</span>
             </div>
             <div className="mt-6 flex items-center gap-3">
-              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#dcefc7] text-base font-semibold text-[#42520d]">AK</div>
+              <img
+                src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=160&h=160&q=80"
+                alt="Aria Kim"
+                className="h-12 w-12 rounded-full object-cover"
+              />
               <div className="min-w-0">
                 <p className="text-lg font-semibold">Aria Kim</p>
                 <p className="text-sm text-white/55">@ariakim</p>
               </div>
             </div>
             <p className="mt-4 text-sm leading-6 text-white/70">Building AgentKit, open-source agents teams actually ship to production.</p>
+
+            {/* GitHub contribution graph */}
+            <div className="mt-6 border-t border-white/10 pt-6">
+              <div className="mb-3 flex items-center justify-between">
+                <p className="text-[0.65rem] font-semibold uppercase tracking-[0.12em] text-white/40">1,284 commits · last 18 weeks</p>
+                <span className="flex items-center gap-1 text-[0.6rem] text-white/35">
+                  Less
+                  <span className="flex gap-0.5">
+                    {COMMIT_LEVELS.map((c, i) => <span key={i} className={`h-2 w-2 rounded-[2px] ${c}`} />)}
+                  </span>
+                  More
+                </span>
+              </div>
+              <div className="flex gap-1 overflow-hidden">
+                {commitColumns.map((col, w) => (
+                  <div key={w} className="flex flex-col gap-1">
+                    {col.map((lvl, d) => (
+                      <span
+                        key={d}
+                        title={lvl ? `${lvl * 4 + (w % 4)} commits` : 'No commits'}
+                        className={`h-2.5 w-2.5 rounded-[3px] ${COMMIT_LEVELS[lvl]} transition-transform duration-150 hover:scale-[1.6]`}
+                      />
+                    ))}
+                  </div>
+                ))}
+              </div>
+            </div>
+
             <div className="mt-6 grid grid-cols-2 gap-3 border-t border-white/10 pt-6">
               {[
                 ['Current build', 'AgentKit v2'],
@@ -120,6 +162,29 @@ export const ForFounders = () => {
                   <p className="mt-1 text-sm font-medium text-white/85">{value}</p>
                 </div>
               ))}
+            </div>
+
+            {/* Pitch deck + mock video player */}
+            <div className="mt-6 border-t border-white/10 pt-6">
+              <p className="mb-3 text-[0.65rem] font-semibold uppercase tracking-[0.12em] text-white/40">Pitch</p>
+              <button
+                type="button"
+                className="group relative block aspect-video w-full overflow-hidden rounded-2xl bg-gradient-to-br from-[#42520d] via-[#1c1c1a] to-[#02402f]"
+                aria-label="Play AgentKit pitch video"
+              >
+                <span className="absolute inset-0 flex items-center justify-center">
+                  <span className="flex h-12 w-12 items-center justify-center rounded-full bg-white/90 text-[#1c1c1a] shadow-lg transition-transform duration-200 group-hover:scale-110">
+                    <Play className="ml-0.5 h-5 w-5 fill-current" />
+                  </span>
+                </span>
+                <span className="absolute bottom-3 left-3 right-3 flex items-center justify-between">
+                  <span className="text-xs font-semibold text-white">AgentKit · Seed pitch</span>
+                  <span className="rounded bg-black/55 px-1.5 py-0.5 text-[0.65rem] font-medium text-white/90">2:14</span>
+                </span>
+              </button>
+              <span className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-white/[0.06] px-3 py-1.5 text-xs font-medium text-white/75">
+                <FileText className="h-3.5 w-3.5" /> Pitch deck · 12 slides
+              </span>
             </div>
           </div>
           <div className="mt-7">
