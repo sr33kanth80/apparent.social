@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import {
   ArrowUpRight,
@@ -84,8 +84,20 @@ const MessageButton = ({ viewer, name, onMessage }: { viewer: AppUser | null; na
 const ShareButton = ({ username, name }: { username: string; name: string }) => {
   const [open, setOpen] = useState(false);
   const [copied, setCopied] = useState(false);
+  const btnRef = useRef<HTMLButtonElement>(null);
+  const [pos, setPos] = useState<{ top: number; left: number } | null>(null);
   const url = typeof window !== 'undefined' ? `${window.location.origin}/@${username}` : `/@${username}`;
   const shareText = `${name} on Apparent`;
+
+  const MENU_WIDTH = 240;
+  const toggle = () => {
+    if (!open && btnRef.current) {
+      const r = btnRef.current.getBoundingClientRect();
+      // Right-align the menu under the button, clamped to the viewport.
+      setPos({ top: r.bottom + 8, left: Math.max(8, Math.min(r.right - MENU_WIDTH, window.innerWidth - MENU_WIDTH - 8)) });
+    }
+    setOpen((value) => !value);
+  };
 
   const copy = async () => {
     try {
@@ -115,18 +127,23 @@ const ShareButton = ({ username, name }: { username: string; name: string }) => 
   const itemCls = 'flex w-full items-center gap-2 rounded-xl px-3 py-2 text-sm text-black transition-colors hover:bg-[#fbf8f3]';
 
   return (
-    <div className="relative inline-block">
+    <div className="inline-block">
       <button
+        ref={btnRef}
         type="button"
-        onClick={() => setOpen((value) => !value)}
+        onClick={toggle}
         className="inline-flex items-center gap-1.5 rounded-full border border-black/15 bg-white px-5 py-2.5 text-sm font-semibold text-black transition hover:bg-black/5"
       >
         <Share2 className="h-4 w-4" /> Share
       </button>
-      {open && (
+      {open && pos && (
         <>
           <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
-          <div className="absolute left-0 top-full z-50 mt-2 w-60 rounded-2xl border border-black/10 bg-white p-2 shadow-xl">
+          {/* Fixed so it isn't clipped by the profile card's overflow-hidden. */}
+          <div
+            className="fixed z-50 w-60 rounded-2xl border border-black/10 bg-white p-2 shadow-xl"
+            style={{ top: pos.top, left: pos.left }}
+          >
             <button type="button" onClick={copy} className={itemCls}>
               {copied ? <Check className="h-4 w-4 text-[#42520d]" /> : <LinkIcon className="h-4 w-4" />}
               {copied ? 'Link copied!' : 'Copy link'}
