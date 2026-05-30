@@ -325,97 +325,97 @@ const FounderProfilePage = ({
 
   return (
     <main className="overflow-x-hidden bg-[#fbfaf7] text-black">
-      {/* ── Hero ── */}
-      <section className="mx-auto max-w-[92rem] px-5 pb-10 pt-16 sm:px-8 md:pt-20">
-        <div className="mb-6 flex flex-wrap items-center gap-2">
-          <span className="rounded-full bg-[#dcefc7] px-3 py-1 text-xs font-semibold text-[#42520d]">Founder on Apparent</span>
-          {(profile.fundraisingStatus === 'raising' || profile.fundraisingStatus === 'open') && (
-            <span className="rounded-full bg-[#42520d] px-3 py-1 text-xs font-semibold text-white">
-              {profile.fundraisingStatus === 'raising'
-                ? `Raising${profile.raisingRound ? ` ${profile.raisingRound}` : ''}${profile.raisingAmount ? ` · ${profile.raisingAmount}` : ''}`
-                : 'Open to investor intros'}
-            </span>
-          )}
-          {profile.location && (
-            <span className="flex items-center gap-1 text-xs text-black/50">
-              <MapPin className="h-3 w-3" />
-              {profile.location}
-            </span>
-          )}
-        </div>
-
-        <h1
-          className="max-w-5xl text-[2.8rem] font-normal leading-[0.92] tracking-[-0.045em] sm:text-[5rem] md:text-[7rem] lg:text-[8.5rem]"
-          style={serif}
-        >
-          {profile.profileName || profile.username || 'Apparent Builder'}
-        </h1>
-
-        <div className="mt-8 flex flex-wrap items-center gap-4">
-          <Avatar
-            src={profile.profilePhotoUrl}
-            name={profile.profileName || profile.username}
-            bg="#dcefc7"
-          />
-          <div>
-            <p className="text-sm font-semibold text-black/80">@{profile.username}</p>
-            {profile.headline && <p className="mt-1 text-sm text-black/55">{profile.headline}</p>}
+      {/* ── Profile card hero ── */}
+      <section className="mx-auto max-w-[82rem] px-5 pb-10 pt-12 sm:px-8 md:pt-16">
+        <div className="overflow-hidden rounded-[32px] border border-black/10 bg-white/80 shadow-[0_18px_60px_rgba(0,0,0,0.06)]">
+          {/* Status row */}
+          <div className="flex flex-wrap items-center gap-2 border-b border-black/5 px-6 py-4 sm:px-8">
+            <span className="rounded-full bg-[#dcefc7] px-3 py-1 text-xs font-semibold text-[#42520d]">Founder on Apparent</span>
+            {(profile.fundraisingStatus === 'raising' || profile.fundraisingStatus === 'open') && (
+              <span className="rounded-full bg-[#42520d] px-3 py-1 text-xs font-semibold text-white">
+                {profile.fundraisingStatus === 'raising'
+                  ? `Raising${profile.raisingRound ? ` ${profile.raisingRound}` : ''}${profile.raisingAmount ? ` · ${profile.raisingAmount}` : ''}`
+                  : 'Open to investor intros'}
+              </span>
+            )}
+            {profile.location && (
+              <span className="ml-auto flex items-center gap-1 text-xs font-medium text-black/50">
+                <MapPin className="h-3 w-3" /> {profile.location}
+              </span>
+            )}
           </div>
-        </div>
 
-        {profile.bio && (
-          <p className="mt-8 max-w-3xl text-lg leading-8 text-black/65 md:text-xl">{profile.bio}</p>
-        )}
+          {/* Identity + actions */}
+          <div className="px-6 py-7 sm:px-8">
+            <div className="flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
+              <div className="flex items-center gap-4">
+                <Avatar src={profile.profilePhotoUrl} name={profile.profileName || profile.username} bg="#dcefc7" />
+                <div className="min-w-0">
+                  <h1 className="text-3xl font-normal leading-tight tracking-[-0.03em] sm:text-4xl" style={serif}>
+                    {profile.profileName || profile.username || 'Apparent Builder'}
+                  </h1>
+                  <p className="mt-1 text-sm font-semibold text-black/55">@{profile.username}</p>
+                </div>
+              </div>
+              <div className="flex flex-wrap items-center gap-2">
+                <MessageButton viewer={viewer} name={profile.profileName || profile.username} onMessage={onMessage} />
+                {profile.shareable !== false && (
+                  <ShareButton username={profile.username} name={profile.profileName || profile.username} />
+                )}
+              </div>
+            </div>
 
-        <div className="mt-8 flex flex-wrap items-center gap-2">
-          <MessageButton viewer={viewer} name={profile.profileName || profile.username} onMessage={onMessage} />
-          {profile.shareable !== false && (
-            <ShareButton username={profile.username} name={profile.profileName || profile.username} />
-          )}
-        </div>
+            {profile.headline && (
+              <p className="mt-6 max-w-3xl text-lg font-medium leading-7 text-black/75">{profile.headline}</p>
+            )}
+            {profile.bio && (
+              <p className="mt-3 max-w-3xl text-base leading-7 text-black/60">{profile.bio}</p>
+            )}
 
-        {links.length > 0 && (
-          <div className="mt-8 flex flex-wrap gap-2">
-            {links.map(({ label, href, icon: Icon }) => (
-              <a
-                key={label}
-                href={href}
-                target="_blank"
-                rel="noreferrer"
-                className="flex items-center gap-1.5 rounded-full bg-white px-4 py-2 text-sm font-medium text-black shadow-sm transition hover:shadow-md"
-              >
-                <Icon className="h-3.5 w-3.5" />
-                {label}
-              </a>
-            ))}
+            {links.length > 0 && (
+              <div className="mt-6 flex flex-wrap gap-2">
+                {links.map(({ label, href, icon: Icon }) => (
+                  <a
+                    key={label}
+                    href={href}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="flex items-center gap-1.5 rounded-full border border-black/10 bg-white px-3.5 py-1.5 text-xs font-medium text-black/70 transition hover:border-black/20 hover:text-black"
+                  >
+                    <Icon className="h-3.5 w-3.5" /> {label}
+                  </a>
+                ))}
+              </div>
+            )}
           </div>
-        )}
-      </section>
 
-      {/* ── Build context cards ── */}
-      <section className="mx-auto max-w-[92rem] border-t border-black/10 px-5 py-16 sm:px-8">
-        <SectionLabel>What they&apos;re building</SectionLabel>
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {[
-            { icon: Rocket, label: 'Current build', value: profile.currentBuild },
-            { icon: Target, label: 'Category', value: profile.category },
-            { icon: ChevronRight, label: 'Stage', value: profile.stage },
-            { icon: Users, label: 'Traction', value: profile.traction },
-          ]
-            .filter((item) => item.value)
-            .map(({ icon: Icon, label, value }) => (
-              <Card key={label}>
-                <Icon className="mb-4 h-4 w-4 text-[#42520d]" />
-                <p className="text-xs font-semibold uppercase tracking-[0.12em] text-black/40">{label}</p>
-                <p className="mt-2 text-sm leading-6 text-black/70">{value}</p>
-              </Card>
-            ))}
+          {/* Build facts grid */}
+          {(() => {
+            const facts = [
+              { icon: Rocket, label: 'Current build', value: profile.currentBuild },
+              { icon: Target, label: 'Category', value: profile.category },
+              { icon: ChevronRight, label: 'Stage', value: profile.stage },
+              { icon: Users, label: 'Traction', value: profile.traction },
+            ].filter((f) => f.value);
+            if (facts.length === 0) return null;
+            return (
+              <div className="grid gap-px border-t border-black/5 bg-black/[0.06] sm:grid-cols-2 lg:grid-cols-4">
+                {facts.map(({ icon: Icon, label, value }) => (
+                  <div key={label} className="bg-[#fbfaf7] px-6 py-5 sm:px-8">
+                    <Icon className="mb-3 h-4 w-4 text-[#42520d]" />
+                    <p className="text-xs font-semibold uppercase tracking-[0.12em] text-black/40">{label}</p>
+                    <p className="mt-1.5 text-sm leading-6 text-black/70">{value}</p>
+                  </div>
+                ))}
+              </div>
+            );
+          })()}
         </div>
       </section>
 
       {/* ── Product launches ── */}
       {profile.launches.length > 0 && (
-        <section className="mx-auto max-w-[92rem] border-t border-black/10 px-5 py-16 sm:px-8">
+        <section className="mx-auto max-w-[82rem] border-t border-black/10 px-5 py-16 sm:px-8">
           <SectionLabel>Products &amp; launches</SectionLabel>
           <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
             {profile.launches.map((launch) => (
@@ -467,7 +467,7 @@ const FounderProfilePage = ({
 
       {/* ── Past products ── */}
       {pastProductList.length > 0 && (
-        <section className="mx-auto max-w-[92rem] border-t border-black/10 px-5 py-16 sm:px-8">
+        <section className="mx-auto max-w-[82rem] border-t border-black/10 px-5 py-16 sm:px-8">
           <SectionLabel>Past products</SectionLabel>
           <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {pastProductList.map((item) => (
@@ -483,7 +483,7 @@ const FounderProfilePage = ({
       {/* ── Raising ── */}
       {(profile.fundraisingStatus === 'raising' || profile.fundraisingStatus === 'open') &&
         (profile.raisingAsk || profile.raisingRound || profile.raisingAmount) && (
-          <section className="mx-auto max-w-[92rem] border-t border-black/10 px-5 py-16 sm:px-8">
+          <section className="mx-auto max-w-[82rem] border-t border-black/10 px-5 py-16 sm:px-8">
             <SectionLabel>{profile.fundraisingStatus === 'raising' ? 'Raising now' : 'Open to investor intros'}</SectionLabel>
             <div className="flex flex-wrap items-center gap-2">
               {profile.raisingRound && <Tag accent>{profile.raisingRound}</Tag>}
@@ -498,7 +498,7 @@ const FounderProfilePage = ({
 
       {/* ── Looking for ── */}
       {profile.lookingFor && (
-        <section className="mx-auto max-w-[92rem] border-t border-black/10 px-5 py-16 sm:px-8">
+        <section className="mx-auto max-w-[82rem] border-t border-black/10 px-5 py-16 sm:px-8">
           <SectionLabel>Looking to meet</SectionLabel>
           <p className="max-w-2xl text-lg leading-8 text-black/65">{profile.lookingFor}</p>
         </section>
