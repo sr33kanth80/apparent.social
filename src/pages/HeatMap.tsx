@@ -38,6 +38,8 @@ interface HeatMapProps {
   /** With fullBleed: fill the flex parent (flex-1) instead of forcing h-screen.
       Used on the public page so the map fits below the fixed navbar. */
   fillParent?: boolean;
+  /** Hide VC partner emails behind a "sign in" gate (for logged-out visitors). */
+  lockContacts?: boolean;
   /** Founder's own stage/sectors — powers the "Match my profile" shortcut. */
   founderStage?: string;
   founderSectors?: string;
@@ -314,15 +316,15 @@ function ApparentHeatmapLayers({
 // serif name, clean key/value rows — shown on the side of the map.
 const CLAUDE_CLAY = '#cc785c';
 
-function HeatMapDetailPanel({ point, onClose }: { point: HeatMapPoint; onClose: () => void }) {
-  const sourceLabel =
-    point.source === 'vc_database'
-      ? 'Cold-pitch VC contact'
-      : point.source === 'apparent'
-        ? 'On Apparent'
-        : 'Ecosystem signal';
-  const kindLabel = point.kind === 'vc' ? 'VC density' : 'Builder density';
-
+function HeatMapDetailPanel({
+  point,
+  onClose,
+  locked = false,
+}: {
+  point: HeatMapPoint;
+  onClose: () => void;
+  locked?: boolean;
+}) {
   const specRows = [
     ['Signal score', String(point.intensity)],
     ['City', point.city],
@@ -335,10 +337,7 @@ function HeatMapDetailPanel({ point, onClose }: { point: HeatMapPoint; onClose: 
       {/* header */}
       <div className="flex items-start justify-between gap-3 border-b border-black/10 px-5 pb-4 pt-5">
         <div className="min-w-0">
-          <p className="text-[10px] font-semibold uppercase tracking-[0.16em]" style={{ color: CLAUDE_CLAY }}>
-            {sourceLabel} · {kindLabel}
-          </p>
-          <h3 className="mt-1.5 font-serif text-xl font-normal leading-tight tracking-[-0.01em] text-[#1a1a1a]">
+          <h3 className="font-serif text-xl font-normal leading-tight tracking-[-0.01em] text-[#1a1a1a]">
             {point.name}
           </h3>
         </div>
@@ -378,23 +377,37 @@ function HeatMapDetailPanel({ point, onClose }: { point: HeatMapPoint; onClose: 
           </div>
         )}
 
-        {point.email && (
-          <p className="break-all px-5 pt-3 text-sm font-medium" style={{ color: CLAUDE_CLAY }}>
-            {point.email}
-          </p>
-        )}
+        {point.email &&
+          (locked ? (
+            <p className="px-5 pt-3 text-sm font-medium text-black/40">Sign in to view email</p>
+          ) : (
+            <p className="break-all px-5 pt-3 text-sm font-medium" style={{ color: CLAUDE_CLAY }}>
+              {point.email}
+            </p>
+          ))}
 
         <div className="flex gap-2 px-5 pb-4 pt-3">
-          <a
-            href={point.email ? `mailto:${point.email}` : point.websiteUrl || '#'}
-            target={point.email ? undefined : '_blank'}
-            rel={point.email ? undefined : 'noreferrer'}
-            className="flex flex-1 items-center justify-center gap-1.5 rounded-full px-4 py-2.5 text-sm font-semibold text-white transition-opacity hover:opacity-90"
-            style={{ backgroundColor: CLAUDE_CLAY }}
-          >
-            <LocateFixed className="h-3.5 w-3.5" />
-            {point.email ? 'Email' : 'Focus'}
-          </a>
+          {point.email && locked ? (
+            <Link
+              to="/login"
+              className="flex flex-1 items-center justify-center gap-1.5 rounded-full px-4 py-2.5 text-sm font-semibold text-white transition-opacity hover:opacity-90"
+              style={{ backgroundColor: CLAUDE_CLAY }}
+            >
+              <LocateFixed className="h-3.5 w-3.5" />
+              Sign in to email
+            </Link>
+          ) : (
+            <a
+              href={point.email ? `mailto:${point.email}` : point.websiteUrl || '#'}
+              target={point.email ? undefined : '_blank'}
+              rel={point.email ? undefined : 'noreferrer'}
+              className="flex flex-1 items-center justify-center gap-1.5 rounded-full px-4 py-2.5 text-sm font-semibold text-white transition-opacity hover:opacity-90"
+              style={{ backgroundColor: CLAUDE_CLAY }}
+            >
+              <LocateFixed className="h-3.5 w-3.5" />
+              {point.email ? 'Email' : 'Focus'}
+            </a>
+          )}
           {point.profilePath ? (
             <Link
               to={point.profilePath}
@@ -521,6 +534,7 @@ export const HeatMap = ({
   vcOnly = false,
   fullBleed = false,
   fillParent = false,
+  lockContacts = false,
   founderStage = '',
   founderSectors = '',
 }: HeatMapProps) => {
@@ -839,7 +853,7 @@ export const HeatMap = ({
 
           {selectedVisiblePoint && (
             <div className="w-full">
-              <HeatMapDetailPanel point={selectedVisiblePoint} onClose={() => setSelectedPoint(null)} />
+              <HeatMapDetailPanel point={selectedVisiblePoint} onClose={() => setSelectedPoint(null)} locked={lockContacts} />
             </div>
           )}
           </div>
