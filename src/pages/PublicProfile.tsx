@@ -8,14 +8,18 @@ import {
   Globe,
   Link as LinkIcon,
   MapPin,
+  MessageSquare,
   Rocket,
+  Send,
   Target,
   Users,
+  X,
 } from 'lucide-react';
 import { LogoIcon } from '@/components/LogoIcon';
 import { GitHubIcon } from '@/components/GitHubIcon';
-import { loadPublicProfile } from '@/lib/dashboard-service';
-import type { PublicFounderProfile, PublicInvestorProfile, PublicProfileResult } from '@/lib/apparent-types';
+import { loadPublicProfile, saveMessage } from '@/lib/dashboard-service';
+import { getCurrentAppUser } from '@/lib/auth-service';
+import type { AppUser, PublicFounderProfile, PublicInvestorProfile, PublicProfileResult } from '@/lib/apparent-types';
 
 const serif = { fontFamily: 'Georgia, "Times New Roman", serif' };
 
@@ -58,9 +62,181 @@ const SectionLabel = ({ children }: { children: React.ReactNode }) => (
   <p className="mb-8 text-sm font-semibold uppercase tracking-[0.12em] text-[#42520d]">{children}</p>
 );
 
+// ─── messaging ──────────────────────────────────────────────────────────────
+
+const firstNameOf = (name: string) => name.split(/\s+/)[0] || 'them';
+
+// Primary "Message" button for the hero. DM is gated to logged-in viewers.
+const MessageButton = ({ viewer, name, onMessage }: { viewer: AppUser | null; name: string; onMessage: () => void }) => {
+  const cls =
+    'inline-flex items-center gap-1.5 rounded-full bg-[#42520d] px-5 py-2.5 text-sm font-semibold text-white transition hover:opacity-90';
+  return viewer ? (
+    <button type="button" onClick={onMessage} className={cls}>
+      <MessageSquare className="h-4 w-4" /> Message {firstNameOf(name)}
+    </button>
+  ) : (
+    <Link to="/login" className={cls}>
+      <MessageSquare className="h-4 w-4" /> Log in to message
+    </Link>
+  );
+};
+
+// Bottom connect card — auth-aware: a real "Message" action when logged in,
+// the join/sign-in pitch only for logged-out visitors.
+const ConnectSection = ({
+  viewer,
+  name,
+  onMessage,
+  tone,
+}: {
+  viewer: AppUser | null;
+  name: string;
+  onMessage: () => void;
+  tone: 'dark' | 'light';
+}) => {
+  const fname = firstNameOf(name);
+  const card = tone === 'dark' ? 'bg-[#42520d] text-white' : 'bg-[#dcefc7] text-black';
+  const eyebrow = tone === 'dark' ? 'text-white/60' : 'text-[#42520d]';
+  const sub = tone === 'dark' ? 'text-white/70' : 'text-black/60';
+  const primary =
+    tone === 'dark'
+      ? 'bg-white text-[#42520d] hover:bg-[#dcefc7]'
+      : 'bg-[#42520d] text-white hover:opacity-90';
+  const secondary =
+    tone === 'dark' ? 'border-white/30 text-white hover:bg-white/10' : 'border-black/20 text-black hover:bg-black/5';
+
+  return (
+    <section className="mx-auto max-w-[92rem] border-t border-black/10 px-5 py-16 sm:px-8">
+      <div className={`rounded-[32px] px-8 py-10 md:flex md:items-center md:justify-between ${card}`}>
+        <div>
+          <p className={`text-sm font-semibold uppercase tracking-[0.12em] ${eyebrow}`}>{viewer ? 'On Apparent' : 'Connect on Apparent'}</p>
+          <h2 className="mt-3 max-w-xl text-3xl font-normal leading-tight tracking-[-0.03em]" style={serif}>
+            {viewer ? `Reach out to ${fname}` : `Want to reach ${fname}?`}
+          </h2>
+          <p className={`mt-3 max-w-lg text-sm leading-7 ${sub}`}>
+            {viewer
+              ? `Send ${fname} a direct message on Apparent.`
+              : `Sign in to message ${fname} directly and follow their work on Apparent.`}
+          </p>
+        </div>
+        <div className="mt-8 flex flex-col gap-3 md:ml-10 md:mt-0 md:shrink-0">
+          {viewer ? (
+            <button
+              type="button"
+              onClick={onMessage}
+              className={`inline-flex items-center justify-center gap-1.5 rounded-full px-6 py-3 text-sm font-semibold transition ${primary}`}
+            >
+              <MessageSquare className="h-4 w-4" /> Message {fname}
+            </button>
+          ) : (
+            <>
+              <Link to="/login" className={`rounded-full px-6 py-3 text-center text-sm font-semibold transition ${primary}`}>
+                Log in to message
+              </Link>
+              <Link to="/login" className={`rounded-full border px-6 py-3 text-center text-sm font-semibold transition ${secondary}`}>
+                Create a free account
+              </Link>
+            </>
+          )}
+        </div>
+      </div>
+    </section>
+  );
+};
+
+// Compose modal for sending a direct message.
+const ProfileMessageModal = ({
+  viewer,
+  target,
+  onClose,
+}: {
+  viewer: AppUser;
+  target: { name: string; username: string };
+  onClose: () => void;
+}) => {
+  const [subject, setSubject] = useState('');
+  const [body, setBody] = useState('');
+  const [status, setStatus] = useState<'idle' | 'sending' | 'sent'>('idle');
+
+  const send = async () => {
+    if (!body.trim()) return;
+    setStatus('sending');
+    try {
+      await saveMessage(viewer, {
+        recipient: target.name || `@${target.username}`,
+        subject: subject.trim() || `Message from ${viewer.email.split('@')[0]}`,
+        body: body.trim(),
+        status: 'sent',
+        context: `dm:${target.username}`,
+      });
+      setStatus('sent');
+    } catch {
+      setStatus('idle');
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 px-4" onClick={onClose}>
+      <div className="w-full max-w-md rounded-[24px] bg-white p-6 shadow-2xl" onClick={(event) => event.stopPropagation()}>
+        {status === 'sent' ? (
+          <div className="py-6 text-center">
+            <p className="text-lg font-semibold" style={serif}>Message sent</p>
+            <p className="mt-2 text-sm text-black/60">Your message to {target.name} is on its way.</p>
+            <button type="button" onClick={onClose} className="mt-6 rounded-full bg-[#42520d] px-6 py-2.5 text-sm font-semibold text-white">
+              Done
+            </button>
+          </div>
+        ) : (
+          <>
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-semibold" style={serif}>Message {target.name}</h3>
+              <button type="button" onClick={onClose} aria-label="Close" className="rounded-full p-1.5 text-black/40 transition-colors hover:bg-black/5 hover:text-black/70">
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+            <input
+              value={subject}
+              onChange={(event) => setSubject(event.target.value)}
+              placeholder="Subject (optional)"
+              className="mt-4 h-10 w-full rounded-xl border border-black/10 px-3 text-sm outline-none focus:border-black/30"
+            />
+            <textarea
+              value={body}
+              onChange={(event) => setBody(event.target.value)}
+              placeholder={`Write to ${target.name}…`}
+              className="mt-3 min-h-32 w-full resize-none rounded-xl border border-black/10 px-3 py-2 text-sm leading-relaxed outline-none focus:border-black/30"
+            />
+            <div className="mt-4 flex justify-end gap-2">
+              <button type="button" onClick={onClose} className="rounded-full border border-black/10 px-4 py-2 text-sm font-semibold hover:bg-[#fbf8f3]">
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={send}
+                disabled={status === 'sending' || !body.trim()}
+                className="inline-flex items-center gap-1.5 rounded-full bg-[#42520d] px-5 py-2 text-sm font-semibold text-white disabled:opacity-50"
+              >
+                <Send className="h-3.5 w-3.5" /> {status === 'sending' ? 'Sending…' : 'Send'}
+              </button>
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  );
+};
+
 // ─── founder profile ──────────────────────────────────────────────────────────
 
-const FounderProfilePage = ({ profile }: { profile: PublicFounderProfile }) => {
+const FounderProfilePage = ({
+  profile,
+  viewer,
+  onMessage,
+}: {
+  profile: PublicFounderProfile;
+  viewer: AppUser | null;
+  onMessage: () => void;
+}) => {
   const pastProductList = profile.pastProducts
     .split('\n')
     .map((s) => s.trim())
@@ -117,6 +293,10 @@ const FounderProfilePage = ({ profile }: { profile: PublicFounderProfile }) => {
         {profile.bio && (
           <p className="mt-8 max-w-3xl text-lg leading-8 text-black/65 md:text-xl">{profile.bio}</p>
         )}
+
+        <div className="mt-8">
+          <MessageButton viewer={viewer} name={profile.profileName || profile.username} onMessage={onMessage} />
+        </div>
 
         {links.length > 0 && (
           <div className="mt-8 flex flex-wrap gap-2">
@@ -248,41 +428,23 @@ const FounderProfilePage = ({ profile }: { profile: PublicFounderProfile }) => {
         </section>
       )}
 
-      {/* ── CTA ── */}
-      <section className="mx-auto max-w-[92rem] border-t border-black/10 px-5 py-16 sm:px-8">
-        <div className="rounded-[32px] bg-[#42520d] px-8 py-10 text-white md:flex md:items-center md:justify-between">
-          <div>
-            <p className="text-sm font-semibold uppercase tracking-[0.12em] text-white/60">Connect on Apparent</p>
-            <h2 className="mt-3 max-w-xl text-3xl font-normal leading-tight tracking-[-0.03em]" style={serif}>
-              Interested in {profile.profileName || 'this founder'}?
-            </h2>
-            <p className="mt-3 max-w-lg text-sm leading-7 text-white/70">
-              Join Apparent to send a message, follow their launches, and get matched with founders and investors whose work is aligned with yours.
-            </p>
-          </div>
-          <div className="mt-8 flex flex-col gap-3 md:ml-10 md:mt-0 md:shrink-0">
-            <Link
-              to="/login?role=investor"
-              className="rounded-full bg-white px-6 py-3 text-center text-sm font-semibold text-[#42520d] transition hover:bg-[#dcefc7]"
-            >
-              Join as an investor
-            </Link>
-            <Link
-              to="/login?role=founder"
-              className="rounded-full border border-white/30 px-6 py-3 text-center text-sm font-semibold text-white transition hover:bg-white/10"
-            >
-              Join as a founder
-            </Link>
-          </div>
-        </div>
-      </section>
+      {/* ── Connect / message ── */}
+      <ConnectSection viewer={viewer} name={profile.profileName || profile.username} onMessage={onMessage} tone="dark" />
     </main>
   );
 };
 
 // ─── investor profile ─────────────────────────────────────────────────────────
 
-const InvestorProfilePage = ({ profile }: { profile: PublicInvestorProfile }) => {
+const InvestorProfilePage = ({
+  profile,
+  viewer,
+  onMessage,
+}: {
+  profile: PublicInvestorProfile;
+  viewer: AppUser | null;
+  onMessage: () => void;
+}) => {
   const visible = (key: string) => profile.publicFields.includes(key);
 
   const infoRows = [
@@ -317,6 +479,10 @@ const InvestorProfilePage = ({ profile }: { profile: PublicInvestorProfile }) =>
             <p className="text-sm font-semibold text-black/80">@{profile.username}</p>
             <p className="mt-1 text-sm text-black/50">Investor profile on Apparent</p>
           </div>
+        </div>
+
+        <div className="mt-8">
+          <MessageButton viewer={viewer} name={profile.displayName || profile.username} onMessage={onMessage} />
         </div>
       </section>
 
@@ -364,34 +530,8 @@ const InvestorProfilePage = ({ profile }: { profile: PublicInvestorProfile }) =>
         </section>
       )}
 
-      {/* ── CTA ── */}
-      <section className="mx-auto max-w-[92rem] border-t border-black/10 px-5 py-16 sm:px-8">
-        <div className="rounded-[32px] bg-[#dcefc7] px-8 py-10 text-black md:flex md:items-center md:justify-between">
-          <div>
-            <p className="text-sm font-semibold uppercase tracking-[0.12em] text-[#42520d]">Connect on Apparent</p>
-            <h2 className="mt-3 max-w-xl text-3xl font-normal leading-tight tracking-[-0.03em]" style={serif}>
-              Building something this investor would back?
-            </h2>
-            <p className="mt-3 max-w-lg text-sm leading-7 text-black/60">
-              Join Apparent to send a message directly, get your profile matched to their thesis, and discover more investors who align with what you are building.
-            </p>
-          </div>
-          <div className="mt-8 flex flex-col gap-3 md:ml-10 md:mt-0 md:shrink-0">
-            <Link
-              to="/login?role=founder"
-              className="rounded-full bg-[#42520d] px-6 py-3 text-center text-sm font-semibold text-white transition hover:opacity-90"
-            >
-              Join as a founder
-            </Link>
-            <Link
-              to="/login?role=investor"
-              className="rounded-full border border-black/20 px-6 py-3 text-center text-sm font-semibold text-black transition hover:bg-black/5"
-            >
-              Join as an investor
-            </Link>
-          </div>
-        </div>
-      </section>
+      {/* ── Connect / message ── */}
+      <ConnectSection viewer={viewer} name={profile.displayName || profile.username} onMessage={onMessage} tone="light" />
     </main>
   );
 };
@@ -440,6 +580,22 @@ export const PublicProfile = () => {
 
   const [result, setResult] = useState<PublicProfileResult | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [viewer, setViewer] = useState<AppUser | null>(null);
+  const [dmFor, setDmFor] = useState<{ name: string; username: string } | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    getCurrentAppUser()
+      .then((current) => {
+        if (!cancelled) setViewer(current);
+      })
+      .catch(() => {
+        /* logged out */
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     if (!handle || !isProfileRoute) {
@@ -501,14 +657,33 @@ export const PublicProfile = () => {
     );
   }
 
+  let content: React.ReactNode;
   if (result.kind === 'founder') {
-    return <FounderProfilePage profile={result.profile} />;
+    const p = result.profile;
+    content = (
+      <FounderProfilePage
+        profile={p}
+        viewer={viewer}
+        onMessage={() => setDmFor({ name: p.profileName || p.username, username: p.username })}
+      />
+    );
+  } else if (result.profile.restricted) {
+    content = <InvestorRestrictedPage username={result.profile.username} />;
+  } else {
+    const p = result.profile;
+    content = (
+      <InvestorProfilePage
+        profile={p}
+        viewer={viewer}
+        onMessage={() => setDmFor({ name: p.displayName || p.username, username: p.username })}
+      />
+    );
   }
 
-  // Investor
-  if (result.profile.restricted) {
-    return <InvestorRestrictedPage username={result.profile.username} />;
-  }
-
-  return <InvestorProfilePage profile={result.profile} />;
+  return (
+    <>
+      {content}
+      {dmFor && viewer && <ProfileMessageModal viewer={viewer} target={dmFor} onClose={() => setDmFor(null)} />}
+    </>
+  );
 };
