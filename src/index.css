@@ -429,46 +429,53 @@ a.rounded-full:hover {
    line. The left edge carries a jigsaw tab (em-based so it scales with the
    responsive headline), and it slides in from the right, overshoots, and
    settles like a piece clicking into place. */
+/* Long base piece: rounded outer end, square inner edge that meets the final
+   piece, with a round socket bitten out of that edge. */
 .puzzle-base {
+  position: relative;
   display: inline-block;
-  padding: 0 0.34em 0.1em 0.32em;
+  padding: 0.04em 0.5em 0.12em 0.36em;
   background: #dcefc7;
   color: #20300a;
-  /* Socket carved into the right edge for the final piece to plug into. */
-  clip-path: polygon(
-    0 0,
-    100% 0,
-    100% 34%,
-    calc(100% - 0.4em) 34%,
-    calc(100% - 0.4em) 66%,
-    100% 66%,
-    100% 100%,
-    0 100%
-  );
+  border-radius: 0.26em 0.08em 0.08em 0.26em;
+}
+.puzzle-base::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  right: -0.25em;
+  width: 0.5em;
+  height: 0.5em;
+  transform: translateY(-50%);
+  background: #fbfaf7; /* page colour, to carve a round socket */
+  border-radius: 50%;
 }
 
+/* Final piece: rounded outer end, a round knob on its left that seats into the
+   base's socket, snapping in on load. */
 .puzzle-piece {
   position: relative;
   z-index: 1;
   display: inline-block;
-  /* Overlap into the base's socket so the tab seats inside it. */
-  margin-left: -0.4em;
-  padding: 0 0.26em 0.1em 0.5em;
+  padding: 0.04em 0.3em 0.12em 0.34em;
   background: #42520d;
   color: #f4f1eb;
-  clip-path: polygon(
-    0.4em 0%,
-    100% 0%,
-    100% 100%,
-    0.4em 100%,
-    0.4em 66%,
-    0% 66%,
-    0% 34%,
-    0.4em 34%
-  );
+  border-radius: 0.08em 0.26em 0.26em 0.08em;
   transform-origin: left center;
   will-change: transform, opacity;
   animation: puzzleSnap 0.95s cubic-bezier(0.32, 1.35, 0.5, 1) 0.35s both;
+}
+.puzzle-piece::before {
+  content: '';
+  position: absolute;
+  z-index: 1;
+  top: 50%;
+  left: -0.25em;
+  width: 0.5em;
+  height: 0.5em;
+  transform: translateY(-50%);
+  background: #42520d; /* knob, fills the base socket */
+  border-radius: 50%;
 }
 
 @keyframes puzzleSnap {
