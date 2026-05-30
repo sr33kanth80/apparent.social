@@ -1,4 +1,4 @@
-import { ArrowUpRight, CheckCircle2, FileText, Map, MapPin, Play, Rocket, Search, Users } from 'lucide-react';
+import { ArrowUpRight, CheckCircle2, FileText, Map, MapPin, Play, Rocket, Search, TrendingUp, Users } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { GitHubIcon } from '../components/GitHubIcon';
 
@@ -131,15 +131,24 @@ export const ForFounders = () => {
               <span className="rounded-full bg-[#42520d] px-3 py-1 text-xs font-semibold text-white">Raising Seed · $1.5M</span>
               <span className="flex items-center gap-1 text-xs text-white/50"><MapPin className="h-3 w-3" /> San Francisco</span>
             </div>
-            <div className="mt-6 flex items-center gap-3">
-              <img
-                src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=160&h=160&q=80"
-                alt="Aria Kim"
-                className="h-12 w-12 rounded-full object-cover"
-              />
-              <div className="min-w-0">
-                <p className="text-lg font-semibold">Aria Kim</p>
-                <p className="text-sm text-white/55">@ariakim</p>
+            <div className="mt-6 flex items-center justify-between gap-3">
+              <div className="flex min-w-0 items-center gap-3">
+                <img
+                  src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=160&h=160&q=80"
+                  alt="Aria Kim"
+                  className="h-12 w-12 rounded-full object-cover"
+                />
+                <div className="min-w-0">
+                  <p className="text-lg font-semibold">Aria Kim</p>
+                  <p className="text-sm text-white/55">@ariakim</p>
+                </div>
+              </div>
+              <div className="shrink-0 text-right">
+                <p className="text-[0.6rem] font-semibold uppercase tracking-[0.14em] text-white/40">MRR</p>
+                <p className="text-lg font-semibold leading-none">$24K</p>
+                <span className="mt-1 inline-flex items-center gap-0.5 text-[0.65rem] font-semibold text-[#58d39a]">
+                  <TrendingUp className="h-3 w-3" /> +22% MoM
+                </span>
               </div>
             </div>
             <p className="mt-4 text-sm leading-6 text-white/70">Building AgentKit, open-source agents teams actually ship to production.</p>
