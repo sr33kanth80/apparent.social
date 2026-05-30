@@ -3,19 +3,20 @@ import { Link, useNavigate } from 'react-router-dom';
 import {
   ArrowUpRight,
   Bookmark,
+  Check,
   ChevronLeft,
   ChevronRight,
   ChevronUp,
-  Clock,
   FileText,
-  Flame,
+  MapPin,
   MessageSquare,
-  Search,
+  Radar,
+  Send,
   Star,
-  Target,
-  TrendingUp,
+  Zap,
 } from 'lucide-react';
 import { EditorialNavbar } from '../components/EditorialNavbar';
+import { HeatMap } from './HeatMap';
 import { loadPublicProductLaunches } from '../lib/dashboard-service';
 import { getFounderPhotoUrl } from '../lib/static-founder-profiles';
 import type { ProductLaunch as WorkspaceProductLaunch } from '../lib/apparent-types';
@@ -354,7 +355,6 @@ export const Home = () => {
 
   const selectedLaunch = launchRows.find((launch) => launch.id === selectedId) ?? launchRows[0];
   const selectedDomain = getDomain(selectedLaunch.website);
-  const topLaunch = launchRows[0];
 
   const handleSelectLaunch = (launch: FrontPageLaunch) => {
     setSelectedId(launch.id);
@@ -371,64 +371,142 @@ export const Home = () => {
     <main className="min-h-screen overflow-x-hidden bg-[#fbfaf7] text-black">
       <EditorialNavbar />
 
-      <section className="mx-auto max-w-[78rem] px-5 pb-5 pt-6 sm:px-8 md:pt-7">
-        <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_21rem] lg:items-end">
-          <div>
-            <div className="mb-3 flex flex-wrap items-center gap-3 text-sm font-semibold text-[#42520d]">
-              <span className="text-black/35">Updated today</span>
-            </div>
-            <h1
-              className="max-w-2xl text-3xl font-normal leading-tight tracking-[-0.035em] md:text-4xl"
-              style={serifDisplay}
-            >
-              Find builders by what they ship.
-            </h1>
-            <p className="mt-3 max-w-2xl text-sm leading-6 text-black/65">
-              Browse the products, proof, and founder signals investors are paying attention to right now.
-            </p>
-          </div>
-
-          <aside className="rounded-[20px] border border-black bg-white/75 p-4 shadow-[0_10px_34px_rgba(0,0,0,0.045)]">
-            <div className="flex items-center justify-between">
-              <p className="text-sm font-semibold text-[#42520d]">Top launch</p>
-              <Flame className="launch-flame h-4 w-4 text-[#f97316]" />
-            </div>
-            <div className="mt-4 flex items-center gap-3">
-              <img
-                src={topLaunch.logoUrl || `https://www.google.com/s2/favicons?domain=${getDomain(topLaunch.website)}&sz=128`}
-                alt=""
-                className="h-12 w-12 rounded-[16px] bg-[#fbfaf7] object-contain p-2"
-              />
-              <div>
-                <h2 className="text-xl font-semibold tracking-[-0.02em]">
-                  {topLaunch.name}
-                </h2>
-                <p className="mt-1 text-sm text-black/55">{topLaunch.momentum}</p>
-              </div>
-            </div>
-            <div className="mt-4 grid grid-cols-3 gap-2 text-center">
-              {[
-                [topLaunch.fit, 'fit'],
-                [topLaunch.saves, 'saves'],
-                [topLaunch.comments, 'notes'],
-              ].map(([value, label]) => (
-                <div key={label} className="rounded-[14px] bg-[#fbfaf7] px-3 py-2.5">
-                  <p className="text-base font-semibold tracking-[-0.02em]">
-                    {value}
-                  </p>
-                  <p className="mt-1 text-xs font-semibold uppercase tracking-[0.14em] text-black/40">{label}</p>
-                </div>
-              ))}
-            </div>
-          </aside>
+      {/* HERO — founder-led: state what Apparent is and the wedge in one breath. */}
+      <section className="mx-auto max-w-[78rem] px-5 pb-6 pt-10 sm:px-8 md:pt-16">
+        <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-black/10 bg-white/70 px-3 py-1.5 text-xs font-semibold text-[#42520d]">
+          <span className="h-1.5 w-1.5 rounded-full bg-[#42520d]" />
+          1,800+ investors mapped · free to explore
+        </div>
+        <h1
+          className="max-w-3xl text-4xl font-normal leading-[1.05] tracking-[-0.04em] md:text-6xl"
+          style={serifDisplay}
+        >
+          Stop cold-emailing investors. Let them find you.
+        </h1>
+        <p className="mt-5 max-w-2xl text-base leading-7 text-black/65 md:text-lg">
+          Apparent turns what you ship — launches, commits, traction — into investor discovery.
+          Browse the live VC map, get matched on thesis fit, and signal when you&apos;re raising.
+          No spreadsheets, no cold outreach.
+        </p>
+        <div className="mt-7 flex flex-wrap items-center gap-3">
+          <button
+            type="button"
+            onClick={() => navigate('/login?role=founder')}
+            className="inline-flex items-center gap-2 rounded-full bg-[#42520d] px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-[#34420a]"
+          >
+            I&apos;m a founder <ArrowUpRight className="h-4 w-4" />
+          </button>
+          <button
+            type="button"
+            onClick={() => navigate('/login?role=investor')}
+            className="inline-flex items-center gap-2 rounded-full bg-[#dcefc7] px-6 py-3 text-sm font-semibold text-black transition-colors hover:bg-[#cce8ae]"
+          >
+            I&apos;m an investor
+          </button>
+          <Link
+            to="/heat-map"
+            className="inline-flex items-center gap-1.5 px-2 py-3 text-sm font-semibold text-black/60 transition-colors hover:text-black"
+          >
+            Explore the VC heatmap <ArrowUpRight className="h-4 w-4" />
+          </Link>
         </div>
       </section>
 
-      <section id="signals" className="mx-auto grid max-w-[78rem] gap-6 border-t border-black/10 px-5 py-6 sm:px-8 lg:grid-cols-[minmax(0,1fr)_21rem]">
+      {/* HEATMAP MAGNET — the free front door, mirrors OpenVC's investor list but alive. */}
+      <section className="mx-auto max-w-[78rem] px-5 pb-12 sm:px-8">
+        <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
+          <div>
+            <h2 className="text-2xl font-normal tracking-[-0.03em] md:text-3xl" style={serifDisplay}>
+              See where the money is. Free.
+            </h2>
+            <p className="mt-2 max-w-xl text-sm leading-6 text-black/60">
+              A living map of active investors by city, stage, and thesis. No login to look around.
+            </p>
+          </div>
+          <Link
+            to="/heat-map"
+            className="inline-flex items-center gap-1.5 rounded-full border border-black/15 bg-white px-5 py-2.5 text-sm font-semibold text-black transition hover:bg-black/5"
+          >
+            Open the full map <ArrowUpRight className="h-4 w-4" />
+          </Link>
+        </div>
+        <div className="relative flex h-[clamp(360px,56vh,560px)] overflow-hidden rounded-[26px] border border-black/10 bg-[#e8e5dc] shadow-[0_18px_60px_rgba(0,0,0,0.08)]">
+          <HeatMap includeVCContacts vcOnly fullBleed fillParent lockContacts />
+        </div>
+      </section>
+
+      {/* WHO IT'S FOR — the section that makes a stranger self-identify in 5 seconds. */}
+      <section className="mx-auto max-w-[78rem] border-t border-black/10 px-5 py-12 sm:px-8">
+        <h2 className="max-w-2xl text-3xl font-normal leading-tight tracking-[-0.035em] md:text-4xl" style={serifDisplay}>
+          One map. Two sides of the table.
+        </h2>
+        <div className="mt-8 grid gap-5 md:grid-cols-2">
+          {/* Founders */}
+          <div className="flex flex-col rounded-[24px] border border-black/10 bg-white/70 p-7">
+            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#42520d]">For founders</p>
+            <h3 className="mt-3 text-2xl font-semibold tracking-[-0.02em]">Get discovered for what you build.</h3>
+            <ul className="mt-5 grid gap-3 text-sm leading-6 text-black/65">
+              {[
+                'Turn launches, commits, and traction into a profile investors actually browse.',
+                'See exactly which investors are tracking you — and follow up when it counts.',
+                'Flip on “raising now” and surface to thesis-fit funds. No mass cold emails.',
+              ].map((item) => (
+                <li key={item} className="flex items-start gap-2.5">
+                  <Check className="mt-0.5 h-4 w-4 shrink-0 text-[#42520d]" />
+                  <span>{item}</span>
+                </li>
+              ))}
+            </ul>
+            <button
+              type="button"
+              onClick={() => navigate('/login?role=founder')}
+              className="mt-7 inline-flex w-fit items-center gap-2 rounded-full bg-[#42520d] px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#34420a]"
+            >
+              Create founder profile <ArrowUpRight className="h-4 w-4" />
+            </button>
+          </div>
+
+          {/* Investors */}
+          <div className="flex flex-col rounded-[24px] bg-[#1c1c1a] p-7 text-white">
+            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#bcd99a]">For investors</p>
+            <h3 className="mt-3 text-2xl font-semibold tracking-[-0.02em]">See who&apos;s shipping — live.</h3>
+            <ul className="mt-5 grid gap-3 text-sm leading-6 text-white/70">
+              {[
+                'A live map of builders who are actually shipping, not a static directory.',
+                'Filter by thesis fit, stage, location, and who’s raising right now.',
+                'Message a founder in one click the moment the signal is fresh.',
+              ].map((item) => (
+                <li key={item} className="flex items-start gap-2.5">
+                  <Check className="mt-0.5 h-4 w-4 shrink-0 text-[#bcd99a]" />
+                  <span>{item}</span>
+                </li>
+              ))}
+            </ul>
+            <button
+              type="button"
+              onClick={() => navigate('/login?role=investor')}
+              className="mt-7 inline-flex w-fit items-center gap-2 rounded-full bg-[#dcefc7] px-5 py-2.5 text-sm font-semibold text-black transition-colors hover:bg-[#cce8ae]"
+            >
+              Create investor profile <ArrowUpRight className="h-4 w-4" />
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <section id="signals" className="mx-auto max-w-[78rem] border-t border-black/10 px-5 pt-12 sm:px-8">
+        <h2 className="max-w-2xl text-3xl font-normal leading-tight tracking-[-0.035em] md:text-4xl" style={serifDisplay}>
+          The kind of momentum investors track.
+        </h2>
+        <p className="mt-3 max-w-2xl text-sm leading-6 text-black/60">
+          Real builder signal, ranked by proof and thesis fit — the feed your profile joins the day you ship.
+        </p>
+      </section>
+
+      <section className="mx-auto grid max-w-[78rem] gap-6 px-5 pb-6 pt-6 sm:px-8 lg:grid-cols-[minmax(0,1fr)_21rem]">
         <div>
           <div className="mb-4 grid gap-3 md:grid-cols-[minmax(12rem,16rem)_minmax(0,1fr)] md:items-center">
             <div className="min-w-0">
-              <p className="text-base font-semibold text-black">Today&apos;s launches</p>
+              <p className="text-base font-semibold text-black">Trending now</p>
             </div>
             <div className="flex min-w-0 max-w-full items-center gap-1.5">
               <button
@@ -673,18 +751,49 @@ export const Home = () => {
         </aside>
       </section>
 
+      {/* THE WEDGE — challenge the spreadsheet-of-cold-contacts model head-on. */}
+      <section className="mx-auto max-w-[78rem] border-t border-black/10 px-5 py-12 sm:px-8">
+        <div className="grid gap-8 md:grid-cols-2 md:items-center">
+          <div>
+            <h2 className="max-w-xl text-3xl font-normal leading-tight tracking-[-0.035em] md:text-4xl" style={serifDisplay}>
+              Fundraising isn&apos;t a spreadsheet of 20,000 strangers.
+            </h2>
+            <p className="mt-4 max-w-xl text-sm leading-7 text-black/60">
+              The old way hands you a static list and tells you to cold-email your way through it.
+              Apparent flips it: your work is the pitch, the map does the matchmaking, and the
+              right investors come to you.
+            </p>
+          </div>
+          <div className="grid gap-3">
+            <div className="rounded-[18px] border border-black/10 bg-white/50 p-5">
+              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-black/35">The old way</p>
+              <p className="mt-2 text-sm leading-6 text-black/55">
+                Export a list. Cold-email hundreds. Hope someone opens the deck.
+              </p>
+            </div>
+            <div className="rounded-[18px] border border-[#42520d]/20 bg-[#dcefc7]/40 p-5">
+              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#42520d]">On Apparent</p>
+              <p className="mt-2 text-sm leading-6 text-black/65">
+                Ship. Get matched on thesis fit. Get messaged while the signal is fresh.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* HOW IT WORKS — the two-sided loop. */}
       <section id="how-to" className="mx-auto max-w-[78rem] border-t border-black/10 px-5 py-10 sm:px-8">
         <div className="grid gap-6 lg:grid-cols-[0.8fr_1.2fr] lg:items-start">
           <div>
             <h2 className="max-w-xl text-3xl font-normal leading-tight tracking-[-0.035em] md:text-4xl" style={serifDisplay}>
-              Browse first. Decide faster.
+              Ship. Get matched. Get funded.
             </h2>
           </div>
           <div className="grid gap-4 sm:grid-cols-3">
             {[
-              { icon: Search, title: 'Scan launches', text: 'See what shipped, who built it, and why it is moving.' },
-              { icon: Target, title: 'Check fit', text: 'Category, stage, location, and thesis signals stay attached.' },
-              { icon: TrendingUp, title: 'Take action', text: 'Open, save, message, or move a builder into workflow.' },
+              { icon: Zap, title: 'Show your work', text: 'Launches, commits, and traction become a profile that proves itself.' },
+              { icon: Radar, title: 'Land on the map', text: 'You surface to thesis-fit investors by stage, sector, and location.' },
+              { icon: Send, title: 'Get the intro', text: 'Signal you’re raising and let investors reach out — no cold emails.' },
             ].map((item) => (
               <article key={item.title} className="rounded-[22px] bg-white/70 p-5">
                 <item.icon className="mb-5 h-4 w-4 text-[#42520d]" />
@@ -701,12 +810,12 @@ export const Home = () => {
       <section className="mx-auto max-w-[78rem] border-t border-black/10 px-5 py-12 sm:px-8">
         <div className="grid gap-6 rounded-[26px] bg-white/65 p-6 text-left md:grid-cols-[1fr_auto] md:items-center">
           <div>
-            <Clock className="mb-5 h-5 w-5 text-[#42520d]" />
+            <MapPin className="mb-5 h-5 w-5 text-[#42520d]" />
             <h2 className="max-w-2xl text-3xl font-normal leading-tight tracking-[-0.035em] md:text-4xl" style={serifDisplay}>
-              Put your product where investors browse.
+              Put yourself on the map.
             </h2>
             <p className="mt-4 max-w-2xl text-sm leading-7 text-black/55">
-              Create a proof profile, add launches, and let the front page turn builder work into investor discovery.
+              Founders raise by being seen. Investors win by seeing first. Pick your side and start in under a minute.
             </p>
           </div>
           <div className="flex flex-col gap-3 sm:flex-row md:flex-col">
