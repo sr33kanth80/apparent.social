@@ -269,6 +269,16 @@ export const productLaunches: FrontPageLaunch[] = [
 
 const filters = ['Today', 'Trending', 'AI', 'Devtools', 'Fintech', 'Data', 'Infra', 'Productivity', 'Audio', 'Security', 'Open Source', 'Climate', 'Health', 'Nearby'];
 
+// Recognizable funds for the hero trust pill — logos pulled via the favicon
+// service already used for launch logos, so they stay reliable (no hotlinking).
+const heroInvestors: { name: string; domain: string }[] = [
+  { name: 'Y Combinator', domain: 'ycombinator.com' },
+  { name: 'Sequoia Capital', domain: 'sequoiacap.com' },
+  { name: 'Andreessen Horowitz', domain: 'a16z.com' },
+  { name: 'Accel', domain: 'accel.com' },
+  { name: 'Antler', domain: 'antler.co' },
+];
+
 const getDomain = (url: string) => {
   try {
     return new URL(url).hostname.replace('www.', '');
@@ -373,9 +383,21 @@ export const Home = () => {
 
       {/* HERO — founder-led: state what Apparent is and the wedge in one breath. */}
       <section className="mx-auto max-w-[78rem] px-5 pb-6 pt-10 sm:px-8 md:pt-16">
-        <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-black/10 bg-white/70 px-3 py-1.5 text-xs font-semibold text-[#42520d]">
-          <span className="h-1.5 w-1.5 rounded-full bg-[#42520d]" />
-          1,800+ investors mapped · free to explore
+        <div className="mb-6 flex justify-center">
+          <div className="inline-flex items-center gap-2.5 rounded-full border border-black/10 bg-white/80 py-1.5 pl-2 pr-4 text-xs font-semibold text-[#42520d] shadow-[0_4px_14px_rgba(0,0,0,0.05)]">
+            <div className="flex items-center">
+              {heroInvestors.map((investor, index) => (
+                <img
+                  key={investor.domain}
+                  src={`https://www.google.com/s2/favicons?domain=${investor.domain}&sz=128`}
+                  alt={investor.name}
+                  title={investor.name}
+                  className={`h-7 w-7 rounded-full border-2 border-white bg-white object-contain p-0.5 ${index > 0 ? '-ml-2.5' : ''}`}
+                />
+              ))}
+            </div>
+            <span>1,800+ investors mapped · free to explore</span>
+          </div>
         </div>
         <h1
           className="max-w-3xl text-4xl font-normal leading-[1.05] tracking-[-0.04em] md:text-6xl"
