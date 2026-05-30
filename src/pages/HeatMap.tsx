@@ -656,7 +656,7 @@ export const HeatMap = ({
                 <button
                   type="button"
                   onClick={() => setFiltersOpen((open) => !open)}
-                  className="flex items-center gap-1.5 rounded-full bg-white/92 px-3 py-1.5 text-xs font-semibold text-black shadow-[0_10px_34px_rgba(0,0,0,0.12)] backdrop-blur transition-colors hover:bg-white"
+                  className="flex items-center gap-1.5 rounded-full border border-black bg-white/92 px-3 py-1.5 text-xs font-semibold text-black shadow-[0_10px_34px_rgba(0,0,0,0.12)] backdrop-blur transition-colors hover:bg-white"
                 >
                   <SlidersHorizontal className="h-3.5 w-3.5 text-[#42520d]" />
                   Filters
@@ -688,7 +688,7 @@ export const HeatMap = ({
                               key={option.key}
                               type="button"
                               onClick={() => toggleFilterKey('stages', option.key)}
-                              className={`rounded-full border border-black px-2.5 py-1 text-[11px] font-medium transition-colors ${active ? 'bg-[#42520d] text-white' : 'bg-[#f4f1eb] text-black/70 hover:bg-[#dcefc7]'}`}
+                              className={`rounded-full px-2.5 py-1 text-[11px] font-medium transition-colors ${active ? 'bg-[#42520d] text-white' : 'bg-[#f4f1eb] text-black/60 hover:bg-[#dcefc7]'}`}
                             >
                               {option.key}
                             </button>
@@ -728,7 +728,7 @@ export const HeatMap = ({
                               key={option.key}
                               type="button"
                               onClick={() => toggleFilterKey('fundTypes', option.key)}
-                              className={`rounded-full border border-black px-2.5 py-1 text-[11px] font-medium transition-colors ${active ? 'bg-[#42520d] text-white' : 'bg-[#f4f1eb] text-black/70 hover:bg-[#dcefc7]'}`}
+                              className={`rounded-full px-2.5 py-1 text-[11px] font-medium transition-colors ${active ? 'bg-[#42520d] text-white' : 'bg-[#f4f1eb] text-black/60 hover:bg-[#dcefc7]'}`}
                             >
                               {option.key}
                             </button>
@@ -741,14 +741,14 @@ export const HeatMap = ({
                       <button
                         type="button"
                         onClick={() => setVcFilters((current) => ({ ...current, contactableOnly: !current.contactableOnly }))}
-                        className={`rounded-full border border-black px-2.5 py-1 text-[11px] font-semibold transition-colors ${vcFilters.contactableOnly ? 'bg-[#42520d] text-white' : 'bg-[#f4f1eb] text-black/70 hover:bg-[#dcefc7]'}`}
+                        className={`rounded-full px-2.5 py-1 text-[11px] font-semibold transition-colors ${vcFilters.contactableOnly ? 'bg-[#42520d] text-white' : 'bg-[#f4f1eb] text-black/60 hover:bg-[#dcefc7]'}`}
                       >
                         Has email
                       </button>
                       <button
                         type="button"
                         onClick={() => setVcFilters((current) => ({ ...current, activeOnly: !current.activeOnly }))}
-                        className={`rounded-full border border-black px-2.5 py-1 text-[11px] font-semibold transition-colors ${vcFilters.activeOnly ? 'bg-[#42520d] text-white' : 'bg-[#f4f1eb] text-black/70 hover:bg-[#dcefc7]'}`}
+                        className={`rounded-full px-2.5 py-1 text-[11px] font-semibold transition-colors ${vcFilters.activeOnly ? 'bg-[#42520d] text-white' : 'bg-[#f4f1eb] text-black/60 hover:bg-[#dcefc7]'}`}
                       >
                         Active only
                       </button>
