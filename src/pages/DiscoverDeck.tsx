@@ -1,6 +1,7 @@
-import { useEffect, useMemo, useState } from 'react';
-import { motion, useMotionValue, useTransform, type PanInfo } from 'framer-motion';
-import { BookOpen, MapPin, RotateCcw, Rocket, Sparkles, Star, X, Zap } from 'lucide-react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { Link } from 'react-router-dom';
+import { animate, motion, useMotionValue, useTransform, type PanInfo } from 'framer-motion';
+import { ArrowUpRight, BookOpen, MapPin, RotateCcw, Rocket, Sparkles, Star, X, Zap } from 'lucide-react';
 import { GitHubIcon } from '../components/GitHubIcon';
 import { saveBuilderDiscoveryState, saveMessage, saveVcInterest } from '../lib/dashboard-service';
 import type { AppUser, BuilderNode } from '../lib/apparent-types';
@@ -31,22 +32,25 @@ const proofIcon = (type: string) => {
   return Rocket;
 };
 
-// ── The visual builder card (presentation only) ──────────────────────────────
+const factsOf = (b: BuilderNode): [string, string][] =>
+  (
+    [
+      ['Category', b.category],
+      ['Stage', b.stage],
+      ['Traction', b.traction],
+      ['Location', b.location],
+    ] as [string, string][]
+  ).filter(([, v]) => v);
+
+// ── Compact builder card ─────────────────────────────────────────────────────
 const BuilderCard = ({ builder }: { builder: BuilderNode }) => {
   const isIngested = builder.origin === 'ingested';
-  const raising =
-    builder.fundraisingStatus === 'raising' || builder.fundraisingStatus === 'open';
-  const facts = [
-    ['Category', builder.category],
-    ['Stage', builder.stage],
-    ['Traction', builder.traction],
-    ['Location', builder.location],
-  ].filter(([, v]) => v) as [string, string][];
+  const raising = builder.fundraisingStatus === 'raising' || builder.fundraisingStatus === 'open';
+  const facts = factsOf(builder);
   const links = (builder.proofLinks || []).filter((l) => l.url).slice(0, 4);
 
   return (
     <div className="flex h-full flex-col overflow-hidden rounded-[28px] bg-[#1c1c1a] p-6 text-white sm:p-7">
-      {/* Status row */}
       <div className="flex flex-wrap items-center gap-2">
         <span className="rounded-full bg-[#dcefc7] px-3 py-1 text-xs font-semibold text-[#42520d]">
           {isIngested ? builder.sourceLabel || 'Public signal' : 'On Apparent'}
@@ -65,7 +69,6 @@ const BuilderCard = ({ builder }: { builder: BuilderNode }) => {
         )}
       </div>
 
-      {/* Identity */}
       <div className="mt-5 flex items-center gap-3">
         <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-[#42520d] text-lg font-semibold text-white">
           {initialsOf(builder.founderName || builder.company)}
@@ -83,12 +86,10 @@ const BuilderCard = ({ builder }: { builder: BuilderNode }) => {
         )}
       </div>
 
-      {/* Summary */}
       {builder.buildSummary && (
         <p className="mt-4 line-clamp-3 text-sm leading-6 text-white/75">{builder.buildSummary}</p>
       )}
 
-      {/* Facts */}
       {facts.length > 0 && (
         <div className="mt-5 grid grid-cols-2 gap-x-4 gap-y-4 border-t border-white/10 pt-5">
           {facts.map(([label, value]) => (
@@ -100,7 +101,6 @@ const BuilderCard = ({ builder }: { builder: BuilderNode }) => {
         </div>
       )}
 
-      {/* Match reasons */}
       {builder.matchReasons && builder.matchReasons.length > 0 && (
         <div className="mt-5">
           <p className="mb-2 flex items-center gap-1.5 text-[0.6rem] font-semibold uppercase tracking-[0.14em] text-[#bcd99a]">
@@ -116,7 +116,6 @@ const BuilderCard = ({ builder }: { builder: BuilderNode }) => {
         </div>
       )}
 
-      {/* Proof links */}
       {links.length > 0 && (
         <div className="mt-auto flex flex-wrap gap-2 pt-6">
           {links.map((link) => {
@@ -132,45 +131,173 @@ const BuilderCard = ({ builder }: { builder: BuilderNode }) => {
           })}
         </div>
       )}
+
+      <p className="mt-4 text-center text-[0.65rem] text-white/30">Tap for full profile</p>
     </div>
   );
 };
 
-// ── The draggable top card. Keyed per builder so motion values reset. ─────────
-const SwipeCard = ({ builder, onDecide }: { builder: BuilderNode; onDecide: (d: Decision) => void }) => {
-  const x = useMotionValue(0);
-  const y = useMotionValue(0);
-  const rotate = useTransform(x, [-220, 220], [-14, 14]);
-  const likeOpacity = useTransform(x, [30, 130], [0, 1]);
-  const passOpacity = useTransform(x, [-130, -30], [1, 0]);
-  const superOpacity = useTransform(y, [-130, -40], [1, 0]);
-
-  const handleDragEnd = (_: unknown, info: PanInfo) => {
-    if (info.offset.y < -120 || info.velocity.y < -800) onDecide('superlike');
-    else if (info.offset.x > 120 || info.velocity.x > 800) onDecide('like');
-    else if (info.offset.x < -120 || info.velocity.x < -800) onDecide('pass');
-  };
+// ── Expanded detail (tap to open) ────────────────────────────────────────────
+const BuilderDetail = ({
+  builder,
+  onClose,
+  onDecide,
+}: {
+  builder: BuilderNode;
+  onClose: () => void;
+  onDecide: (d: Decision) => void;
+}) => {
+  const raising = builder.fundraisingStatus === 'raising' || builder.fundraisingStatus === 'open';
+  const facts = factsOf(builder);
+  const links = (builder.proofLinks || []).filter((l) => l.url);
 
   return (
     <motion.div
-      className="absolute inset-0 cursor-grab active:cursor-grabbing"
-      style={{ x, y, rotate }}
-      drag
-      dragSnapToOrigin
-      dragElastic={0.5}
-      onDragEnd={handleDragEnd}
-      whileTap={{ scale: 0.99 }}
+      className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 p-0 sm:items-center sm:p-6"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      onClick={onClose}
     >
-      <BuilderCard builder={builder} />
-      {/* Swipe overlays */}
-      <motion.div style={{ opacity: likeOpacity }} className="pointer-events-none absolute left-5 top-6 -rotate-12 rounded-lg border-4 border-[#42c463] px-3 py-1 text-xl font-extrabold text-[#42c463]">
-        LIKE
-      </motion.div>
-      <motion.div style={{ opacity: passOpacity }} className="pointer-events-none absolute right-5 top-6 rotate-12 rounded-lg border-4 border-[#e7483d] px-3 py-1 text-xl font-extrabold text-[#e7483d]">
-        PASS
-      </motion.div>
-      <motion.div style={{ opacity: superOpacity }} className="pointer-events-none absolute inset-x-0 top-5 mx-auto w-fit rounded-lg border-4 border-[#3aa0ff] px-3 py-1 text-xl font-extrabold text-[#3aa0ff]">
-        CALL ME
+      <motion.div
+        className="max-h-[92vh] w-full max-w-lg overflow-y-auto rounded-t-[28px] bg-[#1c1c1a] text-white sm:rounded-[28px]"
+        initial={{ y: 40, opacity: 0.6 }}
+        animate={{ y: 0, opacity: 1 }}
+        exit={{ y: 40, opacity: 0 }}
+        transition={{ type: 'spring', stiffness: 320, damping: 32 }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="relative p-6 sm:p-8">
+          <button
+            type="button"
+            onClick={onClose}
+            className="absolute right-4 top-4 flex h-8 w-8 items-center justify-center rounded-full bg-white/10 text-white/70 transition hover:bg-white/20"
+          >
+            <X className="h-4 w-4" />
+          </button>
+
+          <div className="flex flex-wrap items-center gap-2 pr-8">
+            <span className="rounded-full bg-[#dcefc7] px-3 py-1 text-xs font-semibold text-[#42520d]">
+              {builder.origin === 'ingested' ? builder.sourceLabel || 'Public signal' : 'On Apparent'}
+            </span>
+            {raising && (
+              <span className="rounded-full bg-[#42520d] px-3 py-1 text-xs font-semibold text-white">
+                {builder.fundraisingStatus === 'raising'
+                  ? `Raising${builder.raisingRound ? ` ${builder.raisingRound}` : ''}${builder.raisingAmount ? ` · ${builder.raisingAmount}` : ''}`
+                  : 'Open to intros'}
+              </span>
+            )}
+            {builder.location && (
+              <span className="flex items-center gap-1 text-xs font-semibold text-white/55">
+                <MapPin className="h-4 w-4 text-[#e7483d]" fill="currentColor" /> {builder.location}
+              </span>
+            )}
+          </div>
+
+          <div className="mt-5 flex items-center gap-4">
+            <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-[#42520d] text-2xl font-semibold text-white">
+              {initialsOf(builder.founderName || builder.company)}
+            </div>
+            <div className="min-w-0">
+              <h2 className="text-2xl font-semibold tracking-[-0.02em]" style={serif}>
+                {builder.company}
+              </h2>
+              {builder.founderName && <p className="text-sm text-white/55">{builder.founderName}</p>}
+            </div>
+            {typeof builder.fitScore === 'number' && builder.fitScore > 0 && (
+              <span className="ml-auto rounded-full bg-[#dcefc7] px-3 py-1.5 text-sm font-semibold text-black">
+                {builder.fitScore}% fit
+              </span>
+            )}
+          </div>
+
+          {builder.buildSummary && (
+            <p className="mt-5 text-sm leading-7 text-white/80">{builder.buildSummary}</p>
+          )}
+
+          {facts.length > 0 && (
+            <div className="mt-6 grid grid-cols-2 gap-4 border-t border-white/10 pt-6">
+              {facts.map(([label, value]) => (
+                <div key={label}>
+                  <p className="text-[0.6rem] font-semibold uppercase tracking-[0.14em] text-white/40">{label}</p>
+                  <p className="mt-1 text-sm font-medium text-white/85">{value}</p>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {builder.matchReasons && builder.matchReasons.length > 0 && (
+            <div className="mt-6">
+              <p className="mb-2 flex items-center gap-1.5 text-[0.6rem] font-semibold uppercase tracking-[0.14em] text-[#bcd99a]">
+                <Sparkles className="h-3 w-3" /> Why they fit your thesis
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {builder.matchReasons.map((reason) => (
+                  <span key={reason} className="rounded-full bg-white/[0.06] px-2.5 py-1 text-xs text-white/70">
+                    {reason}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {builder.latestActivityLabel && (
+            <p className="mt-6 text-xs text-white/45">Latest: {builder.latestActivityLabel}</p>
+          )}
+
+          {links.length > 0 && (
+            <div className="mt-6 flex flex-wrap gap-2 border-t border-white/10 pt-6">
+              {links.map((link) => {
+                const Icon = proofIcon(link.type);
+                return (
+                  <a
+                    key={link.url}
+                    href={link.url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center gap-1.5 rounded-full bg-white/[0.06] px-3 py-1.5 text-xs font-medium text-white/80 transition hover:bg-white/12"
+                  >
+                    <Icon className="h-3.5 w-3.5" /> {link.label}
+                  </a>
+                );
+              })}
+            </div>
+          )}
+
+          {builder.profileUrl && (
+            <Link
+              to={builder.profileUrl}
+              className="mt-5 inline-flex items-center gap-1.5 text-sm font-semibold text-[#bcd99a] transition hover:text-white"
+            >
+              View full profile <ArrowUpRight className="h-4 w-4" />
+            </Link>
+          )}
+
+          {/* Actions */}
+          <div className="mt-7 flex items-center justify-center gap-4 border-t border-white/10 pt-6">
+            <button
+              type="button"
+              onClick={() => onDecide('pass')}
+              className="flex h-12 w-12 items-center justify-center rounded-full border border-white/15 text-[#e7483d] transition hover:bg-white/5"
+            >
+              <X className="h-5 w-5" />
+            </button>
+            <button
+              type="button"
+              onClick={() => onDecide('superlike')}
+              className="flex h-14 w-14 items-center justify-center rounded-full bg-[#3aa0ff] text-white shadow-lg shadow-[#3aa0ff]/30 transition hover:-translate-y-0.5"
+            >
+              <Zap className="h-6 w-6" fill="currentColor" />
+            </button>
+            <button
+              type="button"
+              onClick={() => onDecide('like')}
+              className="flex h-12 w-12 items-center justify-center rounded-full bg-[#42520d] text-white transition hover:-translate-y-0.5"
+            >
+              <Star className="h-5 w-5" fill="currentColor" />
+            </button>
+          </div>
+        </div>
       </motion.div>
     </motion.div>
   );
@@ -187,13 +314,25 @@ export const DiscoverDeck = ({ user, builders }: { user: AppUser; builders: Buil
     [builders],
   );
 
-  const [index, setIndex] = useState(0);
-  const [history, setHistory] = useState<{ index: number; decision: Decision; builderId: string }[]>([]);
+  const len = deck.length;
+  const [step, setStep] = useState(0); // monotonic; wraps via modulo → infinite deck
+  const [decided, setDecided] = useState(0);
+  const [history, setHistory] = useState<{ decision: Decision; builderId: string }[]>([]);
   const [toast, setToast] = useState('');
+  const [detail, setDetail] = useState<BuilderNode | null>(null);
+  const busy = useRef(false);
 
-  const current = deck[index];
-  const next = deck[index + 1];
+  const current = len ? deck[step % len] : undefined;
+  const next = len ? deck[(step + 1) % len] : undefined;
   const investorName = user.username || user.email.split('@')[0];
+
+  const x = useMotionValue(0);
+  const y = useMotionValue(0);
+  const scale = useMotionValue(1);
+  const rotate = useTransform(x, [-220, 220], [-14, 14]);
+  const likeOpacity = useTransform(x, [30, 130], [0, 1]);
+  const passOpacity = useTransform(x, [-130, -30], [1, 0]);
+  const superOpacity = useTransform(y, [-130, -40], [1, 0]);
 
   const flash = (msg: string) => {
     setToast(msg);
@@ -211,7 +350,6 @@ export const DiscoverDeck = ({ user, builders }: { user: AppUser; builders: Buil
       flash(`Liked ${builder.company} — they'll see your interest.`);
       return;
     }
-    // superlike
     saveBuilderDiscoveryState(user, builder.id, { saved: true, stage: 'Meeting' }).catch(() => {});
     void saveVcInterest(user, builder, 'superlike');
     if (isUuid(builder.founderId)) {
@@ -230,36 +368,67 @@ export const DiscoverDeck = ({ user, builders }: { user: AppUser; builders: Buil
     }
   };
 
-  const swipe = (decision: Decision) => {
-    if (!current) return;
-    setHistory((h) => [...h, { index, decision, builderId: current.id }]);
+  // Fly the current card out (used by buttons, drag, and keyboard alike).
+  const decide = (decision: Decision) => {
+    if (!current || busy.current) return;
+    busy.current = true;
     apply(current, decision);
-    setIndex((i) => i + 1);
+    setHistory((h) => [...h, { decision, builderId: current.id }]);
+
+    const toX = decision === 'pass' ? -700 : decision === 'like' ? 700 : 0;
+    const toY = decision === 'superlike' ? -800 : 0;
+    if (toX) animate(x, toX, { duration: 0.32, ease: 'easeIn' });
+    if (toY) animate(y, toY, { duration: 0.32, ease: 'easeIn' });
+
+    window.setTimeout(() => {
+      setStep((s) => s + 1);
+      setDecided((d) => d + 1);
+      x.set(0);
+      y.set(0);
+      scale.set(0.95);
+      animate(scale, 1, { duration: 0.25, ease: 'easeOut' });
+      busy.current = false;
+    }, 300);
   };
 
   const undo = () => {
-    setHistory((h) => {
-      if (!h.length) return h;
-      const last = h[h.length - 1];
-      if (last.decision === 'pass') saveBuilderDiscoveryState(user, last.builderId, { hidden: false }).catch(() => {});
-      else saveBuilderDiscoveryState(user, last.builderId, { saved: false }).catch(() => {});
-      setIndex(last.index);
-      return h.slice(0, -1);
-    });
+    if (busy.current || !history.length || step === 0) return;
+    const last = history[history.length - 1];
+    if (last.decision === 'pass') saveBuilderDiscoveryState(user, last.builderId, { hidden: false }).catch(() => {});
+    else saveBuilderDiscoveryState(user, last.builderId, { saved: false }).catch(() => {});
+    setHistory((h) => h.slice(0, -1));
+    setDecided((d) => Math.max(0, d - 1));
+    setStep((s) => Math.max(0, s - 1));
+    x.set(0);
+    y.set(0);
+  };
+
+  const handleDragEnd = (_: unknown, info: PanInfo) => {
+    if (info.offset.y < -120 || info.velocity.y < -700) decide('superlike');
+    else if (info.offset.x > 120 || info.velocity.x > 700) decide('like');
+    else if (info.offset.x < -120 || info.velocity.x < -700) decide('pass');
+    else {
+      animate(x, 0, { type: 'spring', stiffness: 400, damping: 32 });
+      animate(y, 0, { type: 'spring', stiffness: 400, damping: 32 });
+    }
   };
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
+      if (detail) {
+        if (e.key === 'Escape') setDetail(null);
+        return;
+      }
       if (['ArrowLeft', 'ArrowRight', 'ArrowUp'].includes(e.key)) e.preventDefault();
-      if (e.key === 'ArrowLeft') swipe('pass');
-      else if (e.key === 'ArrowRight') swipe('like');
-      else if (e.key === 'ArrowUp') swipe('superlike');
+      if (e.key === 'ArrowLeft') decide('pass');
+      else if (e.key === 'ArrowRight') decide('like');
+      else if (e.key === 'ArrowUp') decide('superlike');
       else if (e.key === 'Backspace' || e.key.toLowerCase() === 'z') undo();
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [current, index]);
+  }, [current, step, detail, history.length]);
 
   return (
     <div className="mx-auto flex max-w-md flex-col px-1 py-2">
@@ -268,28 +437,18 @@ export const DiscoverDeck = ({ user, builders }: { user: AppUser; builders: Buil
           Discover builders
         </h1>
         <p className="mt-1 text-sm text-gray-500">
-          Swipe through founders ranked by your thesis. Pass, like, or call.
+          Swipe through founders ranked by your thesis. Tap a card for the full profile.
         </p>
       </div>
 
-      {/* Card stack */}
-      <div className="relative mx-auto h-[clamp(440px,62vh,560px)] w-full">
+      <div className="relative mx-auto h-[clamp(460px,64vh,580px)] w-full">
         {!current ? (
           <div className="flex h-full flex-col items-center justify-center rounded-[28px] border border-dashed border-black/15 bg-white/60 p-8 text-center">
             <Sparkles className="mb-4 h-7 w-7 text-[#42520d]" />
-            <p className="text-lg font-semibold">You&apos;re all caught up</p>
+            <p className="text-lg font-semibold">No builders in your deck yet</p>
             <p className="mt-2 max-w-xs text-sm text-gray-500">
-              No more builders in your deck right now. New founders surface as they ship and join.
+              New founders surface here as they ship and join. Set your thesis to sharpen the matches.
             </p>
-            {history.length > 0 && (
-              <button
-                type="button"
-                onClick={undo}
-                className="mt-6 inline-flex items-center gap-1.5 rounded-full border border-black/15 bg-white px-4 py-2 text-sm font-semibold text-black hover:bg-black/5"
-              >
-                <RotateCcw className="h-4 w-4" /> Undo last
-              </button>
-            )}
           </div>
         ) : (
           <>
@@ -298,57 +457,91 @@ export const DiscoverDeck = ({ user, builders }: { user: AppUser; builders: Buil
                 <BuilderCard builder={next} />
               </div>
             )}
-            <SwipeCard key={current.id} builder={current} onDecide={swipe} />
+            <motion.div
+              className="absolute inset-0 cursor-grab touch-none active:cursor-grabbing"
+              style={{ x, y, rotate, scale }}
+              drag
+              dragSnapToOrigin={false}
+              dragElastic={0.6}
+              onDragEnd={handleDragEnd}
+              onTap={() => {
+                if (!busy.current) setDetail(current);
+              }}
+            >
+              <BuilderCard builder={current} />
+              <motion.div style={{ opacity: likeOpacity }} className="pointer-events-none absolute left-5 top-6 -rotate-12 rounded-lg border-4 border-[#42c463] px-3 py-1 text-xl font-extrabold text-[#42c463]">
+                LIKE
+              </motion.div>
+              <motion.div style={{ opacity: passOpacity }} className="pointer-events-none absolute right-5 top-6 rotate-12 rounded-lg border-4 border-[#e7483d] px-3 py-1 text-xl font-extrabold text-[#e7483d]">
+                PASS
+              </motion.div>
+              <motion.div style={{ opacity: superOpacity }} className="pointer-events-none absolute inset-x-0 top-5 mx-auto w-fit rounded-lg border-4 border-[#3aa0ff] px-3 py-1 text-xl font-extrabold text-[#3aa0ff]">
+                CALL ME
+              </motion.div>
+            </motion.div>
           </>
         )}
       </div>
 
-      {/* Controls */}
       {current && (
-        <div className="mt-6 flex items-center justify-center gap-4">
-          <button
-            type="button"
-            onClick={undo}
-            disabled={!history.length}
-            title="Undo"
-            className="flex h-11 w-11 items-center justify-center rounded-full border border-black/10 bg-white text-black/50 shadow-sm transition hover:text-black disabled:opacity-40"
-          >
-            <RotateCcw className="h-5 w-5" />
-          </button>
-          <button
-            type="button"
-            onClick={() => swipe('pass')}
-            title="Pass (←)"
-            className="flex h-14 w-14 items-center justify-center rounded-full border border-black/10 bg-white text-[#e7483d] shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
-          >
-            <X className="h-6 w-6" />
-          </button>
-          <button
-            type="button"
-            onClick={() => swipe('superlike')}
-            title="Superlike — request a call (↑)"
-            className="flex h-16 w-16 items-center justify-center rounded-full bg-[#3aa0ff] text-white shadow-lg shadow-[#3aa0ff]/30 transition hover:-translate-y-0.5"
-          >
-            <Zap className="h-7 w-7" fill="currentColor" />
-          </button>
-          <button
-            type="button"
-            onClick={() => swipe('like')}
-            title="Like (→)"
-            className="flex h-14 w-14 items-center justify-center rounded-full bg-[#42520d] text-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
-          >
-            <Star className="h-6 w-6" fill="currentColor" />
-          </button>
-        </div>
+        <>
+          <div className="mt-6 flex items-center justify-center gap-4">
+            <button
+              type="button"
+              onClick={undo}
+              disabled={!history.length || step === 0}
+              title="Undo"
+              className="flex h-11 w-11 items-center justify-center rounded-full border border-black/10 bg-white text-black/50 shadow-sm transition hover:text-black disabled:opacity-40"
+            >
+              <RotateCcw className="h-5 w-5" />
+            </button>
+            <button
+              type="button"
+              onClick={() => decide('pass')}
+              title="Pass (←)"
+              className="flex h-14 w-14 items-center justify-center rounded-full border border-black/10 bg-white text-[#e7483d] shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+            >
+              <X className="h-6 w-6" />
+            </button>
+            <button
+              type="button"
+              onClick={() => decide('superlike')}
+              title="Superlike — request a call (↑)"
+              className="flex h-16 w-16 items-center justify-center rounded-full bg-[#3aa0ff] text-white shadow-lg shadow-[#3aa0ff]/30 transition hover:-translate-y-0.5"
+            >
+              <Zap className="h-7 w-7" fill="currentColor" />
+            </button>
+            <button
+              type="button"
+              onClick={() => decide('like')}
+              title="Like (→)"
+              className="flex h-14 w-14 items-center justify-center rounded-full bg-[#42520d] text-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+            >
+              <Star className="h-6 w-6" fill="currentColor" />
+            </button>
+          </div>
+
+          <div className="mt-4 flex items-center justify-center gap-5 text-[0.7rem] font-medium text-gray-400">
+            <span className="inline-flex items-center gap-1"><X className="h-3.5 w-3.5" /> Pass ←</span>
+            <span className="inline-flex items-center gap-1"><Star className="h-3.5 w-3.5" /> Like →</span>
+            <span className="inline-flex items-center gap-1"><Zap className="h-3.5 w-3.5" /> Call ↑</span>
+            <span className="text-gray-300">·</span>
+            <span>{decided} reviewed</span>
+          </div>
+        </>
       )}
 
-      <div className="mt-4 flex items-center justify-center gap-5 text-[0.7rem] font-medium text-gray-400">
-        <span className="inline-flex items-center gap-1"><X className="h-3.5 w-3.5" /> Pass ←</span>
-        <span className="inline-flex items-center gap-1"><Star className="h-3.5 w-3.5" /> Like →</span>
-        <span className="inline-flex items-center gap-1"><Zap className="h-3.5 w-3.5" /> Call ↑</span>
-      </div>
+      {detail && (
+        <BuilderDetail
+          builder={detail}
+          onClose={() => setDetail(null)}
+          onDecide={(d) => {
+            setDetail(null);
+            decide(d);
+          }}
+        />
+      )}
 
-      {/* Toast */}
       {toast && (
         <div className="pointer-events-none fixed bottom-8 left-1/2 z-50 -translate-x-1/2 rounded-full bg-[#1c1c1a] px-4 py-2 text-sm font-medium text-white shadow-xl">
           {toast}

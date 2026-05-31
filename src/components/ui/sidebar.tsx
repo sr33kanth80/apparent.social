@@ -158,8 +158,8 @@ const roleConfig = {
       [
         { label: 'Overview', href: '#overview', icon: LayoutDashboard },
         { label: 'Your Thesis', href: '#profile', icon: Target },
-        { label: 'Builder Discovery', href: '#matches', icon: Search, badge: 'AI' },
         { label: 'Discover', href: '#discover', icon: Layers, badge: 'New' },
+        { label: 'Builder Discovery', href: '#matches', icon: Search, badge: 'AI' },
         { label: 'Messages', href: '#messages', icon: MessagesSquare },
       ],
       [
