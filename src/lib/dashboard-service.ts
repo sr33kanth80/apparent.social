@@ -33,6 +33,7 @@ import type {
   VCContact,
   UserMessage,
   UserSettings,
+  VcInterestEntry,
 } from '@/lib/apparent-types';
 import { isSupabaseConfigured, supabase } from '@/lib/supabase';
 import { getStaticFounderProfile } from '@/lib/static-founder-profiles';
@@ -1161,6 +1162,70 @@ export const saveBuilderDiscoveryState = async (
 
   if (error) throw error;
   return mapBuilderDiscoveryRow(data);
+};
+
+/**
+ * Record a VC's interest in a builder (Discover swipe deck).
+ * Gracefully no-ops if the vc_interest table isn't deployed yet, so the deck
+ * keeps working before the migration is applied.
+ */
+export const saveVcInterest = async (
+  user: AppUser,
+  builder: { id: string; founderId?: string; founderName?: string; company?: string },
+  kind: 'like' | 'superlike',
+): Promise<void> => {
+  const investorName = user.username || user.email.split('@')[0];
+  const builderUserId = builder.founderId && isUuid(builder.founderId) ? builder.founderId : null;
+
+  if (!isSupabaseConfigured || !supabase || user.isDev) {
+    const key = storageKey(user, 'vc-interest');
+    const current = readLocal<Record<string, { kind: string; at: string }>>(key, {});
+    current[builder.id] = { kind, at: nowIso() };
+    writeLocal(key, current);
+    return;
+  }
+
+  try {
+    await supabase.from('vc_interest').upsert(
+      {
+        investor_id: user.id,
+        investor_name: investorName,
+        builder_id: builder.id,
+        builder_user_id: builderUserId,
+        builder_name: builder.founderName || builder.company || '',
+        kind,
+        updated_at: nowIso(),
+      },
+      { onConflict: 'investor_id,builder_id' },
+    );
+  } catch {
+    /* table not deployed yet — non-fatal */
+  }
+};
+
+/** Load the VCs who have expressed interest in the current founder. */
+export const loadFounderInterest = async (user: AppUser): Promise<VcInterestEntry[]> => {
+  if (!isSupabaseConfigured || !supabase || user.isDev) return [];
+  try {
+    const { data, error } = await supabase
+      .from('vc_interest')
+      .select('*')
+      .eq('builder_user_id', user.id)
+      .order('created_at', { ascending: false });
+    if (error || !data) return [];
+    return data.map((row) => ({
+      id: String(row.id),
+      investorId: String(row.investor_id),
+      investorName: String(row.investor_name ?? ''),
+      builderId: String(row.builder_id),
+      builderUserId: row.builder_user_id ? String(row.builder_user_id) : undefined,
+      builderName: String(row.builder_name ?? ''),
+      kind: row.kind === 'superlike' ? 'superlike' : 'like',
+      createdAt: String(row.created_at ?? ''),
+    }));
+  } catch {
+    return [];
+  }
 };
 
 export const subscribeBuilderNetwork = (

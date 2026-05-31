@@ -358,6 +358,19 @@ export interface UserMessage {
   updatedAt: string;
 }
 
+/** A VC's interest in a builder, expressed via the Discover swipe deck. */
+export interface VcInterestEntry {
+  id: string;
+  investorId: string;
+  investorName: string;
+  builderId: string;
+  /** The founder's Apparent user id, when they're a claimed member. */
+  builderUserId?: string;
+  builderName: string;
+  kind: 'like' | 'superlike';
+  createdAt: string;
+}
+
 export interface FeedItem {
   id: string;
   title: string;

@@ -48,6 +48,7 @@ import { BuilderRadarMap } from '@/components/BuilderRadarMap';
 import { SessionNavBar } from '@/components/ui/sidebar';
 import { Switch } from '@/components/ui/switch';
 import { HeatMap } from '@/pages/HeatMap';
+import { DiscoverDeck } from '@/pages/DiscoverDeck';
 import { GitHubIcon } from '@/components/GitHubIcon';
 import { LogoIcon } from '@/components/LogoIcon';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
@@ -64,10 +65,12 @@ import type {
   TermReview,
   UserMessage,
   UserSettings,
+  VcInterestEntry,
 } from '@/lib/apparent-types';
 import {
   buildBuilderMapClusters,
   loadDashboardData,
+  loadFounderInterest,
   saveBuilderDiscoveryState,
   saveFeedAction,
   saveInvestorMatchBookmark,
@@ -90,7 +93,7 @@ import { signOut } from '@/lib/auth-service';
 type DashboardRole = 'founder' | 'investor';
 type ActionMode = 'profile' | 'launch' | 'thesis' | 'meetup';
 type FieldKind = 'input' | 'textarea' | 'select';
-type ViewMode = 'overview' | 'profile' | 'products' | 'matches' | 'messages' | 'deals' | 'terms' | 'knowledge' | 'feedback' | 'settings' | 'for-you' | 'vc-heatmap';
+type ViewMode = 'overview' | 'profile' | 'products' | 'matches' | 'messages' | 'deals' | 'terms' | 'knowledge' | 'feedback' | 'settings' | 'for-you' | 'vc-heatmap' | 'discover';
 type InvestorDealStage = 'New' | 'Reviewing' | 'Reached Out' | 'Meeting' | 'Watchlist';
 
 interface DashboardProps {
@@ -609,6 +612,10 @@ const viewFromHash = (hash: string): ViewMode => {
     return 'matches';
   }
 
+  if (hash === '#discover') {
+    return 'discover';
+  }
+
   if (hash === '#messages') {
     return 'messages';
   }
@@ -663,6 +670,10 @@ const viewFromSectionId = (id: string): ViewMode => {
 
   if (id === 'matches') {
     return 'matches';
+  }
+
+  if (id === 'discover') {
+    return 'discover';
   }
 
   if (id === 'messages') {
@@ -1078,6 +1089,8 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
     saveCount: 0,
     recentSaverNames: [],
   });
+  // VCs who liked/superliked this founder via the Discover deck (founder side).
+  const [vcInterest, setVcInterest] = useState<VcInterestEntry[]>([]);
   const onboardingKey = `apparent:${user.id}:onboarding-dismissed`;
   const [onboardingDismissed, setOnboardingDismissed] = useState<boolean>(() => {
     try {
@@ -1386,6 +1399,41 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
       unsubscribe();
     };
   }, [isInvestor, labelByKey, role, user]);
+
+  // Founder side: load the VCs who liked/superliked this founder (Discover deck).
+  useEffect(() => {
+    if (isInvestor) return;
+    let cancelled = false;
+    loadFounderInterest(user)
+      .then((rows) => {
+        if (!cancelled) setVcInterest(rows);
+      })
+      .catch(() => {
+        /* table may not be deployed yet */
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [isInvestor, user]);
+
+  const handleMessageInterestedVc = async (entry: VcInterestEntry) => {
+    try {
+      const savedMessage = await saveMessage(user, {
+        recipient: entry.investorName || 'Investor',
+        recipientId: entry.investorId,
+        senderName: user.username || user.email.split('@')[0],
+        subject: 'Thanks for your interest',
+        body: `Hi ${entry.investorName || 'there'} — thanks for the interest in what I'm building. I'd be glad to share more. Want to set up a quick call?`,
+        status: 'sent',
+        context: `interest:${entry.investorId}`,
+      });
+      setMessages((current) => [savedMessage, ...current.filter((message) => message.id !== savedMessage.id)]);
+      setSelectedMessageThreadId(savedMessage.recipientId || savedMessage.recipient.toLowerCase());
+      setActiveView('messages');
+    } catch {
+      setDashboardError('Unable to open a message with that investor.');
+    }
+  };
 
   const filteredMatches = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase();
@@ -3278,7 +3326,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
                     {founderInterest.saveCount} tracking
                   </span>
                 </div>
-                <div className="px-5 pb-5">
+                <div className="space-y-3 px-5 pb-5">
                   {founderInterest.saveCount > 0 ? (
                     <p className="text-sm leading-relaxed text-gray-600">
                       {founderInterest.saveCount} investor{founderInterest.saveCount === 1 ? '' : 's'} saved your profile
@@ -3287,11 +3335,41 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
                       )}
                       .
                     </p>
-                  ) : (
+                  ) : vcInterest.length === 0 ? (
                     <p className="text-sm leading-relaxed text-gray-500">
                       No investors are tracking you yet. Set your status to{' '}
                       <span className="font-medium text-[#42520d]">Raising now</span> and complete your profile so thesis-fit investors surface you.
                     </p>
+                  ) : null}
+
+                  {vcInterest.length > 0 && (
+                    <div className="space-y-2 border-t border-black/5 pt-3">
+                      <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[#42520d]">
+                        Investors who liked you
+                      </p>
+                      {vcInterest.map((entry) => (
+                        <div key={entry.id} className="flex items-center gap-3 rounded-xl bg-[#fbfaf7] px-3 py-2.5">
+                          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#42520d] text-xs font-semibold text-white">
+                            {(entry.investorName || 'VC').slice(0, 2).toUpperCase()}
+                          </div>
+                          <div className="min-w-0">
+                            <p className="truncate text-sm font-medium">{entry.investorName || 'An investor'}</p>
+                            <p className="text-xs text-gray-500">
+                              {entry.kind === 'superlike' ? 'Wants to talk — check Messages' : 'Liked your profile'}
+                            </p>
+                          </div>
+                          {entry.kind === 'like' && (
+                            <button
+                              type="button"
+                              onClick={() => handleMessageInterestedVc(entry)}
+                              className="ml-auto shrink-0 rounded-full bg-[#42520d] px-3 py-1.5 text-xs font-semibold text-white transition hover:opacity-90"
+                            >
+                              Message
+                            </button>
+                          )}
+                        </div>
+                      ))}
+                    </div>
                   )}
                 </div>
               </section>
@@ -6649,6 +6727,16 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
               renderProductsPage()
             ) : activeView === 'matches' ? (
               isInvestor ? renderInvestorBuilderDiscoveryPage() : renderFounderMatchesPage()
+            ) : activeView === 'discover' ? (
+              <motion.div
+                key="discover-main"
+                initial={{ opacity: 0, y: 10, filter: 'blur(2px)' }}
+                animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+                exit={{ opacity: 0, y: -8, filter: 'blur(2px)' }}
+                transition={{ duration: 0.22, ease: 'easeOut' }}
+              >
+                <DiscoverDeck user={user} builders={builderNodes} />
+              </motion.div>
             ) : activeView === 'messages' ? (
               renderMessagesPage()
             ) : activeView === 'deals' ? (
