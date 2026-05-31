@@ -1,4 +1,5 @@
 import { ArrowUpRight, CircleDot, Globe2, Radar, Search, ShieldCheck } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { LogoIcon } from '../components/LogoIcon';
 import { useReveal } from '../lib/useReveal';
@@ -36,6 +37,176 @@ const values = [
     text: 'DMs, terms, and pipeline work better when they keep the original proof nearby.',
   },
 ];
+
+// Founder proof points matched to investor thesis criteria. Weights sum to 92.
+const matchRows = [
+  { id: 'proof', founder: '4.2k GitHub stars', investor: 'Technical founders', weight: 24 },
+  { id: 'sector', founder: 'AI agents', investor: 'Seed AI thesis', weight: 30 },
+  { id: 'stage', founder: 'Seed · pre-revenue', investor: 'Pre-revenue checks', weight: 23 },
+  { id: 'geo', founder: 'San Francisco', investor: 'United States', weight: 15 },
+];
+
+const MatchCard = () => {
+  const cardRef = useRef<HTMLDivElement>(null);
+  const [played, setPlayed] = useState(false);
+  const [pct, setPct] = useState(0);
+  const [hovered, setHovered] = useState<string | null>(null);
+
+  // Play the match once the card scrolls into view.
+  useEffect(() => {
+    const el = cardRef.current;
+    if (!el) return;
+    const io = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setPlayed(true);
+          io.disconnect();
+        }
+      },
+      { threshold: 0.4 },
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
+
+  // Count the match percentage up to 92 once played.
+  useEffect(() => {
+    if (!played) return;
+    const target = 92;
+    const duration = 1300;
+    let raf = 0;
+    const start = performance.now();
+    const tick = (now: number) => {
+      const t = Math.min(1, (now - start) / duration);
+      const eased = 1 - Math.pow(1 - t, 3);
+      setPct(Math.round(eased * target));
+      if (t < 1) raf = requestAnimationFrame(tick);
+    };
+    const delay = setTimeout(() => {
+      raf = requestAnimationFrame(tick);
+    }, 250);
+    return () => {
+      clearTimeout(delay);
+      cancelAnimationFrame(raf);
+    };
+  }, [played]);
+
+  return (
+    <div
+      ref={cardRef}
+      className="relative flex min-h-[520px] flex-col overflow-hidden rounded-[32px] bg-[#141412] p-8 text-white"
+    >
+      {/* Ambient glow */}
+      <div className="pointer-events-none absolute -right-24 -top-24 h-64 w-64 rounded-full bg-[#bcd99a]/10 blur-3xl" />
+
+      {/* Header */}
+      <div className="relative flex items-start justify-between">
+        <div>
+          <h3 className="text-2xl font-normal leading-tight tracking-[-0.03em] text-white" style={serifDisplay}>
+            A fit,<br />both ways.
+          </h3>
+          <p className="mt-2 text-sm text-white/40">Hover a signal to trace the match.</p>
+        </div>
+        <LogoIcon className="h-9 w-9 text-[#bcd99a]" />
+      </div>
+
+      {/* Column captions */}
+      <div className="relative mt-9 flex items-center justify-between text-[10px] font-semibold uppercase tracking-[0.18em] text-white/35">
+        <span>Founder · Aria Kim</span>
+        <span>Investor · Northstar</span>
+      </div>
+
+      {/* Match rows */}
+      <div className="relative mt-3 flex flex-col gap-2.5">
+        {matchRows.map((row, i) => {
+          const isHover = hovered === row.id;
+          const dim = hovered !== null && !isHover;
+          return (
+            <div
+              key={row.id}
+              onMouseEnter={() => setHovered(row.id)}
+              onMouseLeave={() => setHovered(null)}
+              className={`grid cursor-default grid-cols-[1fr_auto_1fr] items-center gap-2 transition-opacity duration-300 ${
+                dim ? 'opacity-40' : 'opacity-100'
+              }`}
+            >
+              {/* Founder signal */}
+              <div
+                className={`justify-self-stretch rounded-xl border px-3 py-2.5 text-right text-xs font-semibold transition-colors duration-300 ${
+                  isHover
+                    ? 'border-[#bcd99a]/50 bg-[#bcd99a]/10 text-white'
+                    : 'border-white/10 bg-white/[0.04] text-white/80'
+                }`}
+              >
+                {row.founder}
+              </div>
+
+              {/* Connector */}
+              <div className="relative flex w-16 items-center sm:w-20">
+                {isHover && (
+                  <span className="absolute left-1/2 top-[-17px] -translate-x-1/2 whitespace-nowrap rounded-full bg-[#bcd99a] px-2 py-0.5 text-[9px] font-bold text-black">
+                    +{row.weight}%
+                  </span>
+                )}
+                <span
+                  className={`h-1.5 w-1.5 shrink-0 rounded-full transition-colors duration-500 ${
+                    played ? 'bg-[#bcd99a]' : 'bg-white/20'
+                  }`}
+                />
+                <span className="relative h-px flex-1 overflow-hidden bg-white/10">
+                  <span
+                    className={`absolute inset-0 origin-left bg-gradient-to-r from-[#bcd99a] to-[#bcd99a]/60 transition-transform duration-700 ease-out ${
+                      played ? 'scale-x-100' : 'scale-x-0'
+                    } ${isHover ? 'shadow-[0_0_8px_#bcd99a]' : ''}`}
+                    style={{ transitionDelay: `${i * 120 + 150}ms` }}
+                  />
+                </span>
+                <span
+                  className={`h-1.5 w-1.5 shrink-0 rounded-full transition-colors duration-500 ${
+                    played ? 'bg-[#bcd99a]' : 'bg-white/20'
+                  }`}
+                  style={{ transitionDelay: `${i * 120 + 350}ms` }}
+                />
+              </div>
+
+              {/* Investor signal */}
+              <div
+                className={`justify-self-stretch rounded-xl border px-3 py-2.5 text-left text-xs font-semibold transition-colors duration-300 ${
+                  isHover
+                    ? 'border-[#bcd99a]/50 bg-[#bcd99a]/10 text-white'
+                    : 'border-white/10 bg-white/[0.04] text-white/80'
+                }`}
+              >
+                {row.investor}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Match readout */}
+      <div className="relative mt-auto pt-7">
+        <div className="flex items-end justify-between">
+          <div>
+            <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-white/35">Thesis match</p>
+            <p className="text-4xl font-normal tracking-[-0.03em] text-[#bcd99a]" style={serifDisplay}>
+              {pct}%
+            </p>
+          </div>
+          <p className="mb-1 max-w-[12rem] text-right text-xs leading-5 text-white/40">
+            Proof meets thesis. The intro writes itself.
+          </p>
+        </div>
+        <div className="mt-3 h-1 w-full overflow-hidden rounded-full bg-white/10">
+          <div
+            className="h-full rounded-full bg-gradient-to-r from-[#bcd99a] to-[#02A070]"
+            style={{ width: `${pct}%` }}
+          />
+        </div>
+      </div>
+    </div>
+  );
+};
 
 export const AboutUs = () => {
   const navigate = useNavigate();
@@ -99,71 +270,8 @@ export const AboutUs = () => {
           </button>
         </div>
 
-        {/* The match, both ways — proof meeting thesis. */}
-        <div className="relative flex min-h-[520px] flex-col overflow-hidden rounded-[32px] bg-[#141412] p-8 text-white">
-          {/* Header */}
-          <div className="flex items-start justify-between">
-            <div>
-              <h3 className="text-2xl font-normal leading-tight tracking-[-0.03em] text-white" style={serifDisplay}>
-                A fit,<br />both ways.
-              </h3>
-              <p className="mt-2 text-sm text-white/40">Proof meets thesis. Every time.</p>
-            </div>
-            <LogoIcon className="h-9 w-9 text-[#bcd99a]" />
-          </div>
-
-          {/* Match cards */}
-          <div className="mt-auto flex flex-col gap-0">
-            {/* Founder card */}
-            <div className="rounded-t-2xl border border-white/10 bg-white/[0.04] p-5">
-              <div className="flex items-center justify-between">
-                <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-white/35">Founder</p>
-                <span className="rounded-full bg-white/8 px-2 py-0.5 text-[10px] font-semibold text-white/50">Seed</span>
-              </div>
-              <p className="mt-3 text-base font-semibold tracking-[-0.01em]">Aria Kim</p>
-              <p className="text-sm text-white/50">AI agents · San Francisco</p>
-              <div className="mt-4 flex gap-4 border-t border-white/[0.07] pt-4">
-                <div>
-                  <p className="text-xs font-semibold text-white">4.2k</p>
-                  <p className="text-[10px] text-white/35">GitHub stars</p>
-                </div>
-                <div>
-                  <p className="text-xs font-semibold text-white">38</p>
-                  <p className="text-[10px] text-white/35">design partners</p>
-                </div>
-              </div>
-            </div>
-
-            {/* Connector */}
-            <div className="relative flex items-center justify-between border-x border-white/10 bg-white/[0.02] px-5 py-3">
-              <div className="h-px flex-1 bg-gradient-to-r from-transparent via-[#bcd99a]/40 to-transparent" />
-              <span className="mx-4 shrink-0 rounded-full bg-[#bcd99a] px-3.5 py-1 text-xs font-bold text-black">
-                92% match
-              </span>
-              <div className="h-px flex-1 bg-gradient-to-r from-transparent via-[#bcd99a]/40 to-transparent" />
-            </div>
-
-            {/* Investor card */}
-            <div className="rounded-b-2xl border border-white/10 bg-white/[0.04] p-5">
-              <div className="flex items-center justify-between">
-                <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-white/35">Investor</p>
-                <span className="rounded-full bg-white/8 px-2 py-0.5 text-[10px] font-semibold text-white/50">Seed AI</span>
-              </div>
-              <p className="mt-3 text-base font-semibold tracking-[-0.01em]">Northstar Ventures</p>
-              <p className="text-sm text-white/50">Technical founders · pre-revenue · US</p>
-              <div className="mt-4 flex gap-4 border-t border-white/[0.07] pt-4">
-                <div>
-                  <p className="text-xs font-semibold text-white">$150M</p>
-                  <p className="text-[10px] text-white/35">fund size</p>
-                </div>
-                <div>
-                  <p className="text-xs font-semibold text-white">12</p>
-                  <p className="text-[10px] text-white/35">active investments</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+        {/* The match, both ways — proof meeting thesis, interactively. */}
+        <MatchCard />
       </section>
 
       <section data-reveal className="reveal mx-auto max-w-[92rem] border-t border-black/10 px-5 py-16 sm:px-8">
