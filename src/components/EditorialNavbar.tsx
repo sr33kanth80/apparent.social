@@ -8,8 +8,6 @@ const navLinks = [
   { label: 'For VCs', to: '/for-vcs' },
   { label: 'Heat Map', to: '/heat-map' },
   { label: 'About Us', to: '/about' },
-  { label: 'Resources', to: '/resources' },
-  { label: 'Our Thesis', to: '/our-thesis' },
 ];
 
 export const EditorialNavbar = () => {
