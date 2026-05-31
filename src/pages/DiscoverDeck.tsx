@@ -160,7 +160,7 @@ const BuilderDetail = ({
       onClick={onClose}
     >
       <motion.div
-        className="max-h-[92vh] w-full max-w-lg overflow-y-auto rounded-t-[28px] bg-[#1c1c1a] text-white sm:rounded-[28px]"
+        className="max-h-[92vh] w-full max-w-lg overflow-y-auto overscroll-contain scroll-smooth rounded-t-[28px] bg-[#1c1c1a] text-white sm:rounded-[28px] [scrollbar-color:rgba(255,255,255,0.25)_transparent] [scrollbar-width:thin] [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-white/20 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar]:w-1.5 hover:[&::-webkit-scrollbar-thumb]:bg-white/35"
         initial={{ y: 40, opacity: 0.6 }}
         animate={{ y: 0, opacity: 1 }}
         exit={{ y: 40, opacity: 0 }}
@@ -330,7 +330,6 @@ export const DiscoverDeck = ({ user, builders }: { user: AppUser; builders: Buil
 
   const x = useMotionValue(0);
   const y = useMotionValue(0);
-  const scale = useMotionValue(1);
   const rotate = useTransform(x, [-220, 220], [-14, 14]);
   const likeOpacity = useTransform(x, [30, 130], [0, 1]);
   const passOpacity = useTransform(x, [-130, -30], [1, 0]);
@@ -393,27 +392,27 @@ export const DiscoverDeck = ({ user, builders }: { user: AppUser; builders: Buil
     }
   };
 
-  // Fly the current card out (used by buttons, drag, and keyboard alike).
+  // Fly the current card out, then advance — only once the animation finishes,
+  // so the next card never starts mid-flight (simple + reliable).
   const decide = (decision: Decision) => {
     if (!current || busy.current) return;
     busy.current = true;
     apply(current, decision);
     setHistory((h) => [...h, { decision, builderId: current.id }]);
 
-    const toX = decision === 'pass' ? -700 : decision === 'like' ? 700 : 0;
-    const toY = decision === 'superlike' ? -800 : 0;
-    if (toX) animate(x, toX, { duration: 0.32, ease: 'easeIn' });
-    if (toY) animate(y, toY, { duration: 0.32, ease: 'easeIn' });
-
-    window.setTimeout(() => {
+    const finish = () => {
       setStep((s) => s + 1);
       setDecided((d) => d + 1);
       x.set(0);
       y.set(0);
-      scale.set(0.95);
-      animate(scale, 1, { duration: 0.25, ease: 'easeOut' });
       busy.current = false;
-    }, 300);
+    };
+
+    if (decision === 'superlike') {
+      animate(y, -650, { duration: 0.26, ease: 'easeIn', onComplete: finish });
+    } else {
+      animate(x, decision === 'pass' ? -650 : 650, { duration: 0.26, ease: 'easeIn', onComplete: finish });
+    }
   };
 
   const undo = () => {
@@ -496,7 +495,7 @@ export const DiscoverDeck = ({ user, builders }: { user: AppUser; builders: Buil
             )}
             <motion.div
               className="absolute inset-0 cursor-grab touch-none active:cursor-grabbing"
-              style={{ x, y, rotate, scale }}
+              style={{ x, y, rotate }}
               drag
               dragSnapToOrigin={false}
               dragElastic={0.6}
