@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { animate, motion, useMotionValue, useTransform, type PanInfo } from 'framer-motion';
-import { ArrowUpRight, BookOpen, MapPin, RotateCcw, Rocket, Sparkles, Star, X, Zap } from 'lucide-react';
+import { ArrowUpRight, BookOpen, Check, Link2, MapPin, RotateCcw, Rocket, Sparkles, Star, X, Zap } from 'lucide-react';
 import { GitHubIcon } from '../components/GitHubIcon';
-import { saveBuilderDiscoveryState, saveMessage, saveVcInterest } from '../lib/dashboard-service';
+import { loadInvitableBuilders, saveBuilderDiscoveryState, saveMessage, saveVcInterest } from '../lib/dashboard-service';
 import type { AppUser, BuilderNode } from '../lib/apparent-types';
 
 const serif = { fontFamily: 'Georgia, "Times New Roman", serif' };
@@ -320,6 +320,8 @@ export const DiscoverDeck = ({ user, builders }: { user: AppUser; builders: Buil
   const [history, setHistory] = useState<{ decision: Decision; builderId: string }[]>([]);
   const [toast, setToast] = useState('');
   const [detail, setDetail] = useState<BuilderNode | null>(null);
+  const [invitable, setInvitable] = useState<{ signalId: string; builderName: string; kind: 'like' | 'superlike' }[]>([]);
+  const [copied, setCopied] = useState('');
   const busy = useRef(false);
 
   const current = len ? deck[step % len] : undefined;
@@ -339,6 +341,27 @@ export const DiscoverDeck = ({ user, builders }: { user: AppUser; builders: Buil
     window.setTimeout(() => setToast(''), 1900);
   };
 
+  // Track liked builders who aren't on Apparent yet so the VC can invite them.
+  const addInvitable = (builder: BuilderNode, kind: 'like' | 'superlike') => {
+    if (isUuid(builder.founderId) || !builder.id.startsWith('signal:')) return;
+    const signalId = builder.id.replace(/^signal:/, '');
+    setInvitable((prev) => [
+      { signalId, builderName: builder.founderName || builder.company, kind },
+      ...prev.filter((p) => p.signalId !== signalId),
+    ]);
+  };
+
+  const copyInvite = async (it: { signalId: string; builderName: string }) => {
+    const url = `${window.location.origin}/claim/${it.signalId}?name=${encodeURIComponent(it.builderName)}`;
+    try {
+      await navigator.clipboard.writeText(url);
+      setCopied(it.signalId);
+      window.setTimeout(() => setCopied(''), 1600);
+    } catch {
+      /* clipboard blocked */
+    }
+  };
+
   const apply = (builder: BuilderNode, decision: Decision) => {
     if (decision === 'pass') {
       saveBuilderDiscoveryState(user, builder.id, { hidden: true }).catch(() => {});
@@ -347,11 +370,13 @@ export const DiscoverDeck = ({ user, builders }: { user: AppUser; builders: Buil
     if (decision === 'like') {
       saveBuilderDiscoveryState(user, builder.id, { saved: true }).catch(() => {});
       void saveVcInterest(user, builder, 'like');
+      addInvitable(builder, 'like');
       flash(`Liked ${builder.company} — they'll see your interest.`);
       return;
     }
     saveBuilderDiscoveryState(user, builder.id, { saved: true, stage: 'Meeting' }).catch(() => {});
     void saveVcInterest(user, builder, 'superlike');
+    addInvitable(builder, 'superlike');
     if (isUuid(builder.founderId)) {
       saveMessage(user, {
         recipient: builder.founderName || builder.company,
@@ -429,6 +454,18 @@ export const DiscoverDeck = ({ user, builders }: { user: AppUser; builders: Buil
     return () => window.removeEventListener('keydown', onKey);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [current, step, detail, history.length]);
+
+  useEffect(() => {
+    let cancelled = false;
+    loadInvitableBuilders(user)
+      .then((rows) => {
+        if (!cancelled) setInvitable(rows);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [user]);
 
   return (
     <div className="mx-auto flex max-w-md flex-col px-1 py-2">
@@ -529,6 +566,42 @@ export const DiscoverDeck = ({ user, builders }: { user: AppUser; builders: Buil
             <span>{decided} reviewed</span>
           </div>
         </>
+      )}
+
+      {/* Invite the builders you liked who aren't on Apparent yet. */}
+      {invitable.length > 0 && (
+        <div className="mt-8 rounded-[20px] border border-black/10 bg-white/70 p-5">
+          <div className="flex items-center gap-2">
+            <Link2 className="h-4 w-4 text-[#42520d]" />
+            <div>
+              <p className="text-sm font-semibold">Invite builders you liked</p>
+              <p className="mt-0.5 text-xs text-gray-500">
+                These founders aren&apos;t on Apparent yet. Send their claim link so you can connect.
+              </p>
+            </div>
+          </div>
+          <div className="mt-4 space-y-2">
+            {invitable.slice(0, 10).map((it) => (
+              <div key={it.signalId} className="flex items-center gap-3 rounded-xl bg-[#fbfaf7] px-3 py-2.5">
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#42520d] text-xs font-semibold text-white">
+                  {initialsOf(it.builderName || 'B')}
+                </div>
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-medium">{it.builderName || 'Builder'}</p>
+                  <p className="text-xs text-gray-500">{it.kind === 'superlike' ? 'You want a call' : 'You liked them'}</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => copyInvite(it)}
+                  className="ml-auto inline-flex shrink-0 items-center gap-1.5 rounded-full bg-[#42520d] px-3 py-1.5 text-xs font-semibold text-white transition hover:opacity-90"
+                >
+                  {copied === it.signalId ? <Check className="h-3.5 w-3.5" /> : <Link2 className="h-3.5 w-3.5" />}
+                  {copied === it.signalId ? 'Copied!' : 'Copy invite link'}
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
       )}
 
       {detail && (

@@ -1253,6 +1253,34 @@ export const claimBuilderInterest = async (user: AppUser, builderId: string): Pr
   }
 };
 
+/**
+ * The investor's own liked builders who aren't on Apparent yet (ingested,
+ * unclaimed) — so they can send each a /claim invite link. RLS-safe.
+ */
+export const loadInvitableBuilders = async (
+  user: AppUser,
+): Promise<{ signalId: string; builderName: string; kind: 'like' | 'superlike' }[]> => {
+  if (!isSupabaseConfigured || !supabase || user.isDev) return [];
+  try {
+    const { data, error } = await supabase
+      .from('vc_interest')
+      .select('builder_id, builder_name, kind')
+      .eq('investor_id', user.id)
+      .is('builder_user_id', null)
+      .order('created_at', { ascending: false });
+    if (error || !data) return [];
+    return data
+      .filter((row) => String(row.builder_id).startsWith('signal:'))
+      .map((row) => ({
+        signalId: String(row.builder_id).replace(/^signal:/, ''),
+        builderName: String(row.builder_name ?? ''),
+        kind: row.kind === 'superlike' ? 'superlike' : 'like',
+      }));
+  } catch {
+    return [];
+  }
+};
+
 /** Look up a single ingested signal by id (anon-readable) for the claim landing. */
 export const loadSourceSignal = async (
   signalId: string,
