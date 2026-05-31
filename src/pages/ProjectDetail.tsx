@@ -3,7 +3,7 @@ import { Link, useParams } from 'react-router-dom';
 import { ArrowUpRight, FileText, Globe2, Link as LinkIcon, MapPin, Star, Users } from 'lucide-react';
 import { LogoIcon } from '@/components/LogoIcon';
 import { GitHubIcon } from '@/components/GitHubIcon';
-import { productLaunches } from '@/pages/Home';
+import { productLaunches } from '@/data/showcase-launches';
 import type { PublicProjectDetail } from '@/lib/apparent-types';
 import { loadPublicProjectDetail } from '@/lib/dashboard-service';
 import { getStaticFounderProfile } from '@/lib/static-founder-profiles';

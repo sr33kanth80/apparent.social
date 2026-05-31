@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="675" viewBox="0 0 1200 675">
+  <defs>
+    <filter id="cardShadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="22" stdDeviation="30" flood-color="#111111" flood-opacity="0.12"/>
+    </filter>
+    <pattern id="miniGrid" width="30" height="30" patternUnits="userSpaceOnUse">
+      <path d="M 30 0 L 0 0 0 30" fill="none" stroke="#111111" stroke-opacity="0.05" stroke-width="1"/>
+    </pattern>
+  </defs>
+  <rect width="1200" height="675" fill="#fbfaf7"/>
+  <rect width="1200" height="675" fill="url(#miniGrid)"/>
+  <path d="M0 515 C170 460 270 545 430 474 C585 404 660 288 835 334 C1006 379 1055 511 1200 460 L1200 675 L0 675 Z" fill="#dcefc7" opacity="0.75"/>
+  <path d="M940 0 C1028 93 1079 205 1095 335 C1107 437 1140 516 1200 575 L1200 0 Z" fill="#42520d"/>
+
+  <g transform="translate(76 70)">
+    <g transform="scale(0.168)">
+      <path d="M 128.005 191.173 C 128.448 156.208 156.93 128 192 128 L 192 64 L 128 64 C 128 99.346 99.346 128 64 128 L 64 192 L 128 192 Z M 192 256 L 64 256 C 28.654 256 0 227.346 0 192 L 0 64 L 64 64 L 64 0 L 192 0 C 227.346 0 256 28.654 256 64 L 256 192 L 192 192 Z" fill="#111111"/>
+    </g>
+    <text x="56" y="32" font-family="Inter, Arial, sans-serif" font-size="28" font-weight="700" fill="#111111">Apparent</text>
+  </g>
+
+  <g transform="translate(76 155)">
+    <text x="0" y="70" font-family="Georgia, 'Times New Roman', serif" font-size="80" font-weight="400" fill="#111111">Find investors</text>
+    <text x="0" y="160" font-family="Georgia, 'Times New Roman', serif" font-size="80" font-weight="400" fill="#42520d">who actually fit.</text>
+    <text x="3" y="226" font-family="Inter, Arial, sans-serif" font-size="28" font-weight="500" fill="#111111" fill-opacity="0.66">Apparent matches founders and investors by thesis,</text>
+    <text x="3" y="264" font-family="Inter, Arial, sans-serif" font-size="28" font-weight="500" fill="#111111" fill-opacity="0.66">stage, sector, geography, and proof.</text>
+  </g>
+
+  <g transform="translate(742 120)" filter="url(#cardShadow)">
+    <rect x="0" y="0" width="352" height="420" rx="28" fill="#1c1c1a"/>
+    <text x="32" y="54" font-family="Inter, Arial, sans-serif" font-size="15" font-weight="700" letter-spacing="2" fill="#bcd99a">RANKED BY FIT</text>
+    <g transform="translate(32 92)">
+      <rect x="0" y="0" width="288" height="74" rx="18" fill="#ffffff" fill-opacity="0.08" stroke="#ffffff" stroke-opacity="0.12"/>
+      <circle cx="38" cy="37" r="18" fill="#dcefc7"/>
+      <text x="70" y="32" font-family="Inter, Arial, sans-serif" font-size="18" font-weight="700" fill="#ffffff">AgentKit</text>
+      <text x="70" y="55" font-family="Inter, Arial, sans-serif" font-size="13" font-weight="500" fill="#ffffff" fill-opacity="0.5">AI agents - Seed - SF</text>
+      <rect x="229" y="22" width="41" height="30" rx="15" fill="#dcefc7"/>
+      <text x="249.5" y="43" text-anchor="middle" font-family="Inter, Arial, sans-serif" font-size="13" font-weight="800" fill="#111111">92%</text>
+    </g>
+    <g transform="translate(32 184)">
+      <rect x="0" y="0" width="288" height="74" rx="18" fill="#ffffff" fill-opacity="0.045" stroke="#ffffff" stroke-opacity="0.1"/>
+      <circle cx="38" cy="37" r="18" fill="#42520d"/>
+      <text x="70" y="32" font-family="Inter, Arial, sans-serif" font-size="18" font-weight="700" fill="#ffffff">Ledgerline</text>
+      <text x="70" y="55" font-family="Inter, Arial, sans-serif" font-size="13" font-weight="500" fill="#ffffff" fill-opacity="0.5">Fintech infra - Pre-seed</text>
+      <rect x="229" y="22" width="41" height="30" rx="15" fill="#dcefc7"/>
+      <text x="249.5" y="43" text-anchor="middle" font-family="Inter, Arial, sans-serif" font-size="13" font-weight="800" fill="#111111">88%</text>
+    </g>
+    <g transform="translate(32 276)">
+      <rect x="0" y="0" width="288" height="74" rx="18" fill="#ffffff" fill-opacity="0.045" stroke="#ffffff" stroke-opacity="0.1"/>
+      <circle cx="38" cy="37" r="18" fill="#02a070"/>
+      <text x="70" y="32" font-family="Inter, Arial, sans-serif" font-size="18" font-weight="700" fill="#ffffff">Northwind</text>
+      <text x="70" y="55" font-family="Inter, Arial, sans-serif" font-size="13" font-weight="500" fill="#ffffff" fill-opacity="0.5">Climate - Seed - Berlin</text>
+      <rect x="229" y="22" width="41" height="30" rx="15" fill="#dcefc7"/>
+      <text x="249.5" y="43" text-anchor="middle" font-family="Inter, Arial, sans-serif" font-size="13" font-weight="800" fill="#111111">81%</text>
+    </g>
+  </g>
+
+  <text x="80" y="604" font-family="Inter, Arial, sans-serif" font-size="22" font-weight="700" fill="#111111">apparent.social</text>
+</svg>

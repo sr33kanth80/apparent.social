@@ -1,0 +1,70 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1500" height="500" viewBox="0 0 1500 500">
+  <defs>
+    <filter id="deepShadow" x="-20%" y="-20%" width="140%" height="150%">
+      <feDropShadow dx="0" dy="22" stdDeviation="30" flood-color="#111111" flood-opacity="0.22"/>
+    </filter>
+  </defs>
+  <rect width="1500" height="500" fill="#fbfaf7"/>
+  <path d="M1180 -90 C1322 50 1424 210 1500 392 L1500 0 Z" fill="#42520d"/>
+  <path d="M0 420 C230 352 390 430 590 325 C730 252 865 250 1010 314 C1160 380 1292 398 1500 300 L1500 500 L0 500 Z" fill="#dcefc7" opacity="0.68"/>
+
+  <g transform="translate(84 74)">
+    <text x="0" y="58" font-family="Georgia, 'Times New Roman', serif" font-size="62" fill="#111111">Your GitHub is</text>
+    <text x="0" y="126" font-family="Georgia, 'Times New Roman', serif" font-size="62" fill="#111111">a better pitch than</text>
+    <text x="0" y="194" font-family="Georgia, 'Times New Roman', serif" font-size="62" fill="#42520d">your network.</text>
+    <text x="2" y="250" font-family="Inter, Arial, sans-serif" font-size="21" fill="#111111" fill-opacity="0.62">Profiles, launches, commits, traction, demos,</text>
+    <text x="2" y="279" font-family="Inter, Arial, sans-serif" font-size="21" fill="#111111" fill-opacity="0.62">and fundraising status in one investor-readable card.</text>
+    <g transform="translate(0 338)">
+      <g transform="scale(0.108)">
+        <path d="M128.005 191.173 C128.448 156.208 156.93 128 192 128 L192 64 L128 64 C128 99.346 99.346 128 64 128 L64 192 L128 192 Z M192 256 L64 256 C28.654 256 0 227.346 0 192 L0 64 L64 64 L64 0 L192 0 C227.346 0 256 28.654 256 64 L256 192 L192 192 Z" fill="#111111"/>
+      </g>
+      <text x="40" y="23" font-family="Georgia, 'Times New Roman', serif" font-size="22" font-weight="700" fill="#111111">Apparent</text>
+    </g>
+  </g>
+
+  <g transform="translate(650 36)" filter="url(#deepShadow)">
+    <rect width="574" height="428" rx="32" fill="#1c1c1a"/>
+    <g transform="translate(32 26)">
+      <rect width="132" height="27" rx="13.5" fill="#dcefc7"/>
+      <text x="66" y="18" text-anchor="middle" font-family="Inter, Arial, sans-serif" font-size="11" font-weight="800" fill="#42520d">Founder on Apparent</text>
+      <rect x="144" width="132" height="27" rx="13.5" fill="#42520d"/>
+      <text x="210" y="18" text-anchor="middle" font-family="Inter, Arial, sans-serif" font-size="11" font-weight="800" fill="#ffffff">Raising Seed - $1.5M</text>
+      <text x="292" y="18" font-family="Inter, Arial, sans-serif" font-size="11" fill="#ffffff" fill-opacity="0.5">San Francisco</text>
+    </g>
+    <g transform="translate(32 75)">
+      <circle cx="25" cy="25" r="25" fill="#d6a29a"/>
+      <text x="64" y="22" font-family="Inter, Arial, sans-serif" font-size="20" font-weight="800" fill="#ffffff">Aria Kim</text>
+      <text x="64" y="44" font-family="Inter, Arial, sans-serif" font-size="13" fill="#ffffff" fill-opacity="0.48">@ariakim</text>
+      <line x1="174" y1="4" x2="174" y2="50" stroke="#ffffff" stroke-opacity="0.1"/>
+      <text x="196" y="18" font-family="Inter, Arial, sans-serif" font-size="9" font-weight="800" letter-spacing="1.5" fill="#ffffff" fill-opacity="0.36">MRR</text>
+      <text x="196" y="43" font-family="Inter, Arial, sans-serif" font-size="22" font-weight="800" fill="#bcd99a">$24K</text>
+      <text x="262" y="43" font-family="Inter, Arial, sans-serif" font-size="13" font-weight="800" fill="#58d39a">+22% MoM</text>
+    </g>
+    <text x="32" y="154" font-family="Inter, Arial, sans-serif" font-size="14" fill="#ffffff" fill-opacity="0.72">Building AgentKit, open-source agents teams actually ship to production.</text>
+
+    <g transform="translate(32 184)">
+      <text x="0" y="0" font-family="Inter, Arial, sans-serif" font-size="9" font-weight="800" letter-spacing="1.4" fill="#ffffff" fill-opacity="0.36">1,284 COMMITS - LAST YEAR</text>
+      <rect x="0" y="14" width="510" height="64" rx="9" fill="#ffffff" fill-opacity="0.035"/>
+      <g transform="translate(11 24)">
+        <rect x="0" y="0" width="7" height="7" rx="2" fill="#37a04a"/><rect x="15" y="0" width="7" height="7" rx="2" fill="#58d39a"/><rect x="45" y="0" width="7" height="7" rx="2" fill="#2e6b2e"/><rect x="75" y="0" width="7" height="7" rx="2" fill="#37a04a"/><rect x="105" y="0" width="7" height="7" rx="2" fill="#58d39a"/><rect x="150" y="0" width="7" height="7" rx="2" fill="#2e6b2e"/><rect x="180" y="0" width="7" height="7" rx="2" fill="#37a04a"/><rect x="225" y="0" width="7" height="7" rx="2" fill="#58d39a"/><rect x="270" y="0" width="7" height="7" rx="2" fill="#2e6b2e"/><rect x="315" y="0" width="7" height="7" rx="2" fill="#37a04a"/><rect x="360" y="0" width="7" height="7" rx="2" fill="#58d39a"/><rect x="405" y="0" width="7" height="7" rx="2" fill="#2e6b2e"/><rect x="450" y="0" width="7" height="7" rx="2" fill="#37a04a"/><rect x="480" y="0" width="7" height="7" rx="2" fill="#58d39a"/>
+        <rect x="15" y="13" width="7" height="7" rx="2" fill="#2e6b2e"/><rect x="30" y="13" width="7" height="7" rx="2" fill="#37a04a"/><rect x="60" y="13" width="7" height="7" rx="2" fill="#58d39a"/><rect x="90" y="13" width="7" height="7" rx="2" fill="#2e6b2e"/><rect x="120" y="13" width="7" height="7" rx="2" fill="#37a04a"/><rect x="165" y="13" width="7" height="7" rx="2" fill="#58d39a"/><rect x="210" y="13" width="7" height="7" rx="2" fill="#2e6b2e"/><rect x="240" y="13" width="7" height="7" rx="2" fill="#37a04a"/><rect x="285" y="13" width="7" height="7" rx="2" fill="#58d39a"/><rect x="330" y="13" width="7" height="7" rx="2" fill="#2e6b2e"/><rect x="375" y="13" width="7" height="7" rx="2" fill="#37a04a"/><rect x="420" y="13" width="7" height="7" rx="2" fill="#58d39a"/><rect x="465" y="13" width="7" height="7" rx="2" fill="#2e6b2e"/>
+        <rect x="0" y="26" width="7" height="7" rx="2" fill="#58d39a"/><rect x="30" y="26" width="7" height="7" rx="2" fill="#2e6b2e"/><rect x="60" y="26" width="7" height="7" rx="2" fill="#37a04a"/><rect x="90" y="26" width="7" height="7" rx="2" fill="#58d39a"/><rect x="135" y="26" width="7" height="7" rx="2" fill="#2e6b2e"/><rect x="180" y="26" width="7" height="7" rx="2" fill="#37a04a"/><rect x="225" y="26" width="7" height="7" rx="2" fill="#58d39a"/><rect x="270" y="26" width="7" height="7" rx="2" fill="#2e6b2e"/><rect x="315" y="26" width="7" height="7" rx="2" fill="#37a04a"/><rect x="360" y="26" width="7" height="7" rx="2" fill="#58d39a"/><rect x="405" y="26" width="7" height="7" rx="2" fill="#2e6b2e"/><rect x="450" y="26" width="7" height="7" rx="2" fill="#37a04a"/><rect x="480" y="26" width="7" height="7" rx="2" fill="#58d39a"/>
+      </g>
+    </g>
+
+    <g transform="translate(32 284)">
+      <line x1="0" y1="0" x2="510" y2="0" stroke="#ffffff" stroke-opacity="0.08"/>
+      <text x="0" y="27" font-family="Inter, Arial, sans-serif" font-size="9" font-weight="800" letter-spacing="1.4" fill="#ffffff" fill-opacity="0.34">PITCH</text>
+      <rect x="0" y="42" width="230" height="92" rx="16" fill="#42520d"/>
+      <path d="M0 134 C50 94 120 70 230 84 L230 134 Z" fill="#02a070" opacity="0.38"/>
+      <circle cx="115" cy="88" r="20" fill="#ffffff" fill-opacity="0.9"/>
+      <path d="M110 78 L128 88 L110 99 Z" fill="#1c1c1a"/>
+      <text x="12" y="120" font-family="Inter, Arial, sans-serif" font-size="11" font-weight="700" fill="#ffffff">Seed pitch</text>
+      <rect x="252" y="42" width="258" height="92" rx="16" fill="#ffffff" fill-opacity="0.07" stroke="#ffffff" stroke-opacity="0.12"/>
+      <rect x="270" y="62" width="140" height="5" rx="2.5" fill="#ffffff" fill-opacity="0.32"/>
+      <rect x="270" y="80" width="208" height="4" rx="2" fill="#ffffff" fill-opacity="0.13"/>
+      <rect x="270" y="96" width="160" height="4" rx="2" fill="#ffffff" fill-opacity="0.13"/>
+      <text x="270" y="120" font-family="Inter, Arial, sans-serif" font-size="11" fill="#ffffff" fill-opacity="0.48">Deck - 12 slides</text>
+    </g>
+  </g>
+</svg>

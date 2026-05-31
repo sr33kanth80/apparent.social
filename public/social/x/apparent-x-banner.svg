@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1500" height="500" viewBox="0 0 1500 500">
+  <defs>
+    <filter id="softShadow" x="-30%" y="-30%" width="160%" height="160%">
+      <feDropShadow dx="0" dy="18" stdDeviation="24" flood-color="#111111" flood-opacity="0.12"/>
+    </filter>
+    <pattern id="grid" width="34" height="34" patternUnits="userSpaceOnUse">
+      <path d="M 34 0 L 0 0 0 34" fill="none" stroke="#111111" stroke-opacity="0.055" stroke-width="1"/>
+    </pattern>
+  </defs>
+
+  <rect width="1500" height="500" fill="#fbfaf7"/>
+  <rect width="1500" height="500" fill="url(#grid)"/>
+  <path d="M0 412 C190 330 292 420 470 334 C628 258 724 140 925 178 C1110 213 1220 354 1500 275 L1500 500 L0 500 Z" fill="#dcefc7" opacity="0.72"/>
+  <path d="M1018 -75 C1186 -25 1306 86 1380 238 C1443 369 1500 430 1565 456 L1565 -75 Z" fill="#42520d"/>
+  <path d="M1043 -40 C1205 19 1305 126 1365 260" fill="none" stroke="#bcd99a" stroke-opacity="0.45" stroke-width="2"/>
+  <path d="M1125 18 C1226 81 1292 171 1340 286" fill="none" stroke="#02a070" stroke-opacity="0.38" stroke-width="2"/>
+
+  <g opacity="0.86">
+    <path d="M162 118 L312 178 L445 130 L610 198 L755 118" fill="none" stroke="#42520d" stroke-opacity="0.26" stroke-width="2"/>
+    <path d="M230 316 L382 262 L535 306 L694 246 L850 314" fill="none" stroke="#111111" stroke-opacity="0.18" stroke-width="2"/>
+    <circle cx="162" cy="118" r="8" fill="#42520d"/>
+    <circle cx="312" cy="178" r="6" fill="#02a070"/>
+    <circle cx="445" cy="130" r="7" fill="#111111"/>
+    <circle cx="610" cy="198" r="6" fill="#42520d"/>
+    <circle cx="755" cy="118" r="8" fill="#02a070"/>
+    <circle cx="230" cy="316" r="7" fill="#111111"/>
+    <circle cx="382" cy="262" r="6" fill="#42520d"/>
+    <circle cx="535" cy="306" r="8" fill="#02a070"/>
+    <circle cx="694" cy="246" r="6" fill="#111111"/>
+    <circle cx="850" cy="314" r="7" fill="#42520d"/>
+  </g>
+
+  <g transform="translate(412 92)" filter="url(#softShadow)">
+    <rect x="0" y="0" width="568" height="316" rx="22" fill="#ffffff" fill-opacity="0.86"/>
+    <rect x="0.5" y="0.5" width="567" height="315" rx="21.5" fill="none" stroke="#111111" stroke-opacity="0.08"/>
+  </g>
+
+  <g transform="translate(454 134)">
+    <g transform="translate(0 0) scale(0.164)">
+      <path d="M 128.005 191.173 C 128.448 156.208 156.93 128 192 128 L 192 64 L 128 64 C 128 99.346 99.346 128 64 128 L 64 192 L 128 192 Z M 192 256 L 64 256 C 28.654 256 0 227.346 0 192 L 0 64 L 64 64 L 64 0 L 192 0 C 227.346 0 256 28.654 256 64 L 256 192 L 192 192 Z" fill="#111111"/>
+    </g>
+    <text x="54" y="31" font-family="Inter, Arial, sans-serif" font-size="28" font-weight="700" fill="#111111">Apparent</text>
+    <text x="0" y="112" font-family="Georgia, 'Times New Roman', serif" font-size="67" font-weight="400" fill="#111111">Proof before</text>
+    <text x="0" y="186" font-family="Georgia, 'Times New Roman', serif" font-size="67" font-weight="400" fill="#42520d">network.</text>
+    <text x="2" y="240" font-family="Inter, Arial, sans-serif" font-size="24" font-weight="500" fill="#111111" fill-opacity="0.66">Founders and investors matched by</text>
+    <text x="2" y="273" font-family="Inter, Arial, sans-serif" font-size="24" font-weight="700" fill="#111111" fill-opacity="0.76">thesis, stage, sector, and signal.</text>
+  </g>
+
+  <g transform="translate(1096 122)">
+    <rect x="0" y="0" width="250" height="58" rx="29" fill="#dcefc7"/>
+    <text x="125" y="37" text-anchor="middle" font-family="Inter, Arial, sans-serif" font-size="20" font-weight="700" fill="#20300a">Founder profiles</text>
+    <rect x="36" y="82" width="282" height="58" rx="29" fill="#111111" fill-opacity="0.92"/>
+    <text x="177" y="119" text-anchor="middle" font-family="Inter, Arial, sans-serif" font-size="20" font-weight="700" fill="#ffffff">Thesis matching</text>
+    <rect x="74" y="164" width="228" height="58" rx="29" fill="#02a070"/>
+    <text x="188" y="201" text-anchor="middle" font-family="Inter, Arial, sans-serif" font-size="20" font-weight="700" fill="#ffffff">Builder radar</text>
+  </g>
+
+  <text x="1347" y="447" text-anchor="end" font-family="Inter, Arial, sans-serif" font-size="20" font-weight="700" fill="#ffffff" fill-opacity="0.92">apparent.social</text>
+</svg>
