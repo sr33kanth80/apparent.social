@@ -1,5 +1,6 @@
-import { ArrowUpRight, CircleDot, Globe2, MapPin, Radar, Search, ShieldCheck } from 'lucide-react';
+import { ArrowUpRight, CircleDot, Globe2, Radar, Search, ShieldCheck } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { LogoIcon } from '../components/LogoIcon';
 import { useReveal } from '../lib/useReveal';
 
 const serifDisplay = {
@@ -99,27 +100,69 @@ export const AboutUs = () => {
         </div>
 
         {/* The match, both ways — proof meeting thesis. */}
-        <div className="relative flex min-h-[520px] flex-col justify-between overflow-hidden rounded-[32px] bg-[#1c1c1a] p-7 text-white">
-          <div className="flex items-center justify-between">
-            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#bcd99a]">A fit, both ways</p>
-            <MapPin className="h-5 w-5 text-[#02A070]" />
+        <div className="relative flex min-h-[520px] flex-col overflow-hidden rounded-[32px] bg-[#141412] p-8 text-white">
+          {/* Header */}
+          <div className="flex items-start justify-between">
+            <div>
+              <h3 className="text-2xl font-normal leading-tight tracking-[-0.03em] text-white" style={serifDisplay}>
+                A fit,<br />both ways.
+              </h3>
+              <p className="mt-2 text-sm text-white/40">Proof meets thesis. Every time.</p>
+            </div>
+            <LogoIcon className="h-9 w-9 text-[#bcd99a]" />
           </div>
-          <div className="grid gap-3">
-            <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
-              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-white/40">Founder</p>
-              <p className="mt-2 text-sm font-semibold">Aria Kim · AI agents · Seed</p>
-              <p className="text-xs text-white/45">4.2k GitHub stars · 38 design partners</p>
+
+          {/* Match cards */}
+          <div className="mt-auto flex flex-col gap-0">
+            {/* Founder card */}
+            <div className="rounded-t-2xl border border-white/10 bg-white/[0.04] p-5">
+              <div className="flex items-center justify-between">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-white/35">Founder</p>
+                <span className="rounded-full bg-white/8 px-2 py-0.5 text-[10px] font-semibold text-white/50">Seed</span>
+              </div>
+              <p className="mt-3 text-base font-semibold tracking-[-0.01em]">Aria Kim</p>
+              <p className="text-sm text-white/50">AI agents · San Francisco</p>
+              <div className="mt-4 flex gap-4 border-t border-white/[0.07] pt-4">
+                <div>
+                  <p className="text-xs font-semibold text-white">4.2k</p>
+                  <p className="text-[10px] text-white/35">GitHub stars</p>
+                </div>
+                <div>
+                  <p className="text-xs font-semibold text-white">38</p>
+                  <p className="text-[10px] text-white/35">design partners</p>
+                </div>
+              </div>
             </div>
-            <div className="flex items-center justify-center">
-              <span className="rounded-full bg-[#dcefc7] px-3 py-1 text-xs font-semibold text-black">92% thesis fit</span>
+
+            {/* Connector */}
+            <div className="relative flex items-center justify-between border-x border-white/10 bg-white/[0.02] px-5 py-3">
+              <div className="h-px flex-1 bg-gradient-to-r from-transparent via-[#bcd99a]/40 to-transparent" />
+              <span className="mx-4 shrink-0 rounded-full bg-[#bcd99a] px-3.5 py-1 text-xs font-bold text-black">
+                92% match
+              </span>
+              <div className="h-px flex-1 bg-gradient-to-r from-transparent via-[#bcd99a]/40 to-transparent" />
             </div>
-            <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
-              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-white/40">Investor</p>
-              <p className="mt-2 text-sm font-semibold">Northstar Ventures · Seed AI · US</p>
-              <p className="text-xs text-white/45">Backs technical founders, pre-revenue</p>
+
+            {/* Investor card */}
+            <div className="rounded-b-2xl border border-white/10 bg-white/[0.04] p-5">
+              <div className="flex items-center justify-between">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-white/35">Investor</p>
+                <span className="rounded-full bg-white/8 px-2 py-0.5 text-[10px] font-semibold text-white/50">Seed AI</span>
+              </div>
+              <p className="mt-3 text-base font-semibold tracking-[-0.01em]">Northstar Ventures</p>
+              <p className="text-sm text-white/50">Technical founders · pre-revenue · US</p>
+              <div className="mt-4 flex gap-4 border-t border-white/[0.07] pt-4">
+                <div>
+                  <p className="text-xs font-semibold text-white">$150M</p>
+                  <p className="text-[10px] text-white/35">fund size</p>
+                </div>
+                <div>
+                  <p className="text-xs font-semibold text-white">12</p>
+                  <p className="text-[10px] text-white/35">active investments</p>
+                </div>
+              </div>
             </div>
           </div>
-          <p className="text-xs text-white/40">Proof meets thesis. The intro writes itself.</p>
         </div>
       </section>
 
