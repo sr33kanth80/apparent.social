@@ -1,6 +1,7 @@
 import { ArrowUpRight, CheckCircle2, FileText, Map, MapPin, Play, Rocket, Search, TrendingUp, Users } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { GitHubIcon } from '../components/GitHubIcon';
+import { useReveal } from '../lib/useReveal';
 
 const serifDisplay = {
   fontFamily: 'Georgia, "Times New Roman", serif',
@@ -69,10 +70,11 @@ const founderBenefits = [
 
 export const ForFounders = () => {
   const navigate = useNavigate();
+  useReveal();
 
   return (
     <main className="overflow-x-hidden bg-[#fbfaf7] text-black">
-      <section className="mx-auto max-w-[92rem] px-5 pb-14 pt-14 sm:px-8 md:pt-20">
+      <section data-reveal className="reveal mx-auto max-w-[92rem] px-5 pb-14 pt-14 sm:px-8 md:pt-20">
         <h1
           className="max-w-[86rem] text-[3.35rem] font-normal leading-[0.88] tracking-[-0.055em] sm:text-[7rem] md:text-[8.5rem] lg:text-[10rem]"
           style={serifDisplay}
@@ -95,7 +97,7 @@ export const ForFounders = () => {
         </div>
       </section>
 
-      <section id="features" className="mx-auto grid max-w-[92rem] gap-8 border-t border-black/10 px-5 py-14 sm:px-8 lg:grid-cols-[0.95fr_1.05fr] lg:items-stretch">
+      <section id="features" data-reveal className="reveal mx-auto grid max-w-[92rem] gap-8 border-t border-black/10 px-5 py-14 sm:px-8 lg:grid-cols-[0.95fr_1.05fr] lg:items-stretch">
         <div className="py-4 lg:py-8">
           <p className="mb-12 text-sm font-semibold text-[#42520d]">For founders</p>
           <h2 className="text-5xl font-normal leading-none tracking-[-0.045em] md:text-7xl" style={serifDisplay}>
@@ -246,15 +248,15 @@ export const ForFounders = () => {
         </div>
       </section>
 
-      <section className="mx-auto max-w-[92rem] border-t border-black/10 px-5 py-16 sm:px-8">
+      <section data-reveal className="reveal mx-auto max-w-[92rem] border-t border-black/10 px-5 py-16 sm:px-8">
         <div className="pt-2">
           <p className="mb-12 text-sm font-semibold text-[#42520d]">What you unlock</p>
           <h2 className="max-w-4xl text-5xl font-normal leading-none tracking-[-0.045em] md:text-7xl" style={serifDisplay}>
             Build once. Become discoverable everywhere.
           </h2>
           <div className="mt-24 grid gap-10 md:grid-cols-4">
-            {founderBenefits.map((benefit) => (
-              <article key={benefit.title} className="pt-1">
+            {founderBenefits.map((benefit, i) => (
+              <article key={benefit.title} data-reveal style={{ transitionDelay: `${i * 90}ms` }} className="reveal pt-1">
                 <benefit.icon className="mb-8 h-5 w-5 text-black" />
                 <h3 className="text-xl font-normal tracking-[-0.025em]" style={serifDisplay}>
                   {benefit.title}
@@ -266,7 +268,7 @@ export const ForFounders = () => {
         </div>
       </section>
 
-      <section className="mx-auto max-w-[92rem] px-5 py-10 sm:px-8">
+      <section data-reveal className="reveal mx-auto max-w-[92rem] px-5 py-10 sm:px-8">
         <div className="flex min-h-[320px] items-center overflow-hidden rounded-[32px] bg-[#1c1c1a] px-8 py-14 text-white md:min-h-[420px] md:px-16">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#bcd99a]">The shift</p>
@@ -280,7 +282,7 @@ export const ForFounders = () => {
         </div>
       </section>
 
-      <section className="mx-auto grid max-w-[92rem] border-t border-black/10 px-5 py-16 sm:px-8 lg:grid-cols-[0.95fr_1.05fr]">
+      <section data-reveal className="reveal mx-auto grid max-w-[92rem] border-t border-black/10 px-5 py-16 sm:px-8 lg:grid-cols-[0.95fr_1.05fr]">
         <div className="flex min-h-[420px] items-center overflow-hidden rounded-[32px] bg-[#42520d] p-10 text-white lg:min-h-[520px] lg:rounded-r-none lg:p-14">
           <blockquote className="max-w-md text-3xl font-normal leading-tight tracking-[-0.03em] md:text-4xl" style={serifDisplay}>
             “Your work should speak before your network does.”
@@ -303,7 +305,7 @@ export const ForFounders = () => {
         </div>
       </section>
 
-      <section className="mx-auto max-w-[92rem] border-t border-black/10 px-5 py-20 sm:px-8">
+      <section data-reveal className="reveal mx-auto max-w-[92rem] border-t border-black/10 px-5 py-20 sm:px-8">
         <div className="py-10 text-center">
           <Map className="mx-auto mb-10 h-6 w-6 text-[#02A070]" />
           <h2 className="mx-auto max-w-3xl text-5xl font-normal leading-none tracking-[-0.045em] md:text-7xl" style={serifDisplay}>
