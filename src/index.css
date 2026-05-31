@@ -425,23 +425,37 @@ a.rounded-full:hover {
   animation: mrrShimmer 2.8s linear infinite;
 }
 
-/* Hero headline: the final word ("fit.") is a puzzle piece that snaps into the
-   line. The left edge carries a jigsaw tab (em-based so it scales with the
-   responsive headline), and it slides in from the right, overshoots, and
-   settles like a piece clicking into place. */
-/* Long base piece (left). Rounded outer end; its right edge pushes a round knob
-   (outie) into the final piece, plus a decorative knob on the bottom edge. */
-.puzzle-base {
+/* Hero headline as an interlocking jigsaw. Each word/phrase is a piece. Olive
+   pieces ("investors", "fit.") animate in and click into place; light pieces
+   ("Find", "who actually") form the frame. Knobs/sockets are em-based so they
+   scale with the responsive headline. Pieces sit flush (no whitespace between
+   them) and z-index decreases left-to-right so each right knob overlaps its
+   neighbour's left socket. */
+.pz {
   position: relative;
-  z-index: 2;
   display: inline-block;
-  padding: 0.06em 0.22em 0.16em 0.42em;
+  padding: 0.05em 0.32em 0.14em 0.32em;
+  border-radius: 0.08em;
+  vertical-align: baseline;
+}
+.pz-light {
   background: #dcefc7;
   color: #20300a;
-  border-radius: 0.32em 0.12em 0.12em 0.32em;
 }
-.puzzle-base::after {
-  /* right-edge knob (outie) that seats into the final piece's socket */
+.pz-olive {
+  background: #42520d;
+  color: #f4f1eb;
+}
+.pz-end-l {
+  border-top-left-radius: 0.3em;
+  border-bottom-left-radius: 0.3em;
+}
+.pz-end-r {
+  border-top-right-radius: 0.3em;
+  border-bottom-right-radius: 0.3em;
+}
+/* Right knob (outie), in the piece's own colour, overlapping the next piece. */
+.pz-knob-r::after {
   content: '';
   position: absolute;
   z-index: 1;
@@ -450,38 +464,11 @@ a.rounded-full:hover {
   width: 0.5em;
   height: 0.5em;
   transform: translateY(-50%);
-  background: #dcefc7;
+  background: inherit;
   border-radius: 50%;
 }
-.puzzle-base::before {
-  /* decorative bottom-edge knob near the join */
-  content: '';
-  position: absolute;
-  right: 1.1em;
-  bottom: -0.18em;
-  width: 0.4em;
-  height: 0.4em;
-  background: #dcefc7;
-  border-radius: 50%;
-}
-
-/* Final piece (right). Rounded outer end; a round socket (innie) on its left
-   receives the base's knob, with a decorative knob on the top edge. Snaps in. */
-.puzzle-piece {
-  position: relative;
-  z-index: 1;
-  display: inline-block;
-  padding: 0.06em 0.34em 0.16em 0.36em;
-  background: #42520d;
-  color: #f4f1eb;
-  border-radius: 0.12em 0.32em 0.32em 0.12em;
-  transform-origin: left center;
-  will-change: transform, opacity;
-  animation: puzzleSnap 0.95s cubic-bezier(0.32, 1.35, 0.5, 1) 0.35s both;
-}
-.puzzle-piece::before {
-  /* left-edge socket (innie): carve the page colour so a thin seam shows around
-     the base's knob, reading as an interlocking joint */
+/* Left socket (innie), carved in the page colour to receive a neighbour's knob. */
+.pz-socket-l::before {
   content: '';
   position: absolute;
   top: 50%;
@@ -492,16 +479,15 @@ a.rounded-full:hover {
   background: #fbfaf7;
   border-radius: 50%;
 }
-.puzzle-piece::after {
-  /* decorative top-edge knob */
-  content: '';
-  position: absolute;
-  left: 0.95em;
-  top: -0.18em;
-  width: 0.4em;
-  height: 0.4em;
-  background: #42520d;
-  border-radius: 50%;
+.pz-drop {
+  transform-origin: center top;
+  will-change: transform, opacity;
+  animation: puzzleDrop 0.85s cubic-bezier(0.34, 1.42, 0.5, 1) 0.3s both;
+}
+.pz-slide {
+  transform-origin: left center;
+  will-change: transform, opacity;
+  animation: puzzleSnap 0.95s cubic-bezier(0.32, 1.35, 0.5, 1) 0.5s both;
 }
 
 @keyframes puzzleSnap {
@@ -516,39 +502,6 @@ a.rounded-full:hover {
     opacity: 1;
     transform: translateX(0);
   }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .puzzle-piece {
-    animation: none;
-  }
-}
-
-/* Second hero puzzle piece: the word "investors" rolls down from the top and
-   clicks into place. Olive, matching "fit." A small knob on top sells it. */
-.puzzle-word {
-  position: relative;
-  display: inline-block;
-  padding: 0.02em 0.2em;
-  margin: 0 0.04em;
-  background: #42520d;
-  color: #f4f1eb;
-  border-radius: 0.16em;
-  transform-origin: center top;
-  will-change: transform, opacity;
-  animation: puzzleDrop 0.85s cubic-bezier(0.34, 1.42, 0.5, 1) 0.15s both;
-}
-.puzzle-word::before {
-  /* top-edge knob */
-  content: '';
-  position: absolute;
-  left: 50%;
-  top: -0.16em;
-  width: 0.34em;
-  height: 0.34em;
-  transform: translateX(-50%);
-  background: #42520d;
-  border-radius: 50%;
 }
 
 @keyframes puzzleDrop {
@@ -566,7 +519,8 @@ a.rounded-full:hover {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .puzzle-word {
+  .pz-drop,
+  .pz-slide {
     animation: none;
   }
 }

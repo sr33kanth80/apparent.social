@@ -285,10 +285,10 @@ export const Home = () => {
           </div>
         </div>
         <h1
-          className="max-w-3xl text-4xl font-normal leading-[1.05] tracking-[-0.04em] md:text-5xl lg:max-w-none lg:whitespace-nowrap lg:text-6xl"
+          className="max-w-3xl text-4xl font-normal leading-[1.15] tracking-[-0.04em] md:text-5xl lg:max-w-none lg:whitespace-nowrap lg:text-5xl xl:text-6xl"
           style={serifDisplay}
         >
-          <span className="puzzle-base">Find <span className="puzzle-word">investors</span> who actually</span><span className="puzzle-piece">fit.</span>
+          <span className="pz pz-light pz-end-l pz-knob-r" style={{ zIndex: 4 }}>Find</span><span className="pz pz-olive pz-socket-l pz-knob-r pz-drop" style={{ zIndex: 3 }}>investors</span><span className="pz pz-light pz-socket-l pz-knob-r" style={{ zIndex: 2 }}>who actually</span><span className="pz pz-olive pz-socket-l pz-end-r pz-slide" style={{ zIndex: 1 }}>fit.</span>
         </h1>
         <p className="mt-5 max-w-2xl text-base leading-7 text-black/65 md:text-lg">
           Apparent matches founders and investors by thesis, stage, and sector.
