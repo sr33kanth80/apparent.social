@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { Link } from 'react-router-dom';
 import { animate, motion, useMotionValue, useTransform, type PanInfo } from 'framer-motion';
 import { ArrowUpRight, BookOpen, Check, Link2, MapPin, RotateCcw, Rocket, Sparkles, Star, X, Zap } from 'lucide-react';
@@ -603,22 +604,28 @@ export const DiscoverDeck = ({ user, builders }: { user: AppUser; builders: Buil
         </div>
       )}
 
-      {detail && (
-        <BuilderDetail
-          builder={detail}
-          onClose={() => setDetail(null)}
-          onDecide={(d) => {
-            setDetail(null);
-            decide(d);
-          }}
-        />
-      )}
+      {/* Portal to body so the fixed overlay escapes the dashboard's transformed
+          motion wrapper (which would otherwise scope `fixed` to a tall element). */}
+      {detail &&
+        createPortal(
+          <BuilderDetail
+            builder={detail}
+            onClose={() => setDetail(null)}
+            onDecide={(d) => {
+              setDetail(null);
+              decide(d);
+            }}
+          />,
+          document.body,
+        )}
 
-      {toast && (
-        <div className="pointer-events-none fixed bottom-8 left-1/2 z-50 -translate-x-1/2 rounded-full bg-[#1c1c1a] px-4 py-2 text-sm font-medium text-white shadow-xl">
-          {toast}
-        </div>
-      )}
+      {toast &&
+        createPortal(
+          <div className="pointer-events-none fixed bottom-8 left-1/2 z-[60] -translate-x-1/2 rounded-full bg-[#1c1c1a] px-4 py-2 text-sm font-medium text-white shadow-xl">
+            {toast}
+          </div>,
+          document.body,
+        )}
     </div>
   );
 };
