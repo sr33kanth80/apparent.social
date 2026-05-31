@@ -479,6 +479,23 @@ a.rounded-full:hover {
   background: #fbfaf7;
   border-radius: 50%;
 }
+/* Decorative top/bottom knobs (child element, since ::before/::after carry the
+   left/right joints). Same colour as the piece. */
+.pz-nub {
+  position: absolute;
+  left: 50%;
+  width: 0.42em;
+  height: 0.42em;
+  transform: translateX(-50%);
+  background: inherit;
+  border-radius: 50%;
+}
+.pz-nub-t {
+  top: -0.21em;
+}
+.pz-nub-b {
+  bottom: -0.21em;
+}
 .pz-drop {
   transform-origin: center top;
   will-change: transform, opacity;
