@@ -39,3 +39,8 @@ supabase/.temp/
 # Coverage & misc
 coverage/
 *.local
+
+# Agent skills / tooling (installed via `npx skills add`, not project code)
+.agents/
+.claude/skills/
+skills-lock.json
