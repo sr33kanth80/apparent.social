@@ -1,4 +1,4 @@
-import { ArrowUpRight, CircleDot, Globe2, Radar, Search, ShieldCheck } from 'lucide-react';
+import { ArrowUpRight, ChevronLeft, ChevronRight, CircleDot, Globe2, Radar, Search, ShieldCheck } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { LogoIcon } from '../components/LogoIcon';
@@ -38,87 +38,88 @@ const values = [
   },
 ];
 
-// Founder proof points matched to investor thesis criteria. Weights sum to 92.
-const matchRows = [
-  { id: 'proof', founder: '4.2k GitHub stars', investor: 'Technical founders', weight: 24 },
-  { id: 'sector', founder: 'AI agents', investor: 'Seed AI thesis', weight: 30 },
-  { id: 'stage', founder: 'Seed · pre-revenue', investor: 'Pre-revenue checks', weight: 23 },
-  { id: 'geo', founder: 'San Francisco', investor: 'United States', weight: 15 },
+type MatchRow = { id: string; founder: string; investor: string; weight: number };
+type Match = { founder: string; investor: string; total: number; rows: MatchRow[] };
+
+// A deck of founder ⇄ investor matches. Each row's weights sum to that match's total.
+const matches: Match[] = [
+  {
+    founder: 'Aria Kim',
+    investor: 'Northstar',
+    total: 92,
+    rows: [
+      { id: 'proof', founder: '4.2k GitHub stars', investor: 'Technical founders', weight: 24 },
+      { id: 'sector', founder: 'AI agents', investor: 'Seed AI thesis', weight: 30 },
+      { id: 'stage', founder: 'Seed · pre-revenue', investor: 'Pre-revenue checks', weight: 23 },
+      { id: 'geo', founder: 'San Francisco', investor: 'United States', weight: 15 },
+    ],
+  },
+  {
+    founder: 'Diego Santos',
+    investor: 'Atlas Capital',
+    total: 88,
+    rows: [
+      { id: 'proof', founder: '1.2k deploys / week', investor: 'Usage-led growth', weight: 22 },
+      { id: 'sector', founder: 'Open-source DB', investor: 'Dev-tools thesis', weight: 28 },
+      { id: 'stage', founder: 'Seed round', investor: 'Leads seed rounds', weight: 20 },
+      { id: 'geo', founder: 'Berlin', investor: 'Europe focus', weight: 18 },
+    ],
+  },
+  {
+    founder: 'Mara Lin',
+    investor: 'Vertex Labs',
+    total: 95,
+    rows: [
+      { id: 'proof', founder: 'PhD · 2 patents', investor: 'Technical depth', weight: 25 },
+      { id: 'sector', founder: 'Robotics', investor: 'Deep-tech thesis', weight: 32 },
+      { id: 'stage', founder: 'Pre-seed', investor: 'Pre-seed checks', weight: 20 },
+      { id: 'geo', founder: 'Toronto', investor: 'North America', weight: 18 },
+    ],
+  },
 ];
 
-const MatchCard = () => {
-  const cardRef = useRef<HTMLDivElement>(null);
-  const [played, setPlayed] = useState(false);
+// A single match: animates its connectors and counts the score up whenever it activates.
+const MatchView = ({ match, play }: { match: Match; play: boolean }) => {
   const [pct, setPct] = useState(0);
+  const [connected, setConnected] = useState(false);
   const [hovered, setHovered] = useState<string | null>(null);
 
-  // Play the match once the card scrolls into view.
   useEffect(() => {
-    const el = cardRef.current;
-    if (!el) return;
-    const io = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setPlayed(true);
-          io.disconnect();
-        }
-      },
-      { threshold: 0.4 },
-    );
-    io.observe(el);
-    return () => io.disconnect();
-  }, []);
-
-  // Count the match percentage up to 92 once played.
-  useEffect(() => {
-    if (!played) return;
-    const target = 92;
-    const duration = 1300;
+    if (!play) return;
+    setConnected(false);
+    setPct(0);
+    const startLines = setTimeout(() => setConnected(true), 60);
+    const duration = 1100;
     let raf = 0;
-    const start = performance.now();
+    let startTs = 0;
     const tick = (now: number) => {
-      const t = Math.min(1, (now - start) / duration);
+      if (!startTs) startTs = now;
+      const t = Math.min(1, (now - startTs) / duration);
       const eased = 1 - Math.pow(1 - t, 3);
-      setPct(Math.round(eased * target));
+      setPct(Math.round(eased * match.total));
       if (t < 1) raf = requestAnimationFrame(tick);
     };
-    const delay = setTimeout(() => {
+    const startCount = setTimeout(() => {
       raf = requestAnimationFrame(tick);
-    }, 250);
+    }, 220);
     return () => {
-      clearTimeout(delay);
+      clearTimeout(startLines);
+      clearTimeout(startCount);
       cancelAnimationFrame(raf);
     };
-  }, [played]);
+  }, [play, match]);
 
   return (
-    <div
-      ref={cardRef}
-      className="relative flex min-h-[520px] flex-col overflow-hidden rounded-[32px] bg-[#141412] p-8 text-white"
-    >
-      {/* Ambient glow */}
-      <div className="pointer-events-none absolute -right-24 -top-24 h-64 w-64 rounded-full bg-[#bcd99a]/10 blur-3xl" />
-
-      {/* Header */}
-      <div className="relative flex items-start justify-between">
-        <div>
-          <h3 className="text-2xl font-normal leading-tight tracking-[-0.03em] text-white" style={serifDisplay}>
-            A fit,<br />both ways.
-          </h3>
-          <p className="mt-2 text-sm text-white/40">Hover a signal to trace the match.</p>
-        </div>
-        <LogoIcon className="h-9 w-9 text-[#bcd99a]" />
-      </div>
-
+    <div className="flex flex-1 flex-col">
       {/* Column captions */}
-      <div className="relative mt-9 flex items-center justify-between text-[10px] font-semibold uppercase tracking-[0.18em] text-white/35">
-        <span>Founder · Aria Kim</span>
-        <span>Investor · Northstar</span>
+      <div className="flex items-center justify-between text-[10px] font-semibold uppercase tracking-[0.18em] text-white/35">
+        <span>Founder · {match.founder}</span>
+        <span>Investor · {match.investor}</span>
       </div>
 
-      {/* Match rows */}
-      <div className="relative mt-3 flex flex-col gap-2.5">
-        {matchRows.map((row, i) => {
+      {/* Match rows — centered so the card always fills */}
+      <div className="flex flex-1 flex-col justify-center gap-2.5 py-5">
+        {match.rows.map((row, i) => {
           const isHover = hovered === row.id;
           const dim = hovered !== null && !isHover;
           return (
@@ -150,22 +151,22 @@ const MatchCard = () => {
                 )}
                 <span
                   className={`h-1.5 w-1.5 shrink-0 rounded-full transition-colors duration-500 ${
-                    played ? 'bg-[#bcd99a]' : 'bg-white/20'
+                    connected ? 'bg-[#bcd99a]' : 'bg-white/20'
                   }`}
                 />
                 <span className="relative h-px flex-1 overflow-hidden bg-white/10">
                   <span
                     className={`absolute inset-0 origin-left bg-gradient-to-r from-[#bcd99a] to-[#bcd99a]/60 transition-transform duration-700 ease-out ${
-                      played ? 'scale-x-100' : 'scale-x-0'
+                      connected ? 'scale-x-100' : 'scale-x-0'
                     } ${isHover ? 'shadow-[0_0_8px_#bcd99a]' : ''}`}
-                    style={{ transitionDelay: `${i * 120 + 150}ms` }}
+                    style={{ transitionDelay: `${i * 110 + 120}ms` }}
                   />
                 </span>
                 <span
                   className={`h-1.5 w-1.5 shrink-0 rounded-full transition-colors duration-500 ${
-                    played ? 'bg-[#bcd99a]' : 'bg-white/20'
+                    connected ? 'bg-[#bcd99a]' : 'bg-white/20'
                   }`}
-                  style={{ transitionDelay: `${i * 120 + 350}ms` }}
+                  style={{ transitionDelay: `${i * 110 + 320}ms` }}
                 />
               </div>
 
@@ -185,7 +186,7 @@ const MatchCard = () => {
       </div>
 
       {/* Match readout */}
-      <div className="relative mt-auto pt-7">
+      <div>
         <div className="flex items-end justify-between">
           <div>
             <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-white/35">Thesis match</p>
@@ -202,6 +203,113 @@ const MatchCard = () => {
             className="h-full rounded-full bg-gradient-to-r from-[#bcd99a] to-[#02A070]"
             style={{ width: `${pct}%` }}
           />
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const MatchCard = () => {
+  const cardRef = useRef<HTMLDivElement>(null);
+  const [inView, setInView] = useState(false);
+  const [index, setIndex] = useState(0);
+  const [paused, setPaused] = useState(false);
+
+  // Reveal the deck once it scrolls into view.
+  useEffect(() => {
+    const el = cardRef.current;
+    if (!el) return;
+    const io = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setInView(true);
+          io.disconnect();
+        }
+      },
+      { threshold: 0.4 },
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
+
+  // Auto-advance through the deck, pausing while hovered.
+  useEffect(() => {
+    if (!inView || paused) return;
+    const id = setTimeout(() => setIndex((n) => (n + 1) % matches.length), 4800);
+    return () => clearTimeout(id);
+  }, [inView, paused, index]);
+
+  const go = (n: number) => setIndex((n + matches.length) % matches.length);
+
+  return (
+    <div
+      className="relative h-full"
+      onMouseEnter={() => setPaused(true)}
+      onMouseLeave={() => setPaused(false)}
+    >
+      {/* Peeking deck behind, for depth */}
+      <div className="pointer-events-none absolute inset-x-3 top-2 -bottom-2 -z-10 rounded-[32px] bg-[#1a1a17]" />
+      <div className="pointer-events-none absolute inset-x-6 top-4 -bottom-4 -z-20 rounded-[32px] bg-[#151513]" />
+
+      <div
+        ref={cardRef}
+        className="relative flex h-full min-h-[520px] flex-col overflow-hidden rounded-[32px] bg-[#141412] p-8 text-white"
+      >
+        {/* Ambient glow */}
+        <div className="pointer-events-none absolute -right-24 -top-24 h-64 w-64 rounded-full bg-[#bcd99a]/10 blur-3xl" />
+
+        {/* Header */}
+        <div className="relative flex items-start justify-between">
+          <div>
+            <h3 className="text-2xl font-normal leading-tight tracking-[-0.03em] text-white" style={serifDisplay}>
+              A fit,<br />both ways.
+            </h3>
+            <p className="mt-2 text-sm text-white/40">Hover a signal to trace the match.</p>
+          </div>
+          <LogoIcon className="h-9 w-9 text-[#bcd99a]" />
+        </div>
+
+        {/* Active match — keyed so the connect + count-up replays per card */}
+        <div className="relative mt-9 flex flex-1 flex-col">
+          <MatchView key={index} match={matches[index]} play={inView} />
+        </div>
+
+        {/* Deck navigation */}
+        <div className="relative mt-6 flex items-center justify-between border-t border-white/[0.07] pt-5">
+          <div className="flex items-center gap-2">
+            {matches.map((m, i) => (
+              <button
+                key={m.founder}
+                type="button"
+                aria-label={`Show match ${i + 1}`}
+                onClick={() => go(i)}
+                className={`h-1.5 rounded-full transition-all duration-300 ${
+                  i === index ? 'w-6 bg-[#bcd99a]' : 'w-1.5 bg-white/25 hover:bg-white/50'
+                }`}
+              />
+            ))}
+            <span className="ml-3 text-[11px] font-semibold text-white/40">
+              {index + 1} / {matches.length} live matches
+            </span>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              aria-label="Previous match"
+              onClick={() => go(index - 1)}
+              className="flex h-8 w-8 items-center justify-center rounded-full border border-white/10 text-white/60 transition-colors hover:border-white/30 hover:text-white"
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </button>
+            <button
+              type="button"
+              aria-label="Next match"
+              onClick={() => go(index + 1)}
+              className="flex h-8 w-8 items-center justify-center rounded-full border border-white/10 text-white/60 transition-colors hover:border-white/30 hover:text-white"
+            >
+              <ChevronRight className="h-4 w-4" />
+            </button>
+          </div>
         </div>
       </div>
     </div>
