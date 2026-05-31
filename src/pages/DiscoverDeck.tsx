@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Link } from 'react-router-dom';
 import { animate, motion, useMotionValue, useTransform, type PanInfo } from 'framer-motion';
-import { ArrowUpRight, BookOpen, Check, Link2, MapPin, RotateCcw, Rocket, Sparkles, Star, X, Zap } from 'lucide-react';
+import { ArrowUpRight, BookOpen, Check, Link2, MapPin, RotateCcw, Rocket, Sparkles, Star, TrendingUp, X, Zap } from 'lucide-react';
 import { GitHubIcon } from '../components/GitHubIcon';
 import { loadInvitableBuilders, saveBuilderDiscoveryState, saveMessage, saveVcInterest } from '../lib/dashboard-service';
 import type { AppUser, BuilderNode } from '../lib/apparent-types';
@@ -26,6 +26,32 @@ const firstNameOf = (name?: string) => (name || 'there').split(/\s+/)[0];
 const introBody = (b: BuilderNode, investorName: string) =>
   `Hi ${firstNameOf(b.founderName)} — I came across ${b.company} on Apparent and what you're building stood out. ` +
   `I'd love to get on a quick call this week to learn more. Would that work?\n\n— ${investorName}`;
+
+// Split a founder's MRR string into the headline value and a growth chip,
+// e.g. "$24K MRR · +22% MoM" → { value: "$24K MRR", growth: "+22% MoM" }.
+const splitGrowth = (mrr: string): { value: string; growth: string } => {
+  const match = mrr.match(/([+\-]?\d[\d.,]*\s*%[^,·•|]*)/);
+  if (!match) return { value: mrr.trim(), growth: '' };
+  const growth = match[0].trim();
+  const value = mrr.replace(match[0], '').replace(/[·•|,\s]+$/, '').trim();
+  return { value: value || mrr.trim(), growth };
+};
+
+// Shimmering MRR display (reuses the .mrr-shimmer effect from the profile mock).
+const MrrStat = ({ mrr }: { mrr: string }) => {
+  const { value, growth } = splitGrowth(mrr);
+  return (
+    <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+      <span className="text-[0.55rem] font-semibold uppercase tracking-[0.14em] text-white/40">MRR</span>
+      <span className="mrr-shimmer text-base font-semibold leading-none">{value}</span>
+      {growth && (
+        <span className="inline-flex items-center gap-0.5 text-xs font-semibold text-[#58d39a]">
+          <TrendingUp className="h-3 w-3" /> {growth}
+        </span>
+      )}
+    </div>
+  );
+};
 
 const proofIcon = (type: string) => {
   if (type === 'github') return GitHubIcon;
@@ -126,6 +152,12 @@ const BuilderCard = ({ builder }: { builder: BuilderNode }) => {
           </span>
         )}
       </div>
+
+      {builder.mrr && (
+        <div className="mt-4 rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3">
+          <MrrStat mrr={builder.mrr} />
+        </div>
+      )}
 
       {builder.buildSummary && (
         <p className="mt-4 line-clamp-3 text-sm leading-6 text-white/75">{builder.buildSummary}</p>
@@ -252,6 +284,12 @@ const BuilderDetail = ({
               </div>
             )}
           </div>
+
+          {builder.mrr && (
+            <div className="mt-5 rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3">
+              <MrrStat mrr={builder.mrr} />
+            </div>
+          )}
 
           {builder.buildSummary && (
             <p className="mt-5 text-sm leading-7 text-white/80">{builder.buildSummary}</p>

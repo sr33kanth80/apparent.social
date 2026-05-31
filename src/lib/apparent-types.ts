@@ -262,6 +262,8 @@ export interface BuilderNode {
   raisingRound?: string;
   raisingAmount?: string;
   openToContact?: boolean;
+  /** Optional headline revenue/growth metric, e.g. "$24K MRR · +22% MoM". */
+  mrr?: string;
 }
 
 export interface BuilderMapCluster {

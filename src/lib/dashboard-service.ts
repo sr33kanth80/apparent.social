@@ -595,6 +595,7 @@ const mapBuilderProfileRows = (
         raisingRound: String(profile.raising_round ?? ''),
         raisingAmount: String(profile.raising_amount ?? ''),
         openToContact: profile.open_to_contact !== false,
+        mrr: String(profile.mrr ?? ''),
       };
     })
     .filter((builder) =>
@@ -663,6 +664,7 @@ const localFounderBuilderNode = (
     raisingRound: founderProfile.raisingRound,
     raisingAmount: founderProfile.raisingAmount,
     openToContact: founderProfile.openToContact !== 'false',
+    mrr: founderProfile.mrr,
   };
 };
 
