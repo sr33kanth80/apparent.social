@@ -524,6 +524,53 @@ a.rounded-full:hover {
   }
 }
 
+/* Second hero puzzle piece: the word "investors" rolls down from the top and
+   clicks into place. Olive, matching "fit." A small knob on top sells it. */
+.puzzle-word {
+  position: relative;
+  display: inline-block;
+  padding: 0.02em 0.2em;
+  margin: 0 0.04em;
+  background: #42520d;
+  color: #f4f1eb;
+  border-radius: 0.16em;
+  transform-origin: center top;
+  will-change: transform, opacity;
+  animation: puzzleDrop 0.85s cubic-bezier(0.34, 1.42, 0.5, 1) 0.15s both;
+}
+.puzzle-word::before {
+  /* top-edge knob */
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: -0.16em;
+  width: 0.34em;
+  height: 0.34em;
+  transform: translateX(-50%);
+  background: #42520d;
+  border-radius: 50%;
+}
+
+@keyframes puzzleDrop {
+  0% {
+    opacity: 0;
+    transform: translateY(-0.85em) rotate(-7deg);
+  }
+  55% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) rotate(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .puzzle-word {
+    animation: none;
+  }
+}
+
 .launch-filter-scroll {
   -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 10px, #000 calc(100% - 18px), transparent 100%);
   mask-image: linear-gradient(90deg, transparent 0, #000 10px, #000 calc(100% - 18px), transparent 100%);
