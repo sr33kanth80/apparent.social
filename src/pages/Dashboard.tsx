@@ -69,6 +69,7 @@ import type {
 } from '@/lib/apparent-types';
 import {
   buildBuilderMapClusters,
+  claimBuilderInterest,
   loadDashboardData,
   loadFounderInterest,
   saveBuilderDiscoveryState,
@@ -2647,6 +2648,9 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
       });
 
       setProductLaunches((current) => [savedLaunch, ...current.filter((launch) => launch.id !== savedLaunch.id)]);
+
+      // Attach any investor interest expressed in this ingested builder to the user.
+      void claimBuilderInterest(user, builder.id);
 
       // Drop the ingested node locally so the dashed dot disappears immediately.
       const nextNodes = builderNodes.filter((node) => node.id !== builder.id);

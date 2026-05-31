@@ -1228,6 +1228,55 @@ export const loadFounderInterest = async (user: AppUser): Promise<VcInterestEntr
   }
 };
 
+/** Public, PII-free count of investor interest in a builder (for claim landing). */
+export const loadBuilderInterestSummary = async (
+  builderId: string,
+): Promise<{ likes: number; superlikes: number }> => {
+  if (!isSupabaseConfigured || !supabase) return { likes: 0, superlikes: 0 };
+  try {
+    const { data, error } = await supabase.rpc('builder_interest_summary', { p_builder_id: builderId });
+    const row = Array.isArray(data) ? data[0] : data;
+    if (error || !row) return { likes: 0, superlikes: 0 };
+    return { likes: Number(row.likes ?? 0), superlikes: Number(row.superlikes ?? 0) };
+  } catch {
+    return { likes: 0, superlikes: 0 };
+  }
+};
+
+/** On claim, attach any interest expressed in the ingested builder to this user. */
+export const claimBuilderInterest = async (user: AppUser, builderId: string): Promise<void> => {
+  if (!isSupabaseConfigured || !supabase || user.isDev) return;
+  try {
+    await supabase.rpc('claim_builder_interest', { p_builder_id: builderId });
+  } catch {
+    /* rpc not deployed yet — non-fatal */
+  }
+};
+
+/** Look up a single ingested signal by id (anon-readable) for the claim landing. */
+export const loadSourceSignal = async (
+  signalId: string,
+): Promise<{ company: string; founder: string; detail: string; sourceType: string; location: string } | null> => {
+  if (!isSupabaseConfigured || !supabase) return null;
+  try {
+    const { data, error } = await supabase
+      .from('source_signals')
+      .select('company, founder, detail, source_type, location')
+      .eq('id', signalId)
+      .maybeSingle();
+    if (error || !data) return null;
+    return {
+      company: String(data.company ?? ''),
+      founder: String(data.founder ?? ''),
+      detail: String(data.detail ?? ''),
+      sourceType: String(data.source_type ?? ''),
+      location: String(data.location ?? ''),
+    };
+  } catch {
+    return null;
+  }
+};
+
 export const subscribeBuilderNetwork = (
   user: AppUser,
   onChange: () => void,

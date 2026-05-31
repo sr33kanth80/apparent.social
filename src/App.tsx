@@ -13,6 +13,7 @@ import { ProjectDetail } from './pages/ProjectDetail';
 import { PublicProfile } from './pages/PublicProfile';
 import { PublicPageShell } from './components/PublicPageShell';
 import { Resources } from './pages/Resources';
+import { ClaimProfile } from './pages/ClaimProfile';
 import { Login } from './pages/Login';
 import { Dashboard } from './pages/Dashboard';
 import { CookiePolicy, PrivacyPolicy, TermsOfService } from './pages/Legal';
@@ -118,6 +119,16 @@ function App() {
               <>
                 <EditorialNavbar />
                 <ForVCs />
+                <Footer />
+              </>
+            }
+          />
+          <Route
+            path="/claim/:signalId"
+            element={
+              <>
+                <EditorialNavbar />
+                <ClaimProfile />
                 <Footer />
               </>
             }
