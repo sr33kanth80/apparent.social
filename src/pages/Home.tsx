@@ -1,6 +1,7 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { ArrowUpRight, Check, MapPin, Radar, Send, Zap } from 'lucide-react';
 import { EditorialNavbar } from '../components/EditorialNavbar';
+import { LogoIcon } from '../components/LogoIcon';
 import { HeatMap } from './HeatMap';
 
 const serifDisplay = {
@@ -100,8 +101,8 @@ export const Home = () => {
         <div className="mt-8 grid gap-5 md:grid-cols-2">
           {/* Founders */}
           <div className="flex flex-col rounded-[24px] border border-black/10 bg-white/70 p-7">
-            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#42520d]">For founders</p>
-            <h3 className="mt-3 text-2xl font-semibold tracking-[-0.02em]">Reach the investors who fit your raise.</h3>
+            <LogoIcon className="h-6 w-6 text-[#42520d]" />
+            <h3 className="mt-5 text-2xl font-semibold tracking-[-0.02em]">Reach the investors who fit your raise.</h3>
             <ul className="mt-5 grid gap-3 text-sm leading-6 text-black/65">
               {[
                 'Match to funds by thesis, stage, and sector, not a generic list of thousands.',
@@ -125,8 +126,8 @@ export const Home = () => {
 
           {/* Investors */}
           <div className="flex flex-col rounded-[24px] bg-[#1c1c1a] p-7 text-white">
-            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#bcd99a]">For investors</p>
-            <h3 className="mt-3 text-2xl font-semibold tracking-[-0.02em]">Meet the founders who fit your thesis.</h3>
+            <LogoIcon className="h-6 w-6 text-[#bcd99a]" />
+            <h3 className="mt-5 text-2xl font-semibold tracking-[-0.02em]">Meet the founders who fit your thesis.</h3>
             <ul className="mt-5 grid gap-3 text-sm leading-6 text-white/70">
               {[
                 'A live map of builders who fit your stage, sector, and geography.',
