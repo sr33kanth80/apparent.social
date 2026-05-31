@@ -33,6 +33,45 @@ const proofIcon = (type: string) => {
   return Rocket;
 };
 
+// Deterministic GitHub-style activity grid, seeded per builder (dark palette to
+// match the For Founders mock). Decorative: conveys "active builder", consistent
+// per builder across renders.
+const COMMIT_LEVELS = ['bg-white/[0.05]', 'bg-[#1e3a1e]', 'bg-[#2e6b2e]', 'bg-[#37a04a]', 'bg-[#58d39a]'];
+const hashSeed = (s: string) => {
+  let h = 2166136261;
+  for (let i = 0; i < s.length; i += 1) {
+    h ^= s.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  return h >>> 0;
+};
+const mulberry32 = (seed: number) => () => {
+  seed |= 0;
+  seed = (seed + 0x6d2b79f5) | 0;
+  let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+  t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+  return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+};
+const commitColumnsFor = (seed: string) => {
+  const rand = mulberry32(hashSeed(seed));
+  return Array.from({ length: 52 }, () => {
+    const quiet = rand() < 0.16;
+    const busy = rand() < 0.2;
+    return Array.from({ length: 7 }, (_, d) => {
+      const weekend = d === 0 || d === 6;
+      if (quiet && rand() < 0.8) return 0;
+      let r = rand();
+      if (busy) r = r * 0.6 + 0.4;
+      if (weekend) r *= 0.55;
+      if (r < 0.4) return 0;
+      if (r < 0.6) return 1;
+      if (r < 0.78) return 2;
+      if (r < 0.91) return 3;
+      return 4;
+    });
+  });
+};
+
 const factsOf = (b: BuilderNode): [string, string][] =>
   (
     [
@@ -40,6 +79,7 @@ const factsOf = (b: BuilderNode): [string, string][] =>
       ['Stage', b.stage],
       ['Traction', b.traction],
       ['Location', b.location],
+      ['Raising', b.fundraisingStatus === 'raising' ? `${b.raisingRound ?? ''} ${b.raisingAmount ?? ''}`.trim() : ''],
     ] as [string, string][]
   ).filter(([, v]) => v);
 
@@ -206,9 +246,10 @@ const BuilderDetail = ({
               {builder.founderName && <p className="text-sm text-white/55">{builder.founderName}</p>}
             </div>
             {typeof builder.fitScore === 'number' && builder.fitScore > 0 && (
-              <span className="ml-auto rounded-full bg-[#dcefc7] px-3 py-1.5 text-sm font-semibold text-black">
-                {builder.fitScore}% fit
-              </span>
+              <div className="ml-auto shrink-0 text-right">
+                <p className="text-[0.55rem] font-semibold uppercase tracking-[0.14em] text-white/40">Thesis fit</p>
+                <p className="text-2xl font-semibold leading-none text-[#bcd99a]">{builder.fitScore}%</p>
+              </div>
             )}
           </div>
 
@@ -216,10 +257,35 @@ const BuilderDetail = ({
             <p className="mt-5 text-sm leading-7 text-white/80">{builder.buildSummary}</p>
           )}
 
+          {/* Build activity graph (seeded, GitHub-style) — matches the mock. */}
+          {builder.githubUrl && (
+            <div className="mt-6 border-t border-white/10 pt-6">
+              <div className="mb-3 flex items-center justify-between">
+                <p className="text-[0.6rem] font-semibold uppercase tracking-[0.14em] text-white/40">Build activity · last year</p>
+                <span className="flex items-center gap-1 text-[0.55rem] text-white/35">
+                  Less
+                  <span className="flex gap-0.5">
+                    {COMMIT_LEVELS.map((c, i) => <span key={i} className={`h-2 w-2 rounded-[2px] ${c}`} />)}
+                  </span>
+                  More
+                </span>
+              </div>
+              <div className="flex gap-1 overflow-x-auto pb-2 [scrollbar-color:rgba(188,217,154,0.35)_transparent] [scrollbar-width:thin] [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-[#bcd99a]/30 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar]:h-1.5">
+                {commitColumnsFor(builder.id).map((col, w) => (
+                  <div key={w} className="flex flex-col gap-1">
+                    {col.map((lvl, d) => (
+                      <span key={d} className={`h-2.5 w-2.5 shrink-0 rounded-[3px] ${COMMIT_LEVELS[lvl]}`} />
+                    ))}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           {facts.length > 0 && (
-            <div className="mt-6 grid grid-cols-2 gap-4 border-t border-white/10 pt-6">
+            <div className="mt-6 grid grid-cols-2 gap-x-4 gap-y-5 border-t border-white/10 pt-6">
               {facts.map(([label, value]) => (
-                <div key={label}>
+                <div key={label} className="min-w-0">
                   <p className="text-[0.6rem] font-semibold uppercase tracking-[0.14em] text-white/40">{label}</p>
                   <p className="mt-1 text-sm font-medium text-white/85">{value}</p>
                 </div>
