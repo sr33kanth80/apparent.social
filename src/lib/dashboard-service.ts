@@ -1365,21 +1365,39 @@ export const loadFounderVCContacts = async (): Promise<VCContact[]> => {
     return loadSeedContacts();
   }
 
-  const { data, error } = await supabase
-    .from('vc_contacts')
-    .select('*')
-    .not('latitude', 'is', null)
-    .not('longitude', 'is', null)
-    .order('number_of_investments', { ascending: false })
-    .limit(2500);
+  const rows: Record<string, unknown>[] = [];
+  const pageSize = 1000;
+  const maxRows = 6000;
+
+  for (let from = 0; from < maxRows; from += pageSize) {
+    const to = Math.min(from + pageSize - 1, maxRows - 1);
+    const { data, error } = await supabase
+      .from('vc_contacts')
+      .select('*')
+      .not('latitude', 'is', null)
+      .not('longitude', 'is', null)
+      .order('number_of_investments', { ascending: false })
+      .range(from, to);
+
+    if (error) {
+      return loadSeedContacts();
+    }
+
+    const page = (data ?? []) as Record<string, unknown>[];
+    rows.push(...page);
+
+    if (page.length < pageSize) {
+      break;
+    }
+  }
 
   // On error OR empty (e.g. logged-out visitors blocked by RLS on the public
   // /heat-map), fall back to the bundled VC seed so the map is never sparse.
-  if (error || !data || data.length === 0) {
+  if (rows.length === 0) {
     return loadSeedContacts();
   }
 
-  return data.map((row) => mapVCContactRow(row));
+  return rows.map((row) => mapVCContactRow(row));
 };
 
 export const loadPublicProjectDetail = async (projectId: string): Promise<PublicProjectDetail | null> => {
