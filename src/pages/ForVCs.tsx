@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import { ArrowUpRight, BarChart3, Bell, Calendar, FileText, KanbanSquare, Play, Radar, Search, Target } from 'lucide-react';
+import { ArrowUpRight, BarChart3, Bell, Calendar, FileText, KanbanSquare, Play, Search, Target } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { GitHubIcon } from '../components/GitHubIcon';
+import { LogoIcon } from '../components/LogoIcon';
 
 const serifDisplay = {
   fontFamily: 'Georgia, "Times New Roman", serif',
@@ -68,7 +69,7 @@ const RankedByFitCard = () => {
     <div className="flex min-h-[520px] flex-col rounded-[32px] bg-[#1c1c1a] p-7 text-white">
       <div className="mb-5 flex items-center justify-between">
         <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#bcd99a]">Ranked by fit</p>
-        <Radar className="h-5 w-5 text-[#02A070]" />
+        <LogoIcon className="h-5 w-5 text-[#02A070]" />
       </div>
 
       <div className="grid gap-3">
@@ -99,7 +100,6 @@ const RankedByFitCard = () => {
                 <div className="overflow-hidden">
                   <div className="border-t border-white/10 pt-4">
                     <div className="flex items-center gap-3">
-                      <img src={f.photo} alt="" className="h-12 w-12 rounded-full object-cover" />
                       <div className="min-w-0">
                         <p className="text-base font-semibold">{f.name}</p>
                         <p className="text-xs text-white/50">@{f.handle}</p>
