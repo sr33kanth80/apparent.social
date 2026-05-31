@@ -39,7 +39,23 @@ const values = [
 ];
 
 type MatchRow = { id: string; founder: string; investor: string; weight: number };
-type Match = { founder: string; investor: string; total: number; rows: MatchRow[] };
+type Match = {
+  founder: string;
+  investor: string;
+  total: number;
+  founderAvatar: string;
+  investorLogo: string;
+  rows: MatchRow[];
+};
+
+// Initials for the monogram avatars / logos, e.g. "Aria Kim" -> "AK", "Atlas Capital" -> "AC".
+const initials = (name: string) =>
+  name
+    .split(' ')
+    .map((w) => w[0])
+    .join('')
+    .slice(0, 2)
+    .toUpperCase();
 
 // A deck of founder ⇄ investor matches. Each row's weights sum to that match's total.
 const matches: Match[] = [
@@ -47,6 +63,8 @@ const matches: Match[] = [
     founder: 'Aria Kim',
     investor: 'Northstar',
     total: 92,
+    founderAvatar: 'from-rose-400 to-orange-300',
+    investorLogo: 'bg-emerald-500',
     rows: [
       { id: 'proof', founder: '4.2k GitHub stars', investor: 'Technical founders', weight: 24 },
       { id: 'sector', founder: 'AI agents', investor: 'Seed AI thesis', weight: 30 },
@@ -58,6 +76,8 @@ const matches: Match[] = [
     founder: 'Diego Santos',
     investor: 'Atlas Capital',
     total: 88,
+    founderAvatar: 'from-sky-400 to-cyan-300',
+    investorLogo: 'bg-amber-500',
     rows: [
       { id: 'proof', founder: '1.2k deploys / week', investor: 'Usage-led growth', weight: 22 },
       { id: 'sector', founder: 'Open-source DB', investor: 'Dev-tools thesis', weight: 28 },
@@ -69,6 +89,8 @@ const matches: Match[] = [
     founder: 'Mara Lin',
     investor: 'Vertex Labs',
     total: 95,
+    founderAvatar: 'from-violet-400 to-fuchsia-300',
+    investorLogo: 'bg-indigo-500',
     rows: [
       { id: 'proof', founder: 'PhD · 2 patents', investor: 'Technical depth', weight: 25 },
       { id: 'sector', founder: 'Robotics', investor: 'Deep-tech thesis', weight: 32 },
@@ -111,10 +133,30 @@ const MatchView = ({ match, play }: { match: Match; play: boolean }) => {
 
   return (
     <div className="flex flex-1 flex-col">
-      {/* Column captions */}
-      <div className="flex items-center justify-between text-[10px] font-semibold uppercase tracking-[0.18em] text-white/35">
-        <span>Founder · {match.founder}</span>
-        <span>Investor · {match.investor}</span>
+      {/* Founder + investor identities */}
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center gap-2.5">
+          <div
+            className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br ${match.founderAvatar} text-[11px] font-bold text-white ring-1 ring-white/15`}
+          >
+            {initials(match.founder)}
+          </div>
+          <div className="leading-tight">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-white/35">Founder</p>
+            <p className="text-sm font-semibold text-white">{match.founder}</p>
+          </div>
+        </div>
+        <div className="flex items-center gap-2.5">
+          <div className="text-right leading-tight">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-white/35">Investor</p>
+            <p className="text-sm font-semibold text-white">{match.investor}</p>
+          </div>
+          <div
+            className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-[10px] ${match.investorLogo} text-[11px] font-bold text-white ring-1 ring-white/10`}
+          >
+            {initials(match.investor)}
+          </div>
+        </div>
       </div>
 
       {/* Match rows — centered so the card always fills */}
