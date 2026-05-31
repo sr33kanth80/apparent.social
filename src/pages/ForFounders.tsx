@@ -101,7 +101,7 @@ export const ForFounders = () => {
         <div className="py-4 lg:py-8">
           <p className="mb-12 text-sm font-semibold text-[#42520d]">For founders</p>
           <h2 className="text-5xl font-normal leading-none tracking-[-0.045em] md:text-7xl" style={serifDisplay}>
-            See what investors need to see.
+            Show what investors need to see.
           </h2>
           <p className="mt-8 max-w-2xl text-base leading-8 text-black/60">
             Apparent is built around the evidence you already have: code, launches, customers, press, product velocity, and where you are building.
