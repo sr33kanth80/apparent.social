@@ -1,8 +1,145 @@
-import { ArrowUpRight, BarChart3, Bell, Calendar, FileText, KanbanSquare, Radar, Search, Target } from 'lucide-react';
+import { useState } from 'react';
+import { ArrowUpRight, BarChart3, Bell, Calendar, FileText, KanbanSquare, Play, Radar, Search, Target } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { GitHubIcon } from '../components/GitHubIcon';
 
 const serifDisplay = {
   fontFamily: 'Georgia, "Times New Roman", serif',
+};
+
+// Founders shown in the interactive "Ranked by fit" inbox. Hovering a row
+// expands the founder's profile card (same style as the For Founders mock).
+const rankedFounders = [
+  {
+    handle: 'ariakim',
+    company: 'AgentKit',
+    name: 'Aria Kim',
+    meta: 'AI agents · Seed · San Francisco',
+    fit: 92,
+    photo: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=160&h=160&q=80',
+    headline: 'AgentKit — open-source agents teams actually ship to production.',
+    mrr: '$24K · +22% MoM',
+    facts: [
+      ['Current build', 'AgentKit v2'],
+      ['Stage', 'Seed'],
+      ['Traction', '4.2k GitHub stars'],
+      ['Raising', '$1.5M seed'],
+    ],
+  },
+  {
+    handle: 'devsharma',
+    company: 'Ledgerline',
+    name: 'Dev Sharma',
+    meta: 'Fintech infra · Pre-seed · New York',
+    fit: 88,
+    photo: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=160&h=160&q=80',
+    headline: 'Ledgerline — reconciliation infrastructure for modern fintechs.',
+    mrr: '$11K · +31% MoM',
+    facts: [
+      ['Current build', 'Ledgerline API'],
+      ['Stage', 'Pre-seed'],
+      ['Traction', '9 paying fintechs'],
+      ['Raising', '$800K'],
+    ],
+  },
+  {
+    handle: 'maraolsen',
+    company: 'Northwind',
+    name: 'Mara Olsen',
+    meta: 'Climate · Seed · Berlin',
+    fit: 81,
+    photo: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?auto=format&fit=crop&w=160&h=160&q=80',
+    headline: 'Northwind — grid-balancing software for renewable utilities.',
+    mrr: '$18K · +14% MoM',
+    facts: [
+      ['Current build', 'Northwind OS'],
+      ['Stage', 'Seed'],
+      ['Traction', '2 utility pilots'],
+      ['Raising', '$2M'],
+    ],
+  },
+];
+
+// Interactive ranked inbox: each row expands into the founder's profile card on
+// hover (or keyboard focus), using the smooth grid-rows height transition.
+const RankedByFitCard = () => {
+  const [active, setActive] = useState(0);
+  return (
+    <div className="flex min-h-[520px] flex-col rounded-[32px] bg-[#1c1c1a] p-7 text-white">
+      <div className="mb-5 flex items-center justify-between">
+        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#bcd99a]">Ranked by fit</p>
+        <Radar className="h-5 w-5 text-[#02A070]" />
+      </div>
+
+      <div className="grid gap-3">
+        {rankedFounders.map((f, i) => {
+          const open = active === i;
+          return (
+            <div
+              key={f.handle}
+              tabIndex={0}
+              onMouseEnter={() => setActive(i)}
+              onFocus={() => setActive(i)}
+              className={`cursor-pointer rounded-2xl border p-4 outline-none transition-colors ${
+                open ? 'border-[#bcd99a]/40 bg-white/[0.06]' : 'border-white/10 bg-white/[0.03] hover:bg-white/[0.05]'
+              }`}
+            >
+              {/* Row */}
+              <div className="flex items-center gap-3">
+                <img src={f.photo} alt={f.name} className="h-10 w-10 rounded-xl object-cover" />
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold">{f.company}</p>
+                  <p className="text-xs text-white/45">{f.meta}</p>
+                </div>
+                <span className="ml-auto rounded-full bg-[#dcefc7] px-2.5 py-1 text-xs font-semibold text-black">{f.fit}%</span>
+              </div>
+
+              {/* Expanded founder card (smooth height via grid-rows) */}
+              <div className={`grid transition-all duration-300 ease-out ${open ? 'mt-4 grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'}`}>
+                <div className="overflow-hidden">
+                  <div className="border-t border-white/10 pt-4">
+                    <div className="flex items-center gap-3">
+                      <img src={f.photo} alt="" className="h-12 w-12 rounded-full object-cover" />
+                      <div className="min-w-0">
+                        <p className="text-base font-semibold">{f.name}</p>
+                        <p className="text-xs text-white/50">@{f.handle}</p>
+                      </div>
+                      <div className="ml-auto text-right">
+                        <p className="text-[0.55rem] font-semibold uppercase tracking-[0.14em] text-white/40">MRR</p>
+                        <p className="mrr-shimmer text-sm font-semibold leading-none">{f.mrr}</p>
+                      </div>
+                    </div>
+                    <p className="mt-3 text-sm leading-6 text-white/70">{f.headline}</p>
+                    <div className="mt-4 grid grid-cols-2 gap-3">
+                      {f.facts.map(([label, value]) => (
+                        <div key={label}>
+                          <p className="text-[0.6rem] font-semibold uppercase tracking-[0.12em] text-white/40">{label}</p>
+                          <p className="mt-0.5 text-sm font-medium text-white/85">{value}</p>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="mt-4 flex flex-wrap gap-2">
+                      <span className="inline-flex items-center gap-1.5 rounded-full bg-white/[0.06] px-3 py-1.5 text-xs font-medium text-white/75">
+                        <GitHubIcon className="h-3.5 w-3.5" /> GitHub
+                      </span>
+                      <span className="inline-flex items-center gap-1.5 rounded-full bg-white/[0.06] px-3 py-1.5 text-xs font-medium text-white/75">
+                        <Play className="h-3.5 w-3.5" /> Pitch · 2:14
+                      </span>
+                      <span className="inline-flex items-center gap-1.5 rounded-full bg-white/[0.06] px-3 py-1.5 text-xs font-medium text-white/75">
+                        <FileText className="h-3.5 w-3.5" /> Deck · 12 slides
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      <p className="mt-5 text-xs text-white/40">Hover a founder to preview their profile.</p>
+    </div>
+  );
 };
 
 const vcRows = [
@@ -91,30 +228,8 @@ export const ForVCs = () => {
           </button>
         </div>
 
-        {/* Mock ranked inbox — founders sorted by thesis fit. */}
-        <div className="relative flex min-h-[520px] flex-col justify-between overflow-hidden rounded-[32px] bg-[#1c1c1a] p-7 text-white">
-          <div className="flex items-center justify-between">
-            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#bcd99a]">Ranked by fit</p>
-            <Radar className="h-5 w-5 text-[#02A070]" />
-          </div>
-          <div className="grid gap-3">
-            {[
-              ['AgentKit', 'AI agents · Seed · SF', '92%'],
-              ['Ledgerline', 'Fintech infra · Pre-seed · NYC', '88%'],
-              ['Northwind', 'Climate · Seed · Berlin', '81%'],
-            ].map(([name, meta, fit]) => (
-              <div key={name} className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.03] p-4">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#42520d] text-sm font-semibold">{name[0]}</div>
-                <div className="min-w-0">
-                  <p className="text-sm font-semibold">{name}</p>
-                  <p className="text-xs text-white/45">{meta}</p>
-                </div>
-                <span className="ml-auto rounded-full bg-[#dcefc7] px-2.5 py-1 text-xs font-semibold text-black">{fit}</span>
-              </div>
-            ))}
-          </div>
-          <p className="text-xs text-white/40">Raising now · thesis-fit · contactable.</p>
-        </div>
+        {/* Interactive ranked inbox — hover a founder to open their card. */}
+        <RankedByFitCard />
       </section>
 
       <section className="mx-auto max-w-[92rem] border-t border-black/10 px-5 py-16 sm:px-8">
