@@ -2,6 +2,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { ArrowUpRight, Check, MapPin, Radar, Send, Zap } from 'lucide-react';
 import { EditorialNavbar } from '../components/EditorialNavbar';
 import { LogoIcon } from '../components/LogoIcon';
+import { LogoCloud } from '../components/logo-cloud';
 import { HeatMap } from './HeatMap';
 
 const serifDisplay = {
@@ -69,21 +70,22 @@ export const Home = () => {
           >
             I&apos;m an investor
           </button>
-          <Link
-            to="/heat-map"
-            className="inline-flex items-center gap-1.5 px-2 py-3 text-sm font-semibold text-black/60 transition-colors hover:text-black"
-          >
-            Explore the VC heatmap <ArrowUpRight className="h-4 w-4" />
-          </Link>
         </div>
       </section>
+
+      <LogoCloud />
 
       {/* HEATMAP MAGNET — the free front door, mirrors OpenVC's investor list but alive. */}
       <section className="mx-auto max-w-[78rem] px-5 pb-12 sm:px-8">
         <div className="mb-4 flex justify-end">
           <Link
             to="/heat-map"
-            className="inline-flex items-center gap-1.5 rounded-full border border-black/15 bg-white px-5 py-2.5 text-sm font-semibold text-black transition hover:bg-black/5"
+            className="inline-flex items-center gap-1.5 rounded-full border border-[#42520d]/20 px-5 py-2.5 text-sm font-semibold text-black shadow-[0_8px_24px_rgba(66,82,13,0.14)] transition hover:scale-[1.01]"
+            style={{
+              backgroundColor: '#fff8d7',
+              backgroundImage:
+                'radial-gradient(circle at 18% 45%, rgba(215,48,31,0.78) 0 9%, transparent 18%), radial-gradient(circle at 43% 55%, rgba(254,153,41,0.82) 0 12%, transparent 24%), radial-gradient(circle at 70% 42%, rgba(254,196,79,0.88) 0 14%, transparent 28%), radial-gradient(circle at 88% 62%, rgba(254,227,145,0.9) 0 12%, transparent 26%), linear-gradient(90deg, rgba(220,239,199,0.82), rgba(255,247,188,0.92))',
+            }}
           >
             Open the full map <ArrowUpRight className="h-4 w-4" />
           </Link>
