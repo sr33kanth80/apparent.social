@@ -6,13 +6,14 @@ import { Map, useMap } from '@/components/ui/map';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { cityGeoCoordinates, seedBuilderNodes } from '@/lib/app-defaults';
 import {
-  DEFAULT_OUTREACH_TEMPLATE,
+  OUTREACH_INSPIRATION_EXAMPLES,
   PREBAKED_SUBJECT_LINES,
   loadFounderVCContacts,
   loadOutreachTemplates,
   loadPublicProductLaunches,
   loadVcOutreachLog,
   renderOutreachTemplate,
+  saveOutreachTemplate,
   saveVcOutreach,
   vcContactKey,
 } from '@/lib/dashboard-service';
@@ -1040,6 +1041,7 @@ export const HeatMap = ({
               ...current.filter((row) => row.vcContactKey !== entry.vcContactKey),
             ]);
           }}
+          onTemplatesChange={setOutreachTemplates}
         />
       )}
     </main>
@@ -1063,6 +1065,7 @@ function ComposeDialog({
   founderTraction,
   onClose,
   onSaved,
+  onTemplatesChange,
 }: {
   user: AppUser;
   vc: VCContact;
@@ -1073,9 +1076,12 @@ function ComposeDialog({
   founderTraction: string;
   onClose: () => void;
   onSaved: (entry: VcOutreachEntry) => void;
+  /** Bubble template list mutations back up so the parent can refresh. */
+  onTemplatesChange?: (templates: VcOutreachTemplate[]) => void;
 }) {
-  // Variable map — resolved at compose time, never stored. Founder edits the
-  // rendered text directly, so we just template once on first open.
+  // Variable substitution applied to whatever the user types or pastes — we
+  // never auto-fill the editor, but we still resolve {{vars}} at send time
+  // so saved templates stay portable across VCs.
   const vars = useMemo<Record<string, string>>(
     () => ({
       founder_name: founderName,
@@ -1087,34 +1093,80 @@ function ComposeDialog({
     [founderName, founderCompany, founderTraction, vc.investorName, vc.partnerName],
   );
 
-  // First-open hydration order: prior draft → user's default template →
-  // first saved template → bundled DEFAULT_OUTREACH_TEMPLATE.
-  const initialSubject = (() => {
-    if (existingEntry?.subject) return existingEntry.subject;
-    const defaultTpl = templates.find((tpl) => tpl.isDefault) || templates[0];
-    const tplSubject = defaultTpl?.subject || DEFAULT_OUTREACH_TEMPLATE.subject;
-    return renderOutreachTemplate(tplSubject, vars);
-  })();
-  const initialBody = (() => {
-    if (existingEntry?.body) return existingEntry.body;
-    const defaultTpl = templates.find((tpl) => tpl.isDefault) || templates[0];
-    const tplBody = defaultTpl?.body || DEFAULT_OUTREACH_TEMPLATE.body;
-    return renderOutreachTemplate(tplBody, vars);
-  })();
+  // Hydration order (no bundled template fallback anymore):
+  // 1. Prior draft for this VC → resume where the founder left off
+  // 2. User's saved default template → their own words, applied to this VC
+  // 3. Empty → founder writes from scratch, with inspiration examples below
+  const defaultTpl = templates.find((tpl) => tpl.isDefault) || templates[0];
+  const hasSavedTemplate = Boolean(defaultTpl);
+  const initialSubject = existingEntry?.subject
+    ? existingEntry.subject
+    : defaultTpl
+      ? renderOutreachTemplate(defaultTpl.subject, vars)
+      : '';
+  const initialBody = existingEntry?.body
+    ? existingEntry.body
+    : defaultTpl
+      ? renderOutreachTemplate(defaultTpl.body, vars)
+      : '';
 
   const [subject, setSubject] = useState(initialSubject);
   const [body, setBody] = useState(initialBody);
   const [saving, setSaving] = useState<'idle' | 'sent' | 'saving' | 'error'>('idle');
   const [errorMessage, setErrorMessage] = useState('');
   const [copied, setCopied] = useState(false);
+  // Inspiration panel is collapsed on subsequent opens (when the user already
+  // has a saved template) and expanded on first use so they see the examples.
+  const [inspirationOpen, setInspirationOpen] = useState(!hasSavedTemplate);
+  const [activeExampleId, setActiveExampleId] = useState<string>(
+    OUTREACH_INSPIRATION_EXAMPLES[0]?.id ?? '',
+  );
+  const [savingTemplate, setSavingTemplate] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
+  const activeExample = OUTREACH_INSPIRATION_EXAMPLES.find((ex) => ex.id === activeExampleId)
+    ?? OUTREACH_INSPIRATION_EXAMPLES[0];
 
+  // Quick-swap a pre-baked subject line into the input. Never overwrites
+  // the body so the founder doesn't lose what they typed.
+  const applySubject = (template: string) => {
+    setSubject(renderOutreachTemplate(template, vars));
+  };
+
+  // Apply a saved user template. Body + subject both swap.
   const applyTemplate = (template: { subject: string; body: string }) => {
     setSubject(renderOutreachTemplate(template.subject, vars));
     setBody(renderOutreachTemplate(template.body, vars));
   };
 
-  const applySubject = (template: string) => {
-    setSubject(renderOutreachTemplate(template, vars));
+  // Save the current subject/body as the user's default template so the next
+  // compose pre-fills with it. Stored verbatim — variables stay as {{tokens}}
+  // so they re-substitute per VC.
+  const handleSaveAsDefault = async () => {
+    if (!subject.trim() && !body.trim()) {
+      setErrorMessage('Write a subject or body first before saving as default.');
+      return;
+    }
+    setSavingTemplate('saving');
+    setErrorMessage('');
+    try {
+      const saved = await saveOutreachTemplate(user, {
+        id: defaultTpl?.id,
+        name: defaultTpl?.name || 'My cold outreach',
+        subject,
+        body,
+        isDefault: true,
+      });
+      // Replace the existing default in-place; everything else stays.
+      const nextTemplates = [
+        saved,
+        ...templates.filter((tpl) => tpl.id !== saved.id).map((tpl) => (tpl.isDefault ? { ...tpl, isDefault: false } : tpl)),
+      ];
+      onTemplatesChange?.(nextTemplates);
+      setSavingTemplate('saved');
+      window.setTimeout(() => setSavingTemplate('idle'), 1600);
+    } catch (err) {
+      setSavingTemplate('error');
+      setErrorMessage(err instanceof Error ? err.message : 'Unable to save template.');
+    }
   };
 
   // Save → log row + bump kanban stage. Caller passes the stage they want.
@@ -1141,8 +1193,10 @@ function ComposeDialog({
   };
 
   const mailtoHref = `mailto:${vc.partnerEmail}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+  const canSend = Boolean(subject.trim() || body.trim());
 
   const handleOpenInMail = () => {
+    if (!canSend) return;
     // Persist as Drafted (or keep Sent if already sent) before the mailto
     // handler steals focus, so the kanban reflects the founder's intent.
     if (!existingEntry || existingEntry.stage === 'Drafted') {
@@ -1202,40 +1256,28 @@ function ComposeDialog({
         </div>
 
         <div className="max-h-[70vh] overflow-y-auto px-5 py-4">
-          {/* Pre-baked subject lines — quick swap, free for every founder. */}
-          <div className="mb-4">
-            <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-black/45">
-              Quick subjects
-            </p>
-            <div className="flex flex-wrap gap-1.5">
-              {PREBAKED_SUBJECT_LINES.map((line) => (
-                <button
-                  key={line}
-                  type="button"
-                  onClick={() => applySubject(line)}
-                  className="rounded-full border border-black/10 bg-[#fbfaf7] px-2.5 py-1 text-[11px] font-medium text-black/65 transition-colors hover:bg-[#dcefc7] hover:text-black"
-                >
-                  {renderOutreachTemplate(line, vars)}
-                </button>
-              ))}
+          {/* First-time-use prompt: the founder hasn't saved a default template
+              yet, so we surface the inspiration examples and tell them to
+              write their own voice in. We do NOT pre-fill the editor. */}
+          {!hasSavedTemplate && !existingEntry && (
+            <div className="mb-4 rounded-[14px] border border-[#42520d]/20 bg-[#dcefc7]/40 px-4 py-3">
+              <p className="text-xs font-semibold text-[#42520d]">
+                Write your own outreach — the way you'd actually say it.
+              </p>
+              <p className="mt-1 text-[11px] leading-5 text-black/60">
+                Read the inspiration below for shape and tone, then put it in your own words. Once
+                you're happy, hit "Save as my default" so future composes start from your template.
+              </p>
             </div>
-          </div>
+          )}
 
-          {/* Saved templates — defaults to the bundled one when the user has none yet. */}
-          {(templates.length > 0 || true) && (
+          {/* Saved templates — only shown if the user actually has them. */}
+          {templates.length > 0 && (
             <div className="mb-4">
               <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-black/45">
-                Templates
+                Your templates
               </p>
               <div className="flex flex-wrap gap-1.5">
-                <button
-                  type="button"
-                  onClick={() => applyTemplate(DEFAULT_OUTREACH_TEMPLATE)}
-                  className="inline-flex items-center gap-1 rounded-full border border-black/10 bg-white px-2.5 py-1 text-[11px] font-medium text-black/70 transition-colors hover:bg-[#fbfaf7]"
-                >
-                  <Sparkles className="h-3 w-3 text-[#42520d]" />
-                  Default cold intro
-                </button>
                 {templates.map((tpl) => (
                   <button
                     key={tpl.id}
@@ -1251,6 +1293,25 @@ function ComposeDialog({
             </div>
           )}
 
+          {/* Pre-baked subject patterns — apply with one click, never auto-applied. */}
+          <div className="mb-4">
+            <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-black/45">
+              Subject patterns (click to apply)
+            </p>
+            <div className="flex flex-wrap gap-1.5">
+              {PREBAKED_SUBJECT_LINES.map((line) => (
+                <button
+                  key={line}
+                  type="button"
+                  onClick={() => applySubject(line)}
+                  className="rounded-full border border-black/10 bg-[#fbfaf7] px-2.5 py-1 text-[11px] font-medium text-black/65 transition-colors hover:bg-[#dcefc7] hover:text-black"
+                >
+                  {renderOutreachTemplate(line, vars)}
+                </button>
+              ))}
+            </div>
+          </div>
+
           <label className="mb-3 block">
             <span className="mb-1 block text-[11px] font-semibold uppercase tracking-[0.14em] text-black/45">
               Subject
@@ -1260,7 +1321,7 @@ function ComposeDialog({
               value={subject}
               onChange={(event) => setSubject(event.target.value)}
               className="w-full rounded-[12px] border border-black/10 bg-white px-3 py-2.5 text-sm text-black outline-none focus:border-[#42520d]"
-              placeholder="Quick note re: ..."
+              placeholder={hasSavedTemplate ? 'Edit or write a new subject…' : 'Write your subject — short and specific…'}
             />
           </label>
 
@@ -1273,15 +1334,71 @@ function ComposeDialog({
               onChange={(event) => setBody(event.target.value)}
               rows={12}
               className="w-full resize-y rounded-[12px] border border-black/10 bg-white px-3 py-2.5 text-sm leading-6 text-black outline-none focus:border-[#42520d]"
-              placeholder="Hi ..."
+              placeholder={hasSavedTemplate
+                ? 'Edit or write the body…'
+                : 'Write the body in your own voice. The inspiration below is a guide, not a script.'}
             />
           </label>
 
+          {/* Inspiration drawer — collapsible, real cold emails to read.
+              Never pasted into the editor automatically. */}
+          <div className="mb-4 rounded-[14px] border border-black/10 bg-[#fbfaf7]">
+            <button
+              type="button"
+              onClick={() => setInspirationOpen((prev) => !prev)}
+              className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left"
+              aria-expanded={inspirationOpen}
+            >
+              <span className="inline-flex items-center gap-2">
+                <Sparkles className="h-3.5 w-3.5 text-[#42520d]" />
+                <span className="text-xs font-semibold uppercase tracking-[0.14em] text-black/70">
+                  Inspiration — real cold emails
+                </span>
+              </span>
+              <span className="text-[11px] text-black/45">{inspirationOpen ? 'Hide' : 'Show'}</span>
+            </button>
+            {inspirationOpen && activeExample && (
+              <div className="border-t border-black/10 px-4 py-3">
+                <div className="mb-3 flex flex-wrap gap-1.5">
+                  {OUTREACH_INSPIRATION_EXAMPLES.map((ex) => (
+                    <button
+                      key={ex.id}
+                      type="button"
+                      onClick={() => setActiveExampleId(ex.id)}
+                      className={`rounded-full border px-2.5 py-1 text-[11px] font-medium transition-colors ${
+                        ex.id === activeExample.id
+                          ? 'border-[#42520d] bg-[#42520d] text-white'
+                          : 'border-black/10 bg-white text-black/65 hover:bg-[#dcefc7]'
+                      }`}
+                    >
+                      {ex.label}
+                    </button>
+                  ))}
+                </div>
+                <p className="mb-2 text-[11px] italic text-black/55">{activeExample.note}</p>
+                <div className="rounded-[10px] bg-white p-3">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-black/40">
+                    Subject
+                  </p>
+                  <p className="mt-1 text-sm font-medium text-black/85">{activeExample.subject}</p>
+                  <p className="mt-3 text-[11px] font-semibold uppercase tracking-[0.12em] text-black/40">
+                    Body
+                  </p>
+                  <pre className="mt-1 whitespace-pre-wrap font-sans text-sm leading-6 text-black/75">
+                    {activeExample.body}
+                  </pre>
+                </div>
+                <p className="mt-2 text-[11px] text-black/45">
+                  These are real-world patterns — read for shape and tone, then write your own. Don't copy verbatim. Investors recognize template emails instantly.
+                </p>
+              </div>
+            )}
+          </div>
+
           <p className="text-[11px] leading-5 text-black/45">
-            Tip: variables like <code>{'{{founder_name}}'}</code>, <code>{'{{vc_partner}}'}</code>,
+            You can use <code>{'{{founder_name}}'}</code>, <code>{'{{vc_partner}}'}</code>,
             <code>{'{{vc_firm}}'}</code>, <code>{'{{my_company}}'}</code>, <code>{'{{traction}}'}</code>
-            are filled from your profile. Replies land in your own inbox — your email never
-            leaves your device.
+            in your saved default template — they fill in automatically per VC. Replies land in your own inbox.
           </p>
 
           {errorMessage && (
@@ -1293,9 +1410,25 @@ function ComposeDialog({
           <button
             type="button"
             onClick={handleOpenInMail}
-            className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-full bg-[#42520d] px-4 py-2.5 text-sm font-semibold text-white transition-opacity hover:opacity-90 sm:flex-none"
+            disabled={!canSend}
+            className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-full bg-[#42520d] px-4 py-2.5 text-sm font-semibold text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50 sm:flex-none"
           >
             <Send className="h-3.5 w-3.5" /> Open in mail app
+          </button>
+          <button
+            type="button"
+            onClick={handleSaveAsDefault}
+            disabled={savingTemplate === 'saving' || !canSend}
+            className="inline-flex items-center gap-1.5 rounded-full border border-black/15 bg-white px-3 py-2 text-xs font-semibold text-black/70 transition-colors hover:bg-[#fbfaf7] disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            <Sparkles className="h-3.5 w-3.5 text-[#42520d]" />
+            {savingTemplate === 'saving'
+              ? 'Saving…'
+              : savingTemplate === 'saved'
+                ? 'Saved as default'
+                : hasSavedTemplate
+                  ? 'Update default'
+                  : 'Save as my default'}
           </button>
           <button
             type="button"
@@ -1317,7 +1450,7 @@ function ComposeDialog({
           <button
             type="button"
             onClick={handleMarkSent}
-            disabled={saving === 'saving'}
+            disabled={saving === 'saving' || !canSend}
             className="inline-flex items-center gap-1.5 rounded-full border border-[#42520d] bg-white px-3 py-2 text-xs font-semibold text-[#42520d] transition-colors hover:bg-[#dcefc7] disabled:cursor-not-allowed disabled:opacity-60"
           >
             {saving === 'sent' ? <CheckCircle2 className="h-3.5 w-3.5" /> : <MailCheck className="h-3.5 w-3.5" />}
