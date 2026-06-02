@@ -1,6 +1,11 @@
 import { AuthForm } from '@/components/ui/sign-in';
 import { Switch } from '@/components/ui/switch';
-import { createDevSession, sendEmailLink, signInWithEmail } from '@/lib/auth-service';
+import {
+  createDevSession,
+  isRoleMismatchError,
+  sendEmailLink,
+  signInWithEmail,
+} from '@/lib/auth-service';
 import type { DashboardRole } from '@/lib/apparent-types';
 import { useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
@@ -13,6 +18,13 @@ export const Login = () => {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const [authError, setAuthError] = useState('');
+  // When a role mismatch is detected we surface a one-click switcher to flip
+  // the toggle to the account's actual role instead of forcing the user to
+  // read the error and find the toggle themselves.
+  const [authErrorAction, setAuthErrorAction] = useState<{
+    label: string;
+    targetRole: DashboardRole;
+  } | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const role = searchParams.get('role');
   const activeRole: DashboardRole = role === 'investor' ? 'investor' : 'founder';
@@ -25,6 +37,7 @@ export const Login = () => {
 
   const handleEmailSubmit = async (data: { email: string; password?: string }) => {
     setAuthError('');
+    setAuthErrorAction(null);
     setIsSubmitting(true);
 
     try {
@@ -32,7 +45,15 @@ export const Login = () => {
       const path = isInvestor ? '/dashboard/investor' : '/dashboard/founder';
       navigate(path, result.isNew ? { state: { onboarding: true } } : undefined);
     } catch (error) {
-      setAuthError(error instanceof Error ? error.message : 'Unable to sign in.');
+      if (isRoleMismatchError(error)) {
+        setAuthError(error.message);
+        setAuthErrorAction({
+          label: `Switch to ${error.actualRole === 'investor' ? 'Investor' : 'Founder'} sign-in`,
+          targetRole: error.actualRole,
+        });
+      } else {
+        setAuthError(error instanceof Error ? error.message : 'Unable to sign in.');
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -45,6 +66,7 @@ export const Login = () => {
     }
 
     setAuthError('');
+    setAuthErrorAction(null);
     setIsSubmitting(true);
 
     try {
@@ -193,9 +215,22 @@ export const Login = () => {
               className="border-0 bg-white/80 shadow-[0_18px_60px_rgba(0,0,0,0.06)]"
             />
             {authError && (
-              <p className="mt-4 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700">
-                {authError}
-              </p>
+              <div className="mt-4 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700">
+                <p>{authError}</p>
+                {authErrorAction && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setAuthError('');
+                      setAuthErrorAction(null);
+                      handleRoleChange(authErrorAction.targetRole);
+                    }}
+                    className="mt-3 inline-flex items-center justify-center rounded-full bg-red-700 px-4 py-2 text-xs font-semibold text-white transition-opacity hover:opacity-90"
+                  >
+                    {authErrorAction.label}
+                  </button>
+                )}
+              </div>
             )}
           </div>
         </div>

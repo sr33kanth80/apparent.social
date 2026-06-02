@@ -55,14 +55,24 @@ export const getCurrentAppUser = async (): Promise<AppUser | null> => {
     if (!error && data.user) {
       clearDevSession(); // evict any stale dev session
       const appUser = toAppUser(data.user);
-      // Load the canonical username from the profiles table.
-      // Falls back to the client-side derivation if the row isn't ready yet.
+      // Load the canonical username AND role from the profiles table. The DB
+      // row is the source of truth — user_metadata.role is only used as a
+      // fallback when the profile row hasn't been written yet (race on first
+      // sign up, or out-of-band auth.users imports).
       const { data: profileRow } = await supabase
         .from('profiles')
-        .select('username')
+        .select('username, role')
         .eq('id', appUser.id)
         .maybeSingle();
-      return { ...appUser, username: profileRow?.username ?? deriveUsername(appUser.email) };
+      const dbRole =
+        profileRow?.role === 'investor' || profileRow?.role === 'founder'
+          ? (profileRow.role as DashboardRole)
+          : appUser.role;
+      return {
+        ...appUser,
+        role: dbRole,
+        username: profileRow?.username ?? deriveUsername(appUser.email),
+      };
     }
   }
 
@@ -74,6 +84,36 @@ export const getCurrentAppUser = async (): Promise<AppUser | null> => {
 
   return null;
 };
+
+/**
+ * Human-readable label for the role-mismatch error so the Login screen can
+ * show it as-is without parsing.
+ */
+const ROLE_LABEL: Record<DashboardRole, string> = {
+  founder: 'Founder',
+  investor: 'Investor',
+};
+
+class RoleMismatchError extends Error {
+  /** The role the account is actually bound to in the DB. */
+  readonly actualRole: DashboardRole;
+  /** The role the user tried to sign in as. */
+  readonly attemptedRole: DashboardRole;
+
+  constructor(actualRole: DashboardRole, attemptedRole: DashboardRole) {
+    super(
+      `This account is registered as a ${ROLE_LABEL[actualRole]}. ` +
+        `Switch to the ${ROLE_LABEL[actualRole]} sign-in to continue, ` +
+        `or use a different email to create a ${ROLE_LABEL[attemptedRole]} account.`,
+    );
+    this.name = 'RoleMismatchError';
+    this.actualRole = actualRole;
+    this.attemptedRole = attemptedRole;
+  }
+}
+
+export const isRoleMismatchError = (error: unknown): error is RoleMismatchError =>
+  error instanceof RoleMismatchError;
 
 export const signInWithEmail = async (
   email: string,
@@ -90,10 +130,39 @@ export const signInWithEmail = async (
 
   if (signInResult.data.user) {
     const base = toAppUser(signInResult.data.user);
-    const username = await ensureProfile(base, role);
-    return { ...base, role, username, isNew: false };
+
+    // The account already exists. The DB profile row is the source of truth
+    // for which role this email is bound to. If the user picked the wrong
+    // toggle, reject — never silently flip an existing account's role.
+    const { data: profileRow } = await supabase
+      .from('profiles')
+      .select('role, username')
+      .eq('id', base.id)
+      .maybeSingle();
+
+    const existingRole =
+      profileRow?.role === 'investor' || profileRow?.role === 'founder'
+        ? (profileRow.role as DashboardRole)
+        : null;
+
+    if (existingRole && existingRole !== role) {
+      // Sign the user back out so a dangling session doesn't trail behind
+      // the rejection (otherwise getCurrentAppUser would still resolve them
+      // on the next page load).
+      await supabase.auth.signOut();
+      throw new RoleMismatchError(existingRole, role);
+    }
+
+    // Role matches (or the profile row is missing from a legacy account).
+    // Pass `existingRole ?? role` to ensureProfile so the upsert never
+    // changes the role on an existing row — only fills it in if absent.
+    const username = await ensureProfile(base, existingRole ?? role);
+    return { ...base, role: existingRole ?? role, username, isNew: false };
   }
 
+  // No existing account — create one and bind the requested role for the
+  // very first time. From this point forward the role is immutable from the
+  // client.
   const signUpResult = await supabase.auth.signUp({
     email,
     password,
@@ -115,6 +184,9 @@ export const sendEmailLink = async (email: string, role: DashboardRole) => {
     return;
   }
 
+  // The OTP redirect path is bound to the role THIS request was sent for.
+  // The actual role check happens again post-redirect in getCurrentAppUser
+  // (which reads role from profiles, never trusts metadata or the URL).
   const { error } = await supabase.auth.signInWithOtp({
     email,
     options: {
@@ -135,28 +207,53 @@ export const signOut = async () => {
   }
 };
 
-/** Upserts the profiles row and returns the canonical username. */
+/**
+ * Insert the profiles row on first sign-up, then read back the canonical
+ * username. NEVER updates an existing row's role — once an email is bound to
+ * a role, that binding is permanent until an explicit out-of-band change.
+ * Callers that want to silently flip roles cannot do so through this helper.
+ */
 export const ensureProfile = async (user: AppUser, role = user.role): Promise<string> => {
   if (!isSupabaseConfigured || !supabase || user.isDev) {
     return deriveUsername(user.email);
   }
 
-  // Upsert without username — the DB trigger sets it on INSERT.
-  // On UPDATE (existing user) the username column is untouched.
-  const { error } = await supabase.from('profiles').upsert({
-    id: user.id,
-    role,
-    email: user.email,
-  });
+  // Look up the existing row first. If one exists we don't write at all —
+  // just read back the username. This guarantees a returning user's role
+  // can't be overwritten by a stale `role` argument.
+  const { data: existing } = await supabase
+    .from('profiles')
+    .select('username, role')
+    .eq('id', user.id)
+    .maybeSingle();
 
-  if (error) throw error;
+  if (existing) {
+    return existing.username ?? deriveUsername(user.email);
+  }
 
-  // Read back the canonical username (the trigger may have added a numeric suffix).
-  const { data } = await supabase
+  // No row yet — first sign-up. Insert with the role passed in. The DB
+  // trigger fills in the canonical @-handle.
+  const { error: insertError } = await supabase
+    .from('profiles')
+    .insert({ id: user.id, role, email: user.email });
+
+  if (insertError) {
+    // Race: another tab/request created the row between our read and write.
+    // Treat that as success — read back what's there.
+    const { data: raceWinner } = await supabase
+      .from('profiles')
+      .select('username')
+      .eq('id', user.id)
+      .maybeSingle();
+    if (raceWinner) return raceWinner.username ?? deriveUsername(user.email);
+    throw insertError;
+  }
+
+  const { data: created } = await supabase
     .from('profiles')
     .select('username')
     .eq('id', user.id)
     .maybeSingle();
 
-  return data?.username ?? deriveUsername(user.email);
+  return created?.username ?? deriveUsername(user.email);
 };

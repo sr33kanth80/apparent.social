@@ -1,5 +1,5 @@
 import { useEffect, useState, type ReactNode } from 'react';
-import { Navigate, useNavigate } from 'react-router-dom';
+import { Navigate } from 'react-router-dom';
 import type { AppUser, DashboardRole } from '@/lib/apparent-types';
 import { ensureProfile, getCurrentAppUser } from '@/lib/auth-service';
 
@@ -9,10 +9,12 @@ interface ProtectedDashboardRouteProps {
 }
 
 export const ProtectedDashboardRoute = ({ role, children }: ProtectedDashboardRouteProps) => {
-  const navigate = useNavigate();
   const [user, setUser] = useState<AppUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
+  // When the signed-in user's bound role doesn't match the URL's role we
+  // redirect to their own dashboard instead of rendering the wrong one.
+  const [redirectTo, setRedirectTo] = useState<string | null>(null);
 
   useEffect(() => {
     let isMounted = true;
@@ -27,9 +29,19 @@ export const ProtectedDashboardRoute = ({ role, children }: ProtectedDashboardRo
           return;
         }
 
-        const roleAdjustedUser = { ...currentUser, role };
-        await ensureProfile(roleAdjustedUser, role);
-        setUser(roleAdjustedUser);
+        // SECURITY: the URL's role is untrusted. The session's role comes
+        // from the profiles table (set by getCurrentAppUser) and is the
+        // source of truth. If they disagree, redirect — never coerce.
+        if (currentUser.role !== role) {
+          setRedirectTo(`/dashboard/${currentUser.role}`);
+          return;
+        }
+
+        // Roles match. Make sure the profile row exists (no-op for returning
+        // users) and render. ensureProfile no longer overwrites an existing
+        // row's role, so this can't flip the binding.
+        await ensureProfile(currentUser, currentUser.role);
+        setUser(currentUser);
       } catch (requestError) {
         if (!isMounted) return;
         setError(requestError instanceof Error ? requestError.message : 'Unable to load session.');
@@ -45,7 +57,7 @@ export const ProtectedDashboardRoute = ({ role, children }: ProtectedDashboardRo
     return () => {
       isMounted = false;
     };
-  }, [navigate, role]);
+  }, [role]);
 
   if (isLoading) {
     return (
@@ -64,6 +76,10 @@ export const ProtectedDashboardRoute = ({ role, children }: ProtectedDashboardRo
         </div>
       </div>
     );
+  }
+
+  if (redirectTo) {
+    return <Navigate to={redirectTo} replace />;
   }
 
   if (!user) {
