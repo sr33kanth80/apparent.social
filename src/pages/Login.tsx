@@ -1,5 +1,5 @@
 import { AnimatePresence, motion } from 'framer-motion';
-import { BadgeCheck, Radar, Zap, type LucideIcon } from 'lucide-react';
+import { ArrowUpRight, Fingerprint, Telescope, type LucideIcon } from 'lucide-react';
 import { AuthForm } from '@/components/ui/sign-in';
 import { Switch } from '@/components/ui/switch';
 import { isRoleMismatchError, signInWithEmail } from '@/lib/auth-service';
@@ -21,7 +21,9 @@ const FEATURE_PILLARS: FeaturePillar[] = [
   {
     number: '01',
     label: 'Proof',
-    Icon: BadgeCheck,
+    // Fingerprint: identity + verifiable signal. Distinct from the generic
+    // BadgeCheck every SaaS dashboard ships with.
+    Icon: Fingerprint,
     founderValue: 'GitHub links',
     founderSupport: 'Show real shipping cadence and code history.',
     investorValue: 'Thesis fit',
@@ -30,7 +32,9 @@ const FEATURE_PILLARS: FeaturePillar[] = [
   {
     number: '02',
     label: 'Radar',
-    Icon: Radar,
+    // Telescope: far-sight + exploration. Reads more editorial than the
+    // literal radar dish.
+    Icon: Telescope,
     founderValue: 'Nearby peers',
     founderSupport: 'Find founders in your city and category.',
     investorValue: 'Builder density',
@@ -39,7 +43,9 @@ const FEATURE_PILLARS: FeaturePillar[] = [
   {
     number: '03',
     label: 'Motion',
-    Icon: Zap,
+    // ArrowUpRight: directional motion that mirrors the same icon the rest
+    // of the app already uses on CTAs and project links.
+    Icon: ArrowUpRight,
     founderValue: 'Investor DMs',
     founderSupport: 'Cold-pitch direct, track replies in-app.',
     investorValue: 'Deal flow',
