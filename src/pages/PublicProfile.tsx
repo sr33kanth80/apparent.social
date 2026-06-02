@@ -179,6 +179,11 @@ const ConnectSection = ({
   onMessage: () => void;
   tone: 'dark' | 'light';
 }) => {
+  // Logged-in viewers already have a Message button in the profile header,
+  // so this CTA is redundant for them. Only render it for logged-out visitors
+  // (the sign-in nudge).
+  if (viewer) return null;
+
   const fname = firstNameOf(name);
   const card = tone === 'dark' ? 'bg-[#42520d] text-white' : 'bg-[#dcefc7] text-black';
   const eyebrow = tone === 'dark' ? 'text-white/60' : 'text-[#42520d]';
