@@ -19,6 +19,7 @@ import {
   Plus,
   Rocket,
   Search,
+  Send,
   Settings,
   Target,
   UserCircle,
@@ -135,6 +136,7 @@ const roleConfig = {
         { label: 'Products', href: '#products', path: '/dashboard/founder/products', icon: Rocket },
         { label: 'Investor Matches', href: '#matches', icon: Search, badge: 'AI' },
         { label: 'VC heatmap', href: '#vc-heatmap', path: '/dashboard/founder/vc-heatmap', icon: Map, badge: 'VC' },
+        { label: 'Cold Outreach', href: '#outreach', icon: Send, badge: 'New' },
         { label: 'Messages', href: '#messages', icon: MessagesSquare },
       ],
       [

@@ -21,6 +21,7 @@ import {
   Repeat2,
   Rocket,
   Search,
+  Send,
   Smile,
   SquarePen,
   Star,
@@ -67,6 +68,8 @@ import type {
   UserSettings,
   VcInterestEntry,
   VCContact,
+  VcOutreachEntry,
+  VcOutreachStage,
 } from '@/lib/apparent-types';
 import type { ApparentInvestorRow } from '@/lib/dashboard-service';
 import {
@@ -77,6 +80,9 @@ import {
   loadFounderVCContacts,
   loadLaunchAuthors,
   loadPublicProductLaunches,
+  loadVcOutreachLog,
+  setVcOutreachStage,
+  deleteVcOutreach,
   saveBuilderDiscoveryState,
   saveFeedAction,
   saveInvestorMatchBookmark,
@@ -98,7 +104,7 @@ import { signOut } from '@/lib/auth-service';
 type DashboardRole = 'founder' | 'investor';
 type ActionMode = 'profile' | 'launch' | 'thesis' | 'meetup';
 type FieldKind = 'input' | 'textarea' | 'select';
-type ViewMode = 'overview' | 'profile' | 'products' | 'matches' | 'messages' | 'deals' | 'terms' | 'knowledge' | 'feedback' | 'settings' | 'for-you' | 'vc-heatmap' | 'discover';
+type ViewMode = 'overview' | 'profile' | 'products' | 'matches' | 'messages' | 'deals' | 'terms' | 'knowledge' | 'feedback' | 'settings' | 'for-you' | 'vc-heatmap' | 'discover' | 'outreach';
 type InvestorDealStage = 'New' | 'Reviewing' | 'Reached Out' | 'Meeting' | 'Watchlist';
 
 interface DashboardProps {
@@ -427,6 +433,10 @@ const viewFromHash = (hash: string): ViewMode => {
     return 'for-you';
   }
 
+  if (hash === '#outreach') {
+    return 'outreach';
+  }
+
   return 'overview';
 };
 
@@ -491,6 +501,10 @@ const viewFromSectionId = (id: string): ViewMode => {
     return 'vc-heatmap';
   }
 
+  if (id === 'outreach') {
+    return 'outreach';
+  }
+
   return 'overview';
 };
 
@@ -537,6 +551,10 @@ const sectionIdFromView = (view: ViewMode) => {
 
   if (view === 'settings') {
     return 'settings';
+  }
+
+  if (view === 'outreach') {
+    return 'outreach';
   }
 
   return 'overview';
@@ -845,6 +863,8 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
   // dynamic "Investor Matches" view. Loaded once per session.
   const [vcContactsForMatches, setVcContactsForMatches] = useState<VCContact[]>([]);
   const [apparentInvestors, setApparentInvestors] = useState<ApparentInvestorRow[]>([]);
+  // Founder's outreach kanban entries. Each row links to one VC by vcContactKey.
+  const [outreachEntries, setOutreachEntries] = useState<VcOutreachEntry[]>([]);
   const [meetups, setMeetups] = useState<Meetup[]>([]);
   const [builderNodes, setBuilderNodes] = useState<BuilderNode[]>([]);
   const [, setBuilderClusters] = useState<BuilderMapCluster[]>([]);
@@ -1413,6 +1433,24 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
       cancelled = true;
     };
   }, [isInvestor, user.id]);
+
+  // Founder side: outreach kanban entries. Updated locally when the heat-map
+  // compose dialog saves a row; reloaded here on mount so the view is hydrated
+  // when the founder first opens the tab.
+  useEffect(() => {
+    if (isInvestor) return;
+    let cancelled = false;
+    loadVcOutreachLog(user)
+      .then((rows) => {
+        if (!cancelled) setOutreachEntries(rows);
+      })
+      .catch(() => {
+        if (!cancelled) setOutreachEntries([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [isInvestor, user]);
 
   const handleMessageInterestedVc = async (entry: VcInterestEntry) => {
     try {
@@ -4770,6 +4808,188 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
     );
   };
 
+  // ── Founder cold-outreach kanban ─────────────────────────────────────────
+  const OUTREACH_STAGES: VcOutreachStage[] = ['Drafted', 'Sent', 'Replied', 'Meeting', 'Passed'];
+
+  const outreachByStage = useMemo(() => {
+    const grouped: Record<VcOutreachStage, VcOutreachEntry[]> = {
+      Drafted: [],
+      Sent: [],
+      Replied: [],
+      Meeting: [],
+      Passed: [],
+    };
+    outreachEntries.forEach((entry) => grouped[entry.stage].push(entry));
+    // Within a column, fresher activity floats to the top.
+    (Object.keys(grouped) as VcOutreachStage[]).forEach((stage) => {
+      grouped[stage].sort((a, b) => (b.updatedAt > a.updatedAt ? 1 : -1));
+    });
+    return grouped;
+  }, [outreachEntries]);
+
+  const moveOutreachStage = async (entry: VcOutreachEntry, stage: VcOutreachStage) => {
+    // Optimistic update — revert if persist fails.
+    const prev = entry.stage;
+    setOutreachEntries((current) =>
+      current.map((row) => (row.vcContactKey === entry.vcContactKey ? { ...row, stage } : row)),
+    );
+    try {
+      const updated = await setVcOutreachStage(user, entry.vcContactKey, stage);
+      if (updated) {
+        setOutreachEntries((current) =>
+          current.map((row) => (row.vcContactKey === updated.vcContactKey ? updated : row)),
+        );
+      }
+    } catch {
+      setOutreachEntries((current) =>
+        current.map((row) => (row.vcContactKey === entry.vcContactKey ? { ...row, stage: prev } : row)),
+      );
+      setDashboardError('Could not update outreach stage.');
+    }
+  };
+
+  const removeOutreach = async (entry: VcOutreachEntry) => {
+    setOutreachEntries((current) => current.filter((row) => row.vcContactKey !== entry.vcContactKey));
+    try {
+      await deleteVcOutreach(user, entry.vcContactKey);
+    } catch {
+      /* keep UI in sync with optimistic removal even if DB call fails */
+    }
+  };
+
+  const daysAgo = (iso: string): number | null => {
+    if (!iso) return null;
+    const ms = Date.now() - new Date(iso).getTime();
+    if (Number.isNaN(ms) || ms < 0) return null;
+    return Math.floor(ms / (1000 * 60 * 60 * 24));
+  };
+
+  const renderFounderOutreachKanban = () => (
+    <motion.div
+      key="outreach-main"
+      initial={{ opacity: 0, y: 10, filter: 'blur(2px)' }}
+      animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+      exit={{ opacity: 0, y: -8, filter: 'blur(2px)' }}
+      transition={{ duration: 0.22, ease: 'easeOut' }}
+    >
+      <div id="outreach" className="mx-auto max-w-[1292px] scroll-mt-24 space-y-6">
+        <section className="rounded-[20px] border border-black/10 bg-white shadow-[0_10px_34px_rgba(0,0,0,0.04)] px-5 py-5">
+          <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+            <div>
+              <h2 className="font-serif text-2xl font-normal tracking-[-0.03em]">Cold Outreach</h2>
+              <p className="mt-2 max-w-2xl text-sm leading-6 text-gray-600">
+                Every VC you compose to from the heat map lands here. Move them across the board as the conversation moves: Drafted → Sent → Replied → Meeting → Passed.
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-2 text-xs text-gray-500">
+              <span className="rounded-full bg-[#f4f1eb] px-3 py-1.5">{outreachEntries.length} total</span>
+              <span className="rounded-full bg-[#dcefc7] px-3 py-1.5 text-black">
+                {outreachByStage.Sent.length + outreachByStage.Replied.length + outreachByStage.Meeting.length} active
+              </span>
+            </div>
+          </div>
+        </section>
+
+        {outreachEntries.length === 0 ? (
+          <section className="rounded-[20px] border border-black/10 bg-white p-10 text-center shadow-[0_10px_34px_rgba(0,0,0,0.04)]">
+            <Send className="mx-auto h-8 w-8 text-black/25" />
+            <h3 className="mt-4 text-xl font-semibold tracking-[-0.02em]">No outreach yet</h3>
+            <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-black/55">
+              Open the VC heat map, click a VC with a public partner email, and use the Compose button. Every send shows up here as a kanban card.
+            </p>
+            <button
+              type="button"
+              onClick={() => {
+                setActiveView('vc-heatmap');
+                navigate(`${dashboardBasePath}/vc-heatmap`);
+              }}
+              className="mt-6 inline-flex items-center gap-1.5 rounded-full bg-black px-5 py-2.5 text-sm font-semibold text-white hover:bg-black/85"
+            >
+              Open VC heatmap <ArrowUpRight className="h-4 w-4" />
+            </button>
+          </section>
+        ) : (
+          <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
+            {OUTREACH_STAGES.map((stage) => {
+              const rows = outreachByStage[stage];
+              return (
+                <div key={stage} className="rounded-[16px] border border-black/10 bg-white p-3 shadow-[0_6px_20px_rgba(0,0,0,0.03)]">
+                  <div className="mb-2 flex items-center justify-between">
+                    <p className="text-xs font-semibold uppercase tracking-[0.16em] text-black/55">{stage}</p>
+                    <span className="rounded-full bg-[#fbfaf7] px-2 py-0.5 text-[11px] font-semibold text-black/55">
+                      {rows.length}
+                    </span>
+                  </div>
+                  <div className="space-y-2">
+                    {rows.map((entry) => {
+                      const updated = daysAgo(entry.updatedAt);
+                      const sent = daysAgo(entry.sentAt);
+                      return (
+                        <article
+                          key={entry.id || entry.vcContactKey}
+                          className="rounded-[12px] border border-black/10 bg-[#fbfaf7] p-3 transition-colors hover:bg-white"
+                        >
+                          <p className="truncate text-sm font-semibold text-black">
+                            {entry.investorName || entry.toEmail}
+                          </p>
+                          {entry.partnerName && (
+                            <p className="mt-0.5 truncate text-xs text-black/55">{entry.partnerName}</p>
+                          )}
+                          <p className="mt-1 truncate font-mono text-[11px] text-black/45">{entry.toEmail}</p>
+                          {entry.subject && (
+                            <p className="mt-2 line-clamp-2 text-xs leading-5 text-black/65">{entry.subject}</p>
+                          )}
+                          <div className="mt-2 flex flex-wrap items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-black/45">
+                            {sent !== null && <span>Sent {sent === 0 ? 'today' : `${sent}d ago`}</span>}
+                            {updated !== null && sent === null && (
+                              <span>Updated {updated === 0 ? 'today' : `${updated}d ago`}</span>
+                            )}
+                          </div>
+                          <div className="mt-3 flex flex-wrap items-center gap-1.5">
+                            <select
+                              value={entry.stage}
+                              onChange={(event) => void moveOutreachStage(entry, event.target.value as VcOutreachStage)}
+                              className="rounded-full border border-black/10 bg-white px-2 py-1 text-[11px] font-semibold text-black/70 outline-none focus:border-[#42520d]"
+                              aria-label={`Move outreach for ${entry.investorName || entry.toEmail}`}
+                            >
+                              {OUTREACH_STAGES.map((option) => (
+                                <option key={option} value={option}>{option}</option>
+                              ))}
+                            </select>
+                            <a
+                              href={`mailto:${entry.toEmail}?subject=${encodeURIComponent(entry.subject || '')}&body=${encodeURIComponent(entry.body || '')}`}
+                              className="inline-flex items-center gap-1 rounded-full border border-black/10 bg-white px-2 py-1 text-[11px] font-semibold text-black/70 transition-colors hover:bg-[#fbfaf7]"
+                              title="Resend or follow up"
+                            >
+                              Resend
+                            </a>
+                            <button
+                              type="button"
+                              onClick={() => void removeOutreach(entry)}
+                              className="ml-auto rounded-full border border-black/10 bg-white p-1 text-black/40 transition-colors hover:bg-red-50 hover:text-red-600"
+                              aria-label={`Remove ${entry.investorName || entry.toEmail}`}
+                            >
+                              <X className="h-3 w-3" />
+                            </button>
+                          </div>
+                        </article>
+                      );
+                    })}
+                    {rows.length === 0 && (
+                      <p className="rounded-[10px] bg-[#fbfaf7] px-3 py-4 text-center text-[11px] text-black/35">
+                        Empty
+                      </p>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </section>
+        )}
+      </div>
+    </motion.div>
+  );
+
   const renderInvestorDealFlowSection = () => (
     <section id="deals" className="scroll-mt-24 rounded-[20px] border border-black/10 bg-white shadow-[0_10px_34px_rgba(0,0,0,0.04)]">
       <div className="flex items-center justify-between border-b border-black/10 px-5 py-3">
@@ -6649,7 +6869,17 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
                 exit={{ opacity: 0, y: -8, filter: 'blur(2px)' }}
                 transition={{ duration: 0.22, ease: 'easeOut' }}
               >
-                <HeatMap includeVCContacts vcOnly fullBleed founderStage={intakeValues.stage} founderSectors={intakeValues.category} />
+                <HeatMap
+                  includeVCContacts
+                  vcOnly
+                  fullBleed
+                  founderStage={intakeValues.stage}
+                  founderSectors={intakeValues.category}
+                  currentUser={user}
+                  founderName={intakeValues.profileName || user.username || user.email.split('@')[0]}
+                  founderCompany={productLaunches[0]?.name || intakeValues.currentBuild || ''}
+                  founderTraction={productLaunches[0]?.metrics || intakeValues.traction || ''}
+                />
               </motion.div>
             ) : activeView === 'overview' ? (
               <motion.div
@@ -6706,6 +6936,8 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
               </motion.div>
             ) : activeView === 'for-you' ? (
               renderForYouLaunchPage()
+            ) : activeView === 'outreach' && !isInvestor ? (
+              renderFounderOutreachKanban()
             ) : (
               <motion.div
                 key="for-you-main"

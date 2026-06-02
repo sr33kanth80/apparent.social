@@ -33,6 +33,9 @@ import type {
   UserMessage,
   UserSettings,
   VcInterestEntry,
+  VcOutreachEntry,
+  VcOutreachStage,
+  VcOutreachTemplate,
 } from '@/lib/apparent-types';
 import { isSupabaseConfigured, supabase } from '@/lib/supabase';
 import { getStaticFounderProfile } from '@/lib/static-founder-profiles';
@@ -2411,4 +2414,360 @@ export const saveInvestorMatchBookmark = async (
   saved: boolean,
 ): Promise<void> => {
   return saveFeedAction(user, `inv-match:${matchName}`, { saved, reposted: false, reply: '' });
+};
+
+// ── VC outreach (mailto compose + kanban) ──────────────────────────────────
+
+/**
+ * Stable per-VC identity key. Prefers the partner email; falls back to a
+ * `name|website` slug so seed-only entries (without email in DB) still dedupe.
+ * Matches the dedup logic in loadFounderVCContacts.
+ */
+export const vcContactKey = (vc: {
+  partnerEmail?: string;
+  investorName?: string;
+  website?: string;
+}): string => {
+  const email = (vc.partnerEmail || '').toLowerCase().trim();
+  if (email) return `email:${email}`;
+  const name = (vc.investorName || '').toLowerCase().trim();
+  const website = (vc.website || '')
+    .toLowerCase()
+    .trim()
+    .replace(/^https?:\/\//, '')
+    .replace(/^www\./, '')
+    .replace(/\/$/, '');
+  return `nw:${name}|${website}`;
+};
+
+const mapOutreachRow = (row: Record<string, unknown>): VcOutreachEntry => ({
+  id: String(row.id ?? ''),
+  userId: String(row.user_id ?? row.userId ?? ''),
+  vcContactKey: String(row.vc_contact_key ?? row.vcContactKey ?? ''),
+  vcContactId: row.vc_contact_id ? String(row.vc_contact_id) : '',
+  toEmail: String(row.to_email ?? row.toEmail ?? ''),
+  toName: String(row.to_name ?? row.toName ?? ''),
+  investorName: String(row.investor_name ?? row.investorName ?? ''),
+  partnerName: String(row.partner_name ?? row.partnerName ?? ''),
+  subject: String(row.subject ?? ''),
+  body: String(row.body ?? ''),
+  stage: (['Drafted', 'Sent', 'Replied', 'Meeting', 'Passed'].includes(String(row.stage))
+    ? String(row.stage)
+    : 'Drafted') as VcOutreachStage,
+  sentAt: String(row.sent_at ?? row.sentAt ?? ''),
+  notes: String(row.notes ?? ''),
+  updatedAt: String(row.updated_at ?? row.updatedAt ?? nowIso()),
+});
+
+const mapTemplateRow = (row: Record<string, unknown>): VcOutreachTemplate => ({
+  id: String(row.id ?? ''),
+  userId: String(row.user_id ?? row.userId ?? ''),
+  name: String(row.name ?? 'Untitled template'),
+  subject: String(row.subject ?? ''),
+  body: String(row.body ?? ''),
+  isDefault: Boolean(row.is_default ?? row.isDefault ?? false),
+  updatedAt: String(row.updated_at ?? row.updatedAt ?? nowIso()),
+});
+
+/**
+ * Pre-baked subject lines tuned for cold-VC outreach. Free for every founder;
+ * AI-rewrites per VC thesis stay a paid option.
+ */
+export const PREBAKED_SUBJECT_LINES = [
+  'Quick note re: {{vc_firm}} thesis fit',
+  'Building {{my_company}} — would value your perspective',
+  '{{my_company}}: {{traction}}',
+  'For {{vc_partner}}: short intro from a builder',
+  '{{vc_firm}} × {{my_company}} — 60 seconds',
+] as const;
+
+/**
+ * Default cold-email template seeded into every founder's account when the
+ * outreach UI first opens. Variables resolve at compose time, never stored.
+ */
+export const DEFAULT_OUTREACH_TEMPLATE = {
+  name: 'Default cold intro',
+  subject: 'Quick note re: {{vc_firm}} thesis fit',
+  body: `Hi {{vc_partner}},
+
+I'm {{founder_name}}, building {{my_company}}.
+
+{{traction}}
+
+We're focused on the space your firm has backed before, and I'd love 60 seconds of your time to share what we're seeing and hear what would make this a fit (or not) for {{vc_firm}}.
+
+Open to a quick call this or next week?
+
+Best,
+{{founder_name}}`,
+};
+
+/** Replace {{variable}} tokens with the founder's supplied context. */
+export const renderOutreachTemplate = (
+  source: string,
+  vars: Record<string, string>,
+): string =>
+  source.replace(/\{\{\s*([a-zA-Z_][a-zA-Z0-9_]*)\s*\}\}/g, (_, key) => {
+    const value = vars[key];
+    return value === undefined || value === '' ? `{{${key}}}` : value;
+  });
+
+export const loadVcOutreachLog = async (
+  user: AppUser,
+): Promise<VcOutreachEntry[]> => {
+  if (!isSupabaseConfigured || !supabase || user.isDev) {
+    return readLocal<VcOutreachEntry[]>(storageKey(user, 'vc-outreach-log'), []);
+  }
+  try {
+    const { data, error } = await supabase
+      .from('vc_outreach_log')
+      .select('*')
+      .eq('user_id', user.id)
+      .order('updated_at', { ascending: false });
+    if (error || !data) return [];
+    return data.map((row) => mapOutreachRow(row as Record<string, unknown>));
+  } catch {
+    return [];
+  }
+};
+
+/**
+ * Upsert by (user_id, vc_contact_key). Marking a VC as "Sent" overwrites the
+ * stage + bumps sent_at; later kanban moves only touch stage.
+ */
+export const saveVcOutreach = async (
+  user: AppUser,
+  patch: {
+    vcContactKey: string;
+    vcContactId?: string;
+    toEmail: string;
+    toName?: string;
+    investorName?: string;
+    partnerName?: string;
+    subject?: string;
+    body?: string;
+    stage?: VcOutreachStage;
+    sentAt?: string;
+    notes?: string;
+  },
+): Promise<VcOutreachEntry> => {
+  const stage = patch.stage ?? 'Drafted';
+  const sentAt = patch.sentAt ?? (stage === 'Sent' ? nowIso() : '');
+  const draft: VcOutreachEntry = {
+    id: localId('outreach'),
+    userId: user.id,
+    vcContactKey: patch.vcContactKey,
+    vcContactId: patch.vcContactId ?? '',
+    toEmail: patch.toEmail,
+    toName: patch.toName ?? '',
+    investorName: patch.investorName ?? '',
+    partnerName: patch.partnerName ?? '',
+    subject: patch.subject ?? '',
+    body: patch.body ?? '',
+    stage,
+    sentAt,
+    notes: patch.notes ?? '',
+    updatedAt: nowIso(),
+  };
+
+  if (!isSupabaseConfigured || !supabase || user.isDev) {
+    const current = readLocal<VcOutreachEntry[]>(storageKey(user, 'vc-outreach-log'), []);
+    const existing = current.find((entry) => entry.vcContactKey === draft.vcContactKey);
+    const merged: VcOutreachEntry = existing
+      ? {
+          ...existing,
+          ...draft,
+          id: existing.id,
+          // Preserve original sentAt unless the new stage is Sent and there was none.
+          sentAt: draft.stage === 'Sent' && !existing.sentAt ? sentAt : existing.sentAt || sentAt,
+        }
+      : draft;
+    writeLocal(
+      storageKey(user, 'vc-outreach-log'),
+      [merged, ...current.filter((entry) => entry.vcContactKey !== merged.vcContactKey)],
+    );
+    return merged;
+  }
+
+  const payload: Record<string, unknown> = {
+    user_id: user.id,
+    vc_contact_key: draft.vcContactKey,
+    vc_contact_id: draft.vcContactId || null,
+    to_email: draft.toEmail,
+    to_name: draft.toName,
+    investor_name: draft.investorName,
+    partner_name: draft.partnerName,
+    subject: draft.subject,
+    body: draft.body,
+    stage: draft.stage,
+    notes: draft.notes,
+  };
+  if (draft.sentAt) payload.sent_at = draft.sentAt;
+
+  const { data, error } = await supabase
+    .from('vc_outreach_log')
+    .upsert(payload, { onConflict: 'user_id,vc_contact_key' })
+    .select('*')
+    .single();
+
+  if (error || !data) throw error ?? new Error('Unable to save outreach.');
+  return mapOutreachRow(data as Record<string, unknown>);
+};
+
+/** Move an existing entry between kanban columns. */
+export const setVcOutreachStage = async (
+  user: AppUser,
+  vcContactKey: string,
+  stage: VcOutreachStage,
+): Promise<VcOutreachEntry | null> => {
+  if (!isSupabaseConfigured || !supabase || user.isDev) {
+    const current = readLocal<VcOutreachEntry[]>(storageKey(user, 'vc-outreach-log'), []);
+    const existing = current.find((entry) => entry.vcContactKey === vcContactKey);
+    if (!existing) return null;
+    const updated: VcOutreachEntry = {
+      ...existing,
+      stage,
+      sentAt: stage === 'Sent' && !existing.sentAt ? nowIso() : existing.sentAt,
+      updatedAt: nowIso(),
+    };
+    writeLocal(
+      storageKey(user, 'vc-outreach-log'),
+      [updated, ...current.filter((entry) => entry.vcContactKey !== vcContactKey)],
+    );
+    return updated;
+  }
+  try {
+    const payload: Record<string, unknown> = { stage };
+    if (stage === 'Sent') payload.sent_at = nowIso();
+    const { data, error } = await supabase
+      .from('vc_outreach_log')
+      .update(payload)
+      .eq('user_id', user.id)
+      .eq('vc_contact_key', vcContactKey)
+      .select('*')
+      .single();
+    if (error || !data) return null;
+    return mapOutreachRow(data as Record<string, unknown>);
+  } catch {
+    return null;
+  }
+};
+
+export const deleteVcOutreach = async (
+  user: AppUser,
+  vcContactKey: string,
+): Promise<void> => {
+  if (!isSupabaseConfigured || !supabase || user.isDev) {
+    const current = readLocal<VcOutreachEntry[]>(storageKey(user, 'vc-outreach-log'), []);
+    writeLocal(
+      storageKey(user, 'vc-outreach-log'),
+      current.filter((entry) => entry.vcContactKey !== vcContactKey),
+    );
+    return;
+  }
+  try {
+    await supabase
+      .from('vc_outreach_log')
+      .delete()
+      .eq('user_id', user.id)
+      .eq('vc_contact_key', vcContactKey);
+  } catch {
+    /* non-fatal */
+  }
+};
+
+export const loadOutreachTemplates = async (
+  user: AppUser,
+): Promise<VcOutreachTemplate[]> => {
+  if (!isSupabaseConfigured || !supabase || user.isDev) {
+    return readLocal<VcOutreachTemplate[]>(storageKey(user, 'vc-outreach-templates'), []);
+  }
+  try {
+    const { data, error } = await supabase
+      .from('vc_outreach_templates')
+      .select('*')
+      .eq('user_id', user.id)
+      .order('updated_at', { ascending: false });
+    if (error || !data) return [];
+    return data.map((row) => mapTemplateRow(row as Record<string, unknown>));
+  } catch {
+    return [];
+  }
+};
+
+export const saveOutreachTemplate = async (
+  user: AppUser,
+  template: {
+    id?: string;
+    name: string;
+    subject: string;
+    body: string;
+    isDefault?: boolean;
+  },
+): Promise<VcOutreachTemplate> => {
+  const draft: VcOutreachTemplate = {
+    id: template.id || localId('tpl'),
+    userId: user.id,
+    name: template.name,
+    subject: template.subject,
+    body: template.body,
+    isDefault: Boolean(template.isDefault),
+    updatedAt: nowIso(),
+  };
+
+  if (!isSupabaseConfigured || !supabase || user.isDev) {
+    const current = readLocal<VcOutreachTemplate[]>(
+      storageKey(user, 'vc-outreach-templates'),
+      [],
+    );
+    writeLocal(
+      storageKey(user, 'vc-outreach-templates'),
+      [draft, ...current.filter((tpl) => tpl.id !== draft.id)],
+    );
+    return draft;
+  }
+
+  const payload: Record<string, unknown> = {
+    user_id: user.id,
+    name: draft.name,
+    subject: draft.subject,
+    body: draft.body,
+    is_default: draft.isDefault,
+  };
+  if (template.id) payload.id = template.id;
+
+  const { data, error } = await supabase
+    .from('vc_outreach_templates')
+    .upsert(payload)
+    .select('*')
+    .single();
+
+  if (error || !data) throw error ?? new Error('Unable to save template.');
+  return mapTemplateRow(data as Record<string, unknown>);
+};
+
+export const deleteOutreachTemplate = async (
+  user: AppUser,
+  templateId: string,
+): Promise<void> => {
+  if (!isSupabaseConfigured || !supabase || user.isDev) {
+    const current = readLocal<VcOutreachTemplate[]>(
+      storageKey(user, 'vc-outreach-templates'),
+      [],
+    );
+    writeLocal(
+      storageKey(user, 'vc-outreach-templates'),
+      current.filter((tpl) => tpl.id !== templateId),
+    );
+    return;
+  }
+  try {
+    await supabase
+      .from('vc_outreach_templates')
+      .delete()
+      .eq('user_id', user.id)
+      .eq('id', templateId);
+  } catch {
+    /* non-fatal */
+  }
 };

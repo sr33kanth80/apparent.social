@@ -303,6 +303,36 @@ export interface VCContact {
   foundingYear: number | null;
 }
 
+export type VcOutreachStage = 'Drafted' | 'Sent' | 'Replied' | 'Meeting' | 'Passed';
+
+export interface VcOutreachEntry {
+  id: string;
+  userId: string;
+  /** Stable per-VC key: lower-cased partner email, or "name|website" when missing. */
+  vcContactKey: string;
+  vcContactId?: string;
+  toEmail: string;
+  toName: string;
+  investorName: string;
+  partnerName: string;
+  subject: string;
+  body: string;
+  stage: VcOutreachStage;
+  sentAt: string;
+  notes: string;
+  updatedAt: string;
+}
+
+export interface VcOutreachTemplate {
+  id: string;
+  userId: string;
+  name: string;
+  subject: string;
+  body: string;
+  isDefault: boolean;
+  updatedAt: string;
+}
+
 export interface BuilderDiscoveryState {
   userId: string;
   builderId: string;

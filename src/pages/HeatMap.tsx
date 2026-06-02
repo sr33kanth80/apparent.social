@@ -1,12 +1,29 @@
 import { useEffect, useId, useMemo, useState } from 'react';
-import { ArrowUpRight, Building2, Flame, Globe2, Layers3, LocateFixed, SlidersHorizontal, Users, X } from 'lucide-react';
+import { ArrowUpRight, Building2, CheckCircle2, Clock, Copy, Flame, Globe2, Layers3, LocateFixed, MailCheck, Send, SlidersHorizontal, Sparkles, Users, X } from 'lucide-react';
 import type { GeoJSONSource, MapLayerMouseEvent } from 'maplibre-gl';
 import { Link } from 'react-router-dom';
 import { Map, useMap } from '@/components/ui/map';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { cityGeoCoordinates, seedBuilderNodes } from '@/lib/app-defaults';
-import { loadFounderVCContacts, loadPublicProductLaunches } from '@/lib/dashboard-service';
-import type { ProductLaunch, VCContact } from '@/lib/apparent-types';
+import {
+  DEFAULT_OUTREACH_TEMPLATE,
+  PREBAKED_SUBJECT_LINES,
+  loadFounderVCContacts,
+  loadOutreachTemplates,
+  loadPublicProductLaunches,
+  loadVcOutreachLog,
+  renderOutreachTemplate,
+  saveVcOutreach,
+  vcContactKey,
+} from '@/lib/dashboard-service';
+import type {
+  AppUser,
+  ProductLaunch,
+  VCContact,
+  VcOutreachEntry,
+  VcOutreachStage,
+  VcOutreachTemplate,
+} from '@/lib/apparent-types';
 
 type HeatMapMode = 'all' | 'builders' | 'vcs';
 
@@ -28,6 +45,8 @@ type HeatMapPoint = {
   socialLinks?: Array<{ label: string; url: string }>;
   imageUrl: string;
   imageKind?: 'city' | 'logo';
+  /** Underlying VC record — used by the compose dialog for variable substitution. */
+  vcContact?: VCContact;
 };
 
 interface HeatMapProps {
@@ -43,6 +62,11 @@ interface HeatMapProps {
   /** Founder's own stage/sectors — powers the "Match my profile" shortcut. */
   founderStage?: string;
   founderSectors?: string;
+  /** Founder identity passed in from the dashboard. Enables the compose dialog. */
+  currentUser?: AppUser | null;
+  founderName?: string;
+  founderCompany?: string;
+  founderTraction?: string;
 }
 
 const HEATMAP_GRADIENT_COLORS = ['#fff7bc', '#fee391', '#fec44f', '#fe9929', '#d7301f'];
@@ -160,6 +184,7 @@ const vcContactToPoint = (contact: VCContact, index: number): HeatMapPoint | nul
     ].filter(Boolean) as Array<{ label: string; url: string }>,
     imageUrl: logoUrlFromWebsite(contact.website),
     imageKind: 'logo',
+    vcContact: contact,
   };
 };
 
@@ -320,10 +345,18 @@ function HeatMapDetailPanel({
   point,
   onClose,
   locked = false,
+  outreachEntry,
+  canCompose = false,
+  onOpenCompose,
 }: {
   point: HeatMapPoint;
   onClose: () => void;
   locked?: boolean;
+  /** Existing outreach record for this VC (if any) — drives the badge. */
+  outreachEntry?: VcOutreachEntry;
+  /** True when a logged-in founder is viewing — unlocks the compose flow. */
+  canCompose?: boolean;
+  onOpenCompose?: () => void;
 }) {
   const specRows = [
     ['Signal score', String(point.intensity)],
@@ -331,6 +364,16 @@ function HeatMapDetailPanel({
     point.partnerName ? ['Partner', point.partnerName] : null,
     point.fundStage ? ['Stage', point.fundStage] : null,
   ].filter(Boolean) as Array<[string, string]>;
+
+  // "Last contacted N days ago" — only shown when the founder has actually
+  // sent something. Drafts don't count.
+  const lastContactedDaysAgo = (() => {
+    const ts = outreachEntry?.sentAt;
+    if (!ts) return null;
+    const ms = Date.now() - new Date(ts).getTime();
+    if (Number.isNaN(ms) || ms < 0) return null;
+    return Math.max(0, Math.floor(ms / (1000 * 60 * 60 * 24)));
+  })();
 
   return (
     <div className="overflow-hidden rounded-[18px] border border-black/10 bg-[#f0eee6] text-[#1f1e1d] shadow-[0_20px_60px_rgba(0,0,0,0.16)]">
@@ -386,6 +429,24 @@ function HeatMapDetailPanel({
             </p>
           ))}
 
+        {/* Outreach status badges (founder only). Shows the kanban stage + a
+            "last contacted N days ago" counter so the founder doesn't re-spam. */}
+        {outreachEntry && (
+          <div className="flex flex-wrap items-center gap-1.5 px-5 pt-3">
+            <span className="inline-flex items-center gap-1 rounded-full bg-[#42520d] px-2.5 py-1 text-[11px] font-semibold text-white">
+              <MailCheck className="h-3 w-3" /> {outreachEntry.stage}
+            </span>
+            {lastContactedDaysAgo !== null && (
+              <span className="inline-flex items-center gap-1 rounded-full border border-black/15 bg-white px-2.5 py-1 text-[11px] font-medium text-black/65">
+                <Clock className="h-3 w-3" />
+                {lastContactedDaysAgo === 0
+                  ? 'Contacted today'
+                  : `Last contacted ${lastContactedDaysAgo}d ago`}
+              </span>
+            )}
+          </div>
+        )}
+
         <div className="flex gap-2 px-5 pb-4 pt-3">
           {point.email && locked ? (
             <Link
@@ -396,6 +457,16 @@ function HeatMapDetailPanel({
               <LocateFixed className="h-3.5 w-3.5" />
               Sign in to email
             </Link>
+          ) : point.email && canCompose ? (
+            <button
+              type="button"
+              onClick={onOpenCompose}
+              className="flex flex-1 items-center justify-center gap-1.5 rounded-full px-4 py-2.5 text-sm font-semibold text-white transition-opacity hover:opacity-90"
+              style={{ backgroundColor: CLAUDE_CLAY }}
+            >
+              <Send className="h-3.5 w-3.5" />
+              Compose email
+            </button>
           ) : (
             <a
               href={point.email ? `mailto:${point.email}` : point.websiteUrl || '#'}
@@ -537,6 +608,10 @@ export const HeatMap = ({
   lockContacts = false,
   founderStage = '',
   founderSectors = '',
+  currentUser = null,
+  founderName = '',
+  founderCompany = '',
+  founderTraction = '',
 }: HeatMapProps) => {
   const [publishedLaunches, setPublishedLaunches] = useState<ProductLaunch[]>([]);
   const [vcContacts, setVcContacts] = useState<VCContact[]>([]);
@@ -545,6 +620,23 @@ export const HeatMap = ({
   const [infoDismissed, setInfoDismissed] = useState(false);
   const [vcFilters, setVcFilters] = useState<VcFilters>(emptyVcFilters);
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const [composeOpen, setComposeOpen] = useState(false);
+  const [outreachLog, setOutreachLog] = useState<VcOutreachEntry[]>([]);
+  const [outreachTemplates, setOutreachTemplates] = useState<VcOutreachTemplate[]>([]);
+
+  // Index by vcContactKey so the detail panel + dialog can answer
+  // "last contacted" + "current stage" in O(1). Use a plain object because
+  // the `Map` identifier here shadows the JS built-in (the map UI component
+  // was imported under the same name).
+  const outreachByKey = useMemo(() => {
+    const lookup: Record<string, VcOutreachEntry> = {};
+    outreachLog.forEach((entry) => {
+      lookup[entry.vcContactKey] = entry;
+    });
+    return lookup;
+  }, [outreachLog]);
+
+  const isFounderLoggedIn = Boolean(currentUser && currentUser.role === 'founder');
 
   const toggleFilterKey = (group: 'stages' | 'sectors' | 'fundTypes', key: string) =>
     setVcFilters((current) => ({
@@ -591,6 +683,28 @@ export const HeatMap = ({
       isMounted = false;
     };
   }, [includeVCContacts]);
+
+  // Founder-only: pull this user's outreach log + saved templates so the
+  // detail panel can show "Last contacted N days ago" and the compose dialog
+  // can offer their saved templates. Non-founders skip the network calls.
+  useEffect(() => {
+    if (!isFounderLoggedIn || !currentUser) return;
+    let cancelled = false;
+    Promise.all([loadVcOutreachLog(currentUser), loadOutreachTemplates(currentUser)])
+      .then(([log, templates]) => {
+        if (cancelled) return;
+        setOutreachLog(log);
+        setOutreachTemplates(templates);
+      })
+      .catch(() => {
+        if (cancelled) return;
+        setOutreachLog([]);
+        setOutreachTemplates([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [currentUser, isFounderLoggedIn]);
 
   const heatPoints = useMemo(() => {
     const apparentBuilders: HeatMapPoint[] = [
@@ -853,7 +967,18 @@ export const HeatMap = ({
 
           {selectedVisiblePoint && (
             <div className="w-full">
-              <HeatMapDetailPanel point={selectedVisiblePoint} onClose={() => setSelectedPoint(null)} locked={lockContacts} />
+              <HeatMapDetailPanel
+                point={selectedVisiblePoint}
+                onClose={() => setSelectedPoint(null)}
+                locked={lockContacts}
+                outreachEntry={
+                  selectedVisiblePoint.vcContact
+                    ? outreachByKey[vcContactKey(selectedVisiblePoint.vcContact)]
+                    : undefined
+                }
+                canCompose={isFounderLoggedIn && Boolean(selectedVisiblePoint.email && selectedVisiblePoint.vcContact)}
+                onOpenCompose={() => setComposeOpen(true)}
+              />
             </div>
           )}
           </div>
@@ -898,6 +1023,308 @@ export const HeatMap = ({
 
         </div>
       </section>
+
+      {composeOpen && currentUser && selectedPoint?.vcContact && selectedPoint.email && (
+        <ComposeDialog
+          user={currentUser}
+          vc={selectedPoint.vcContact}
+          templates={outreachTemplates}
+          existingEntry={outreachByKey[vcContactKey(selectedPoint.vcContact)]}
+          founderName={founderName || currentUser.username || currentUser.email.split('@')[0]}
+          founderCompany={founderCompany}
+          founderTraction={founderTraction}
+          onClose={() => setComposeOpen(false)}
+          onSaved={(entry) => {
+            setOutreachLog((current) => [
+              entry,
+              ...current.filter((row) => row.vcContactKey !== entry.vcContactKey),
+            ]);
+          }}
+        />
+      )}
     </main>
   );
 };
+
+// ── Compose dialog ──────────────────────────────────────────────────────────
+// Pre-baked subjects + saved templates + variable substitution. Send opens
+// the system mail handler (no API). "Mark as sent" logs to vc_outreach_log
+// so the kanban and last-contacted counter pick it up.
+
+const OUTREACH_STAGE_OPTIONS: VcOutreachStage[] = ['Drafted', 'Sent', 'Replied', 'Meeting', 'Passed'];
+
+function ComposeDialog({
+  user,
+  vc,
+  templates,
+  existingEntry,
+  founderName,
+  founderCompany,
+  founderTraction,
+  onClose,
+  onSaved,
+}: {
+  user: AppUser;
+  vc: VCContact;
+  templates: VcOutreachTemplate[];
+  existingEntry?: VcOutreachEntry;
+  founderName: string;
+  founderCompany: string;
+  founderTraction: string;
+  onClose: () => void;
+  onSaved: (entry: VcOutreachEntry) => void;
+}) {
+  // Variable map — resolved at compose time, never stored. Founder edits the
+  // rendered text directly, so we just template once on first open.
+  const vars = useMemo<Record<string, string>>(
+    () => ({
+      founder_name: founderName,
+      my_company: founderCompany || 'my product',
+      vc_partner: (vc.partnerName || '').split(/\s+/)[0] || 'there',
+      vc_firm: vc.investorName || 'your firm',
+      traction: founderTraction || '',
+    }),
+    [founderName, founderCompany, founderTraction, vc.investorName, vc.partnerName],
+  );
+
+  // First-open hydration order: prior draft → user's default template →
+  // first saved template → bundled DEFAULT_OUTREACH_TEMPLATE.
+  const initialSubject = (() => {
+    if (existingEntry?.subject) return existingEntry.subject;
+    const defaultTpl = templates.find((tpl) => tpl.isDefault) || templates[0];
+    const tplSubject = defaultTpl?.subject || DEFAULT_OUTREACH_TEMPLATE.subject;
+    return renderOutreachTemplate(tplSubject, vars);
+  })();
+  const initialBody = (() => {
+    if (existingEntry?.body) return existingEntry.body;
+    const defaultTpl = templates.find((tpl) => tpl.isDefault) || templates[0];
+    const tplBody = defaultTpl?.body || DEFAULT_OUTREACH_TEMPLATE.body;
+    return renderOutreachTemplate(tplBody, vars);
+  })();
+
+  const [subject, setSubject] = useState(initialSubject);
+  const [body, setBody] = useState(initialBody);
+  const [saving, setSaving] = useState<'idle' | 'sent' | 'saving' | 'error'>('idle');
+  const [errorMessage, setErrorMessage] = useState('');
+  const [copied, setCopied] = useState(false);
+
+  const applyTemplate = (template: { subject: string; body: string }) => {
+    setSubject(renderOutreachTemplate(template.subject, vars));
+    setBody(renderOutreachTemplate(template.body, vars));
+  };
+
+  const applySubject = (template: string) => {
+    setSubject(renderOutreachTemplate(template, vars));
+  };
+
+  // Save → log row + bump kanban stage. Caller passes the stage they want.
+  const persist = async (stage: VcOutreachStage) => {
+    setSaving('saving');
+    setErrorMessage('');
+    try {
+      const entry = await saveVcOutreach(user, {
+        vcContactKey: vcContactKey(vc),
+        toEmail: vc.partnerEmail,
+        toName: vc.partnerName,
+        investorName: vc.investorName,
+        partnerName: vc.partnerName,
+        subject,
+        body,
+        stage,
+      });
+      onSaved(entry);
+      setSaving('sent');
+    } catch (err) {
+      setSaving('error');
+      setErrorMessage(err instanceof Error ? err.message : 'Unable to save outreach.');
+    }
+  };
+
+  const mailtoHref = `mailto:${vc.partnerEmail}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+
+  const handleOpenInMail = () => {
+    // Persist as Drafted (or keep Sent if already sent) before the mailto
+    // handler steals focus, so the kanban reflects the founder's intent.
+    if (!existingEntry || existingEntry.stage === 'Drafted') {
+      void persist('Drafted');
+    }
+    window.location.href = mailtoHref;
+  };
+
+  const handleMarkSent = () => {
+    void persist('Sent');
+  };
+
+  const handleCopyBody = async () => {
+    try {
+      await navigator.clipboard.writeText(`Subject: ${subject}\n\n${body}`);
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 1500);
+    } catch {
+      /* clipboard blocked — non-fatal */
+    }
+  };
+
+  return (
+    <div
+      className="fixed inset-0 z-[60] flex items-end justify-center bg-black/40 p-3 backdrop-blur-sm sm:items-center sm:p-6"
+      onClick={onClose}
+      role="presentation"
+    >
+      <div
+        className="relative w-full max-w-2xl overflow-hidden rounded-[20px] bg-white shadow-[0_24px_60px_rgba(0,0,0,0.32)]"
+        onClick={(event) => event.stopPropagation()}
+        role="dialog"
+        aria-modal="true"
+        aria-label={`Compose email to ${vc.investorName}`}
+      >
+        <div className="flex items-start justify-between gap-3 border-b border-black/10 px-5 py-4">
+          <div className="min-w-0">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#42520d]">
+              Compose cold email
+            </p>
+            <h2 className="mt-1 text-lg font-semibold tracking-[-0.01em]">
+              {vc.investorName}
+            </h2>
+            <p className="mt-0.5 truncate text-xs text-black/55">
+              To: {vc.partnerName ? `${vc.partnerName} · ` : ''}
+              <span className="font-mono">{vc.partnerEmail}</span>
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Close compose dialog"
+            className="shrink-0 rounded-full p-1.5 text-black/40 transition-colors hover:bg-black/5 hover:text-black/70"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+
+        <div className="max-h-[70vh] overflow-y-auto px-5 py-4">
+          {/* Pre-baked subject lines — quick swap, free for every founder. */}
+          <div className="mb-4">
+            <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-black/45">
+              Quick subjects
+            </p>
+            <div className="flex flex-wrap gap-1.5">
+              {PREBAKED_SUBJECT_LINES.map((line) => (
+                <button
+                  key={line}
+                  type="button"
+                  onClick={() => applySubject(line)}
+                  className="rounded-full border border-black/10 bg-[#fbfaf7] px-2.5 py-1 text-[11px] font-medium text-black/65 transition-colors hover:bg-[#dcefc7] hover:text-black"
+                >
+                  {renderOutreachTemplate(line, vars)}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Saved templates — defaults to the bundled one when the user has none yet. */}
+          {(templates.length > 0 || true) && (
+            <div className="mb-4">
+              <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-black/45">
+                Templates
+              </p>
+              <div className="flex flex-wrap gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => applyTemplate(DEFAULT_OUTREACH_TEMPLATE)}
+                  className="inline-flex items-center gap-1 rounded-full border border-black/10 bg-white px-2.5 py-1 text-[11px] font-medium text-black/70 transition-colors hover:bg-[#fbfaf7]"
+                >
+                  <Sparkles className="h-3 w-3 text-[#42520d]" />
+                  Default cold intro
+                </button>
+                {templates.map((tpl) => (
+                  <button
+                    key={tpl.id}
+                    type="button"
+                    onClick={() => applyTemplate(tpl)}
+                    className="rounded-full border border-black/10 bg-white px-2.5 py-1 text-[11px] font-medium text-black/70 transition-colors hover:bg-[#fbfaf7]"
+                  >
+                    {tpl.name}
+                    {tpl.isDefault ? ' · default' : ''}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          <label className="mb-3 block">
+            <span className="mb-1 block text-[11px] font-semibold uppercase tracking-[0.14em] text-black/45">
+              Subject
+            </span>
+            <input
+              type="text"
+              value={subject}
+              onChange={(event) => setSubject(event.target.value)}
+              className="w-full rounded-[12px] border border-black/10 bg-white px-3 py-2.5 text-sm text-black outline-none focus:border-[#42520d]"
+              placeholder="Quick note re: ..."
+            />
+          </label>
+
+          <label className="mb-4 block">
+            <span className="mb-1 block text-[11px] font-semibold uppercase tracking-[0.14em] text-black/45">
+              Body
+            </span>
+            <textarea
+              value={body}
+              onChange={(event) => setBody(event.target.value)}
+              rows={12}
+              className="w-full resize-y rounded-[12px] border border-black/10 bg-white px-3 py-2.5 text-sm leading-6 text-black outline-none focus:border-[#42520d]"
+              placeholder="Hi ..."
+            />
+          </label>
+
+          <p className="text-[11px] leading-5 text-black/45">
+            Tip: variables like <code>{'{{founder_name}}'}</code>, <code>{'{{vc_partner}}'}</code>,
+            <code>{'{{vc_firm}}'}</code>, <code>{'{{my_company}}'}</code>, <code>{'{{traction}}'}</code>
+            are filled from your profile. Replies land in your own inbox — your email never
+            leaves your device.
+          </p>
+
+          {errorMessage && (
+            <p className="mt-3 rounded-lg bg-red-50 px-3 py-2 text-xs text-red-700">{errorMessage}</p>
+          )}
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2 border-t border-black/10 bg-[#fbfaf7] px-5 py-3">
+          <button
+            type="button"
+            onClick={handleOpenInMail}
+            className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-full bg-[#42520d] px-4 py-2.5 text-sm font-semibold text-white transition-opacity hover:opacity-90 sm:flex-none"
+          >
+            <Send className="h-3.5 w-3.5" /> Open in mail app
+          </button>
+          <button
+            type="button"
+            onClick={handleCopyBody}
+            className="inline-flex items-center gap-1.5 rounded-full border border-black/15 bg-white px-3 py-2 text-xs font-semibold text-black/70 transition-colors hover:bg-[#fbfaf7]"
+          >
+            <Copy className="h-3.5 w-3.5" /> {copied ? 'Copied' : 'Copy'}
+          </button>
+          <select
+            value={existingEntry?.stage ?? 'Drafted'}
+            onChange={(event) => persist(event.target.value as VcOutreachStage)}
+            className="rounded-full border border-black/15 bg-white px-3 py-2 text-xs font-semibold text-black/70 outline-none focus:border-[#42520d]"
+            aria-label="Outreach stage"
+          >
+            {OUTREACH_STAGE_OPTIONS.map((stage) => (
+              <option key={stage} value={stage}>{stage}</option>
+            ))}
+          </select>
+          <button
+            type="button"
+            onClick={handleMarkSent}
+            disabled={saving === 'saving'}
+            className="inline-flex items-center gap-1.5 rounded-full border border-[#42520d] bg-white px-3 py-2 text-xs font-semibold text-[#42520d] transition-colors hover:bg-[#dcefc7] disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {saving === 'sent' ? <CheckCircle2 className="h-3.5 w-3.5" /> : <MailCheck className="h-3.5 w-3.5" />}
+            {saving === 'saving' ? 'Saving…' : 'Mark as sent'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
