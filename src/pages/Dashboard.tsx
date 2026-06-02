@@ -2526,20 +2526,6 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
     addActivity('Opened founder profile from launch');
   };
 
-  const handleForYouPrimaryAction = (launch: DashboardLaunchRow) => {
-    if (isInvestor) {
-      setQuery(launch.name);
-      setActiveView('deals');
-      navigate('/dashboard/investor#deals');
-      addActivity(`Saved ${launch.name} to investor deal flow`);
-      return;
-    }
-
-    setActiveView('products');
-    navigate('/dashboard/founder/products');
-    addActivity(`Opened product launcher from ${launch.name}`);
-  };
-
   const scrollDashboardFilters = (direction: -1 | 1) => {
     dashboardFilterScrollRef.current?.scrollBy({
       left: direction * 140,
@@ -5517,13 +5503,6 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
                                     >
                                       Open project <ArrowUpRight className="h-4 w-4" />
                                     </a>
-                                    <button
-                                      type="button"
-                                      onClick={() => handleForYouPrimaryAction(launch)}
-                                      className={`rounded-full ${accentSurface} px-4 py-2.5 text-sm font-semibold ${accentForeground} transition-colors hover:opacity-90`}
-                                    >
-                                      {isInvestor ? 'Save to deal flow' : 'Launch your product'}
-                                    </button>
                                   </div>
                                 </aside>
                               </div>
