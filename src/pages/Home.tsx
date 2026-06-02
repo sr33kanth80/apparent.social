@@ -56,7 +56,7 @@ export const Home = () => {
           <p className="mt-5 max-w-3xl text-base leading-7 text-black/65 md:text-lg">
             Apparent matches founders and investors by thesis, stage, and sector.
             <br />
-            Founders reach the funds that back what they&apos;re building. Investors meet the founders who fit their thesis.
+            Founders find the right funds. Investors find the right founders.
           </p>
           <div className="mt-7 flex flex-wrap items-center justify-center gap-3">
             <button
