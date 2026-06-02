@@ -1,4 +1,4 @@
-﻿import {
+import {
   ArrowUpRight,
   Bell,
   Bookmark,
@@ -224,7 +224,7 @@ const founderIntakeFields: IntakeField[] = [
   { key: 'headline', label: 'Headline', placeholder: 'Founder building AI tools for engineering teams.', kind: 'input' },
   { key: 'bio', label: 'Bio', placeholder: 'A short founder bio: what you care about, where you have built, and what kind of people you want to meet.', kind: 'textarea' },
   { key: 'currentBuild', label: 'What are you building or exploring?', placeholder: 'A GitHub-native analytics layer for engineering leaders.', kind: 'textarea' },
-  { key: 'mrr', label: 'MRR (optional)', placeholder: '$24K MRR Â· +22% MoM', kind: 'input' },
+  { key: 'mrr', label: 'MRR (optional)', placeholder: '$24K MRR · +22% MoM', kind: 'input' },
   { key: 'category', label: 'Primary interests', placeholder: 'Devtools, AI infra, SaaS, marketplace', kind: 'input' },
   { key: 'stage', label: 'Current stage', placeholder: 'Select stage', kind: 'select', options: founderStageOptions },
   { key: 'lookingFor', label: 'Who do you want to meet?', placeholder: 'Founders, investors, operators, design partners, collaborators.', kind: 'textarea' },
@@ -843,7 +843,7 @@ const buildKnownPlaceSuggestions = (
         label,
         latitude: coordinates.latitude,
         longitude: coordinates.longitude,
-        detail: detailParts.join(' Â· ') || 'Known place',
+        detail: detailParts.join(' · ') || 'Known place',
         source: 'Apparent' as const,
         matchScore,
         networkWeight: builderCount * 2 + meetupCount,
@@ -1275,7 +1275,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
         recipientId: entry.investorId,
         senderName: user.username || user.email.split('@')[0],
         subject: 'Thanks for your interest',
-        body: `Hi ${entry.investorName || 'there'} â€” thanks for the interest in what I'm building. I'd be glad to share more. Want to set up a quick call?`,
+        body: `Hi ${entry.investorName || 'there'} €” thanks for the interest in what I'm building. I'd be glad to share more. Want to set up a quick call?`,
         status: 'sent',
         context: `interest:${entry.investorId}`,
       });
@@ -1755,7 +1755,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
     const reader = new FileReader();
     reader.onload = async () => {
       const url = String(reader.result ?? '');
-      // Update state â€” the debounce will also fire, but we save immediately
+      // Update state €” the debounce will also fire, but we save immediately
       // here too because photo uploads are discrete user actions
       setIntakeValues((current) => {
         const next = { ...current, profilePhotoUrl: url };
@@ -2204,7 +2204,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
       await saveIntakeValues(user, role, intakeValues);
       setProfileSaved(true);
     } catch {
-      // non-fatal â€” user can save profile manually later
+      // non-fatal €” user can save profile manually later
     }
   };
 
@@ -2509,7 +2509,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
       setBuilderClusters(buildBuilderMapClusters(nextNodes, meetups));
       setSelectedBuilderId((current) => (current === builder.id ? nextNodes[0]?.id ?? '' : current));
 
-      addActivity(`Claimed ${builder.company} â€” now your launch on Apparent`);
+      addActivity(`Claimed ${builder.company} €” now your launch on Apparent`);
     } catch (error) {
       setDashboardError(error instanceof Error ? error.message : 'Unable to claim this builder.');
     } finally {
@@ -2930,7 +2930,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
         <div id="profile" className="mx-auto max-w-[1292px] scroll-mt-24 space-y-6">
           {isInvestor ? (
             <>
-              {/* Header â€” mirrors founder avatar/name card exactly */}
+              {/* Header €” mirrors founder avatar/name card exactly */}
               <section className="rounded-[20px] border border-black/10 bg-white shadow-[0_10px_34px_rgba(0,0,0,0.04)]">
                 <div className="px-5 py-5">
                   <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
@@ -2950,7 +2950,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
                           className="mt-2 inline-flex items-center gap-1 rounded-full bg-[#f4f1eb] px-3 py-1 text-xs font-medium text-gray-600 transition hover:bg-[#42520d] hover:text-white"
                         >
                           <ArrowUpRight className="h-3 w-3" />
-                          @{user.username ?? user.email.split('@')[0].toLowerCase().replace(/[^a-z0-9]/g, '')} Â· View public profile
+                          @{user.username ?? user.email.split('@')[0].toLowerCase().replace(/[^a-z0-9]/g, '')} · View public profile
                         </a>
                       </div>
                     </div>
@@ -2958,7 +2958,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
                 </div>
               </section>
 
-              {/* Thesis fields â€” same divide-y card as founder "Your Profile" */}
+              {/* Thesis fields €” same divide-y card as founder "Your Profile" */}
               <section className="rounded-[20px] border border-black/10 bg-white shadow-[0_10px_34px_rgba(0,0,0,0.04)]">
                 <div className="flex flex-col gap-3 border-b border-black/10 px-5 py-4 md:flex-row md:items-center md:justify-between">
                   <div>
@@ -2991,9 +2991,9 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
                 </div>
                 <div className="flex flex-col gap-3 border-t border-black/10 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
                   <span className="text-xs text-gray-400">
-                    {autoSaveStatus === 'saving' && 'Auto-savingâ€¦'}
-                    {autoSaveStatus === 'saved' && 'âœ“ Saved'}
-                    {autoSaveStatus === 'error' && 'Auto-save failed â€” use the button'}
+                    {autoSaveStatus === 'saving' && 'Auto-saving€¦'}
+                    {autoSaveStatus === 'saved' && 'œ“ Saved'}
+                    {autoSaveStatus === 'error' && 'Auto-save failed €” use the button'}
                   </span>
                   <button className={`rounded-full ${accentSurface} px-5 py-2.5 text-sm font-medium ${accentForeground} transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60`} onClick={handleSaveProfile} disabled={isSavingWorkspace}>
                     {isSavingWorkspace ? 'Saving...' : 'Save thesis'}
@@ -3069,12 +3069,12 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
                   <p className="text-xs text-gray-400">
                     {intakeValues.publicProfileEnabled === 'true'
                       ? 'Your profile is visible to the internet. Only checked fields are shown to non-members.'
-                      : 'Your profile is only visible to signed-in Apparent members â€” no public indexing.'}
+                      : 'Your profile is only visible to signed-in Apparent members €” no public indexing.'}
                   </p>
                 </div>
               </section>
 
-              {/* Bottom grid â€” mirrors founder "Products + Past products" layout */}
+              {/* Bottom grid €” mirrors founder "Products + Past products" layout */}
               <section className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">
                 <div className="rounded-[20px] border border-black/10 bg-white shadow-[0_10px_34px_rgba(0,0,0,0.04)]">
                   <div className="flex items-center justify-between border-b border-black/10 px-5 py-4">
@@ -3101,7 +3101,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
                             <p className="mt-1 line-clamp-2 text-sm leading-5 text-gray-500">{signal.detail}</p>
                             <div className="mt-2 flex flex-wrap gap-2 text-xs text-gray-400">
                               <span>{signal.source}</span>
-                              <span>Â·</span>
+                              <span>·</span>
                               <span>{signal.freshness}</span>
                             </div>
                           </div>
@@ -3153,7 +3153,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
                           className="mt-2 inline-flex items-center gap-1 rounded-full bg-[#f4f1eb] px-3 py-1 text-xs font-medium text-gray-600 transition hover:bg-[#dcefc7] hover:text-black"
                         >
                           <ArrowUpRight className="h-3 w-3" />
-                          @{user.username ?? user.email.split('@')[0].toLowerCase().replace(/[^a-z0-9]/g, '')} Â· View public profile
+                          @{user.username ?? user.email.split('@')[0].toLowerCase().replace(/[^a-z0-9]/g, '')} · View public profile
                         </a>
                       </div>
                     </div>
@@ -3170,7 +3170,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
                 </div>
               </section>
 
-              {/* Investor interest â€” the come-back-next-week loop */}
+              {/* Investor interest €” the come-back-next-week loop */}
               <section className="rounded-[20px] border border-black/10 bg-white shadow-[0_10px_34px_rgba(0,0,0,0.04)]">
                 <div className="flex items-center justify-between gap-3 px-5 py-4">
                   <div>
@@ -3186,7 +3186,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
                     <p className="text-sm leading-relaxed text-gray-600">
                       {founderInterest.saveCount} investor{founderInterest.saveCount === 1 ? '' : 's'} saved your profile
                       {founderInterest.recentSaverNames.length > 0 && (
-                        <> â€” including {founderInterest.recentSaverNames.slice(0, 3).join(', ')}</>
+                        <> €” including {founderInterest.recentSaverNames.slice(0, 3).join(', ')}</>
                       )}
                       .
                     </p>
@@ -3210,7 +3210,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
                           <div className="min-w-0">
                             <p className="truncate text-sm font-medium">{entry.investorName || 'An investor'}</p>
                             <p className="text-xs text-gray-500">
-                              {entry.kind === 'superlike' ? 'Wants to talk â€” check Messages' : 'Liked your profile'}
+                              {entry.kind === 'superlike' ? 'Wants to talk €” check Messages' : 'Liked your profile'}
                             </p>
                           </div>
                           {entry.kind === 'like' && (
@@ -3229,11 +3229,11 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
                 </div>
               </section>
 
-              {/* Fundraising intent â€” the opt-in signal pure scrapers can't have */}
+              {/* Fundraising intent €” the opt-in signal pure scrapers can't have */}
               <section className="rounded-[20px] border border-black/10 bg-white shadow-[0_10px_34px_rgba(0,0,0,0.04)]">
                 <div className="border-b border-black/10 px-5 py-4">
                   <h3 className="text-sm font-semibold">Fundraising status</h3>
-                  <p className="mt-1 text-xs text-gray-500">Tell thesis-fit investors whether you&apos;re raising â€” this is what surfaces you in their &ldquo;Raising now&rdquo; view.</p>
+                  <p className="mt-1 text-xs text-gray-500">Tell thesis-fit investors whether you&apos;re raising €” this is what surfaces you in their &ldquo;Raising now&rdquo; view.</p>
                 </div>
                 <div className="space-y-4 px-5 py-4">
                   <div className="flex flex-wrap gap-2">
@@ -4038,7 +4038,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
                 <EmptyState
                   icon={<Rocket className="h-5 w-5" />}
                   title="Launch your first product"
-                  body="Publishing a product is what gets you discovered â€” it puts you on Builder Radar and in front of thesis-fit investors. Add proof, traction, and a link."
+                  body="Publishing a product is what gets you discovered €” it puts you on Builder Radar and in front of thesis-fit investors. Add proof, traction, and a link."
                   ctaLabel="Launch a product"
                   onCta={() => setIsLaunchFormOpen(true)}
                 />
@@ -4238,7 +4238,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
             <div className="flex items-start justify-between gap-3">
               <div>
                 <p className="text-sm font-medium">{meetup.title}</p>
-                <p className="mt-1 text-xs leading-relaxed text-gray-500">{meetup.city} Â· {meetup.venue} Â· {toDatetimeLocalValue(meetup.startsAt).replace('T', ' ')}</p>
+                <p className="mt-1 text-xs leading-relaxed text-gray-500">{meetup.city} · {meetup.venue} · {toDatetimeLocalValue(meetup.startsAt).replace('T', ' ')}</p>
                 <p className="mt-2 text-xs leading-relaxed text-gray-600">{meetup.description}</p>
               </div>
               <button className="shrink-0 rounded-full border border-black/10 px-3 py-1.5 text-xs font-medium hover:bg-[#fbf8f3]" onClick={() => handleToggleMeetupRsvp(meetup)}>
@@ -4259,14 +4259,14 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
       ? [
           {
             label: 'Set your investment thesis',
-            hint: 'Sectors, stage, and what you back â€” this ranks every founder you see.',
+            hint: 'Sectors, stage, and what you back €” this ranks every founder you see.',
             done: Boolean((intakeValues.thesis ?? '').trim() || (intakeValues.sectors ?? '').trim()),
             cta: 'Set thesis',
             onClick: () => setActiveView('profile'),
           },
           {
             label: 'Find founders who are raising now',
-            hint: 'Open Builder Radar and hit â€œRaising nowâ€ to see contactable, thesis-fit founders.',
+            hint: 'Open Builder Radar and hit €œRaising now€ to see contactable, thesis-fit founders.',
             done: builderDiscoveryStates.some((state) => state.saved),
             cta: 'Open Builder Radar',
             onClick: () => {
@@ -4285,14 +4285,14 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
       : [
           {
             label: 'Complete your founder profile',
-            hint: 'Name, headline, and bio â€” this is what investors see first.',
+            hint: 'Name, headline, and bio €” this is what investors see first.',
             done: Boolean((intakeValues.profileName ?? '').trim() && (intakeValues.headline ?? '').trim() && (intakeValues.bio ?? '').trim()),
             cta: 'Edit profile',
             onClick: () => setActiveView('profile'),
           },
           {
             label: 'Set your fundraising status',
-            hint: 'â€œRaising nowâ€ is what surfaces you to thesis-fit investors.',
+            hint: '€œRaising now€ is what surfaces you to thesis-fit investors.',
             done: intakeValues.fundraisingStatus === 'raising' || intakeValues.fundraisingStatus === 'open',
             cta: 'Set status',
             onClick: () => setActiveView('profile'),
@@ -4307,7 +4307,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
         ];
 
     const doneCount = steps.filter((step) => step.done).length;
-    if (doneCount === steps.length) return null; // fully activated â€” get out of the way
+    if (doneCount === steps.length) return null; // fully activated €” get out of the way
 
     return (
       <div className="mx-auto mb-8 max-w-[1292px]">
@@ -4316,7 +4316,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
           <div>
             <h3 className="text-sm font-semibold">{isInvestor ? 'Get started sourcing' : 'Get discovered on Apparent'}</h3>
             <p className="mt-1 text-xs text-gray-500">
-              {doneCount} of {steps.length} done Â· finish these to {isInvestor ? 'see contactable, thesis-fit founders' : 'get in front of thesis-fit investors'}.
+              {doneCount} of {steps.length} done · finish these to {isInvestor ? 'see contactable, thesis-fit founders' : 'get in front of thesis-fit investors'}.
             </p>
           </div>
           <button
@@ -4430,7 +4430,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
                     <span className="min-w-0 flex-1">
                       <span className="block truncate text-sm font-medium text-gray-900">{suggestion.label}</span>
                       <span className="block truncate text-xs text-gray-500">
-                        {suggestion.detail} Â· {suggestion.source}
+                        {suggestion.detail} · {suggestion.source}
                       </span>
                     </span>
                     <span className="text-[11px] font-medium text-gray-400">Drop</span>
@@ -4581,7 +4581,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
         <div className="px-4 pt-4">
           <div className="flex items-center justify-between">
             <p className="text-sm font-semibold">{mapContextTitle}</p>
-            <span className="text-xs text-gray-500">{selectedClusterBuilders.length} builders Â· {selectedClusterMeetups.length} meetups</span>
+            <span className="text-xs text-gray-500">{selectedClusterBuilders.length} builders · {selectedClusterMeetups.length} meetups</span>
           </div>
           <div className="mt-3 flex flex-wrap gap-1.5">
             {mapContextTags.map((tag) => (
@@ -4589,7 +4589,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
             ))}
           </div>
           <div className="mt-3 divide-y divide-black/10 border-t border-black/10">
-            {[...selectedClusterSignals.slice(0, 2).map((signal) => `${signal.company} Â· ${signal.stage}`), ...selectedClusterMeetups.slice(0, 2).map((meetup) => `${meetup.title} Â· ${meetup.venue}`)].map((item) => (
+            {[...selectedClusterSignals.slice(0, 2).map((signal) => `${signal.company} · ${signal.stage}`), ...selectedClusterMeetups.slice(0, 2).map((meetup) => `${meetup.title} · ${meetup.venue}`)].map((item) => (
               <button key={item} className="w-full py-2 text-left text-xs text-gray-600 hover:text-black" onClick={() => addActivity(`Opened map item: ${item}`)}>{item}</button>
             ))}
           </div>
@@ -4619,7 +4619,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
                           {state.saved && <span className="rounded-full bg-[#f4f1eb] px-2 py-0.5 text-xs text-gray-600">saved</span>}
                           {builder.origin === 'apparent' && (builder.fundraisingStatus === 'raising' || builder.fundraisingStatus === 'open') && (
                             <span className="rounded-full bg-[#42520d] px-2 py-0.5 text-xs font-semibold text-white">
-                              {builder.fundraisingStatus === 'raising' ? `Raising${builder.raisingRound ? ` Â· ${builder.raisingRound}` : ''}` : 'Open to intros'}
+                              {builder.fundraisingStatus === 'raising' ? `Raising${builder.raisingRound ? ` · ${builder.raisingRound}` : ''}` : 'Open to intros'}
                             </span>
                           )}
                           {builder.origin === 'ingested' && (
@@ -4647,22 +4647,22 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
                     {selectedBuilder.isCurrentUser
                       ? 'Your builder node'
                       : selectedBuilder.origin === 'ingested'
-                        ? `Ingested signal Â· ${selectedBuilder.sourceLabel ?? 'public source'}`
+                        ? `Ingested signal · ${selectedBuilder.sourceLabel ?? 'public source'}`
                         : 'Builder on Apparent'}
                   </p>
                   <h4 className="mt-1 text-base font-semibold">{selectedBuilder.company}</h4>
                   <p className="mt-1 text-xs text-gray-500">{selectedBuilder.founderName} | {selectedBuilder.location}</p>
                   {selectedBuilder.origin === 'ingested' && (
                     <p className="mt-2 rounded-lg bg-[#f3e9df] px-2.5 py-1.5 text-[11px] leading-relaxed text-[#8a5a3b]">
-                      Sourced from {selectedBuilder.sourceLabel ?? 'a public launch surface'} â€” not yet on Apparent.
+                      Sourced from {selectedBuilder.sourceLabel ?? 'a public launch surface'} €” not yet on Apparent.
                     </p>
                   )}
                   {selectedBuilder.origin === 'apparent' && (selectedBuilder.fundraisingStatus === 'raising' || selectedBuilder.fundraisingStatus === 'open') && (
                     <p className="mt-2 inline-flex items-center gap-1 rounded-lg bg-[#42520d] px-2.5 py-1.5 text-[11px] font-semibold leading-relaxed text-white">
                       {selectedBuilder.fundraisingStatus === 'raising'
-                        ? `Raising${selectedBuilder.raisingRound ? ` ${selectedBuilder.raisingRound}` : ''}${selectedBuilder.raisingAmount ? ` Â· ${selectedBuilder.raisingAmount}` : ''}`
+                        ? `Raising${selectedBuilder.raisingRound ? ` ${selectedBuilder.raisingRound}` : ''}${selectedBuilder.raisingAmount ? ` · ${selectedBuilder.raisingAmount}` : ''}`
                         : 'Open to investor intros'}
-                      {selectedBuilder.openToContact ? ' Â· open to contact' : ''}
+                      {selectedBuilder.openToContact ? ' · open to contact' : ''}
                     </p>
                   )}
                 </div>
@@ -4755,7 +4755,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
                     disabled={savingWorkflow === 'claim'}
                     onClick={() => handleClaimBuilder(selectedBuilder)}
                   >
-                    {savingWorkflow === 'claim' ? 'Claimingâ€¦' : 'This is my project â€” claim it'}
+                    {savingWorkflow === 'claim' ? 'Claiming€¦' : 'This is my project €” claim it'}
                   </button>
                   <p className="mt-2 text-[11px] leading-relaxed text-gray-500">
                     Claiming creates a launch under your Apparent profile and replaces this ingested signal.
@@ -4783,7 +4783,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
         <EmptyState
           icon={<FileText className="h-5 w-5" />}
           title="Your deal flow is empty"
-          body="Save founders from Builder Radar â€” try the â€œRaising nowâ€ filter to find contactable, thesis-fit founders â€” then drag them across these stages from discovery to meeting."
+          body="Save founders from Builder Radar €” try the €œRaising now€ filter to find contactable, thesis-fit founders €” then drag them across these stages from discovery to meeting."
           ctaLabel="Open Builder Radar"
           onCta={() => {
             setActiveView('overview');
@@ -4891,7 +4891,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
             <div className="flex items-start justify-between gap-3">
               <div>
                 <p className="text-sm font-medium">{review.company}</p>
-                <p className="mt-1 text-xs text-gray-500">{review.instrument} Â· {review.amount} Â· {review.valuation}</p>
+                <p className="mt-1 text-xs text-gray-500">{review.instrument} · {review.amount} · {review.valuation}</p>
                 <p className="mt-2 text-xs leading-relaxed text-gray-600">{review.notes}</p>
               </div>
               <span className={`shrink-0 rounded-full ${accentSurface} px-2 py-1 text-xs font-medium ${accentForeground}`}>{review.status}</span>
@@ -4903,8 +4903,8 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
             icon={<FileText className="h-5 w-5" />}
             title={isInvestor ? 'Track your deal terms' : 'Track and compare your offers'}
             body={isInvestor
-              ? 'Log instrument, amount, valuation cap, pro-rata, and notes for each deal youâ€™re reviewing â€” all in one place.'
-              : 'Capture investor offers â€” SAFE notes, valuation caps, rights, and decision notes â€” so your fundraise stays organized.'}
+              ? 'Log instrument, amount, valuation cap, pro-rata, and notes for each deal you€™re reviewing €” all in one place.'
+              : 'Capture investor offers €” SAFE notes, valuation caps, rights, and decision notes €” so your fundraise stays organized.'}
             ctaLabel="Add terms"
             onCta={() => setIsTermFormOpen(true)}
           />
@@ -4931,7 +4931,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
               <p className="mt-2 max-w-2xl text-sm leading-6 text-gray-600">
                 {isInvestor
                   ? 'Track sourced companies as they move from discovery to review, outreach, meetings, and watchlist.'
-                  : 'Log and compare the investor offers you receive â€” instrument, valuation cap, amount, pro-rata, and deadlines â€” all in one place.'}
+                  : 'Log and compare the investor offers you receive €” instrument, valuation cap, amount, pro-rata, and deadlines €” all in one place.'}
               </p>
             </div>
             <button
@@ -5042,17 +5042,17 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
       ? [
           {
             title: 'Set your investment thesis',
-            text: 'Capture your sectors, stage, geography, check size, and the founder signals you back. This is what ranks every founder Apparent shows you â€” so itâ€™s the first thing to do.',
+            text: 'Capture your sectors, stage, geography, check size, and the founder signals you back. This is what ranks every founder Apparent shows you €” so it€™s the first thing to do.',
             cta: { label: 'Open your thesis', view: 'profile' },
           },
           {
             title: 'Discover builders by what they ship',
-            text: 'Builder Discovery surfaces founders ranked against your thesis â€” real Apparent founders plus ingested signals from YC, GitHub, Product Hunt, and Hacker News. Flip on â€œRaising nowâ€ to see contactable, thesis-fit founders who are actively raising.',
+            text: 'Builder Discovery surfaces founders ranked against your thesis €” real Apparent founders plus ingested signals from YC, GitHub, Product Hunt, and Hacker News. Flip on €œRaising now€ to see contactable, thesis-fit founders who are actively raising.',
             cta: { label: 'Open Builder Discovery', view: 'matches' },
           },
           {
             title: 'Build your deal flow',
-            text: 'Save the founders you like, then drag them across your Deal Flow pipeline â€” Discovery â†’ Reviewing â†’ Reached out â†’ Meeting â†’ Watchlist.',
+            text: 'Save the founders you like, then drag them across your Deal Flow pipeline €” Discovery †’ Reviewing †’ Reached out †’ Meeting †’ Watchlist.',
             cta: { label: 'Open Deal Flow', view: 'deals' },
           },
           {
@@ -5069,27 +5069,27 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
       : [
           {
             title: 'Build your founder profile',
-            text: 'Add your name, headline, bio, links, and what youâ€™re building. This is the first thing investors see when they find you â€” make it count.',
+            text: 'Add your name, headline, bio, links, and what you€™re building. This is the first thing investors see when they find you €” make it count.',
             cta: { label: 'Edit your profile', view: 'profile' },
           },
           {
             title: 'Set your fundraising status',
-            text: 'Flip on â€œRaising nowâ€ or â€œOpen to introsâ€ and add your round, amount, and ask. This is what surfaces you to thesis-fit investors â€” and itâ€™s a signal pure scrapers canâ€™t see.',
+            text: 'Flip on €œRaising now€ or €œOpen to intros€ and add your round, amount, and ask. This is what surfaces you to thesis-fit investors €” and it€™s a signal pure scrapers can€™t see.',
             cta: { label: 'Set your status', view: 'profile' },
           },
           {
             title: 'Launch your products',
-            text: 'Publish each product with proof, traction, a demo, and a pitch. Launches put you on the Builder Radar and in investorsâ€™ discovery feeds.',
+            text: 'Publish each product with proof, traction, a demo, and a pitch. Launches put you on the Builder Radar and in investors€™ discovery feeds.',
             cta: { label: 'Launch a product', view: 'products' },
           },
           {
             title: 'Find your investors',
-            text: 'Open the VC Heat Map, filter by stage and sector, or hit â€œMatch my profileâ€ to light up the thesis-fit VCs you can actually pitch â€” with their contact details.',
+            text: 'Open the VC Heat Map, filter by stage and sector, or hit €œMatch my profile€ to light up the thesis-fit VCs you can actually pitch €” with their contact details.',
             cta: { label: 'Open VC Heat Map', view: 'vc-heatmap' },
           },
           {
             title: 'Track interest & compare offers',
-            text: 'See which investors are tracking your profile, and log every offer you receive â€” instrument, cap, amount, and deadline â€” in your Fundraise Tracker to compare them side by side.',
+            text: 'See which investors are tracking your profile, and log every offer you receive €” instrument, cap, amount, and deadline €” in your Fundraise Tracker to compare them side by side.',
             cta: { label: 'Open Fundraise Tracker', view: 'deals' },
           },
         ];
@@ -5107,8 +5107,8 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
             <h2 className="text-2xl font-normal tracking-[-0.03em] font-serif">How to Use Apparent?</h2>
             <p className="mt-2 max-w-2xl text-sm leading-6 text-gray-600">
               {isInvestor
-                ? 'Apparent is your founder-sourcing desk: capture your thesis, discover builders by what they ship, and run outreach and deal flow in one place. Hereâ€™s the flow.'
-                : 'Apparent gets your work in front of thesis-fit investors who are actively hunting. Build your profile, signal that youâ€™re raising, and find the right VCs to pitch. Hereâ€™s the flow.'}
+                ? 'Apparent is your founder-sourcing desk: capture your thesis, discover builders by what they ship, and run outreach and deal flow in one place. Here€™s the flow.'
+                : 'Apparent gets your work in front of thesis-fit investors who are actively hunting. Build your profile, signal that you€™re raising, and find the right VCs to pitch. Here€™s the flow.'}
             </p>
           </section>
 
@@ -5143,7 +5143,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
               <button type="button" onClick={() => handleDashboardViewChange('feedback')} className="font-semibold text-[#42520d] hover:underline">
                 Send us feedback
               </button>{' '}
-              â€” we read every note.
+              €” we read every note.
             </p>
           </section>
         </div>
@@ -5380,7 +5380,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
   );
 
   const renderForYouLaunchPage = () => {
-    // No real Apparent launches loaded yet (or none exist) â€” render an empty state
+    // No real Apparent launches loaded yet (or none exist) €” render an empty state
     // instead of crashing on selectedForYouLaunch.website. The first founder to
     // publish a launch will populate this feed for everyone.
     if (!selectedForYouLaunch) {
@@ -6318,7 +6318,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
                 <EmptyState
                   icon={<Search className="h-5 w-5" />}
                   title="No investor matches yet"
-                  body="Complete your profile and set your fundraising status so Apparent can match you to thesis-fit investors â€” then theyâ€™ll appear here."
+                  body="Complete your profile and set your fundraising status so Apparent can match you to thesis-fit investors €” then they€™ll appear here."
                   ctaLabel="Complete your profile"
                   onCta={() => setActiveView('profile')}
                 />
@@ -6410,7 +6410,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
           subtitle: "A bit more detail so we can match you to the right builders.",
           fields: [
             { key: 'stage', label: 'Preferred stage', placeholder: 'Select stage', kind: 'select' as FieldKind, options: investorStageOptions },
-            { key: 'checkSize', label: 'Typical check size', placeholder: '$250k â€“ $1.5M', kind: 'input' as FieldKind },
+            { key: 'checkSize', label: 'Typical check size', placeholder: '$250k €“ $1.5M', kind: 'input' as FieldKind },
             { key: 'geography', label: 'Geography', placeholder: 'SF, NYC, remote-first', kind: 'input' as FieldKind },
           ],
         },
@@ -6507,7 +6507,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
                 onClick={() => setOnboardingStep((s) => s - 1)}
                 className="text-sm text-black/40 hover:text-black/70"
               >
-                â† Back
+                † Back
               </button>
             ) : (
               <span />
@@ -6517,7 +6517,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
               onClick={isLastOnboardingStep ? handleOnboardingComplete : () => setOnboardingStep((s) => s + 1)}
               className={`rounded-xl px-6 py-3 text-sm font-semibold text-white transition ${isInvestor ? 'bg-green-700 hover:bg-green-800' : 'bg-black hover:bg-black/80'}`}
             >
-              {isLastOnboardingStep ? 'Enter your workspace â†’' : 'Continue â†’'}
+              {isLastOnboardingStep ? 'Enter your workspace †’' : 'Continue †’'}
             </button>
           </div>
 
@@ -6756,7 +6756,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
                                 <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
                                   <span className="text-sm font-semibold">{item.actor}</span>
                                   <span className="text-xs text-gray-400">{item.meta}</span>
-                                  <span className="text-xs text-gray-400">Â·</span>
+                                  <span className="text-xs text-gray-400">·</span>
                                   <span className="text-xs text-gray-500">{item.source}</span>
                                 </div>
                                 <h3 className="mt-2 text-lg font-semibold leading-snug">{item.title}</h3>
