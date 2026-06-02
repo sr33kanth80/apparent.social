@@ -4,6 +4,18 @@ import type { AppUser, DashboardRole } from '@/lib/apparent-types';
 
 const DEV_SESSION_KEY = 'apparent-dev-session';
 
+// One-shot evict at module load: if Supabase is configured (i.e., we're in
+// any deployed environment) and a stale dev-session key is lingering from a
+// pre-launch build, wipe it so a returning user can't ride the old synthetic
+// session in.
+if (typeof window !== 'undefined' && isSupabaseConfigured) {
+  try {
+    window.localStorage.removeItem(DEV_SESSION_KEY);
+  } catch {
+    /* localStorage unavailable — non-fatal */
+  }
+}
+
 /** Derive a URL-safe @-handle from an email address (mirrors the DB trigger logic). */
 export const deriveUsername = (email: string): string =>
   email.split('@')[0].toLowerCase().replace(/[^a-z0-9]/g, '') || 'user';
@@ -18,7 +30,12 @@ const toAppUser = (user: User): AppUser => ({
   isDev: false,
 });
 
-export const getDevSession = (): AppUser | null => {
+// Dev-session helpers are intentionally NOT exported. They power a
+// localStorage-backed fallback used only when Supabase env vars are absent
+// (i.e., a fresh dev clone). No code path outside this module can grant a
+// synthetic logged-in session — the pre-launch "Skip login" button that used
+// to call these has been removed.
+const getDevSession = (): AppUser | null => {
   const raw = window.localStorage.getItem(DEV_SESSION_KEY);
   if (!raw) {
     return null;
@@ -32,7 +49,7 @@ export const getDevSession = (): AppUser | null => {
   }
 };
 
-export const createDevSession = (role: DashboardRole): AppUser => {
+const createDevSession = (role: DashboardRole): AppUser => {
   const user: AppUser = {
     id: `dev-${role}`,
     email: role === 'investor' ? 'partner@apparent.dev' : 'founder@apparent.dev',
@@ -44,7 +61,7 @@ export const createDevSession = (role: DashboardRole): AppUser => {
   return user;
 };
 
-export const clearDevSession = () => {
+const clearDevSession = () => {
   window.localStorage.removeItem(DEV_SESSION_KEY);
 };
 

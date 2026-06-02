@@ -38,11 +38,9 @@ interface AuthFormProps extends React.HTMLAttributes<HTMLDivElement> {
   emailLinkLabel?: string;
   socialLabel?: string;
   submitLabel?: string;
-  bypassLabel?: string;
   onEmailSubmit?: (data: { email: string; password?: string }) => void;
   onSocialSignIn?: (provider: 'google' | 'microsoft' | 'apple' | 'sso') => void;
   onEmailLink?: () => void;
-  onBypass?: () => void;
 }
 
 const AuthForm = React.forwardRef<HTMLDivElement, AuthFormProps>(
@@ -57,11 +55,9 @@ const AuthForm = React.forwardRef<HTMLDivElement, AuthFormProps>(
       emailLinkLabel = 'Or email me a link',
       socialLabel = 'Sign in with',
       submitLabel = 'Sign In',
-      bypassLabel,
       onEmailSubmit,
       onSocialSignIn,
       onEmailLink,
-      onBypass,
       ...props
     },
     ref,
@@ -197,19 +193,6 @@ const AuthForm = React.forwardRef<HTMLDivElement, AuthFormProps>(
               <Button type="submit" className="w-full">
                 {submitLabel}
               </Button>
-              {onBypass && bypassLabel && (
-                <Button
-                  type="button"
-                  variant="secondary"
-                  className="w-full bg-amber-100 text-amber-950 shadow-none hover:bg-amber-200"
-                  onClick={onBypass}
-                >
-                  <span className="mr-2 rounded-full bg-amber-950 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-100">
-                    Test
-                  </span>
-                  <span>{bypassLabel}</span>
-                </Button>
-              )}
             </form>
           </div>
         </CardContent>

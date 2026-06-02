@@ -1,7 +1,6 @@
 import { AuthForm } from '@/components/ui/sign-in';
 import { Switch } from '@/components/ui/switch';
 import {
-  createDevSession,
   isRoleMismatchError,
   sendEmailLink,
   signInWithEmail,
@@ -125,17 +124,9 @@ export const Login = () => {
       ? 'Email me a founder link'
       : 'Or email me a link';
   const submitLabel = isInvestor ? 'Continue as Investor' : isFounder ? 'Continue as Founder' : 'Sign In';
-  const bypassLabel = isInvestor
-    ? 'Skip login - enter investor portal'
-    : 'Skip login - enter founder portal';
 
   const handleRoleChange = (nextRole: string) => {
     setSearchParams({ role: nextRole });
-  };
-
-  const handleBypass = () => {
-    createDevSession(activeRole);
-    navigate(isInvestor ? '/dashboard/investor' : '/dashboard/founder');
   };
 
   return (
@@ -207,11 +198,9 @@ export const Login = () => {
               socialLabel={socialLabel}
               emailLinkLabel={emailLinkLabel}
               submitLabel={isSubmitting ? 'Working...' : submitLabel}
-              bypassLabel={bypassLabel}
               onSocialSignIn={handleSocialSignIn}
               onEmailSubmit={handleEmailSubmit}
               onEmailLink={handleEmailLink}
-              onBypass={handleBypass}
               className="border-0 bg-white/80 shadow-[0_18px_60px_rgba(0,0,0,0.06)]"
             />
             {authError && (
