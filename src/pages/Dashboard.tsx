@@ -71,6 +71,7 @@ import {
   buildBuilderMapClusters,
   loadDashboardData,
   loadFounderInterest,
+  loadLaunchAuthors,
   loadPublicProductLaunches,
   saveBuilderDiscoveryState,
   saveFeedAction,
@@ -696,6 +697,7 @@ const productLaunchToDashboardRow = (
   launch: ProductLaunch,
   index: number,
   ownerLabel = 'Founder on Apparent',
+  ownerUsername = '',
 ): DashboardLaunchRow => ({
   id: `workspace-${launch.id}`,
   name: launch.name,
@@ -711,7 +713,9 @@ const productLaunchToDashboardRow = (
   momentum: launch.metrics || 'Fresh founder launch',
   website: launch.launchUrl || launch.proofUrl || 'https://apparent.dev/',
   projectPath: `/projects/${launch.slug || launch.id}`,
-  founderProfilePath: `/profile/${launch.ownerId}`,
+  // Prefer the canonical /@username route so the link lands on the public
+  // profile that knows about the founder's display name + handle.
+  founderProfilePath: ownerUsername ? `/@${ownerUsername}` : `/profile/${launch.ownerId}`,
   logoUrl: launch.logoUrl,
   bannerUrl: launch.bannerUrl,
   demoVideoUrl: launch.demoVideoUrl,
@@ -882,6 +886,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
   const [isSavingWorkspace, setIsSavingWorkspace] = useState(false);
   const [productLaunches, setProductLaunches] = useState<ProductLaunch[]>([]);
   const [publicLaunches, setPublicLaunches] = useState<ProductLaunch[]>([]);
+  const [launchAuthors, setLaunchAuthors] = useState<Record<string, { name: string; username: string }>>({});
   const [meetups, setMeetups] = useState<Meetup[]>([]);
   const [builderNodes, setBuilderNodes] = useState<BuilderNode[]>([]);
   const [, setBuilderClusters] = useState<BuilderMapCluster[]>([]);
@@ -1036,10 +1041,18 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
       seen.add(launch.id);
       merged.push(launch);
     }
-    return merged.map((launch, index) =>
-      productLaunchToDashboardRow(launch, index, launch.ownerId === user.id ? 'Your profile' : 'Founder on Apparent'),
-    );
-  }, [productLaunches, publicLaunches, user.id]);
+    return merged.map((launch, index) => {
+      const isOwn = launch.ownerId === user.id;
+      const author = launchAuthors[launch.ownerId];
+      const ownerLabel = isOwn
+        ? user.username
+          ? `You (@${user.username})`
+          : 'Your profile'
+        : author?.name || 'Founder on Apparent';
+      const ownerUsername = isOwn ? user.username ?? '' : author?.username ?? '';
+      return productLaunchToDashboardRow(launch, index, ownerLabel, ownerUsername);
+    });
+  }, [productLaunches, publicLaunches, launchAuthors, user.id, user.username]);
   const availableDashboardLaunchFilters = isInvestor
     ? [...dashboardLaunchFilters, ...investorFounderSignalFilters]
     : dashboardLaunchFilters;
@@ -1254,8 +1267,19 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
   useEffect(() => {
     let cancelled = false;
     loadPublicProductLaunches()
-      .then((launches) => {
-        if (!cancelled) setPublicLaunches(launches);
+      .then(async (launches) => {
+        if (cancelled) return;
+        setPublicLaunches(launches);
+        // Batch-load real founder names + handles so the inline "Launched by"
+        // card in For You shows the actual person instead of "Founder on Apparent".
+        const ownerIds = launches.map((launch) => launch.ownerId).filter(Boolean);
+        if (!ownerIds.length) return;
+        try {
+          const authors = await loadLaunchAuthors(ownerIds);
+          if (!cancelled) setLaunchAuthors(authors);
+        } catch {
+          /* non-fatal */
+        }
       })
       .catch(() => {
         if (!cancelled) setPublicLaunches([]);
@@ -5443,28 +5467,45 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
                                 <aside className="space-y-4">
                                   <div className="rounded-[16px] border border-black/10 bg-white p-4">
                                     <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#42520d]">Launched by</p>
-                                    {launch.founderProfilePath ? (
-                                      <Link
-                                        to={launch.founderProfilePath}
-                                        className="mt-3 flex items-center gap-3 rounded-[12px] p-2 -mx-2 transition-colors hover:bg-[#f4f1eb]"
-                                      >
-                                        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#dcefc7] text-xs font-semibold text-[#42520d]">
-                                          {launch.founder.slice(0, 2).toUpperCase()}
-                                        </div>
-                                        <div className="min-w-0 flex-1">
-                                          <p className="truncate text-sm font-semibold">{launch.founder}</p>
-                                          <p className="mt-0.5 truncate text-xs text-black/50">View founder profile</p>
-                                        </div>
-                                        <ArrowUpRight className="h-3.5 w-3.5 shrink-0 text-black/30" />
-                                      </Link>
-                                    ) : (
-                                      <div className="mt-3 flex items-center gap-3">
-                                        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#dcefc7] text-xs font-semibold text-[#42520d]">
-                                          {launch.founder.slice(0, 2).toUpperCase()}
-                                        </div>
-                                        <p className="text-sm font-semibold">{launch.founder}</p>
-                                      </div>
-                                    )}
+                                    {(() => {
+                                      // founderProfilePath is either `/@username` or `/profile/<uuid>`.
+                                      // Show the @-handle as the secondary line whenever we have one.
+                                      const handle = launch.founderProfilePath?.startsWith('/@')
+                                        ? launch.founderProfilePath.slice(1)
+                                        : '';
+                                      const subline = handle || 'View profile';
+                                      const initials = launch.founder
+                                        .replace(/^You\s*\(@.*\)$/, 'YOU')
+                                        .split(/\s+/)
+                                        .slice(0, 2)
+                                        .map((part) => part[0] ?? '')
+                                        .join('')
+                                        .toUpperCase() || 'FO';
+                                      const Inner = (
+                                        <>
+                                          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#dcefc7] text-xs font-semibold text-[#42520d]">
+                                            {initials}
+                                          </div>
+                                          <div className="min-w-0 flex-1">
+                                            <p className="truncate text-sm font-semibold">{launch.founder}</p>
+                                            <p className="mt-0.5 truncate text-xs text-black/50">{subline}</p>
+                                          </div>
+                                          {launch.founderProfilePath && (
+                                            <ArrowUpRight className="h-3.5 w-3.5 shrink-0 text-black/30" />
+                                          )}
+                                        </>
+                                      );
+                                      return launch.founderProfilePath ? (
+                                        <Link
+                                          to={launch.founderProfilePath}
+                                          className="mt-3 flex items-center gap-3 rounded-[12px] p-2 -mx-2 transition-colors hover:bg-[#f4f1eb]"
+                                        >
+                                          {Inner}
+                                        </Link>
+                                      ) : (
+                                        <div className="mt-3 flex items-center gap-3">{Inner}</div>
+                                      );
+                                    })()}
                                   </div>
 
                                   <div className="grid gap-2">

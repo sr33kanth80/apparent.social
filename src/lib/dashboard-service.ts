@@ -1241,6 +1241,47 @@ export const loadFounderVCContacts = async (): Promise<VCContact[]> => {
   return rows.map((row) => mapVCContactRow(row));
 };
 
+/**
+ * Batch-load display info for the owners of a set of launches so the
+ * For You feed can show real founder names + canonical @-handle profile
+ * links instead of the placeholder "Founder on Apparent" label.
+ */
+export const loadLaunchAuthors = async (
+  ownerIds: string[],
+): Promise<Record<string, { name: string; username: string }>> => {
+  const result: Record<string, { name: string; username: string }> = {};
+  if (!ownerIds.length || !isSupabaseConfigured || !supabase) return result;
+
+  const uniqueIds = Array.from(new Set(ownerIds.filter((id) => id && isUuid(id))));
+  if (!uniqueIds.length) return result;
+
+  try {
+    const [{ data: profileRows }, { data: founderRows }] = await Promise.all([
+      supabase.from('profiles').select('id, username, display_name, email').in('id', uniqueIds),
+      supabase.from('founder_profiles').select('user_id, profile_name').in('user_id', uniqueIds),
+    ]);
+
+    const founderNameById = new Map(
+      (founderRows ?? []).map((row) => [String(row.user_id), String(row.profile_name ?? '').trim()]),
+    );
+
+    (profileRows ?? []).forEach((row) => {
+      const id = String(row.id);
+      const founderName = founderNameById.get(id) ?? '';
+      const fallbackName =
+        String(row.display_name ?? '').trim() || String(row.email ?? '').split('@')[0] || 'Founder on Apparent';
+      result[id] = {
+        name: founderName || fallbackName,
+        username: String(row.username ?? ''),
+      };
+    });
+  } catch {
+    /* Non-fatal — caller will fall back to the placeholder label. */
+  }
+
+  return result;
+};
+
 export const loadPublicProjectDetail = async (projectId: string): Promise<PublicProjectDetail | null> => {
   if (!isSupabaseConfigured || !supabase) {
     const localLaunch = readPublicProductLaunches().find((launch) => launch.id === projectId || launch.slug === projectId);
