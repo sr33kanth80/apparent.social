@@ -6819,8 +6819,32 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
           )}
 
           {isDashboardLoading && (
-            <div className="mb-4 rounded-[20px] border border-black/10 bg-white shadow-[0_10px_34px_rgba(0,0,0,0.04)] px-5 py-3 text-sm text-gray-500">
-              Loading workspace data...
+            // Dead-center overlay with a stationary Apparent logo wrapped by
+            // a rotating ring. Subtle backdrop blur so the workspace stays
+            // visible behind it. pointer-events-none keeps the page reachable
+            // for users who tab through during the load.
+            <div
+              className="pointer-events-none fixed inset-0 z-40 flex items-center justify-center backdrop-blur-[2px]"
+              role="status"
+              aria-live="polite"
+              aria-label="Loading workspace"
+            >
+              <div className="relative flex h-20 w-20 items-center justify-center">
+                {/* Rotating ring — top arc colored, rest transparent, so the
+                    rotation reads as a spinner without a CSS keyframe. */}
+                <span
+                  aria-hidden="true"
+                  className="absolute inset-0 animate-spin rounded-full border-2 border-transparent border-t-[#42520d] border-r-[#42520d]/40"
+                />
+                {/* Soft halo behind the logo so it sits cleanly on top of any
+                    workspace background. */}
+                <span
+                  aria-hidden="true"
+                  className="absolute inset-2 rounded-full bg-white shadow-[0_10px_30px_rgba(0,0,0,0.08)]"
+                />
+                <LogoIcon className="relative h-8 w-8 text-[#42520d]" />
+              </div>
+              <span className="sr-only">Loading workspace data</span>
             </div>
           )}
 
