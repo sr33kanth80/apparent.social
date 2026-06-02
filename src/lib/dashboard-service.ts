@@ -1268,6 +1268,72 @@ export const loadFounderVCContacts = async (): Promise<VCContact[]> => {
 };
 
 /**
+ * Pull every investor who signed up on Apparent and made their criteria
+ * publicly visible. Used by the founder's "Investor Matches" view to mix
+ * real Apparent investors into the ranking alongside the bundled VC list.
+ */
+export interface ApparentInvestorRow {
+  userId: string;
+  username: string;
+  displayName: string;
+  thesis: string;
+  sectors: string;
+  stage: string;
+  checkSize: string;
+  geography: string;
+  founderSignals: string;
+  portfolioExamples: string;
+}
+
+export const loadApparentInvestors = async (): Promise<ApparentInvestorRow[]> => {
+  if (!isSupabaseConfigured || !supabase) return [];
+
+  try {
+    const { data: profileRows, error: profilesError } = await supabase
+      .from('profiles')
+      .select('id, username, display_name, email')
+      .eq('role', 'investor');
+    if (profilesError || !profileRows?.length) return [];
+
+    const ids = profileRows.map((row) => String(row.id));
+    const { data: criteriaRows } = await supabase
+      .from('investor_criteria')
+      .select('*')
+      .in('user_id', ids)
+      .eq('public_profile_enabled', true);
+
+    const criteriaByUser = new Map(
+      (criteriaRows ?? []).map((row) => [String(row.user_id), row as Record<string, unknown>]),
+    );
+
+    return profileRows
+      .filter((row) => criteriaByUser.has(String(row.id)))
+      .map((row) => {
+        const id = String(row.id);
+        const criteria = criteriaByUser.get(id)!;
+        const displayName =
+          String(row.display_name ?? '').trim() ||
+          String(row.email ?? '').split('@')[0] ||
+          'Investor on Apparent';
+        return {
+          userId: id,
+          username: String(row.username ?? ''),
+          displayName,
+          thesis: String(criteria.thesis ?? ''),
+          sectors: String(criteria.sectors ?? ''),
+          stage: String(criteria.stage ?? ''),
+          checkSize: String(criteria.check_size ?? ''),
+          geography: String(criteria.geography ?? ''),
+          founderSignals: String(criteria.founder_signals ?? ''),
+          portfolioExamples: String(criteria.portfolio_examples ?? ''),
+        };
+      });
+  } catch {
+    return [];
+  }
+};
+
+/**
  * Batch-load display info for the owners of a set of launches so the
  * For You feed can show real founder names + canonical @-handle profile
  * links instead of the placeholder "Founder on Apparent" label.

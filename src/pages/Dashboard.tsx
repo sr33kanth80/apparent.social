@@ -66,11 +66,15 @@ import type {
   UserMessage,
   UserSettings,
   VcInterestEntry,
+  VCContact,
 } from '@/lib/apparent-types';
+import type { ApparentInvestorRow } from '@/lib/dashboard-service';
 import {
   buildBuilderMapClusters,
+  loadApparentInvestors,
   loadDashboardData,
   loadFounderInterest,
+  loadFounderVCContacts,
   loadLaunchAuthors,
   loadPublicProductLaunches,
   saveBuilderDiscoveryState,
@@ -253,56 +257,6 @@ const investorFounderSignalFilters = ['Women-led', 'LGBTQ+ founder(s)', 'Underre
 const underrepresentedFounderSignals = ['Women-led', 'LGBTQ+ founder(s)', 'Black founder(s)', 'Latino/a founder(s)', 'Immigrant founder(s)', 'Veteran founder'];
 
 
-const founderMatches: MatchItem[] = [
-  {
-    name: 'Northstar Ventures',
-    detail: 'AI infra, developer tools, seed',
-    score: '94%',
-    signal: 'Thesis fit',
-    location: 'San Francisco',
-    nextStep: 'Send founder profile',
-    thesis: 'Backs technical founders turning developer pain into durable workflow infrastructure.',
-    checkSize: '$250k - $1.5M',
-    stageFocus: 'Pre-seed to Seed',
-    sectors: ['AI infra', 'Devtools', 'Open-source'],
-    why: ['Your category maps to their devtools thesis', 'Public proof links shorten diligence', 'Seed-stage capital request fits their entry point'],
-    portfolio: ['Buildbase', 'Vectorlane', 'Traceflow'],
-    warmPath: 'Founder profile first, then short technical call',
-    responseWindow: 'Reviewing 6 new builders this week',
-  },
-  {
-    name: 'Signal Ridge',
-    detail: 'Technical founders, product-led SaaS',
-    score: '89%',
-    signal: 'Warm signal',
-    location: 'New York',
-    nextStep: 'Request intro window',
-    thesis: 'Looks for founder-led SaaS with narrow wedges, visible user pull, and strong product taste.',
-    checkSize: '$100k - $750k',
-    stageFocus: 'MVP to Seed',
-    sectors: ['Product-led SaaS', 'Workflow automation', 'Vertical tools'],
-    why: ['Your traction notes suggest early pull', 'Founder-led product motion fits their taste', 'Your location/proximity creates an easy meetup path'],
-    portfolio: ['MosaicOps', 'Runway Desk', 'PilotLayer'],
-    warmPath: 'Ask for launch review or office-hours slot',
-    responseWindow: 'Office hours open next Friday',
-  },
-  {
-    name: 'Convex Capital',
-    detail: 'Vertical software and automation',
-    score: '86%',
-    signal: 'Nearby',
-    location: 'Austin',
-    nextStep: 'Invite to launch review',
-    thesis: 'Invests in vertical software where automation creates obvious operational leverage.',
-    checkSize: '$150k - $1M',
-    stageFocus: 'Prototype to Seed',
-    sectors: ['Vertical software', 'Automation', 'AI SaaS'],
-    why: ['Your build notes mention workflow automation', 'They like precise ICPs and customer proof', 'Nearby builder density increases their attention'],
-    portfolio: ['FieldPilot', 'OpsForge', 'ClauseKit'],
-    warmPath: 'Share one customer story and product demo',
-    responseWindow: 'Actively sourcing Austin and remote teams',
-  },
-];
 
 const investorSignals: InvestorSignal[] = [
   {
@@ -887,6 +841,10 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
   const [productLaunches, setProductLaunches] = useState<ProductLaunch[]>([]);
   const [publicLaunches, setPublicLaunches] = useState<ProductLaunch[]>([]);
   const [launchAuthors, setLaunchAuthors] = useState<Record<string, { name: string; username: string }>>({});
+  // VC list + Apparent investor list, both used to build the founder's
+  // dynamic "Investor Matches" view. Loaded once per session.
+  const [vcContactsForMatches, setVcContactsForMatches] = useState<VCContact[]>([]);
+  const [apparentInvestors, setApparentInvestors] = useState<ApparentInvestorRow[]>([]);
   const [meetups, setMeetups] = useState<Meetup[]>([]);
   const [builderNodes, setBuilderNodes] = useState<BuilderNode[]>([]);
   const [, setBuilderClusters] = useState<BuilderMapCluster[]>([]);
@@ -1002,13 +960,157 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
       }));
     }
 
-    const category = intakeValues.category || productLaunches[0]?.category || 'builder proof';
-    return founderMatches.map((match, index) => ({
-      ...match,
-      detail: `${match.detail} - aligned with ${category}`,
-      score: `${Math.min(96, 78 + profileStrength / 5 + index * 2).toFixed(0)}%`,
-    }));
-  }, [intakeValues.category, isInvestor, productLaunches, profileStrength, signalRows]);
+    // Founder side: rank VCs from the bundled list + active Apparent investors
+    // against the founder's launches + profile. Built dynamically each render.
+
+    // Build the founder's interest signature from their launches + profile.
+    const tokenize = (value: string): string[] =>
+      value
+        .toLowerCase()
+        .split(/[^a-z0-9]+/)
+        .filter((token) => token.length > 2);
+    const founderSignal = [
+      intakeValues.category,
+      intakeValues.currentBuild,
+      intakeValues.lookingFor,
+      intakeValues.headline,
+      ...productLaunches.flatMap((launch) => [launch.category, launch.tagline, launch.intro, launch.metrics]),
+    ]
+      .filter(Boolean)
+      .join(' ');
+    const founderTokens = new Set(tokenize(founderSignal));
+    const founderStageLower = (intakeValues.stage || productLaunches[0]?.stage || '').toLowerCase();
+    const founderLocationLower = (intakeValues.location || productLaunches[0]?.location || '').toLowerCase();
+
+    const overlapScore = (haystack: string, weight: number): number => {
+      if (!founderTokens.size) return 0;
+      const haystackLower = haystack.toLowerCase();
+      let hits = 0;
+      for (const token of founderTokens) {
+        if (haystackLower.includes(token)) {
+          hits += 1;
+          if (hits >= 5) break;
+        }
+      }
+      return hits * weight;
+    };
+
+    const splitCSV = (value: string): string[] =>
+      value
+        .split(/[,;]/)
+        .map((part) => part.trim())
+        .filter(Boolean)
+        .slice(0, 6);
+
+    // Real Apparent investors get a baseline bonus + direct DM path.
+    const apparentMatches: MatchItem[] = apparentInvestors.map((inv) => {
+      const why: string[] = [];
+      let score = 55;
+      const sectorBonus = overlapScore(inv.sectors, 8);
+      if (sectorBonus > 0) {
+        score += Math.min(sectorBonus, 20);
+        why.push('Sector overlap with your launches');
+      }
+      const thesisBonus = overlapScore(inv.thesis, 6);
+      if (thesisBonus > 0) {
+        score += Math.min(thesisBonus, 16);
+        why.push('Thesis maps to what you are building');
+      }
+      if (founderStageLower && inv.stage.toLowerCase().includes(founderStageLower)) {
+        score += 10;
+        why.push(`Stage focus matches "${inv.stage}"`);
+      }
+      if (founderLocationLower && inv.geography.toLowerCase().includes(founderLocationLower)) {
+        score += 8;
+        why.push('Geography overlaps your location');
+      }
+      why.push('Active on Apparent — message in-app');
+      return {
+        name: inv.displayName,
+        detail: inv.thesis ? inv.thesis.slice(0, 140) : `${inv.sectors || 'Apparent investor'} · ${inv.stage || 'multi-stage'}`,
+        score: `${Math.min(99, Math.round(score))}%`,
+        signal: 'On Apparent',
+        location: inv.geography || 'Apparent',
+        nextStep: 'DM via Apparent',
+        thesis: inv.thesis,
+        checkSize: inv.checkSize || 'Not disclosed',
+        stageFocus: inv.stage || 'Flexible',
+        sectors: splitCSV(inv.sectors),
+        portfolio: splitCSV(inv.portfolioExamples),
+        why: why.slice(0, 3),
+        warmPath: inv.username ? `Open @${inv.username} and send a DM` : 'Open profile and send a DM',
+        responseWindow: 'Active on Apparent',
+      };
+    });
+
+    // Bundled VC list (vc_contacts + seed). Scored against the same founder signature.
+    const vcMatches: MatchItem[] = vcContactsForMatches.map((vc) => {
+      const why: string[] = [];
+      let score = 38;
+      const sectorBonus = overlapScore(vc.fundFocusSectors, 7);
+      if (sectorBonus > 0) {
+        score += Math.min(sectorBonus, 22);
+        why.push(`Invests in ${splitCSV(vc.fundFocusSectors).slice(0, 2).join(', ')}`);
+      }
+      const portfolioBonus = overlapScore(vc.portfolioCompanies, 4);
+      if (portfolioBonus > 0) {
+        score += Math.min(portfolioBonus, 10);
+        why.push('Has portfolio companies adjacent to your space');
+      }
+      if (founderStageLower && vc.fundStage.toLowerCase().includes(founderStageLower)) {
+        score += 12;
+        why.push(`Backs ${vc.fundStage}`);
+      }
+      if (founderLocationLower && vc.normalizedCity.toLowerCase().includes(founderLocationLower)) {
+        score += 7;
+        why.push(`Based in ${vc.normalizedCity}`);
+      }
+      // Activity bonus — funds with more recent investments are more likely to deploy.
+      if (vc.numberOfInvestments > 100) score += 6;
+      else if (vc.numberOfInvestments > 30) score += 3;
+      if (vc.numberOfExits > 5) score += 2;
+
+      const detailParts = [vc.fundFocusSectors, vc.fundStage].filter(Boolean);
+      return {
+        name: vc.investorName,
+        detail: detailParts.length ? detailParts.join(' · ').slice(0, 160) : `${vc.fundType || 'Venture fund'}`,
+        score: `${Math.min(98, Math.round(score))}%`,
+        signal: vc.partnerEmail ? 'Email public' : 'Thesis fit',
+        location: vc.location || vc.normalizedCity || 'Remote',
+        nextStep: vc.partnerEmail ? `Email ${vc.partnerName || 'partner'}` : 'Visit fund website',
+        thesis: vc.fundDescription || `${vc.investorName} backs ${splitCSV(vc.fundFocusSectors).slice(0, 3).join(', ') || 'early-stage companies'}.`,
+        checkSize: vc.fundStage || 'Multi-stage',
+        stageFocus: vc.fundStage || 'Flexible',
+        sectors: splitCSV(vc.fundFocusSectors),
+        portfolio: splitCSV(vc.portfolioCompanies),
+        why: why.slice(0, 3),
+        warmPath: vc.partnerEmail
+          ? `Cold email ${vc.partnerName || 'partner'} at ${vc.partnerEmail}`
+          : vc.website
+            ? `Submit via ${vc.website}`
+            : 'Find a warm intro via LinkedIn',
+        responseWindow: `${vc.numberOfInvestments || 0} investments · ${vc.numberOfExits || 0} exits`,
+      };
+    });
+
+    // Apparent investors win on tiebreak when scores are equal — they're
+    // contactable in-app, which is a stronger next step than cold email.
+    return [...apparentMatches, ...vcMatches]
+      .sort((a, b) => Number.parseInt(b.score, 10) - Number.parseInt(a.score, 10))
+      .slice(0, 80);
+  }, [
+    apparentInvestors,
+    intakeValues.category,
+    intakeValues.currentBuild,
+    intakeValues.headline,
+    intakeValues.location,
+    intakeValues.lookingFor,
+    intakeValues.stage,
+    isInvestor,
+    productLaunches,
+    signalRows,
+    vcContactsForMatches,
+  ]);
   const selectedLiveLaunch = productLaunches.find((launch) => launch.id === selectedLaunchId) ?? productLaunches[0];
   const launchChecklist = [
     { label: 'Product name', done: Boolean(launchDraft.name.trim()) },
@@ -1288,6 +1390,29 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
       cancelled = true;
     };
   }, [user.id]);
+
+  // Founder side: load the full VC list + active Apparent investors once so the
+  // "Investor Matches" tab can rank them against the founder's launches and
+  // profile in-memory. Skipped for investor accounts (they see deal-flow).
+  useEffect(() => {
+    if (isInvestor) return;
+    let cancelled = false;
+    Promise.all([loadFounderVCContacts(), loadApparentInvestors()])
+      .then(([vcs, investors]) => {
+        if (cancelled) return;
+        setVcContactsForMatches(vcs);
+        setApparentInvestors(investors);
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setVcContactsForMatches([]);
+          setApparentInvestors([]);
+        }
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [isInvestor, user.id]);
 
   const handleMessageInterestedVc = async (entry: VcInterestEntry) => {
     try {
@@ -6177,13 +6302,23 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
               })}
 
               {filteredMatches.length === 0 && (
-                <EmptyState
-                  icon={<Search className="h-5 w-5" />}
-                  title="No investor matches yet"
-                  body="Complete your profile and set your fundraising status so Apparent can match you to thesis-fit investors — then they’ll appear here."
-                  ctaLabel="Complete your profile"
-                  onCta={() => setActiveView('profile')}
-                />
+                productLaunches.length === 0 ? (
+                  <EmptyState
+                    icon={<Rocket className="h-5 w-5" />}
+                    title="Launch a product to unlock matches"
+                    body="Apparent ranks thesis-fit VCs from our 3,000+ investor database plus active investors on Apparent against the launches you publish. Launch your first product to see who fits."
+                    ctaLabel="Launch a product"
+                    onCta={() => setActiveView('products')}
+                  />
+                ) : (
+                  <EmptyState
+                    icon={<Search className="h-5 w-5" />}
+                    title="No investor matches yet"
+                    body="Loading the investor database and ranking against your launches. If this persists, add a category and stage to your profile so we can score thesis fit."
+                    ctaLabel="Complete your profile"
+                    onCta={() => setActiveView('profile')}
+                  />
+                )
               )}
             </div>
           </section>
