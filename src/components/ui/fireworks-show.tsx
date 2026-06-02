@@ -146,10 +146,16 @@ export const FireworksBackground = ({
     const updateAndDraw = () => {
       const width = cssWidth();
       const height = cssHeight();
-      // Trail effect: fade prior frames instead of clearing outright so the
-      // particle trails feel like real sparks.
-      ctx.fillStyle = 'rgba(0, 0, 0, 0.18)';
+      // Trail effect that keeps the canvas transparent: instead of painting
+      // translucent black over each frame (which leaves a dim background
+      // tint), use the destination-out composite to subtract alpha from
+      // whatever is already on the canvas. Particles fade naturally over a
+      // few frames while the underlying page bleeds through cleanly.
+      ctx.save();
+      ctx.globalCompositeOperation = 'destination-out';
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.22)';
       ctx.fillRect(0, 0, width, height);
+      ctx.restore();
 
       const currentFireworks = fireworksRef.current;
       for (let i = 0; i < currentFireworks.length; i += 1) {
