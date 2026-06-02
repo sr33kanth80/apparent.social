@@ -1316,12 +1316,12 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
             ? current
             : data.builderNodes[0]?.id ?? '',
         );
-        const requestedView = viewFromLocation(window.location.pathname, window.location.hash);
-        if (requestedView === 'overview' && !window.location.hash) {
-          setActiveView(data.profileSaved ? 'for-you' : 'overview');
-        } else {
-          setActiveView(requestedView);
-        }
+        // Respect the URL: whatever section the user is on stays the active
+        // section. The pre-migration code auto-flipped Overview -> For You
+        // for "activated" users when no hash was present, which after the
+        // path-based URL migration fires on every dashboard load and yanks
+        // the user away from Overview without warning.
+        setActiveView(viewFromLocation(window.location.pathname, window.location.hash));
         setActivity([
           data.profileSaved
             ? isInvestor
