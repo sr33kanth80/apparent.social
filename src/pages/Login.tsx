@@ -1,10 +1,51 @@
 import { AnimatePresence, motion } from 'framer-motion';
+import { BadgeCheck, Radar, Zap, type LucideIcon } from 'lucide-react';
 import { AuthForm } from '@/components/ui/sign-in';
 import { Switch } from '@/components/ui/switch';
 import { isRoleMismatchError, signInWithEmail } from '@/lib/auth-service';
 import type { DashboardRole } from '@/lib/apparent-types';
 import { useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+
+interface FeaturePillar {
+  number: string;
+  label: string;
+  founderValue: string;
+  founderSupport: string;
+  investorValue: string;
+  investorSupport: string;
+  Icon: LucideIcon;
+}
+
+const FEATURE_PILLARS: FeaturePillar[] = [
+  {
+    number: '01',
+    label: 'Proof',
+    Icon: BadgeCheck,
+    founderValue: 'GitHub links',
+    founderSupport: 'Show real shipping cadence and code history.',
+    investorValue: 'Thesis fit',
+    investorSupport: 'Score builders against your sectors and stage.',
+  },
+  {
+    number: '02',
+    label: 'Radar',
+    Icon: Radar,
+    founderValue: 'Nearby peers',
+    founderSupport: 'Find founders in your city and category.',
+    investorValue: 'Builder density',
+    investorSupport: '1,800+ VCs and live builder map at a glance.',
+  },
+  {
+    number: '03',
+    label: 'Motion',
+    Icon: Zap,
+    founderValue: 'Investor DMs',
+    founderSupport: 'Cold-pitch direct, track replies in-app.',
+    investorValue: 'Deal flow',
+    investorSupport: 'Kanban every signal from inbox to meeting.',
+  },
+];
 
 // Shared transition for role-toggle content swaps. Short and eased so the
 // crossfade reads as polish, not delay.
@@ -137,17 +178,58 @@ export const Login = () => {
                   ))}
                 </div>
 
-                <div className="mt-12 grid gap-4 sm:grid-cols-3">
-                  {[
-                    ['Proof', isInvestor ? 'Thesis fit' : 'GitHub links'],
-                    ['Radar', isInvestor ? 'Builder density' : 'Nearby peers'],
-                    ['Motion', isInvestor ? 'Deal flow' : 'Investor DMs'],
-                  ].map(([label, value]) => (
-                    <div key={label} className="rounded-[22px] bg-white/70 p-5">
-                      <p className="text-sm font-semibold">{label}</p>
-                      <p className="mt-3 text-sm leading-6 text-black/55">{value}</p>
-                    </div>
-                  ))}
+                {/* Feature pillars — three editorial cards with numbered
+                    eyebrow, icon badge, bold display value, supporting line,
+                    and a hover lift that nudges the accent line in from the
+                    left. Themed per role so the active toggle's color reads
+                    consistently across the page. */}
+                <div className="mt-12 grid gap-3 sm:grid-cols-3">
+                  {FEATURE_PILLARS.map((pillar, index) => {
+                    const value = isInvestor ? pillar.investorValue : pillar.founderValue;
+                    const support = isInvestor ? pillar.investorSupport : pillar.founderSupport;
+                    const iconBadgeClass = isInvestor
+                      ? 'bg-[#42520d] text-white'
+                      : 'bg-[#dcefc7] text-[#42520d]';
+                    const accentBarClass = isInvestor ? 'bg-[#42520d]' : 'bg-[#42520d]';
+                    return (
+                      <motion.article
+                        key={pillar.label}
+                        initial={{ opacity: 0, y: 12 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{
+                          duration: 0.35,
+                          delay: 0.05 + index * 0.06,
+                          ease: [0.22, 0.61, 0.36, 1],
+                        }}
+                        whileHover={{ y: -3 }}
+                        className="group relative overflow-hidden rounded-[20px] border border-black/8 bg-white/85 p-5 shadow-[0_2px_8px_rgba(0,0,0,0.03)] transition-shadow duration-300 hover:shadow-[0_18px_44px_rgba(0,0,0,0.07)]"
+                      >
+                        {/* Accent bar that slides in from the left on hover. */}
+                        <span
+                          aria-hidden="true"
+                          className={`absolute inset-y-0 left-0 w-[3px] origin-bottom scale-y-0 transition-transform duration-300 ease-out group-hover:scale-y-100 ${accentBarClass}`}
+                        />
+                        <div className="flex items-start justify-between gap-3">
+                          <span className={`flex h-9 w-9 items-center justify-center rounded-[12px] ${iconBadgeClass}`}>
+                            <pillar.Icon className="h-4 w-4" />
+                          </span>
+                          <span className="text-[10px] font-semibold uppercase tracking-[0.18em] text-black/35">
+                            {pillar.number}
+                          </span>
+                        </div>
+                        <p className="mt-5 text-[10px] font-semibold uppercase tracking-[0.18em] text-black/45">
+                          {pillar.label}
+                        </p>
+                        <p
+                          className="mt-1 text-xl font-normal leading-tight tracking-[-0.02em] text-black"
+                          style={serifDisplay}
+                        >
+                          {value}
+                        </p>
+                        <p className="mt-2 text-xs leading-5 text-black/55">{support}</p>
+                      </motion.article>
+                    );
+                  })}
                 </div>
               </motion.div>
             </AnimatePresence>
