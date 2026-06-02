@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ArrowUpRight, Check, MapPin, Radar, Send, Sparkles, Zap } from 'lucide-react';
+import { ArrowUpRight, Check, MapPin, Radar, Send, Zap } from 'lucide-react';
 import { EditorialNavbar } from '../components/EditorialNavbar';
 import { LogoIcon } from '../components/LogoIcon';
 import { LogoCloud } from '../components/logo-cloud';
@@ -300,12 +300,8 @@ const WaitlistSection = () => {
 
         <div className="relative grid gap-8 md:grid-cols-[1.05fr_minmax(0,1fr)] md:items-end md:gap-12">
           <div>
-            <div className="inline-flex items-center gap-1.5 rounded-full border border-[#42520d]/15 bg-white/70 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-[#42520d]">
-              <Sparkles className="h-3 w-3" />
-              Early access
-            </div>
             <h2
-              className="mt-4 max-w-2xl text-3xl font-normal leading-[1.05] tracking-[-0.035em] sm:text-4xl md:text-[2.85rem]"
+              className="max-w-2xl text-3xl font-normal leading-[1.05] tracking-[-0.035em] sm:text-4xl md:text-[2.85rem]"
               style={serifDisplay}
             >
               Be first in when Apparent opens.
