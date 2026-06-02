@@ -80,12 +80,7 @@ export const Home = () => {
         <div className="mb-4 flex justify-end">
           <Link
             to="/heat-map"
-            className="inline-flex items-center gap-1.5 rounded-full border border-[#42520d]/20 px-5 py-2.5 text-sm font-semibold text-black shadow-[0_8px_24px_rgba(66,82,13,0.14)] transition hover:scale-[1.01]"
-            style={{
-              backgroundColor: '#fff8d7',
-              backgroundImage:
-                'radial-gradient(circle at 18% 45%, rgba(215,48,31,0.78) 0 9%, transparent 18%), radial-gradient(circle at 43% 55%, rgba(254,153,41,0.82) 0 12%, transparent 24%), radial-gradient(circle at 70% 42%, rgba(254,196,79,0.88) 0 14%, transparent 28%), radial-gradient(circle at 88% 62%, rgba(254,227,145,0.9) 0 12%, transparent 26%), linear-gradient(90deg, rgba(220,239,199,0.82), rgba(255,247,188,0.92))',
-            }}
+            className="inline-flex items-center gap-1.5 rounded-full border border-black/10 bg-white px-5 py-2.5 text-sm font-semibold text-black shadow-[0_8px_24px_rgba(0,0,0,0.08)] transition-all duration-200 hover:scale-[1.01] hover:border-black hover:bg-black hover:text-white"
           >
             Open the full map <ArrowUpRight className="h-4 w-4" />
           </Link>
