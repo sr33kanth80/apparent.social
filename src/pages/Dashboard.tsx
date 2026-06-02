@@ -5256,8 +5256,6 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
       );
     }
 
-    const selectedDomain = dashboardLaunchDomain(selectedForYouLaunch.website);
-
     return (
       <motion.div
         key="for-you-main"
@@ -5310,67 +5308,188 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
 
                 <div className="divide-y divide-black/10">
                   {visibleDashboardLaunches.map((launch, index) => {
-                    const isSelected = selectedForYouLaunch.id === launch.id;
+                    const isExpanded = selectedForYouLaunchId === launch.id;
                     const domain = dashboardLaunchDomain(launch.website);
+                    const projectHref = launch.projectPath ?? `/projects/${launch.id}`;
 
                     return (
-                      <button
-                        key={launch.id}
-                        type="button"
-                        onClick={() => setSelectedForYouLaunchId(launch.id)}
-                        className={`group grid w-full gap-4 px-5 py-4 text-left transition-colors hover:bg-[#fbf8f3] md:grid-cols-[3.25rem_1fr_auto] md:items-center ${
-                          isSelected ? 'bg-[#fbfaf7]' : 'bg-white'
-                        }`}
-                      >
-                        <div className="flex items-center gap-3 md:block">
-                          <div className="flex h-12 w-12 items-center justify-center rounded-[16px] bg-[#fbfaf7]">
-                            <img
-                              src={launch.logoUrl || `https://www.google.com/s2/favicons?domain=${domain}&sz=128`}
-                              alt=""
-                              className="h-7 w-7 object-contain"
-                            />
-                          </div>
-                          <span className="text-xs font-semibold uppercase tracking-[0.16em] text-black/35 md:mt-4 md:block">
-                            0{index + 1}
-                          </span>
-                        </div>
-
-                        <div>
-                          <div className="flex flex-wrap items-center gap-2">
-                            <h3 className="text-xl font-semibold tracking-[-0.02em]">{launch.name}</h3>
-                            <span className="rounded-full bg-[#dcefc7] px-2.5 py-0.5 text-xs font-semibold text-black">
-                              {launch.fit}% thesis fit
+                      <div key={launch.id} className={isExpanded ? 'bg-[#fbfaf7]' : 'bg-white'}>
+                        {/* Row header — click toggles expansion. Use a button so it
+                            stays keyboard-accessible without nesting interactive
+                            elements inside it. */}
+                        <button
+                          type="button"
+                          onClick={() => setSelectedForYouLaunchId((current) => (current === launch.id ? '' : launch.id))}
+                          aria-expanded={isExpanded}
+                          className="group grid w-full gap-4 px-5 py-4 text-left transition-colors hover:bg-[#fbf8f3] md:grid-cols-[3.25rem_1fr_auto] md:items-center"
+                        >
+                          <div className="flex items-center gap-3 md:block">
+                            <div className="flex h-12 w-12 items-center justify-center rounded-[16px] bg-[#fbfaf7]">
+                              <img
+                                src={launch.logoUrl || `https://www.google.com/s2/favicons?domain=${domain}&sz=128`}
+                                alt=""
+                                className="h-7 w-7 object-contain"
+                              />
+                            </div>
+                            <span className="text-xs font-semibold uppercase tracking-[0.16em] text-black/35 md:mt-4 md:block">
+                              0{index + 1}
                             </span>
                           </div>
-                          <p className="mt-1.5 text-sm leading-6 text-black/70">{launch.tagline}</p>
-                          <div className="mt-3 flex flex-wrap gap-2 text-xs font-semibold text-black/45">
-                            <span>{launch.category}</span>
-                            <span>-</span>
-                            <span>{launch.location}</span>
-                            <span>-</span>
-                            <span>{launch.stage}</span>
-                            {(launch.founderSignals ?? []).slice(0, 2).map((signal) => (
-                              <span key={signal} className="rounded-full bg-[#f4f1eb] px-2 py-0.5 text-black/50">
-                                {signal}
+
+                          <div>
+                            <div className="flex flex-wrap items-center gap-2">
+                              <h3 className="text-xl font-semibold tracking-[-0.02em]">{launch.name}</h3>
+                              <span className="rounded-full bg-[#dcefc7] px-2.5 py-0.5 text-xs font-semibold text-black">
+                                {launch.fit}% thesis fit
                               </span>
-                            ))}
+                            </div>
+                            <p className="mt-1.5 text-sm leading-6 text-black/70">{launch.tagline}</p>
+                            <div className="mt-3 flex flex-wrap gap-2 text-xs font-semibold text-black/45">
+                              <span>{launch.category}</span>
+                              <span>-</span>
+                              <span>{launch.location}</span>
+                              <span>-</span>
+                              <span>{launch.stage}</span>
+                              {(launch.founderSignals ?? []).slice(0, 2).map((signal) => (
+                                <span key={signal} className="rounded-full bg-[#f4f1eb] px-2 py-0.5 text-black/50">
+                                  {signal}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-4 text-sm font-semibold text-black/60 md:w-44 md:justify-end">
+                            <span className="inline-flex items-center gap-1.5">
+                              <ChevronUp className="h-4 w-4 text-[#42520d]" />
+                              {launch.saves}
+                            </span>
+                            <span className="inline-flex items-center gap-1.5 text-black/45">
+                              <MessageSquare className="h-4 w-4" />
+                              {launch.comments}
+                            </span>
+                            <span className={`ml-auto rounded-full px-3.5 py-2 text-xs font-semibold transition-colors md:ml-0 ${
+                              isExpanded ? 'bg-[#42520d] text-white' : 'bg-[#f4f1eb] text-black/70 group-hover:bg-[#42520d] group-hover:text-white'
+                            }`}>
+                              {isExpanded ? 'Hide' : 'View'}
+                            </span>
+                          </div>
+                        </button>
+
+                        {/* Inline expansion: project detail + founder + "Open in new tab".
+                            grid-rows animation gives a smooth height transition without
+                            measuring the panel. */}
+                        <div
+                          className={`grid overflow-hidden transition-all duration-300 ease-out ${
+                            isExpanded ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'
+                          }`}
+                        >
+                          <div className="min-h-0">
+                            <div className="border-t border-black/10 px-5 py-5">
+                              {launch.bannerUrl && (
+                                <div className="mb-5 aspect-[16/7] overflow-hidden rounded-[18px] bg-[#fbfaf7]">
+                                  <img src={launch.bannerUrl} alt="" className="h-full w-full object-cover" />
+                                </div>
+                              )}
+                              <div className="grid gap-5 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
+                                <div>
+                                  <p className="text-sm leading-7 text-black/65">{launch.description}</p>
+
+                                  {(launch.demoVideoUrl || launch.pitchVideoUrl) && (
+                                    <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                                      {launch.demoVideoUrl && (
+                                        <video className="aspect-video w-full rounded-[16px] bg-black object-cover" src={launch.demoVideoUrl} controls />
+                                      )}
+                                      {launch.pitchVideoUrl && (
+                                        <video className="aspect-video w-full rounded-[16px] bg-black object-cover" src={launch.pitchVideoUrl} controls />
+                                      )}
+                                    </div>
+                                  )}
+
+                                  <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
+                                    <div className="rounded-[14px] bg-white p-3 border border-black/5">
+                                      <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-black/40">Location</p>
+                                      <p className="mt-1.5 text-sm font-semibold">{launch.location}</p>
+                                    </div>
+                                    <div className="rounded-[14px] bg-white p-3 border border-black/5">
+                                      <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-black/40">Stage</p>
+                                      <p className="mt-1.5 text-sm font-semibold">{launch.stage}</p>
+                                    </div>
+                                    <div className="rounded-[14px] bg-white p-3 border border-black/5">
+                                      <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-black/40">Category</p>
+                                      <p className="mt-1.5 text-sm font-semibold">{launch.category}</p>
+                                    </div>
+                                    <div className="rounded-[14px] bg-white p-3 border border-black/5">
+                                      <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-black/40">Momentum</p>
+                                      <p className="mt-1.5 text-sm font-semibold">{launch.momentum}</p>
+                                    </div>
+                                  </div>
+
+                                  {launch.proof.length > 0 && (
+                                    <div className="mt-5">
+                                      <p className="mb-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-[#42520d]">Proof signals</p>
+                                      <div className="grid gap-1.5">
+                                        {launch.proof.map((signal) => (
+                                          <div key={signal} className="flex items-start gap-2 text-xs leading-5 text-black/60">
+                                            <Star className="mt-0.5 h-3 w-3 shrink-0 text-[#42520d]" />
+                                            <span>{signal}</span>
+                                          </div>
+                                        ))}
+                                      </div>
+                                    </div>
+                                  )}
+                                </div>
+
+                                {/* Founder card + open-in-new-tab CTA */}
+                                <aside className="space-y-4">
+                                  <div className="rounded-[16px] border border-black/10 bg-white p-4">
+                                    <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#42520d]">Launched by</p>
+                                    {launch.founderProfilePath ? (
+                                      <Link
+                                        to={launch.founderProfilePath}
+                                        className="mt-3 flex items-center gap-3 rounded-[12px] p-2 -mx-2 transition-colors hover:bg-[#f4f1eb]"
+                                      >
+                                        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#dcefc7] text-xs font-semibold text-[#42520d]">
+                                          {launch.founder.slice(0, 2).toUpperCase()}
+                                        </div>
+                                        <div className="min-w-0 flex-1">
+                                          <p className="truncate text-sm font-semibold">{launch.founder}</p>
+                                          <p className="mt-0.5 truncate text-xs text-black/50">View founder profile</p>
+                                        </div>
+                                        <ArrowUpRight className="h-3.5 w-3.5 shrink-0 text-black/30" />
+                                      </Link>
+                                    ) : (
+                                      <div className="mt-3 flex items-center gap-3">
+                                        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#dcefc7] text-xs font-semibold text-[#42520d]">
+                                          {launch.founder.slice(0, 2).toUpperCase()}
+                                        </div>
+                                        <p className="text-sm font-semibold">{launch.founder}</p>
+                                      </div>
+                                    )}
+                                  </div>
+
+                                  <div className="grid gap-2">
+                                    <a
+                                      href={projectHref}
+                                      target="_blank"
+                                      rel="noreferrer"
+                                      className="inline-flex items-center justify-center gap-1.5 rounded-full bg-[#42520d] px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#34420a]"
+                                    >
+                                      Open project <ArrowUpRight className="h-4 w-4" />
+                                    </a>
+                                    <button
+                                      type="button"
+                                      onClick={() => handleForYouPrimaryAction(launch)}
+                                      className={`rounded-full ${accentSurface} px-4 py-2.5 text-sm font-semibold ${accentForeground} transition-colors hover:opacity-90`}
+                                    >
+                                      {isInvestor ? 'Save to deal flow' : 'Launch your product'}
+                                    </button>
+                                  </div>
+                                </aside>
+                              </div>
+                            </div>
                           </div>
                         </div>
-
-                        <div className="flex items-center gap-4 text-sm font-semibold text-black/60 md:w-44 md:justify-end">
-                          <span className="inline-flex items-center gap-1.5">
-                            <ChevronUp className="h-4 w-4 text-[#42520d]" />
-                            {launch.saves}
-                          </span>
-                          <span className="inline-flex items-center gap-1.5 text-black/45">
-                            <MessageSquare className="h-4 w-4" />
-                            {launch.comments}
-                          </span>
-                          <span className="ml-auto rounded-full bg-[#f4f1eb] px-3.5 py-2 text-xs font-semibold text-black/70 transition-colors group-hover:bg-[#42520d] group-hover:text-white md:ml-0">
-                            View
-                          </span>
-                        </div>
-                      </button>
+                      </div>
                     );
                   })}
                   {visibleDashboardLaunches.length === 0 && (
@@ -5412,120 +5531,6 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
                   </div>
                 </div>
 
-                <div className="rounded-[20px] border border-black/10 bg-white shadow-[0_10px_34px_rgba(0,0,0,0.04)] p-5">
-                  <div className="flex items-center justify-between">
-                    <p className="text-sm font-semibold text-[#42520d]">Selected project</p>
-                    <Bookmark className="h-5 w-5 text-black/50" />
-                  </div>
-                  {selectedForYouLaunch.bannerUrl && (
-                    <div className="mt-5 aspect-[16/7] overflow-hidden rounded-[18px] bg-[#fbfaf7]">
-                      <img src={selectedForYouLaunch.bannerUrl} alt="" className="h-full w-full object-cover" />
-                    </div>
-                  )}
-                  <div className="mt-5 flex items-center gap-3">
-                    <Link to={selectedForYouLaunch.projectPath ?? `/projects/${selectedForYouLaunch.id}`} aria-label={`Open ${selectedForYouLaunch.name} project profile`}>
-                      <img
-                        src={selectedForYouLaunch.logoUrl || `https://www.google.com/s2/favicons?domain=${selectedDomain}&sz=128`}
-                        alt=""
-                        className="h-12 w-12 rounded-[16px] bg-[#fbfaf7] object-contain p-2 transition-opacity hover:opacity-75"
-                      />
-                    </Link>
-                    <div>
-                      <Link
-                        to={selectedForYouLaunch.projectPath ?? `/projects/${selectedForYouLaunch.id}`}
-                        className="text-xl font-semibold tracking-[-0.02em] transition-colors hover:text-[#42520d]"
-                      >
-                        {selectedForYouLaunch.name}
-                      </Link>
-                      <p className="mt-2 text-sm font-semibold text-black/55">by {selectedForYouLaunch.founder}</p>
-                    </div>
-                  </div>
-                  <p className="mt-5 text-sm leading-7 text-black/60">{selectedForYouLaunch.description}</p>
-                  {(selectedForYouLaunch.demoVideoUrl || selectedForYouLaunch.pitchVideoUrl) && (
-                    <div className="mt-5 grid gap-3">
-                      {selectedForYouLaunch.demoVideoUrl && (
-                        <video className="aspect-video w-full rounded-[16px] bg-black object-cover" src={selectedForYouLaunch.demoVideoUrl} controls />
-                      )}
-                      {selectedForYouLaunch.pitchVideoUrl && (
-                        <video className="aspect-video w-full rounded-[16px] bg-black object-cover" src={selectedForYouLaunch.pitchVideoUrl} controls />
-                      )}
-                    </div>
-                  )}
-                  <div className="mt-5 grid grid-cols-2 gap-3">
-                    <div className="rounded-[16px] bg-[#fbfaf7] p-4">
-                      <p className="text-xs font-semibold uppercase tracking-[0.14em] text-black/40">Location</p>
-                      <p className="mt-2 text-sm font-semibold">{selectedForYouLaunch.location}</p>
-                    </div>
-                    <div className="rounded-[16px] bg-[#fbfaf7] p-4">
-                      <p className="text-xs font-semibold uppercase tracking-[0.14em] text-black/40">Momentum</p>
-                      <p className="mt-2 text-sm font-semibold">{selectedForYouLaunch.momentum}</p>
-                    </div>
-                  </div>
-                  <div className="mt-5">
-                    <p className="mb-3 text-xs font-semibold uppercase tracking-[0.14em] text-[#42520d]">Proof signals</p>
-                    <div className="grid gap-2">
-                      {selectedForYouLaunch.proof.map((signal) => (
-                        <div key={signal} className="flex items-start gap-2 text-sm leading-6 text-black/60">
-                          <Star className="mt-1 h-3.5 w-3.5 shrink-0 text-[#42520d]" />
-                          <span>{signal}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                  <div className="mt-5 flex flex-wrap gap-2">
-                    {selectedForYouLaunch.investors.map((investor) => (
-                      <span key={investor} className="rounded-full bg-[#dcefc7] px-3 py-1.5 text-xs font-semibold text-black">
-                        {investor}
-                      </span>
-                    ))}
-                  </div>
-                  {(selectedForYouLaunch.pitchDeckUrl || selectedForYouLaunch.pitchBookNote || (selectedForYouLaunch.founderSignals ?? []).length > 0) && (
-                    <div className="mt-5 rounded-[16px] bg-[#fbfaf7] p-4">
-                      <div className="flex flex-wrap items-center justify-between gap-3">
-                        <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#42520d]">Pitch Book</p>
-                        <span className="rounded-full bg-white px-2.5 py-1 text-[11px] font-semibold text-black/55">
-                          {selectedForYouLaunch.pitchVisibility === 'investors' ? 'Investors only' : 'Public'}
-                        </span>
-                      </div>
-                      {selectedForYouLaunch.pitchBookNote && (
-                        <p className="mt-3 text-sm leading-6 text-black/60">{selectedForYouLaunch.pitchBookNote}</p>
-                      )}
-                      <div className="mt-3 flex flex-wrap gap-2">
-                        {selectedForYouLaunch.pitchDeckUrl && (
-                          <a
-                            href={selectedForYouLaunch.pitchDeckUrl}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="inline-flex items-center gap-1.5 rounded-full bg-white px-3 py-1.5 text-xs font-semibold text-[#42520d]"
-                          >
-                            <FileText className="h-3.5 w-3.5" />
-                            Pitch deck
-                          </a>
-                        )}
-                        {(selectedForYouLaunch.founderSignals ?? []).map((signal) => (
-                          <span key={signal} className="rounded-full bg-white px-3 py-1.5 text-xs font-semibold text-black/55">
-                            {signal}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                  <div className="mt-6 grid gap-3">
-                    <Link
-                      to={selectedForYouLaunch.projectPath ?? `/projects/${selectedForYouLaunch.id}`}
-                      className="inline-flex items-center justify-center rounded-full bg-[#42520d] px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-[#34420a]"
-                    >
-                      Open project <ArrowUpRight className="ml-2 h-4 w-4" />
-                    </Link>
-                    <button
-                      type="button"
-                      onClick={() => handleForYouPrimaryAction(selectedForYouLaunch)}
-                      className={`rounded-full ${accentSurface} px-5 py-3 text-sm font-semibold ${accentForeground} transition-colors hover:opacity-90`}
-                    >
-                      {isInvestor ? 'Save to deal flow' : 'Launch your product'}
-                    </button>
-                  </div>
-                </div>
               </aside>
             </div>
           </div>
