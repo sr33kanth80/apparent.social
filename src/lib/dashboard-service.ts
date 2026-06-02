@@ -5,7 +5,6 @@ import {
   defaultInvestorCriteria,
   generalFeedDefaults,
   seedBuilderNodes,
-  seedInvestorSignals,
   seedMeetups,
 } from '@/lib/app-defaults';
 import type {
@@ -90,14 +89,6 @@ const textIncludesAny = (source: string, tokens: string[]) => {
   return tokens.some((token) => normalizedSource.includes(token));
 };
 
-const sourceWeight = (sourceType: string) => {
-  const lower = sourceType.toLowerCase();
-  if (lower.includes('github')) return 14;
-  if (lower.includes('launch')) return 12;
-  if (lower.includes('customer')) return 10;
-  if (lower.includes('hn')) return 8;
-  return 5;
-};
 
 const freshnessWeight = (freshnessAt: string) => {
   const ageMs = Date.now() - new Date(freshnessAt).getTime();
@@ -126,61 +117,8 @@ const formatFreshness = (freshnessAt: string) => {
   return days === 1 ? 'Yesterday' : `${days}d ago`;
 };
 
-const generateOutreachDraft = (signal: InvestorSignal, criteria: InvestorCriteriaValues) => {
-  const thesis = criteria.thesis.trim() || 'our current investment thesis';
-  const founderSignals = criteria.founderSignals.trim() || 'public proof, freshness, and founder-market fit';
 
-  return `${signal.founder}, ${signal.company} stood out because of ${signal.source.toLowerCase()} and the way it maps to ${thesis}. We pay close attention to ${founderSignals}. Open to comparing notes this week?`;
-};
 
-const calculateRelevance = (signal: InvestorSignal, criteria: InvestorCriteriaValues) => {
-  const haystack = [
-    signal.company,
-    signal.founder,
-    signal.detail,
-    signal.source,
-    signal.stage,
-    signal.location,
-    signal.rawTags.join(' '),
-  ].join(' ');
-
-  let score = 42;
-  if (textIncludesAny(haystack, toTextTokens(criteria.thesis))) score += 14;
-  if (textIncludesAny(haystack, toTextTokens(criteria.sectors))) score += 12;
-  if (criteria.stage && signal.stage.toLowerCase().includes(criteria.stage.toLowerCase())) score += 8;
-  if (textIncludesAny(signal.location, toTextTokens(criteria.geography))) score += 6;
-  if (textIncludesAny(haystack, toTextTokens(criteria.founderSignals))) score += 10;
-  if (textIncludesAny(haystack, toTextTokens(criteria.portfolioExamples))) score += 5;
-
-  score += sourceWeight(signal.sourceType);
-  score += freshnessWeight(signal.freshnessAt);
-
-  if (criteria.passSignals && textIncludesAny(haystack, toTextTokens(criteria.passSignals))) {
-    score -= 18;
-  }
-
-  return Math.max(1, Math.min(99, score));
-};
-
-const mapSourceRow = (row: Record<string, unknown>): InvestorSignal => ({
-  id: String(row.id),
-  company: String(row.company ?? ''),
-  founder: String(row.founder ?? ''),
-  detail: String(row.detail ?? ''),
-  source: String(row.source_type ?? ''),
-  sourceUrl: String(row.source_url ?? '#'),
-  profileUrl: String(row.profile_url ?? '#'),
-  relevance: 1,
-  freshness: formatFreshness(String(row.freshness_at ?? new Date().toISOString())),
-  stage: String(row.stage ?? ''),
-  location: String(row.location ?? ''),
-  column: 'New',
-  outreach: '',
-  sourceType: String(row.source_type ?? ''),
-  freshnessAt: String(row.freshness_at ?? new Date().toISOString()),
-  githubUrl: String(row.github_url ?? ''),
-  rawTags: Array.isArray(row.raw_tags) ? (row.raw_tags as string[]) : [],
-});
 
 const mapCriteriaRow = (row: Record<string, unknown> | null): InvestorCriteriaValues => ({
   ...defaultInvestorCriteria,
@@ -668,94 +606,6 @@ const localFounderBuilderNode = (
   };
 };
 
-// ── Ingested public signals → Builder Radar nodes ───────────────────────────────
-// Turns rows from public.source_signals (YC / GitHub / Product Hunt / Hacker News)
-// into builders that plot on the radar alongside real Apparent users.
-
-const githubHandle = (url: string): string => {
-  const match = url.match(/github\.com\/([^/?#]+)/i);
-  return match ? match[1].toLowerCase() : '';
-};
-
-const isKnownRadarCity = (city: string) =>
-  Object.prototype.hasOwnProperty.call(cityGeoCoordinates, city) && city !== 'Remote';
-
-const signalToBuilderNode = (row: Record<string, unknown>, index: number): BuilderNode | null => {
-  const company = String(row.company ?? '').trim();
-  const founder = String(row.founder ?? '').trim();
-  const sourceType = String(row.source_type ?? 'Ingested signal');
-  const sourceUrl = String(row.source_url ?? '');
-  const profileUrl = String(row.profile_url ?? '');
-  const githubUrl = String(row.github_url ?? '');
-  const detail = String(row.detail ?? '');
-  const stage = String(row.stage ?? '');
-  const city = normalizeCity(String(row.location ?? ''));
-
-  // Only plot ingested builders we can place on the curated city map. Locationless
-  // signals (e.g. most GitHub repos) still flow into the investor signal feed.
-  if (!company || !isKnownRadarCity(city)) return null;
-
-  const coords = cityGeoCoordinates[city];
-  const latestActivity = String(row.freshness_at ?? row.created_at ?? nowIso());
-  const tags = Array.isArray(row.raw_tags) ? (row.raw_tags as string[]) : [];
-  const proofLinks: BuilderProofLink[] = [
-    githubUrl ? { label: 'GitHub', url: githubUrl, type: 'github' } : null,
-    sourceUrl ? { label: sourceType, url: sourceUrl, type: 'launch' } : null,
-    profileUrl && profileUrl !== sourceUrl ? { label: 'Profile', url: profileUrl, type: 'profile' } : null,
-  ].filter(Boolean) as BuilderProofLink[];
-
-  return {
-    id: `signal:${String(row.id)}`,
-    founderId: `signal:${String(row.id)}`,
-    founderName: founder || company,
-    company,
-    displayLabel: company,
-    buildSummary: detail || `${company} surfaced from ${sourceType}.`,
-    category: tags[0] ?? '',
-    stage,
-    location: city,
-    // Jitter so multiple signals in one city don't stack on the exact point.
-    latitude: coords.latitude + Math.sin((index + 1) * 1.7) * 0.06,
-    longitude: coords.longitude + Math.cos((index + 1) * 1.3) * 0.06,
-    proofLinks,
-    traction: '',
-    launchCount: 0,
-    latestActivity,
-    latestActivityLabel: formatFreshness(latestActivity),
-    fitScore: 50,
-    matchReasons: [],
-    profileUrl: sourceUrl || profileUrl || githubUrl || '#',
-    githubUrl,
-    pressUrl: sourceUrl,
-    launchUrl: sourceUrl,
-    rawTags: mergeUnique([...tags, stage, sourceType], 8),
-    origin: 'ingested',
-    sourceLabel: sourceType,
-  };
-};
-
-/** Build identity keys (company name, github handle) for dedup against ingested signals. */
-const builderIdentityKeys = (builder: BuilderNode): string[] => {
-  const keys: string[] = [];
-  if (builder.company) keys.push(builder.company.toLowerCase().trim());
-  const gh = githubHandle(builder.githubUrl);
-  if (gh) keys.push(`gh:${gh}`);
-  return keys;
-};
-
-/** Drop ingested nodes that collide with a native Apparent builder or an earlier ingested one. */
-const dedupeIngestedNodes = (ingested: BuilderNode[], nativeNodes: BuilderNode[]): BuilderNode[] => {
-  const seen = new Set<string>();
-  nativeNodes.forEach((node) => builderIdentityKeys(node).forEach((key) => seen.add(key)));
-
-  return ingested.filter((node) => {
-    const keys = builderIdentityKeys(node);
-    if (keys.some((key) => seen.has(key))) return false;
-    keys.forEach((key) => seen.add(key));
-    return true;
-  });
-};
-
 const calculateBuilderFit = (
   builder: BuilderNode,
   role: DashboardRole,
@@ -1093,27 +943,18 @@ export const loadBuilderNetwork = async (
     };
   }
 
-  const [{ data: profileRows }, { data: launchRows }, { data: stateRows }, { data: signalRows }] = await Promise.all([
+  const [{ data: profileRows }, { data: launchRows }, { data: stateRows }] = await Promise.all([
     supabase.from('founder_profiles').select('*').order('updated_at', { ascending: false }),
     supabase.from('product_launches').select('*').order('updated_at', { ascending: false }),
     supabase.from('builder_discovery_states').select('*').eq('user_id', user.id),
-    supabase.from('source_signals').select('*').order('freshness_at', { ascending: false }).limit(1000),
   ]);
 
   const allLaunches = (launchRows ?? []).map((row) => mapProductLaunchRow(row));
   const mappedBuilders = mapBuilderProfileRows((profileRows ?? []) as Record<string, unknown>[], allLaunches, user.id);
-  const nativeBuilders = mappedBuilders.length ? mappedBuilders : seedBuilderNodes;
-
-  // Merge ingested public-signal builders (YC / GitHub / Product Hunt / Hacker News)
-  // onto the radar, deduped against the native Apparent builders.
-  const ingestedBuilders = dedupeIngestedNodes(
-    ((signalRows ?? []) as Record<string, unknown>[])
-      .map((row, index) => signalToBuilderNode(row, index))
-      .filter((node): node is BuilderNode => node !== null),
-    nativeBuilders,
-  );
-
-  const builderNodes = [...nativeBuilders, ...ingestedBuilders]
+  // Only show real Apparent founders on the radar. We previously merged
+  // ingested public signals (YC / GitHub / Product Hunt / Hacker News) but the
+  // scraped pipeline was removed; this keeps the radar clean of leftover dots.
+  const builderNodes = mappedBuilders
     .map((builder) => calculateBuilderFit(builder, role, values))
     .sort((a, b) => b.fitScore - a.fitScore);
   const builderDiscoveryStates = (stateRows ?? []).map((row) => mapBuilderDiscoveryRow(row));
@@ -1664,21 +1505,9 @@ const loadLocalDashboard = async (user: AppUser, role: DashboardRole, labelByKey
   if (role === 'investor') {
     const criteria = readLocal<InvestorCriteriaValues>(storageKey(user, 'criteria'), defaultInvestorCriteria);
     const intakeValues = toIntakeRecord(criteria);
-    const stateBySignal = readLocal<Record<string, InvestorDealStage>>(storageKey(user, 'signal-stages'), {});
-    const draftsBySignal = readLocal<Record<string, string>>(storageKey(user, 'drafts'), {});
-    const signalRows = seedInvestorSignals.map((signal) => {
-      const merged = {
-        ...signal,
-        column: stateBySignal[signal.id] ?? signal.column,
-      };
-      const relevance = calculateRelevance(merged, criteria);
-      return {
-        ...merged,
-        relevance,
-        freshness: formatFreshness(merged.freshnessAt),
-        outreach: draftsBySignal[signal.id] ?? generateOutreachDraft({ ...merged, relevance }, criteria),
-      };
-    });
+    // Legacy scraped `source_signals` and sample outreach drafts removed.
+    // Deal flow now comes purely from real Apparent builders the investor adds.
+    const signalRows: InvestorSignal[] = [];
 
     const profileSaved = completedLabels(intakeValues, labelByKey).length > 0;
     const builderNetwork = await loadBuilderNetwork(user, role, criteria, productLaunches);
@@ -1718,17 +1547,17 @@ const loadLocalDashboard = async (user: AppUser, role: DashboardRole, labelByKey
     intakeValues,
     completedLabels: completedLabels(intakeValues, labelByKey),
     profileSaved,
-    signalRows: seedInvestorSignals,
+    signalRows: [],
     settings,
     productLaunches,
     meetups,
-    networkClusters: buildNetworkClusters(seedInvestorSignals, meetups, founderProfile.location),
+    networkClusters: buildNetworkClusters([], meetups, founderProfile.location),
     builderNodes: builderNetwork.builderNodes,
     builderClusters: buildBuilderMapClusters(builderNetwork.builderNodes, meetups),
     builderDiscoveryStates: builderNetwork.builderDiscoveryStates,
     termReviews,
     messages,
-    feedItems: buildFeedItems(role, profileSaved, seedInvestorSignals, meetups, productLaunches, feedActions),
+    feedItems: buildFeedItems(role, profileSaved, [], meetups, productLaunches, feedActions),
     savedInvestorMatchNames: [],
     launchEngagement: {},
     founderInterest: { saveCount: 0, recentSaverNames: [] },
@@ -1830,11 +1659,13 @@ export const loadDashboardData = async (
   }, {});
 
   if (role === 'investor') {
-    const [{ data: criteriaRow }, { data: sourceRows }, { data: stateRows }, { data: draftRows }] = await Promise.all([
+    // The legacy `source_signals` table was populated by an Apify scraper
+    // (YC / GitHub / Product Hunt / Hacker News). That pipeline is gone, so
+    // we no longer read from it. Deal flow now comes entirely from real
+    // Apparent builders the investor has added (via mergeBuilderDealFlowSignals).
+    const [{ data: criteriaRow }, { data: stateRows }] = await Promise.all([
       supabase.from('investor_criteria').select('*').eq('user_id', user.id).maybeSingle(),
-      supabase.from('source_signals').select('*').order('freshness_at', { ascending: false }),
       supabase.from('investor_signal_states').select('*').eq('investor_id', user.id),
-      supabase.from('outreach_drafts').select('*').eq('investor_id', user.id),
     ]);
 
     const criteria = mapCriteriaRow(criteriaRow as Record<string, unknown> | null);
@@ -1842,22 +1673,10 @@ export const loadDashboardData = async (
     const stateBySignal = new Map(
       (stateRows ?? []).map((row) => [String(row.signal_id), String(row.stage) as InvestorDealStage]),
     );
-    const draftBySignal = new Map((draftRows ?? []).map((row) => [String(row.signal_id), String(row.body)]));
-    const mappedSourceRows = (sourceRows?.length ? sourceRows : []).map((row) => mapSourceRow(row));
-    const baseSignals = mappedSourceRows.length ? mappedSourceRows : seedInvestorSignals;
-    const signalRows = baseSignals.map((signal) => {
-      const withState = {
-        ...signal,
-        column: stateBySignal.get(signal.id) ?? signal.column,
-      };
-      const relevance = calculateRelevance(withState, criteria);
-      return {
-        ...withState,
-        relevance,
-        freshness: formatFreshness(withState.freshnessAt),
-        outreach: draftBySignal.get(signal.id) ?? generateOutreachDraft({ ...withState, relevance }, criteria),
-      };
-    });
+    const signalRows: InvestorSignal[] = [];
+    // Apply persisted column state on top of the empty base — preserved so
+    // future, non-ingested signal sources can plug in here without rewiring.
+    void stateBySignal;
 
     const profileSaved = completedLabels(intakeValues, labelByKey).length > 0;
     const builderNetwork = await loadBuilderNetwork(user, role, criteria, productLaunches);
@@ -1920,17 +1739,17 @@ export const loadDashboardData = async (
     intakeValues,
     completedLabels: completedLabels(intakeValues, labelByKey),
     profileSaved,
-    signalRows: seedInvestorSignals,
+    signalRows: [],
     settings,
     productLaunches,
     meetups: effectiveMeetups,
-    networkClusters: buildNetworkClusters(seedInvestorSignals, effectiveMeetups, founderProfile.location),
+    networkClusters: buildNetworkClusters([], effectiveMeetups, founderProfile.location),
     builderNodes: builderNetwork.builderNodes,
     builderClusters: buildBuilderMapClusters(builderNetwork.builderNodes, effectiveMeetups),
     builderDiscoveryStates: builderNetwork.builderDiscoveryStates,
     termReviews,
     messages,
-    feedItems: buildFeedItems(role, profileSaved, seedInvestorSignals, effectiveMeetups, productLaunches, feedActions),
+    feedItems: buildFeedItems(role, profileSaved, [], effectiveMeetups, productLaunches, feedActions),
     savedInvestorMatchNames,
     launchEngagement,
     founderInterest,

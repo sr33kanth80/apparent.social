@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
-import { ArrowUpRight, FileText, Globe2, Link as LinkIcon, MapPin, Star, Users } from 'lucide-react';
+import { Link, useNavigate, useParams } from 'react-router-dom';
+import { ArrowUpRight, FileText, Globe2, Link as LinkIcon, MapPin, MessageCircle, Star, Users } from 'lucide-react';
 import { LogoIcon } from '@/components/LogoIcon';
 import { GitHubIcon } from '@/components/GitHubIcon';
 import { productLaunches } from '@/data/showcase-launches';
-import type { PublicProjectDetail } from '@/lib/apparent-types';
-import { loadPublicProjectDetail } from '@/lib/dashboard-service';
+import type { AppUser, PublicProjectDetail } from '@/lib/apparent-types';
+import { loadPublicProjectDetail, saveMessage } from '@/lib/dashboard-service';
+import { getCurrentAppUser } from '@/lib/auth-service';
 import { getStaticFounderProfile } from '@/lib/static-founder-profiles';
 
 const serifDisplay = {
@@ -88,8 +89,12 @@ const fallbackProjectDetail = (projectId: string): PublicProjectDetail | null =>
 
 export const ProjectDetail = () => {
   const { projectId = '' } = useParams();
+  const navigate = useNavigate();
   const [detail, setDetail] = useState<PublicProjectDetail | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [currentUser, setCurrentUser] = useState<AppUser | null>(null);
+  const [outreachStatus, setOutreachStatus] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle');
+  const [outreachError, setOutreachError] = useState('');
 
   useEffect(() => {
     let isMounted = true;
@@ -105,6 +110,51 @@ export const ProjectDetail = () => {
       isMounted = false;
     };
   }, [projectId]);
+
+  useEffect(() => {
+    let cancelled = false;
+    getCurrentAppUser()
+      .then((user) => {
+        if (!cancelled) setCurrentUser(user);
+      })
+      .catch(() => {
+        if (!cancelled) setCurrentUser(null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  // Investor outreach: send a canned DM via the existing user_messages flow.
+  // The founder sees the message in their inbox; this replaces the old sample
+  // outreach drafts that were generated locally inside the investor dashboard.
+  const handleSendOutreach = async () => {
+    if (!currentUser || !detail) return;
+    const founderName = detail.founder?.profileName || 'Founder on Apparent';
+    const firstName = founderName.split(/\s+/)[0];
+    const investorName = currentUser.username || currentUser.email.split('@')[0];
+
+    setOutreachStatus('sending');
+    setOutreachError('');
+
+    try {
+      await saveMessage(currentUser, {
+        recipient: founderName,
+        recipientId: detail.founder?.userId || detail.launch.ownerId,
+        senderName: investorName,
+        subject: `Apparent: interested in ${detail.launch.name}`,
+        body:
+          `Hi ${firstName} — I'm ${investorName} on Apparent. I came across ${detail.launch.name} and what you're building stood out. ` +
+          `I'd love to learn more and see if there's a fit. Open to a quick call this week?\n\n— ${investorName}`,
+        status: 'sent',
+        context: `launch:${detail.launch.id}`,
+      });
+      setOutreachStatus('sent');
+    } catch (error) {
+      setOutreachStatus('error');
+      setOutreachError(error instanceof Error ? error.message : 'Unable to send outreach.');
+    }
+  };
 
   const proofSignals = useMemo(
     () =>
@@ -218,6 +268,42 @@ export const ProjectDetail = () => {
                 <a href={launch.proofUrl} target="_blank" rel="noreferrer" className="inline-flex justify-center rounded-full bg-[#dcefc7] px-5 py-3 text-sm font-semibold text-black hover:bg-[#cce8ae]">
                   View proof <ArrowUpRight className="ml-2 h-4 w-4" />
                 </a>
+              )}
+              {/* Outreach: only shown to logged-in investors viewing someone else's
+                  launch. Sends a canned DM via the existing user_messages system. */}
+              {currentUser?.role === 'investor' && currentUser.id !== launch.ownerId && (
+                <>
+                  {outreachStatus === 'sent' ? (
+                    <button
+                      type="button"
+                      onClick={() => navigate('/dashboard/investor#messages')}
+                      className="inline-flex items-center justify-center gap-2 rounded-full border border-[#42520d]/30 bg-white px-5 py-3 text-sm font-semibold text-[#42520d] hover:bg-[#f4f1eb]"
+                    >
+                      <MessageCircle className="h-4 w-4" /> Outreach sent · open inbox
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={handleSendOutreach}
+                      disabled={outreachStatus === 'sending'}
+                      className="inline-flex items-center justify-center gap-2 rounded-full bg-black px-5 py-3 text-sm font-semibold text-white hover:bg-black/85 disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      <MessageCircle className="h-4 w-4" />
+                      {outreachStatus === 'sending' ? 'Sending…' : 'Send outreach DM'}
+                    </button>
+                  )}
+                  {outreachError && (
+                    <p className="rounded-lg bg-red-50 px-3 py-2 text-xs text-red-700">{outreachError}</p>
+                  )}
+                </>
+              )}
+              {!currentUser && (
+                <Link
+                  to="/login?role=investor"
+                  className="inline-flex items-center justify-center gap-2 rounded-full border border-black/10 bg-white px-5 py-3 text-sm font-semibold text-black hover:bg-[#f4f1eb]"
+                >
+                  <MessageCircle className="h-4 w-4" /> Sign in to send outreach
+                </Link>
               )}
             </div>
           </aside>
