@@ -46,32 +46,34 @@ export const Home = () => {
             <span>1,800+ investors mapped</span>
           </div>
         </div>
-        <h1
-          className="max-w-3xl text-4xl font-normal leading-[1.15] tracking-[-0.04em] md:text-5xl lg:max-w-none lg:whitespace-nowrap xl:text-6xl"
-          style={serifDisplay}
-        >
-          <span className="pz pz-light pz-end-l pz-knob-r" style={{ zIndex: 4 }}>Find<i className="pz-nub pz-nub-b" /></span><span className="pz pz-olive pz-socket-l pz-knob-r pz-drop" style={{ zIndex: 3 }}>investors<i className="pz-nub pz-nub-t" /></span><span className="pz pz-light pz-socket-l pz-knob-r" style={{ zIndex: 2 }}>who actually<i className="pz-nub pz-nub-b" /></span><span className="pz pz-olive pz-socket-l pz-end-r pz-slide" style={{ zIndex: 1 }}>fit.<i className="pz-nub pz-nub-t" /></span>
-        </h1>
-        <p className="mt-5 max-w-2xl text-base leading-7 text-black/65 md:text-lg">
-          Apparent matches founders and investors by thesis, stage, and sector.
-          Founders reach the funds that back what they&apos;re building. Investors meet the
-          founders who fit their thesis. Less noise on both sides, better conversations.
-        </p>
-        <div className="mt-7 flex flex-wrap items-center gap-3">
-          <button
-            type="button"
-            onClick={() => navigate('/login?role=founder')}
-            className="inline-flex items-center gap-2 rounded-full bg-[#dcefc7] px-6 py-3 text-sm font-semibold text-black transition-colors hover:bg-[#cce8ae]"
+        <div className="flex flex-col items-center text-center">
+          <h1
+            className="max-w-3xl text-4xl font-normal leading-[1.15] tracking-[-0.04em] md:text-5xl lg:max-w-none lg:whitespace-nowrap xl:text-6xl"
+            style={serifDisplay}
           >
-            I&apos;m a founder <ArrowUpRight className="h-4 w-4" />
-          </button>
-          <button
-            type="button"
-            onClick={() => navigate('/login?role=investor')}
-            className="inline-flex items-center gap-2 rounded-full bg-[#42520d] px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-[#34420a]"
-          >
-            I&apos;m an investor
-          </button>
+            <span className="pz pz-light pz-end-l pz-knob-r" style={{ zIndex: 4 }}>Find<i className="pz-nub pz-nub-b" /></span><span className="pz pz-olive pz-socket-l pz-knob-r pz-drop" style={{ zIndex: 3 }}>investors<i className="pz-nub pz-nub-t" /></span><span className="pz pz-light pz-socket-l pz-knob-r" style={{ zIndex: 2 }}>who actually<i className="pz-nub pz-nub-b" /></span><span className="pz pz-olive pz-socket-l pz-end-r pz-slide" style={{ zIndex: 1 }}>fit.<i className="pz-nub pz-nub-t" /></span>
+          </h1>
+          <p className="mt-5 max-w-2xl text-base leading-7 text-black/65 md:text-lg">
+            Apparent matches founders and investors by thesis, stage, and sector.
+            Founders reach the funds that back what they&apos;re building. Investors meet the
+            founders who fit their thesis. Less noise on both sides, better conversations.
+          </p>
+          <div className="mt-7 flex flex-wrap items-center justify-center gap-3">
+            <button
+              type="button"
+              onClick={() => navigate('/login?role=founder')}
+              className="inline-flex items-center gap-2 rounded-full bg-[#dcefc7] px-6 py-3 text-sm font-semibold text-black transition-colors hover:bg-[#cce8ae]"
+            >
+              I&apos;m a founder <ArrowUpRight className="h-4 w-4" />
+            </button>
+            <button
+              type="button"
+              onClick={() => navigate('/login?role=investor')}
+              className="inline-flex items-center gap-2 rounded-full bg-[#42520d] px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-[#34420a]"
+            >
+              I&apos;m an investor
+            </button>
+          </div>
         </div>
       </section>
 
