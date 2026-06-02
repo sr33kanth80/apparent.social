@@ -195,27 +195,6 @@ export const signInWithEmail = async (
   return { ...appUser, username, isNew: true };
 };
 
-export const sendEmailLink = async (email: string, role: DashboardRole) => {
-  if (!isSupabaseConfigured || !supabase) {
-    createDevSession(role);
-    return;
-  }
-
-  // The OTP redirect path is bound to the role THIS request was sent for.
-  // The actual role check happens again post-redirect in getCurrentAppUser
-  // (which reads role from profiles, never trusts metadata or the URL).
-  const { error } = await supabase.auth.signInWithOtp({
-    email,
-    options: {
-      data: { role },
-      emailRedirectTo: window.location.origin + `/dashboard/${role}`,
-    },
-  });
-
-  if (error) {
-    throw error;
-  }
-};
 
 export const signOut = async () => {
   clearDevSession();

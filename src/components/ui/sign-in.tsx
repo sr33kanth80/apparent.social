@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { Link } from 'react-router-dom';
-import { Eye, EyeOff, KeyRound, Mail, Sparkles } from 'lucide-react';
+import { Eye, EyeOff, KeyRound, Mail } from 'lucide-react';
 
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -15,19 +15,6 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 
-const GoogleIcon = (props: React.ImgHTMLAttributes<HTMLImageElement>) => (
-  <img src="https://svgl.app/library/google.svg" alt="" aria-hidden="true" {...props} />
-);
-
-const MicrosoftIcon = (props: React.ImgHTMLAttributes<HTMLImageElement>) => (
-  <img src="https://svgl.app/library/microsoft.svg" alt="" aria-hidden="true" {...props} />
-);
-
-const AppleIcon = (props: React.SVGProps<SVGSVGElement>) => (
-  <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" {...props}>
-    <path d="M17.05 12.31c-.03-2.82 2.3-4.17 2.4-4.24-1.31-1.91-3.34-2.17-4.06-2.2-1.73-.17-3.38 1.02-4.26 1.02-.88 0-2.24-.99-3.68-.96-1.9.03-3.64 1.1-4.62 2.8-1.97 3.42-.5 8.48 1.42 11.25.94 1.36 2.06 2.89 3.53 2.83 1.42-.06 1.96-.92 3.67-.92 1.72 0 2.2.92 3.7.89 1.53-.03 2.5-1.39 3.43-2.75 1.08-1.58 1.52-3.11 1.55-3.19-.03-.01-2.98-1.14-3.08-4.53ZM14.27 4.05c.78-.95 1.31-2.26 1.16-3.57-1.12.04-2.48.75-3.29 1.69-.72.83-1.36 2.17-1.18 3.45 1.24.1 2.52-.63 3.31-1.57Z" />
-  </svg>
-);
 
 interface AuthFormProps extends React.HTMLAttributes<HTMLDivElement> {
   title?: string;
@@ -35,12 +22,8 @@ interface AuthFormProps extends React.HTMLAttributes<HTMLDivElement> {
   contextLabel?: string;
   contextItems?: string[];
   emailPlaceholder?: string;
-  emailLinkLabel?: string;
-  socialLabel?: string;
   submitLabel?: string;
   onEmailSubmit?: (data: { email: string; password?: string }) => void;
-  onSocialSignIn?: (provider: 'google' | 'microsoft' | 'apple' | 'sso') => void;
-  onEmailLink?: () => void;
 }
 
 const AuthForm = React.forwardRef<HTMLDivElement, AuthFormProps>(
@@ -52,12 +35,8 @@ const AuthForm = React.forwardRef<HTMLDivElement, AuthFormProps>(
       contextLabel,
       contextItems = [],
       emailPlaceholder = 'you@app.com',
-      emailLinkLabel = 'Or email me a link',
-      socialLabel = 'Sign in with',
       submitLabel = 'Sign In',
       onEmailSubmit,
-      onSocialSignIn,
-      onEmailLink,
       ...props
     },
     ref,
@@ -101,49 +80,6 @@ const AuthForm = React.forwardRef<HTMLDivElement, AuthFormProps>(
                 </div>
               </div>
             )}
-
-            <div className="space-y-2">
-              <Label className="text-xs text-muted-foreground">{socialLabel}</Label>
-              <div className="grid grid-cols-4 gap-2">
-                <Button
-                  type="button"
-                  variant="secondary"
-                  className="bg-muted/70 shadow-none hover:bg-muted"
-                  onClick={() => onSocialSignIn?.('google')}
-                >
-                  <GoogleIcon className="size-4" />
-                </Button>
-                <Button
-                  type="button"
-                  variant="secondary"
-                  className="bg-muted/70 shadow-none hover:bg-muted"
-                  onClick={() => onSocialSignIn?.('microsoft')}
-                >
-                  <MicrosoftIcon className="size-4" />
-                </Button>
-                <Button
-                  type="button"
-                  variant="secondary"
-                  className="bg-muted/70 shadow-none hover:bg-muted"
-                  onClick={() => onSocialSignIn?.('apple')}
-                >
-                  <AppleIcon className="size-5" />
-                </Button>
-                <Button
-                  type="button"
-                  variant="secondary"
-                  className="bg-muted/70 shadow-none hover:bg-muted"
-                  onClick={() => onSocialSignIn?.('sso')}
-                >
-                  <KeyRound className="h-5 w-5" />
-                  <span className="ml-1.5">SSO</span>
-                </Button>
-              </div>
-            </div>
-
-            <div className="flex justify-center text-xs uppercase">
-              <span className="rounded-full bg-muted px-3 py-1 text-muted-foreground">or</span>
-            </div>
 
             <form onSubmit={handleFormSubmit} className="space-y-4">
               <div className="space-y-2">
@@ -197,15 +133,6 @@ const AuthForm = React.forwardRef<HTMLDivElement, AuthFormProps>(
           </div>
         </CardContent>
         <CardFooter className="flex-col items-start space-y-4">
-          <Button
-            type="button"
-            variant="ghost"
-            className="w-full text-muted-foreground"
-            onClick={() => onEmailLink?.()}
-          >
-            <Sparkles className="mr-2 h-4 w-4" />
-            {emailLinkLabel}
-          </Button>
           <p className="w-full text-center text-xs text-muted-foreground">
             By logging in, you agree to our{' '}
             <Link to="/terms" className="underline hover:text-primary">

@@ -1,10 +1,6 @@
 import { AuthForm } from '@/components/ui/sign-in';
 import { Switch } from '@/components/ui/switch';
-import {
-  isRoleMismatchError,
-  sendEmailLink,
-  signInWithEmail,
-} from '@/lib/auth-service';
+import { isRoleMismatchError, signInWithEmail } from '@/lib/auth-service';
 import type { DashboardRole } from '@/lib/apparent-types';
 import { useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
@@ -30,10 +26,6 @@ export const Login = () => {
   const isInvestor = activeRole === 'investor';
   const isFounder = activeRole === 'founder';
 
-  const handleSocialSignIn = (provider: string) => {
-    window.alert(`Continue with ${provider}`);
-  };
-
   const handleEmailSubmit = async (data: { email: string; password?: string }) => {
     setAuthError('');
     setAuthErrorAction(null);
@@ -53,26 +45,6 @@ export const Login = () => {
       } else {
         setAuthError(error instanceof Error ? error.message : 'Unable to sign in.');
       }
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const handleEmailLink = async () => {
-    const email = window.prompt('Email address for your Apparent sign-in link');
-    if (!email) {
-      return;
-    }
-
-    setAuthError('');
-    setAuthErrorAction(null);
-    setIsSubmitting(true);
-
-    try {
-      await sendEmailLink(email, activeRole);
-      window.alert('Check your email for the Apparent sign-in link.');
-    } catch (error) {
-      setAuthError(error instanceof Error ? error.message : 'Unable to send email link.');
     } finally {
       setIsSubmitting(false);
     }
@@ -113,16 +85,6 @@ export const Login = () => {
     : isFounder
       ? 'founder@startup.com'
       : 'you@app.com';
-  const socialLabel = isInvestor
-    ? 'Continue as investor with'
-    : isFounder
-      ? 'Continue as founder with'
-      : 'Sign in with';
-  const emailLinkLabel = isInvestor
-    ? 'Email me an investor link'
-    : isFounder
-      ? 'Email me a founder link'
-      : 'Or email me a link';
   const submitLabel = isInvestor ? 'Continue as Investor' : isFounder ? 'Continue as Founder' : 'Sign In';
 
   const handleRoleChange = (nextRole: string) => {
@@ -195,12 +157,8 @@ export const Login = () => {
               contextLabel={contextLabel}
               contextItems={contextItems}
               emailPlaceholder={emailPlaceholder}
-              socialLabel={socialLabel}
-              emailLinkLabel={emailLinkLabel}
               submitLabel={isSubmitting ? 'Working...' : submitLabel}
-              onSocialSignIn={handleSocialSignIn}
               onEmailSubmit={handleEmailSubmit}
-              onEmailLink={handleEmailLink}
               className="border-0 bg-white/80 shadow-[0_18px_60px_rgba(0,0,0,0.06)]"
             />
             {authError && (
