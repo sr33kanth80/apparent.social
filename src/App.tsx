@@ -78,7 +78,7 @@ function App() {
             }
           />
           <Route
-            path="/dashboard/investor"
+            path="/dashboard/investor/*"
             element={
               <ProtectedDashboardRoute role="investor">
                 {(user) => <Dashboard role="investor" user={user} />}

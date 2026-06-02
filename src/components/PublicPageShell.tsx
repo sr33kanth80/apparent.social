@@ -27,7 +27,7 @@ export const PublicPageShell = ({ children }: { children: ReactNode }) => {
     if (window.history.length > 1) {
       navigate(-1);
     } else {
-      navigate(user ? `/dashboard/${user.role}#overview` : '/');
+      navigate(user ? `/dashboard/${user.role}` : '/');
     }
   };
 

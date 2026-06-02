@@ -68,10 +68,10 @@ const deriveInitials = (email: string): string => {
 
 interface NavItem {
   label: string;
-  href: string;
+  /** Canonical URL path for this section. Always set on real nav items. */
+  path: string;
   icon: LucideIcon;
   badge?: string;
-  path?: string;
 }
 
 const SIDEBAR_PIN_STORAGE_KEY = 'apparent-sidebar-pinned';
@@ -131,20 +131,20 @@ const roleConfig = {
     basePath: '/dashboard/founder',
     groups: [
       [
-        { label: 'Overview', href: '#overview', icon: LayoutDashboard },
-        { label: 'Your Profile', href: '#profile', icon: UserCircle },
-        { label: 'Products', href: '#products', path: '/dashboard/founder/products', icon: Rocket },
-        { label: 'Investor Matches', href: '#matches', icon: Search, badge: 'AI' },
-        { label: 'VC heatmap', href: '#vc-heatmap', path: '/dashboard/founder/vc-heatmap', icon: Map, badge: 'VC' },
-        { label: 'Cold Outreach', href: '#outreach', icon: Send, badge: 'New' },
-        { label: 'Messages', href: '#messages', icon: MessagesSquare },
+        { label: 'Overview', path: '/dashboard/founder', icon: LayoutDashboard },
+        { label: 'Your Profile', path: '/dashboard/founder/profile', icon: UserCircle },
+        { label: 'Products', path: '/dashboard/founder/products', icon: Rocket },
+        { label: 'Investor Matches', path: '/dashboard/founder/matches', icon: Search, badge: 'AI' },
+        { label: 'VC heatmap', path: '/dashboard/founder/vc-heatmap', icon: Map, badge: 'VC' },
+        { label: 'Cold Outreach', path: '/dashboard/founder/outreach', icon: Send, badge: 'New' },
+        { label: 'Messages', path: '/dashboard/founder/messages', icon: MessagesSquare },
       ],
       [
-        { label: 'Fundraise Tracker', href: '#deals', icon: Layout },
+        { label: 'Fundraise Tracker', path: '/dashboard/founder/deals', icon: Layout },
       ],
       [
-        { label: 'How to Use Apparent?', href: '#knowledge', icon: GraduationCap },
-        { label: 'Feedback', href: '#feedback', icon: MessageSquareText },
+        { label: 'How to Use Apparent?', path: '/dashboard/founder/knowledge', icon: GraduationCap },
+        { label: 'Feedback', path: '/dashboard/founder/feedback', icon: MessageSquareText },
       ],
     ] as NavItem[][],
   },
@@ -158,19 +158,19 @@ const roleConfig = {
     basePath: '/dashboard/investor',
     groups: [
       [
-        { label: 'Overview', href: '#overview', icon: LayoutDashboard },
-        { label: 'Your Thesis', href: '#profile', icon: Target },
-        { label: 'Discover', href: '#discover', icon: Layers, badge: 'New' },
-        { label: 'Builder Discovery', href: '#matches', icon: Search, badge: 'AI' },
-        { label: 'Messages', href: '#messages', icon: MessagesSquare },
+        { label: 'Overview', path: '/dashboard/investor', icon: LayoutDashboard },
+        { label: 'Your Thesis', path: '/dashboard/investor/profile', icon: Target },
+        { label: 'Discover', path: '/dashboard/investor/discover', icon: Layers, badge: 'New' },
+        { label: 'Builder Discovery', path: '/dashboard/investor/matches', icon: Search, badge: 'AI' },
+        { label: 'Messages', path: '/dashboard/investor/messages', icon: MessagesSquare },
       ],
       [
-        { label: 'Deal Flow', href: '#deals', icon: Layout },
-        { label: 'Terms Review', href: '#terms', icon: FileClock },
+        { label: 'Deal Flow', path: '/dashboard/investor/deals', icon: Layout },
+        { label: 'Terms Review', path: '/dashboard/investor/terms', icon: FileClock },
       ],
       [
-        { label: 'How to Use Apparent?', href: '#knowledge', icon: GraduationCap },
-        { label: 'Feedback', href: '#feedback', icon: MessageSquareText },
+        { label: 'How to Use Apparent?', path: '/dashboard/investor/knowledge', icon: GraduationCap },
+        { label: 'Feedback', path: '/dashboard/investor/feedback', icon: MessageSquareText },
       ],
     ] as NavItem[][],
   },
@@ -181,16 +181,14 @@ const NavLinkItem = ({
   isCollapsed,
   isActive,
   activeClass,
-  basePath,
 }: {
   item: NavItem;
   isCollapsed: boolean;
   isActive: boolean;
   activeClass: string;
-  basePath: string;
 }) => {
   const Icon = item.icon;
-  const to = item.path ?? `${basePath}${item.href}`;
+  const to = item.path;
 
   return (
     <Link
@@ -234,12 +232,11 @@ export function SessionNavBar({ role, user, activated = true }: SessionNavBarPro
   const navigate = useNavigate();
   const config = roleConfig[role];
   const activePath = location.pathname;
-  const activeHash = location.hash || (activePath === config.basePath ? '#overview' : '');
   const isCollapsed = !isPinned && !isHovered;
   // Progressive disclosure: keep advanced groups hidden for brand-new users
   // until they activate — but never hide the group containing the active view.
   const advancedItems = config.groups.slice(1).flat();
-  const activeInAdvanced = advancedItems.some((item) => item.href === activeHash || (item.path && item.path === activePath));
+  const activeInAdvanced = advancedItems.some((item) => item.path === activePath);
   const showAdvanced = activated || navExpanded || activeInAdvanced;
   const displayName = deriveDisplayName(user.email);
   const initials = deriveInitials(user.email);
@@ -274,7 +271,7 @@ export function SessionNavBar({ role, user, activated = true }: SessionNavBarPro
           <div className="flex grow flex-col items-center">
             <div className="flex w-full shrink-0 flex-col border-b">
               <Link
-                to={`${config.basePath}#overview`}
+                to={`${config.basePath}`}
                 className={cn(
                   'flex h-[50px] w-full items-center gap-2 px-2 transition hover:bg-muted',
                   isCollapsed ? 'justify-center' : 'justify-start',
@@ -313,17 +310,17 @@ export function SessionNavBar({ role, user, activated = true }: SessionNavBarPro
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="start">
                     <DropdownMenuItem asChild className="flex items-center gap-2">
-                      <Link to={`${config.basePath}#profile`}>
+                      <Link to={`${config.basePath}/profile`}>
                         <UserCog className="h-4 w-4" /> Manage profile
                       </Link>
                     </DropdownMenuItem>
                     <DropdownMenuItem asChild className="flex items-center gap-2">
-                      <Link to={`${config.basePath}#integrations`}>
+                      <Link to={`${config.basePath}/settings`}>
                         <Blocks className="h-4 w-4" /> Integrations
                       </Link>
                     </DropdownMenuItem>
                     <DropdownMenuItem asChild>
-                      <Link to={`${config.basePath}#workspace`} className="flex items-center gap-2">
+                      <Link to={`${config.basePath}`} className="flex items-center gap-2">
                         <Plus className="h-4 w-4" />
                         Create workspace
                       </Link>
@@ -363,9 +360,8 @@ export function SessionNavBar({ role, user, activated = true }: SessionNavBarPro
                               key={item.label}
                               item={item}
                               isCollapsed={isCollapsed}
-                              isActive={activeHash === item.href || activePath === item.path}
+                              isActive={activePath === item.path}
                               activeClass={config.active}
-                              basePath={config.basePath}
                             />
                           ))}
                         </div>
@@ -388,7 +384,7 @@ export function SessionNavBar({ role, user, activated = true }: SessionNavBarPro
 
               <div className="flex flex-col p-2">
                 <Link
-                  to={`${config.basePath}#settings`}
+                  to={`${config.basePath}/settings`}
                   className="mt-auto flex h-8 w-full flex-row items-center rounded-md px-2 py-1.5 transition hover:bg-muted hover:text-primary"
                 >
                   <Settings className="h-4 w-4 shrink-0" />
@@ -426,7 +422,7 @@ export function SessionNavBar({ role, user, activated = true }: SessionNavBarPro
                       </div>
                       <DropdownMenuSeparator />
                       <DropdownMenuItem asChild className="flex items-center gap-2">
-                        <Link to={`${config.basePath}#profile`}>
+                        <Link to={`${config.basePath}/profile`}>
                           <UserCircle className="h-4 w-4" /> Edit profile
                         </Link>
                       </DropdownMenuItem>

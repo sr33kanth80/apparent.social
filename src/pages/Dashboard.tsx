@@ -388,68 +388,45 @@ const EmptyState = ({
   </div>
 );
 
-const viewFromHash = (hash: string): ViewMode => {
-  if (hash === '#profile') {
-    return 'profile';
+// All dashboard sections that have a canonical URL path. Order matters only
+// for documentation — the lookup is O(1).
+const PATH_TO_VIEW: Record<string, ViewMode> = {
+  profile: 'profile',
+  products: 'products',
+  launches: 'products', // legacy
+  matches: 'matches',
+  discover: 'discover',
+  messages: 'messages',
+  deals: 'deals',
+  terms: 'terms',
+  knowledge: 'knowledge',
+  feedback: 'feedback',
+  settings: 'settings',
+  'for-you': 'for-you',
+  outreach: 'outreach',
+  'vc-heatmap': 'vc-heatmap',
+};
+
+/**
+ * Resolve the active dashboard view from the current URL. Path-based first
+ * (the canonical model), with one fallback to the legacy `#section` hash so
+ * old bookmarks keep working until they get redirected on mount.
+ */
+const viewFromLocation = (pathname: string, hash: string): ViewMode => {
+  // Extract the trailing segment after the role prefix (/dashboard/{role}/X).
+  const match = pathname.match(/\/dashboard\/(?:founder|investor)\/([^/?#]+)/);
+  const segment = match?.[1] ?? '';
+  if (segment && PATH_TO_VIEW[segment]) {
+    return PATH_TO_VIEW[segment];
   }
 
-  if (hash === '#products' || hash === '#launches') {
-    return 'products';
-  }
-
-  if (hash === '#matches') {
-    return 'matches';
-  }
-
-  if (hash === '#discover') {
-    return 'discover';
-  }
-
-  if (hash === '#messages') {
-    return 'messages';
-  }
-
-  if (hash === '#deals') {
-    return 'deals';
-  }
-
-  if (hash === '#terms') {
-    return 'terms';
-  }
-
-  if (hash === '#knowledge') {
-    return 'knowledge';
-  }
-
-  if (hash === '#feedback') {
-    return 'feedback';
-  }
-
-  if (hash === '#settings') {
-    return 'settings';
-  }
-
-  if (hash === '#for-you') {
-    return 'for-you';
-  }
-
-  if (hash === '#outreach') {
-    return 'outreach';
+  // Backward-compat: derive from `#section` when the path is the root.
+  const hashSegment = hash.replace(/^#/, '');
+  if (hashSegment && PATH_TO_VIEW[hashSegment]) {
+    return PATH_TO_VIEW[hashSegment];
   }
 
   return 'overview';
-};
-
-const viewFromLocation = (pathname: string, hash: string): ViewMode => {
-  if (pathname.endsWith('/vc-heatmap')) {
-    return 'vc-heatmap';
-  }
-
-  if (pathname.endsWith('/products')) {
-    return 'products';
-  }
-
-  return viewFromHash(hash);
 };
 
 const viewFromSectionId = (id: string): ViewMode => {
@@ -950,6 +927,22 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
   useLayoutEffect(() => {
     setActiveView(viewFromLocation(location.pathname, location.hash));
   }, [location.hash, location.pathname]);
+
+  // Backward-compat: redirect legacy `#section` URLs to the canonical
+  // `/section` path so old bookmarks, emails, and shared screenshots keep
+  // working. Runs once per location change; the redirect uses `replace` so
+  // the hash URL never lands in browser history.
+  useEffect(() => {
+    if (!location.hash) return;
+    const hashSegment = location.hash.replace(/^#/, '');
+    if (!hashSegment || !PATH_TO_VIEW[hashSegment]) return;
+    const canonical = hashSegment === 'overview' ? dashboardBasePath : `${dashboardBasePath}/${hashSegment}`;
+    // Only redirect when the path itself doesn't already match the hash —
+    // otherwise we'd loop on every render.
+    if (location.pathname !== canonical) {
+      navigate(canonical, { replace: true });
+    }
+  }, [dashboardBasePath, location.hash, location.pathname, navigate]);
 
   const accentSurface = isInvestor ? 'bg-[#42520d]' : 'bg-[#dcefc7]';
   const accentForeground = isInvestor ? 'text-white' : 'text-black';
@@ -2320,7 +2313,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
       setIsMessageFormOpen(false);
       addActivity(`Drafted investor note: ${match.name}`);
       setActiveView('messages');
-      navigate(`${dashboardBasePath}#messages`);
+      navigate(`${dashboardBasePath}/messages`);
     } catch (error) {
       setDashboardError(error instanceof Error ? error.message : 'Unable to create investor message draft.');
     } finally {
@@ -2331,7 +2324,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
   const handlePrepProofForMatch = (match: MatchItem) => {
     addActivity(`Preparing founder profile for ${match.name}`);
     setActiveView('profile');
-    navigate(`${dashboardBasePath}#profile`);
+    navigate(`${dashboardBasePath}/profile`);
     window.setTimeout(() => scrollToSection('profile'), 50);
   };
 
@@ -2684,7 +2677,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
 
   const handleOpenFounderProfileFromLaunch = () => {
     setActiveView('profile');
-    navigate('/dashboard/founder#profile');
+    navigate('/dashboard/founder/profile');
     window.setTimeout(() => scrollToSection('profile'), 50);
     addActivity('Opened founder profile from launch');
   };
@@ -2928,7 +2921,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
   const handleDashboardSearchAction = (action: Action) => {
     const openWorkspaceSection = (id: string) => {
       setActiveView(viewFromSectionId(id));
-      navigate(`${dashboardBasePath}#${id}`);
+      navigate(`${dashboardBasePath}/${id}`);
       window.setTimeout(() => scrollToSection(id), 50);
     };
 
@@ -2950,19 +2943,19 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
       'open-messages': () => openWorkspaceSection('messages'),
       'view-for-you': () => {
         setActiveView('for-you');
-        navigate(`${dashboardBasePath}#for-you`);
+        navigate(`${dashboardBasePath}/for-you`);
         window.setTimeout(() => scrollToSection('for-you'), 50);
       },
       'query-ai': () => setQuery('AI infra'),
       'query-devtools': () => {
         setActiveView('matches');
-        navigate(`${dashboardBasePath}#matches`);
+        navigate(`${dashboardBasePath}/matches`);
         setQuery('devtools');
         window.setTimeout(() => scrollToSection('matches'), 50);
       },
       'query-investors': () => {
         setActiveView('matches');
-        navigate(`${dashboardBasePath}#matches`);
+        navigate(`${dashboardBasePath}/matches`);
         setQuery('investor');
         window.setTimeout(() => scrollToSection('matches'), 50);
       },
@@ -2981,7 +2974,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
     } else if (nextView === 'vc-heatmap') {
       navigate('/dashboard/founder/vc-heatmap');
     } else {
-      navigate(`${dashboardBasePath}#${sectionId}`);
+      navigate(`${dashboardBasePath}/${sectionId}`);
     }
     window.setTimeout(() => scrollToSection(sectionId), 50);
   };
@@ -5161,7 +5154,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
                 setIsTermFormOpen(true);
                 if (isInvestor) {
                   setActiveView('terms');
-                  navigate(`${dashboardBasePath}#terms`);
+                  navigate(`${dashboardBasePath}/terms`);
                 }
               }}
             >
@@ -5597,7 +5590,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
                     type="button"
                     onClick={() => {
                       setActiveView('products');
-                      navigate(`${dashboardBasePath}#products`);
+                      navigate(`${dashboardBasePath}/products`);
                     }}
                     className="mt-6 inline-flex items-center gap-1.5 rounded-full bg-black px-5 py-2.5 text-sm font-semibold text-white hover:bg-black/85"
                   >
@@ -6294,7 +6287,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
                   className={`mt-4 w-full rounded-full ${accentSurface} px-4 py-2 text-sm font-medium ${accentForeground}`}
                   onClick={() => {
                     setActiveView('profile');
-                    navigate(`${dashboardBasePath}#profile`);
+                    navigate(`${dashboardBasePath}/profile`);
                   }}
                 >
                   Tune thesis
@@ -6375,7 +6368,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
                     className={`w-full rounded-full ${accentSurface} px-4 py-2 text-sm font-medium ${accentForeground}`}
                     onClick={() => {
                       setActiveView('overview');
-                      navigate(`${dashboardBasePath}#deals`);
+                      navigate(`${dashboardBasePath}/deals`);
                       window.setTimeout(() => scrollToSection('deals'), 50);
                     }}
                   >

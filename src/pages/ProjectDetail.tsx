@@ -276,7 +276,7 @@ export const ProjectDetail = () => {
                   {outreachStatus === 'sent' ? (
                     <button
                       type="button"
-                      onClick={() => navigate('/dashboard/investor#messages')}
+                      onClick={() => navigate('/dashboard/investor/messages')}
                       className="inline-flex items-center justify-center gap-2 rounded-full border border-[#42520d]/30 bg-white px-5 py-3 text-sm font-semibold text-[#42520d] hover:bg-[#f4f1eb]"
                     >
                       <MessageCircle className="h-4 w-4" /> Outreach sent · open inbox
