@@ -16,7 +16,6 @@ import {
   MessageSquare,
   MapPin,
   Paperclip,
-  Phone,
   Plus,
   Repeat2,
   Rocket,
@@ -2804,11 +2803,6 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
     });
   };
 
-  const handleCycleMessageFilter = () => {
-    const filterOrder: MessageStatusFilter[] = ['all', 'draft', 'sent', 'replied'];
-    const currentIndex = filterOrder.indexOf(messageStatusFilter);
-    setMessageStatusFilter(filterOrder[(currentIndex + 1) % filterOrder.length]);
-  };
 
   const handleSaveMessage = async (status: UserMessage['status']) => {
     const recipient = messageDraft.recipient.trim() || activeMessageThread?.recipient.trim() || '';
@@ -5997,15 +5991,23 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
               >
                 <SquarePen className="h-4 w-4" />
               </button>
-              <button
-                type="button"
-                className="rounded-xl border border-black/10 p-2 text-gray-500 transition-colors hover:bg-[#fbf8f3] hover:text-black"
-                onClick={handleCycleMessageFilter}
-                aria-label="Filter messages"
-                title={`Filter: ${messageStatusFilter}`}
-              >
-                <ListFilter className="h-4 w-4" />
-              </button>
+              {/* Native dropdown so the user can pick a status directly
+                  instead of cycling through options with repeated clicks. */}
+              <div className="relative">
+                <ListFilter className="pointer-events-none absolute left-2 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-500" />
+                <select
+                  value={messageStatusFilter}
+                  onChange={(event) => setMessageStatusFilter(event.target.value as MessageStatusFilter)}
+                  className="h-9 cursor-pointer appearance-none rounded-xl border border-black/10 bg-white pl-8 pr-7 text-xs font-medium text-gray-700 outline-none transition-colors hover:bg-[#fbf8f3] focus:border-[#42520d]"
+                  aria-label="Filter messages by status"
+                >
+                  <option value="all">All</option>
+                  <option value="draft">Drafts</option>
+                  <option value="sent">Sent</option>
+                  <option value="replied">Replied</option>
+                </select>
+                <ChevronUp className="pointer-events-none absolute right-2 top-1/2 h-3 w-3 -translate-y-1/2 rotate-180 text-gray-400" />
+              </div>
             </div>
           </div>
 
@@ -6099,17 +6101,6 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
                     : 'Compose a direct Apparent note'}
                 </p>
               </div>
-            </div>
-            <div className="flex items-center gap-1 text-gray-500">
-              <button type="button" className="rounded-xl p-2 transition-colors hover:bg-[#fbf8f3] hover:text-black" aria-label="Video call">
-                <Video className="h-4 w-4" />
-              </button>
-              <button type="button" className="rounded-xl p-2 transition-colors hover:bg-[#fbf8f3] hover:text-black" aria-label="Phone call">
-                <Phone className="h-4 w-4" />
-              </button>
-              <button type="button" className="rounded-xl p-2 transition-colors hover:bg-[#fbf8f3] hover:text-black" aria-label="Search conversation">
-                <Search className="h-4 w-4" />
-              </button>
             </div>
           </div>
 
