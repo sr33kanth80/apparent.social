@@ -1,5 +1,5 @@
 import { useEffect, useId, useMemo, useState } from 'react';
-import { ArrowUpRight, Building2, CheckCircle2, Clock, Copy, Flame, Globe2, Layers3, LocateFixed, MailCheck, Send, SlidersHorizontal, Sparkles, Users, X } from 'lucide-react';
+import { ArrowUpRight, Building2, CheckCircle2, ChevronLeft, ChevronRight, Clock, Copy, Flame, Globe2, Layers3, LocateFixed, MailCheck, Send, SlidersHorizontal, Sparkles, Users, X } from 'lucide-react';
 import type { GeoJSONSource, MapLayerMouseEvent } from 'maplibre-gl';
 import { Link } from 'react-router-dom';
 import { Map, useMap } from '@/components/ui/map';
@@ -751,6 +751,32 @@ export const HeatMap = ({
     [heatPoints, mode],
   );
   const selectedVisiblePoint = selectedPoint && filteredPoints.some((point) => point.id === selectedPoint.id) ? selectedPoint : null;
+
+  // Queue of contactable VCs from the currently visible/filtered set. The
+  // compose dialog uses this to let the founder cold-email VC-by-VC without
+  // closing + reopening the dialog: send → click Next VC → fresh dialog
+  // mounts for the next contactable VC with their saved template pre-filled.
+  const composableVcQueue = useMemo(
+    () =>
+      filteredPoints.filter(
+        (point) => point.kind === 'vc' && Boolean(point.email && point.vcContact),
+      ),
+    [filteredPoints],
+  );
+  const queueIndex = selectedPoint
+    ? composableVcQueue.findIndex((point) => point.id === selectedPoint.id)
+    : -1;
+
+  const goToVcAtOffset = (offset: -1 | 1) => {
+    if (!composableVcQueue.length) return;
+    const start = queueIndex >= 0 ? queueIndex : -1;
+    const nextIndex = (start + offset + composableVcQueue.length) % composableVcQueue.length;
+    const next = composableVcQueue[nextIndex];
+    if (next) {
+      setSelectedPoint(next);
+      setComposeOpen(true);
+    }
+  };
   const apparentCount = heatPoints.filter((point) => point.source === 'apparent').length;
   const builderCount = heatPoints.filter((point) => point.kind === 'builder').length;
   const vcCount = heatPoints.filter((point) => point.kind === 'vc').length;
@@ -1027,6 +1053,10 @@ export const HeatMap = ({
 
       {composeOpen && currentUser && selectedPoint?.vcContact && selectedPoint.email && (
         <ComposeDialog
+          // key forces a fresh mount per VC so the dialog's internal subject /
+          // body state re-hydrates from the user's saved template against the
+          // new VC's variables when they hit Next.
+          key={selectedPoint.id}
           user={currentUser}
           vc={selectedPoint.vcContact}
           templates={outreachTemplates}
@@ -1034,7 +1064,14 @@ export const HeatMap = ({
           founderName={founderName || currentUser.username || currentUser.email.split('@')[0]}
           founderCompany={founderCompany}
           founderTraction={founderTraction}
+          queuePosition={
+            queueIndex >= 0
+              ? { current: queueIndex + 1, total: composableVcQueue.length }
+              : undefined
+          }
           onClose={() => setComposeOpen(false)}
+          onNext={composableVcQueue.length > 1 ? () => goToVcAtOffset(1) : undefined}
+          onPrev={composableVcQueue.length > 1 ? () => goToVcAtOffset(-1) : undefined}
           onSaved={(entry) => {
             setOutreachLog((current) => [
               entry,
@@ -1063,8 +1100,11 @@ function ComposeDialog({
   founderName,
   founderCompany,
   founderTraction,
+  queuePosition,
   onClose,
   onSaved,
+  onNext,
+  onPrev,
   onTemplatesChange,
 }: {
   user: AppUser;
@@ -1074,8 +1114,14 @@ function ComposeDialog({
   founderName: string;
   founderCompany: string;
   founderTraction: string;
+  /** Position of this VC in the contactable queue ("3 of 12"). */
+  queuePosition?: { current: number; total: number };
   onClose: () => void;
   onSaved: (entry: VcOutreachEntry) => void;
+  /** Advance to the next contactable VC in the heat map's current filter. */
+  onNext?: () => void;
+  /** Step back to the previous contactable VC. */
+  onPrev?: () => void;
   /** Bubble template list mutations back up so the parent can refresh. */
   onTemplatesChange?: (templates: VcOutreachTemplate[]) => void;
 }) {
@@ -1194,6 +1240,12 @@ function ComposeDialog({
 
   const mailtoHref = `mailto:${vc.partnerEmail}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
   const canSend = Boolean(subject.trim() || body.trim());
+  // Track whether the user has touched the editor on this VC. Used so the
+  // Next-VC handler doesn't blast a Drafted row to the log for VCs the
+  // founder skipped through without writing anything.
+  const isDirty =
+    Boolean((subject.trim() || body.trim())) &&
+    (subject !== initialSubject || body !== initialBody);
 
   const handleOpenInMail = () => {
     if (!canSend) return;
@@ -1207,6 +1259,21 @@ function ComposeDialog({
 
   const handleMarkSent = () => {
     void persist('Sent');
+  };
+
+  // Save-and-advance helpers used by the Next/Prev buttons. Persist as
+  // Drafted only if the founder actually typed something on this VC so we
+  // don't pollute the kanban with empty drafts from a skim-through.
+  const handleAdvance = (direction: -1 | 1) => async () => {
+    if (isDirty && (!existingEntry || existingEntry.stage === 'Drafted')) {
+      try {
+        await persist('Drafted');
+      } catch {
+        /* non-fatal — advance anyway */
+      }
+    }
+    if (direction === 1 && onNext) onNext();
+    else if (direction === -1 && onPrev) onPrev();
   };
 
   const handleCopyBody = async () => {
@@ -1234,9 +1301,16 @@ function ComposeDialog({
       >
         <div className="flex items-start justify-between gap-3 border-b border-black/10 px-5 py-4">
           <div className="min-w-0">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#42520d]">
-              Compose cold email
-            </p>
+            <div className="flex flex-wrap items-center gap-2">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#42520d]">
+                Compose cold email
+              </p>
+              {queuePosition && queuePosition.total > 1 && (
+                <span className="inline-flex items-center gap-1 rounded-full bg-[#fbfaf7] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-black/55">
+                  VC {queuePosition.current} of {queuePosition.total}
+                </span>
+              )}
+            </div>
             <h2 className="mt-1 text-lg font-semibold tracking-[-0.01em]">
               {vc.investorName}
             </h2>
@@ -1456,6 +1530,35 @@ function ComposeDialog({
             {saving === 'sent' ? <CheckCircle2 className="h-3.5 w-3.5" /> : <MailCheck className="h-3.5 w-3.5" />}
             {saving === 'saving' ? 'Saving…' : 'Mark as sent'}
           </button>
+
+          {(onPrev || onNext) && (
+            <div className="ml-auto flex items-center gap-1">
+              {onPrev && (
+                <button
+                  type="button"
+                  onClick={handleAdvance(-1)}
+                  className="inline-flex items-center gap-1 rounded-full border border-black/15 bg-white px-2.5 py-2 text-xs font-semibold text-black/65 transition-colors hover:bg-[#fbfaf7]"
+                  aria-label="Previous VC"
+                  title="Previous VC in the visible list"
+                >
+                  <ChevronLeft className="h-3.5 w-3.5" />
+                  Prev
+                </button>
+              )}
+              {onNext && (
+                <button
+                  type="button"
+                  onClick={handleAdvance(1)}
+                  className="inline-flex items-center gap-1 rounded-full bg-black px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-black/85"
+                  aria-label="Next VC"
+                  title="Save current as draft (if edited) and load the next VC"
+                >
+                  Next VC
+                  <ChevronRight className="h-3.5 w-3.5" />
+                </button>
+              )}
+            </div>
+          )}
         </div>
       </div>
     </div>
