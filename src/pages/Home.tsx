@@ -1,9 +1,10 @@
-import { useState, type FormEvent } from 'react';
+import { useEffect, useState, type FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ArrowUpRight, Check, MapPin, Radar, Send, Zap } from 'lucide-react';
 import { EditorialNavbar } from '../components/EditorialNavbar';
 import { LogoIcon } from '../components/LogoIcon';
 import { LogoCloud } from '../components/logo-cloud';
+import { FireworksBackground } from '../components/ui/fireworks-show';
 import { signupForWaitlist, type WaitlistRole } from '../lib/waitlist-service';
 import { HeatMap } from './HeatMap';
 
@@ -256,6 +257,17 @@ const WaitlistSection = () => {
   const [role, setRole] = useState<WaitlistRole>('');
   const [status, setStatus] = useState<'idle' | 'submitting' | 'success' | 'error'>('idle');
   const [message, setMessage] = useState('');
+  // Brief celebratory fireworks burst when a NEW signup lands. Keyed by a
+  // counter so a duplicate-email re-submit doesn't replay the effect.
+  const [fireworksKey, setFireworksKey] = useState(0);
+
+  // Auto-clear the fireworks overlay ~3.5s after a successful signup so it
+  // stays celebratory (not annoying). The success message itself stays put.
+  useEffect(() => {
+    if (fireworksKey === 0) return;
+    const timer = window.setTimeout(() => setFireworksKey(0), 3500);
+    return () => window.clearTimeout(timer);
+  }, [fireworksKey]);
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -274,7 +286,13 @@ const WaitlistSection = () => {
       if (result.ok) {
         setStatus('success');
         setMessage(result.message);
-        if (result.isNew) setEmail('');
+        if (result.isNew) {
+          setEmail('');
+          // Bump the key so the FireworksBackground remounts and replays the
+          // burst. Skipped on duplicate re-submit (isNew=false) so people
+          // don't farm the animation by spamming the button.
+          setFireworksKey((current) => current + 1);
+        }
       } else {
         setStatus('error');
         setMessage(result.message);
@@ -417,6 +435,29 @@ const WaitlistSection = () => {
           </form>
         </div>
       </div>
+
+      {/* Celebratory fireworks burst — only on a fresh successful signup, and
+          auto-dismissed after ~3.5s by the useEffect above. Fixed viewport
+          overlay with pointer-events-none so the page stays interactive. The
+          FireworksBackground itself takes the cue from spawnDurationMs to
+          stop spawning new rockets just before unmount, so the trailing
+          particles get to finish their lifetime gracefully. */}
+      {fireworksKey > 0 && (
+        <div
+          aria-hidden="true"
+          className="pointer-events-none fixed inset-0 z-[60]"
+        >
+          <FireworksBackground
+            key={fireworksKey}
+            spawnDurationMs={2800}
+            // Brand-tuned palette: warmer fireworks so the burst feels of-a-
+            // piece with the cream + olive landing-page system instead of
+            // generic rainbow confetti.
+            colors={['#42520d', '#dcefc7', '#f4d27a', '#f97316', '#cce8ae', '#fff7bc']}
+            className="h-full w-full"
+          />
+        </div>
+      )}
     </section>
   );
 };
