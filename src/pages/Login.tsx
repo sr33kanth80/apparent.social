@@ -184,55 +184,98 @@ export const Login = () => {
                   ))}
                 </div>
 
-                {/* Feature pillars — three editorial cards with numbered
-                    eyebrow, icon badge, bold display value, supporting line,
-                    and a hover lift that nudges the accent line in from the
-                    left. Themed per role so the active toggle's color reads
-                    consistently across the page. */}
-                <div className="mt-12 grid gap-3 sm:grid-cols-3">
+                {/* Feature pillars — three interlocking puzzle pieces. Same
+                    visual language as the hero headline on the marketing page
+                    (.pz family in index.css), upscaled to card size.
+                    Light → olive → light alternation keeps the seams crisp.
+                    Each piece animates in from a different vector and snaps
+                    into its neighbour, then a soft "click" pulse plays once
+                    all three are seated. */}
+                <div className="mt-12 grid grid-cols-3 items-stretch gap-0">
                   {FEATURE_PILLARS.map((pillar, index) => {
                     const value = isInvestor ? pillar.investorValue : pillar.founderValue;
                     const support = isInvestor ? pillar.investorSupport : pillar.founderSupport;
-                    const iconBadgeClass = isInvestor
-                      ? 'bg-[#42520d] text-white'
-                      : 'bg-[#dcefc7] text-[#42520d]';
-                    const accentBarClass = isInvestor ? 'bg-[#42520d]' : 'bg-[#42520d]';
+
+                    // Olive in the middle, light on the ends — high-contrast
+                    // sequence that mirrors the hero headline.
+                    const isMiddle = index === 1;
+                    const pieceBg = isMiddle ? '#42520d' : '#dcefc7';
+                    const pieceFg = isMiddle ? '#f4f1eb' : '#20300a';
+                    const labelMuted = isMiddle ? 'text-white/60' : 'text-[#20300a]/60';
+                    const supportMuted = isMiddle ? 'text-white/75' : 'text-[#20300a]/72';
+                    const iconBadgeBg = isMiddle ? 'bg-white/15 text-white' : 'bg-[#42520d] text-[#dcefc7]';
+
+                    // Puzzle joint class — leftmost only has knob, middle has
+                    // both, rightmost only has socket. Z-index decreases
+                    // left→right so each knob covers the next socket's hole.
+                    const isLeft = index === 0;
+                    const isRight = index === 2;
+                    const jointClasses = [
+                      'pz-card',
+                      !isLeft && 'pz-card-socket-l',
+                      !isRight && 'pz-card-knob-r',
+                      isLeft && 'rounded-l-[18px]',
+                      isRight && 'rounded-r-[18px]',
+                    ]
+                      .filter(Boolean)
+                      .join(' ');
+                    const zIndex = 3 - index;
+
+                    // Entrance: outer pieces slide in horizontally from their
+                    // sides, middle piece drops in from above. Easing
+                    // overshoots slightly so the click-into-place reads as
+                    // satisfying instead of mechanical.
+                    const entrance = isLeft
+                      ? { initial: { opacity: 0, x: -42 }, animate: { opacity: 1, x: 0 } }
+                      : isRight
+                        ? { initial: { opacity: 0, x: 42 }, animate: { opacity: 1, x: 0 } }
+                        : { initial: { opacity: 0, y: -24, rotate: -4 }, animate: { opacity: 1, y: 0, rotate: 0 } };
+                    const delay = isLeft ? 0 : isRight ? 0.32 : 0.18;
+
                     return (
                       <motion.article
                         key={pillar.label}
-                        initial={{ opacity: 0, y: 12 }}
-                        animate={{ opacity: 1, y: 0 }}
+                        initial={entrance.initial}
+                        animate={entrance.animate}
                         transition={{
-                          duration: 0.35,
-                          delay: 0.05 + index * 0.06,
-                          ease: [0.22, 0.61, 0.36, 1],
+                          duration: 0.6,
+                          delay,
+                          ease: [0.34, 1.42, 0.5, 1],
                         }}
                         whileHover={{ y: -3 }}
-                        className="group relative overflow-hidden rounded-[20px] border border-black/8 bg-white/85 p-5 shadow-[0_2px_8px_rgba(0,0,0,0.03)] transition-shadow duration-300 hover:shadow-[0_18px_44px_rgba(0,0,0,0.07)]"
+                        style={{
+                          // Drive .pz-card background via CSS var so the
+                          // ::after knob inherits the same fill cleanly.
+                          ['--pz-card-color' as string]: pieceBg,
+                          color: pieceFg,
+                          zIndex,
+                        }}
+                        className={`${jointClasses} relative flex flex-col px-5 py-6 shadow-[0_8px_24px_rgba(0,0,0,0.06)] transition-shadow duration-300 hover:shadow-[0_18px_44px_rgba(0,0,0,0.12)]`}
                       >
-                        {/* Accent bar that slides in from the left on hover. */}
-                        <span
-                          aria-hidden="true"
-                          className={`absolute inset-y-0 left-0 w-[3px] origin-bottom scale-y-0 transition-transform duration-300 ease-out group-hover:scale-y-100 ${accentBarClass}`}
-                        />
+                        {/* Decorative top + bottom nubs only on the outer
+                            pieces — keeps the silhouette balanced (the middle
+                            piece is symmetrical via its side joints alone). */}
+                        {isLeft && <span aria-hidden="true" className="pz-card-nub pz-card-nub-t" />}
+                        {isRight && <span aria-hidden="true" className="pz-card-nub pz-card-nub-b" />}
+
                         <div className="flex items-start justify-between gap-3">
-                          <span className={`flex h-9 w-9 items-center justify-center rounded-[12px] ${iconBadgeClass}`}>
+                          <span className={`flex h-9 w-9 items-center justify-center rounded-[12px] ${iconBadgeBg}`}>
                             <pillar.Icon className="h-4 w-4" />
                           </span>
-                          <span className="text-[10px] font-semibold uppercase tracking-[0.18em] text-black/35">
+                          <span className={`text-[10px] font-semibold uppercase tracking-[0.18em] ${labelMuted}`}>
                             {pillar.number}
                           </span>
                         </div>
-                        <p className="mt-5 text-[10px] font-semibold uppercase tracking-[0.18em] text-black/45">
+                        <p className={`mt-5 text-[10px] font-semibold uppercase tracking-[0.18em] ${labelMuted}`}>
                           {pillar.label}
                         </p>
                         <p
-                          className="mt-1 text-xl font-normal leading-tight tracking-[-0.02em] text-black"
+                          className="mt-1 text-xl font-normal leading-tight tracking-[-0.02em]"
                           style={serifDisplay}
                         >
                           {value}
                         </p>
-                        <p className="mt-2 text-xs leading-5 text-black/55">{support}</p>
+                        <p className={`mt-2 text-xs leading-5 ${supportMuted}`}>{support}</p>
                       </motion.article>
                     );
                   })}

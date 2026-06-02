@@ -542,7 +542,64 @@ a.rounded-full:hover {
   }
 }
 
-/* Scroll-reveal: a simple opacity fade as elements enter the viewport (see
+/* ── Card-scale puzzle pieces ────────────────────────────────────────────────
+   Same interlock pattern as the hero (.pz family) but sized in pixels so it
+   works on full UI cards instead of headline text. Used by the Login feature
+   pillars to render three cards as one connected puzzle bar.
+
+   Layout contract: cards live in a flex/grid row with NO gap. Knobs/sockets
+   are pseudo-elements positioned outside the card box. z-index decreases
+   left-to-right so each right knob renders on top of its neighbour's left
+   socket cut-out, hiding the page bg seam.
+*/
+.pz-card {
+  position: relative;
+  background-color: var(--pz-card-color, #dcefc7);
+}
+.pz-card-knob-r::after {
+  content: '';
+  position: absolute;
+  z-index: 1;
+  top: 50%;
+  right: -13px;
+  width: 26px;
+  height: 26px;
+  transform: translateY(-50%);
+  background-color: inherit;
+  border-radius: 50%;
+  pointer-events: none;
+}
+.pz-card-socket-l::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: -14px;
+  width: 28px;
+  height: 28px;
+  transform: translateY(-50%);
+  background-color: #fbfaf7;
+  border-radius: 50%;
+  pointer-events: none;
+}
+/* Decorative top + bottom nubs so each piece reads as a real jigsaw shape,
+   not just a card with a side knob. Use child <span class="pz-card-nub"> so
+   the ::before / ::after pseudos stay free for the seam joints. */
+.pz-card-nub {
+  position: absolute;
+  left: 50%;
+  width: 22px;
+  height: 22px;
+  transform: translateX(-50%);
+  background-color: inherit;
+  border-radius: 50%;
+  pointer-events: none;
+}
+.pz-card-nub-t {
+  top: -11px;
+}
+.pz-card-nub-b {
+  bottom: -11px;
+}
    useReveal). No transform, so it can never affect layout or scroll size. */
 .reveal {
   opacity: 0;
