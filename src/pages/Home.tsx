@@ -445,7 +445,11 @@ const WaitlistSection = () => {
       {fireworksKey > 0 && (
         <div
           aria-hidden="true"
-          className="pointer-events-none fixed inset-0 z-[60]"
+          // Soft light-grey scrim sits beneath the canvas to make the
+          // bursts pop without fully hiding the page. Tiny backdrop blur
+          // adds a touch of depth. Canvas itself keeps its transparent
+          // destination-out trail so the grey tint stays even.
+          className="pointer-events-none fixed inset-0 z-[60] bg-black/20 backdrop-blur-[2px]"
         >
           <FireworksBackground
             key={fireworksKey}
