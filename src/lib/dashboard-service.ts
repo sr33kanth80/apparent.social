@@ -1202,13 +1202,29 @@ export const loadFounderVCContacts = async (): Promise<VCContact[]> => {
     return vcContactSeed;
   };
 
+  // Identity key for dedup. Partner email is the strongest unique handle when
+  // present; otherwise fall back to investor name + website. Lower-cased and
+  // trimmed so casing/whitespace differences don't create false duplicates.
+  const contactKey = (contact: VCContact): string => {
+    const email = (contact.partnerEmail || '').toLowerCase().trim();
+    if (email) return `email:${email}`;
+    const name = (contact.investorName || '').toLowerCase().trim();
+    const website = (contact.website || '').toLowerCase().trim().replace(/^https?:\/\//, '').replace(/^www\./, '').replace(/\/$/, '');
+    return `nw:${name}|${website}`;
+  };
+
+  // Always start with the bundled seed so the logged-in dashboard sees the
+  // same baseline coverage as the logged-out /heat-map page. The seed is
+  // bundled at build time and ships with the app, so this is free.
+  const seedContacts = await loadSeedContacts();
+
   if (!isSupabaseConfigured || !supabase) {
-    return loadSeedContacts();
+    return seedContacts;
   }
 
   const rows: Record<string, unknown>[] = [];
   const pageSize = 1000;
-  const maxRows = 6000;
+  const maxRows = 10000;
 
   for (let from = 0; from < maxRows; from += pageSize) {
     const to = Math.min(from + pageSize - 1, maxRows - 1);
@@ -1221,7 +1237,8 @@ export const loadFounderVCContacts = async (): Promise<VCContact[]> => {
       .range(from, to);
 
     if (error) {
-      return loadSeedContacts();
+      // DB error (e.g. RLS denial for anon) — just hand back the seed.
+      return seedContacts;
     }
 
     const page = (data ?? []) as Record<string, unknown>[];
@@ -1232,13 +1249,22 @@ export const loadFounderVCContacts = async (): Promise<VCContact[]> => {
     }
   }
 
-  // On error OR empty (e.g. logged-out visitors blocked by RLS on the public
-  // /heat-map), fall back to the bundled VC seed so the map is never sparse.
   if (rows.length === 0) {
-    return loadSeedContacts();
+    return seedContacts;
   }
 
-  return rows.map((row) => mapVCContactRow(row));
+  // Union DB rows with the seed. DB rows win on conflict because they're
+  // fresher (admin can update vc_contacts post-deploy without re-shipping
+  // the bundle), but every seed contact the DB doesn't have still appears.
+  // Result: the logged-in dashboard sees >= the logged-out /heat-map count.
+  const dbContacts = rows.map((row) => mapVCContactRow(row));
+  const merged = new Map<string, VCContact>();
+  for (const contact of dbContacts) merged.set(contactKey(contact), contact);
+  for (const contact of seedContacts) {
+    const key = contactKey(contact);
+    if (!merged.has(key)) merged.set(key, contact);
+  }
+  return Array.from(merged.values());
 };
 
 /**
