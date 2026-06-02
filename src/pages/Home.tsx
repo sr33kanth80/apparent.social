@@ -1,8 +1,10 @@
+import { useState, type FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ArrowUpRight, Check, MapPin, Radar, Send, Zap } from 'lucide-react';
+import { ArrowUpRight, Check, MapPin, Radar, Send, Sparkles, Zap } from 'lucide-react';
 import { EditorialNavbar } from '../components/EditorialNavbar';
 import { LogoIcon } from '../components/LogoIcon';
 import { LogoCloud } from '../components/logo-cloud';
+import { signupForWaitlist, type WaitlistRole } from '../lib/waitlist-service';
 import { HeatMap } from './HeatMap';
 
 const serifDisplay = {
@@ -74,6 +76,8 @@ export const Home = () => {
       </section>
 
       <LogoCloud />
+
+      <WaitlistSection />
 
       {/* HEATMAP MAGNET — the free front door, mirrors OpenVC's investor list but alive. */}
       <section className="mx-auto max-w-[78rem] px-5 pb-12 sm:px-8">
@@ -237,5 +241,160 @@ export const Home = () => {
         </div>
       </section>
     </main>
+  );
+};
+
+// ── Waitlist signup CTA ───────────────────────────────────────────────────
+// Email-only capture. Stored in waitlist_signups (anon-insert, admin-read).
+// Editorial design language: cream surface, olive accent, serif headline,
+// matches the rest of the landing page.
+
+const WaitlistSection = () => {
+  const [email, setEmail] = useState('');
+  const [role, setRole] = useState<WaitlistRole>('');
+  const [status, setStatus] = useState<'idle' | 'submitting' | 'success' | 'error'>('idle');
+  const [message, setMessage] = useState('');
+
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (status === 'submitting') return;
+    setStatus('submitting');
+    setMessage('');
+    try {
+      const result = await signupForWaitlist({ email, role, source: 'landing-cta' });
+      if (result.ok) {
+        setStatus('success');
+        setMessage(result.message);
+        if (result.isNew) setEmail('');
+      } else {
+        setStatus('error');
+        setMessage(result.message);
+      }
+    } catch (error) {
+      setStatus('error');
+      setMessage(error instanceof Error ? error.message : 'Unable to save your email.');
+    }
+  };
+
+  const roleChips: { value: WaitlistRole; label: string }[] = [
+    { value: 'founder', label: 'Founder' },
+    { value: 'investor', label: 'Investor' },
+    { value: 'curious', label: 'Just curious' },
+  ];
+
+  return (
+    <section className="mx-auto max-w-[78rem] px-5 pb-12 pt-6 sm:px-8">
+      <div className="relative overflow-hidden rounded-[32px] bg-[#f4f1eb] px-6 py-10 shadow-[0_18px_44px_rgba(0,0,0,0.05)] sm:px-12 sm:py-14 md:px-16">
+        {/* Background flourish: same warm-cream → mint gradient sweep the rest
+            of the page leans on, kept subtle. */}
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0 opacity-70"
+          style={{
+            background:
+              'radial-gradient(circle at 15% 25%, rgba(220,239,199,0.55) 0%, transparent 45%), radial-gradient(circle at 85% 75%, rgba(66,82,13,0.07) 0%, transparent 50%)',
+          }}
+        />
+
+        <div className="relative grid gap-8 md:grid-cols-[1.05fr_minmax(0,1fr)] md:items-end md:gap-12">
+          <div>
+            <div className="inline-flex items-center gap-1.5 rounded-full border border-[#42520d]/15 bg-white/70 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-[#42520d]">
+              <Sparkles className="h-3 w-3" />
+              Early access
+            </div>
+            <h2
+              className="mt-4 max-w-2xl text-3xl font-normal leading-[1.05] tracking-[-0.035em] sm:text-4xl md:text-[2.85rem]"
+              style={serifDisplay}
+            >
+              Be first in when Apparent opens.
+            </h2>
+            <p className="mt-4 max-w-xl text-base leading-7 text-black/65">
+              Founders meet thesis-fit investors; investors source thesis-fit founders. Drop your email and we&apos;ll email you the moment public access lands.
+            </p>
+          </div>
+
+          <form onSubmit={handleSubmit} className="w-full" noValidate>
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-0">
+              <label htmlFor="waitlist-email" className="sr-only">
+                Email address
+              </label>
+              <input
+                id="waitlist-email"
+                type="email"
+                required
+                value={email}
+                onChange={(event) => {
+                  setEmail(event.target.value);
+                  if (status !== 'idle') {
+                    setStatus('idle');
+                    setMessage('');
+                  }
+                }}
+                placeholder="you@startup.com"
+                className="h-12 w-full flex-1 rounded-full border border-black/10 bg-white px-5 text-sm text-black outline-none transition-colors placeholder:text-black/35 focus:border-[#42520d] sm:rounded-r-none sm:border-r-0"
+                disabled={status === 'submitting' || status === 'success'}
+              />
+              <button
+                type="submit"
+                disabled={status === 'submitting' || status === 'success'}
+                className="inline-flex h-12 items-center justify-center gap-1.5 rounded-full bg-[#42520d] px-6 text-sm font-semibold text-white transition-colors hover:bg-[#34420a] disabled:cursor-not-allowed disabled:opacity-70 sm:rounded-l-none"
+              >
+                {status === 'submitting' ? (
+                  'Adding…'
+                ) : status === 'success' ? (
+                  <>
+                    <Check className="h-4 w-4" /> On the list
+                  </>
+                ) : (
+                  <>
+                    Join the waitlist <ArrowUpRight className="h-4 w-4" />
+                  </>
+                )}
+              </button>
+            </div>
+
+            {/* Optional role hint — purely for our segmentation, never used
+                to gate anything. Reuses the same olive-on-cream chip style as
+                the page's other pills. */}
+            <div className="mt-3 flex flex-wrap items-center gap-1.5 text-[11px] font-medium text-black/55">
+              <span className="mr-1 uppercase tracking-[0.14em] text-black/40">I&apos;m a</span>
+              {roleChips.map((chip) => {
+                const isActive = role === chip.value;
+                return (
+                  <button
+                    key={chip.value}
+                    type="button"
+                    onClick={() => setRole(isActive ? '' : chip.value)}
+                    disabled={status === 'submitting' || status === 'success'}
+                    className={`rounded-full border px-2.5 py-1 transition-colors disabled:cursor-not-allowed disabled:opacity-60 ${
+                      isActive
+                        ? 'border-[#42520d] bg-[#42520d] text-white'
+                        : 'border-black/15 bg-white/70 text-black/65 hover:border-[#42520d]/60 hover:text-[#42520d]'
+                    }`}
+                  >
+                    {chip.label}
+                  </button>
+                );
+              })}
+            </div>
+
+            {message && (
+              <p
+                role={status === 'error' ? 'alert' : 'status'}
+                className={`mt-3 text-xs leading-5 ${
+                  status === 'error' ? 'text-red-700' : 'text-[#42520d]'
+                }`}
+              >
+                {message}
+              </p>
+            )}
+
+            <p className="mt-2 text-[11px] leading-5 text-black/40">
+              No spam. One email when we open, and one if there&apos;s a real reason to write.
+            </p>
+          </form>
+        </div>
+      </div>
+    </section>
   );
 };
