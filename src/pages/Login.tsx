@@ -1,9 +1,19 @@
+import { AnimatePresence, motion } from 'framer-motion';
 import { AuthForm } from '@/components/ui/sign-in';
 import { Switch } from '@/components/ui/switch';
 import { isRoleMismatchError, signInWithEmail } from '@/lib/auth-service';
 import type { DashboardRole } from '@/lib/apparent-types';
 import { useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+
+// Shared transition for role-toggle content swaps. Short and eased so the
+// crossfade reads as polish, not delay.
+const ROLE_SWAP_TRANSITION = { duration: 0.28, ease: [0.22, 0.61, 0.36, 1] } as const;
+const ROLE_SWAP_VARIANTS = {
+  initial: { opacity: 0, y: 8, filter: 'blur(4px)' },
+  animate: { opacity: 1, y: 0, filter: 'blur(0px)' },
+  exit: { opacity: 0, y: -8, filter: 'blur(4px)' },
+};
 
 const serifDisplay = {
   fontFamily: 'Georgia, "Times New Roman", serif',
@@ -96,37 +106,51 @@ export const Login = () => {
       <section className="mx-auto max-w-[92rem] px-5 py-14 sm:px-8 md:py-20">
         <div className="grid items-start gap-10 lg:grid-cols-[minmax(0,1fr)_440px] xl:gap-16">
           <section className="hidden py-4 lg:block">
-            <h1
-              className="max-w-4xl text-6xl font-normal leading-[0.94] tracking-[-0.05em] xl:text-7xl"
-              style={serifDisplay}
-            >
-              {headline}
-            </h1>
-            <p className="mt-8 max-w-2xl text-lg leading-8 text-black/60">
-              {bodyCopy}
-            </p>
+            {/* The editorial column re-themes per role. AnimatePresence
+                crossfades + slides the whole block so the swap reads as a
+                planned transition rather than instant string replacement. */}
+            <AnimatePresence mode="wait" initial={false}>
+              <motion.div
+                key={activeRole}
+                variants={ROLE_SWAP_VARIANTS}
+                initial="initial"
+                animate="animate"
+                exit="exit"
+                transition={ROLE_SWAP_TRANSITION}
+              >
+                <h1
+                  className="max-w-4xl text-6xl font-normal leading-[0.94] tracking-[-0.05em] xl:text-7xl"
+                  style={serifDisplay}
+                >
+                  {headline}
+                </h1>
+                <p className="mt-8 max-w-2xl text-lg leading-8 text-black/60">
+                  {bodyCopy}
+                </p>
 
-            <div className="mt-12 grid gap-5">
-              {contextItems.map((item, index) => (
-                <div key={item} className="grid gap-4 sm:grid-cols-[3rem_1fr]">
-                  <span className="text-sm font-semibold text-black/45">0{index + 1}</span>
-                  <p className="text-sm leading-6 text-black/65">{item}</p>
+                <div className="mt-12 grid gap-5">
+                  {contextItems.map((item, index) => (
+                    <div key={item} className="grid gap-4 sm:grid-cols-[3rem_1fr]">
+                      <span className="text-sm font-semibold text-black/45">0{index + 1}</span>
+                      <p className="text-sm leading-6 text-black/65">{item}</p>
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
 
-            <div className="mt-12 grid gap-4 sm:grid-cols-3">
-              {[
-                ['Proof', isInvestor ? 'Thesis fit' : 'GitHub links'],
-                ['Radar', isInvestor ? 'Builder density' : 'Nearby peers'],
-                ['Motion', isInvestor ? 'Deal flow' : 'Investor DMs'],
-              ].map(([label, value]) => (
-                <div key={label} className="rounded-[22px] bg-white/70 p-5">
-                  <p className="text-sm font-semibold">{label}</p>
-                  <p className="mt-3 text-sm leading-6 text-black/55">{value}</p>
+                <div className="mt-12 grid gap-4 sm:grid-cols-3">
+                  {[
+                    ['Proof', isInvestor ? 'Thesis fit' : 'GitHub links'],
+                    ['Radar', isInvestor ? 'Builder density' : 'Nearby peers'],
+                    ['Motion', isInvestor ? 'Deal flow' : 'Investor DMs'],
+                  ].map(([label, value]) => (
+                    <div key={label} className="rounded-[22px] bg-white/70 p-5">
+                      <p className="text-sm font-semibold">{label}</p>
+                      <p className="mt-3 text-sm leading-6 text-black/55">{value}</p>
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
+              </motion.div>
+            </AnimatePresence>
           </section>
 
           <div>
@@ -151,16 +175,29 @@ export const Login = () => {
               </Switch>
             </div>
 
-            <AuthForm
-              title={authTitle}
-              description={authDescription}
-              contextLabel={contextLabel}
-              contextItems={contextItems}
-              emailPlaceholder={emailPlaceholder}
-              submitLabel={isSubmitting ? 'Working...' : submitLabel}
-              onEmailSubmit={handleEmailSubmit}
-              className="border-0 bg-white/80 shadow-[0_18px_60px_rgba(0,0,0,0.06)]"
-            />
+            {/* Same crossfade on the right column so the form copy doesn't
+                snap while the editorial column animates. */}
+            <AnimatePresence mode="wait" initial={false}>
+              <motion.div
+                key={activeRole}
+                variants={ROLE_SWAP_VARIANTS}
+                initial="initial"
+                animate="animate"
+                exit="exit"
+                transition={ROLE_SWAP_TRANSITION}
+              >
+                <AuthForm
+                  title={authTitle}
+                  description={authDescription}
+                  contextLabel={contextLabel}
+                  contextItems={contextItems}
+                  emailPlaceholder={emailPlaceholder}
+                  submitLabel={isSubmitting ? 'Working...' : submitLabel}
+                  onEmailSubmit={handleEmailSubmit}
+                  className="border-0 bg-white/80 shadow-[0_18px_60px_rgba(0,0,0,0.06)]"
+                />
+              </motion.div>
+            </AnimatePresence>
             {authError && (
               <div className="mt-4 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700">
                 <p>{authError}</p>
