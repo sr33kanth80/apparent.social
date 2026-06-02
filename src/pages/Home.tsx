@@ -260,6 +260,13 @@ const WaitlistSection = () => {
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (status === 'submitting') return;
+    // Role is required — friendly nudge before we hit the network so the
+    // user knows we need the segmentation hint to sort their email.
+    if (!role) {
+      setStatus('error');
+      setMessage("Oops — pick one: Founder, Investor, or Just curious.");
+      return;
+    }
     setStatus('submitting');
     setMessage('');
     try {
@@ -351,18 +358,35 @@ const WaitlistSection = () => {
               </button>
             </div>
 
-            {/* Optional role hint — purely for our segmentation, never used
-                to gate anything. Reuses the same olive-on-cream chip style as
-                the page's other pills. */}
-            <div className="mt-3 flex flex-wrap items-center gap-1.5 text-[11px] font-medium text-black/55">
-              <span className="mr-1 uppercase tracking-[0.14em] text-black/40">I&apos;m a</span>
+            {/* Required role selector — segmentation hint we need before we
+                accept the signup. Asterisk + red outline on the chip row
+                signal the requirement; submit handler nudges them if they
+                forget. */}
+            <div
+              className={`mt-3 flex flex-wrap items-center gap-1.5 rounded-full border border-dashed px-2 py-1 text-[11px] font-medium text-black/55 transition-colors ${
+                status === 'error' && !role ? 'border-red-400 bg-red-50/40' : 'border-transparent'
+              }`}
+              aria-invalid={status === 'error' && !role}
+            >
+              <span className="mr-1 uppercase tracking-[0.14em] text-black/40">
+                I&apos;m a
+                <span aria-hidden="true" className="ml-1 text-red-600">*</span>
+              </span>
               {roleChips.map((chip) => {
                 const isActive = role === chip.value;
                 return (
                   <button
                     key={chip.value}
                     type="button"
-                    onClick={() => setRole(isActive ? '' : chip.value)}
+                    onClick={() => {
+                      setRole(isActive ? '' : chip.value);
+                      // Picking a chip clears the prior "missing role" nudge
+                      // so the user gets immediate feedback they fixed it.
+                      if (status === 'error' && message.startsWith('Oops')) {
+                        setStatus('idle');
+                        setMessage('');
+                      }
+                    }}
                     disabled={status === 'submitting' || status === 'success'}
                     className={`rounded-full border px-2.5 py-1 transition-colors disabled:cursor-not-allowed disabled:opacity-60 ${
                       isActive
