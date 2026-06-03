@@ -575,9 +575,14 @@ const FounderHero = ({
       ) : (
         <div className="mt-5">
           <div className="space-y-2">
-            <div className="h-4 w-2/3 max-w-md animate-pulse rounded bg-[#e8e4da]" />
-            <div className="h-4 w-1/2 max-w-xs animate-pulse rounded bg-[#e8e4da]" />
+            <div className="h-4 w-2/3 max-w-md rounded bg-[#e8e4da]" />
+            <div className="h-4 w-1/2 max-w-xs rounded bg-[#e8e4da]" />
           </div>
+          {!isOwnProfile && (
+            <span className="mt-2 inline-flex items-center rounded-full border border-black/8 bg-[#ebe8e0] px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.1em] text-black/35">
+              Incomplete
+            </span>
+          )}
           {isOwnProfile && (
             <Link
               to="/dashboard/founder/profile"
@@ -742,19 +747,19 @@ const FounderHero = ({
 const SkeletonLaunchCard = () => (
   <div className="rounded-[28px] bg-white/80 p-6">
     <div className="flex items-center gap-3">
-      <div className="h-10 w-10 animate-pulse rounded-[12px] bg-[#e8e4da]" />
+      <div className="h-10 w-10 rounded-[12px] bg-[#e8e4da]" />
       <div className="flex-1 space-y-2">
-        <div className="h-4 w-28 animate-pulse rounded bg-[#e8e4da]" />
-        <div className="h-3 w-16 animate-pulse rounded bg-[#e8e4da]" />
+        <div className="h-4 w-28 rounded bg-[#e8e4da]" />
+        <div className="h-3 w-16 rounded bg-[#e8e4da]" />
       </div>
     </div>
     <div className="mt-4 space-y-2">
-      <div className="h-3 w-full animate-pulse rounded bg-[#e8e4da]" />
-      <div className="h-3 w-3/4 animate-pulse rounded bg-[#e8e4da]" />
+      <div className="h-3 w-full rounded bg-[#e8e4da]" />
+      <div className="h-3 w-3/4 rounded bg-[#e8e4da]" />
     </div>
     <div className="mt-4 flex gap-2">
-      <div className="h-6 w-14 animate-pulse rounded-full bg-[#e8e4da]" />
-      <div className="h-6 w-10 animate-pulse rounded-full bg-[#e8e4da]" />
+      <div className="h-6 w-14 rounded-full bg-[#e8e4da]" />
+      <div className="h-6 w-10 rounded-full bg-[#e8e4da]" />
     </div>
   </div>
 );
@@ -819,7 +824,14 @@ const FounderProfilePage = ({
 
       {/* ── Product launches ── */}
       <section className="mx-auto max-w-[82rem] border-t border-black/10 px-5 py-16 sm:px-8">
-        <SectionLabel>Products &amp; launches</SectionLabel>
+        <div className="mb-8 flex flex-wrap items-center gap-3">
+          <p className="text-sm font-semibold uppercase tracking-[0.12em] text-[#42520d]">Products &amp; launches</p>
+          {profile.launches.length === 0 && !isOwnProfile && (
+            <span className="rounded-full border border-black/8 bg-[#ebe8e0] px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.1em] text-black/35">
+              Incomplete
+            </span>
+          )}
+        </div>
         {profile.launches.length > 0 ? (
           <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
             {profile.launches.map((launch) => (
