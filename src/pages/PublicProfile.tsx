@@ -441,9 +441,9 @@ const FounderHeroDark = ({
     const handle = profile.githubUsername || ghLogin;
     if (!handle || !profile.githubVerified) return;
     let cancelled = false;
-    // v=2 busts any stale Edge entry from the pre-migration era that's still
-    // pinned to a 404 by the old SWR window. Safe to leave in indefinitely.
-    fetch(`/api/github/contributions?username=${encodeURIComponent(handle)}&v=2`)
+    // v=3 busts the browser's locally-cached 304 from the previous attempt.
+    // Safe to leave in; future drift bumps the number.
+    fetch(`/api/github/contributions?username=${encodeURIComponent(handle)}&v=3`)
       .then(async (r) => {
         if (r.status === 404) return null;
         if (!r.ok) return null;
@@ -504,9 +504,16 @@ const FounderHeroDark = ({
   const hasLatestLaunch = profile.launches && profile.launches.length > 0;
   const latestLaunch = hasLatestLaunch ? profile.launches[0] : null;
 
+  // Unified GitHub handle for both the panel + the footer pill: prefer the
+  // OAuth-verified username, fall back to whatever the founder typed into
+  // the profile form. Without this, a founder who connected GitHub but
+  // never filled the URL field would render no panel at all.
+  const ghHandle = profile.githubUsername || ghLogin;
+  const ghProfileUrl = profile.github || (ghHandle ? `https://github.com/${ghHandle}` : '');
+
   const links = [
     profile.website && { label: 'Website', href: profile.website, icon: Globe },
-    profile.github && { label: 'GitHub', href: profile.github, icon: GitHubIcon },
+    ghProfileUrl && { label: 'GitHub', href: ghProfileUrl, icon: GitHubIcon },
     profile.linkedin && { label: 'LinkedIn', href: profile.linkedin, icon: LinkIcon },
     profile.xProfile && { label: 'X', href: profile.xProfile, icon: ArrowUpRight },
   ].filter(Boolean) as { label: string; href: string; icon: React.ElementType }[];
@@ -575,7 +582,7 @@ const FounderHeroDark = ({
         )}
 
         {/* ─ GitHub activity grid ─ */}
-        {profile.github && (
+        {ghHandle && (
           <div className="mt-7 rounded-2xl bg-white/[0.02] p-5">
             <div className="flex flex-wrap items-baseline justify-between gap-2">
               <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-white/45">
@@ -606,7 +613,7 @@ const FounderHeroDark = ({
             <div className="mt-3 flex items-center justify-between text-[11px] text-white/40">
               <span>{realStarsLabel}</span>
               <a
-                href={profile.github}
+                href={ghProfileUrl || `https://github.com/${ghHandle}`}
                 target="_blank"
                 rel="noreferrer"
                 className="inline-flex items-center gap-1 text-white/55 transition-colors hover:text-white"
