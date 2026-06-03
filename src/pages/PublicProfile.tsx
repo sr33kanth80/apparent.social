@@ -707,10 +707,6 @@ const FounderHero = ({
           ))}
         </div>
       )}
-
-      <p className="mt-4 text-[11px] leading-5 text-black/40">
-        Investors see the whole picture. What you&apos;ve shipped counts most.
-      </p>
     </section>
   );
 };
