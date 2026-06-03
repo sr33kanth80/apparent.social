@@ -32,34 +32,6 @@ export default async function handler(req, res) {
     return;
   }
 
-  // ── Ownership verification mode ─────────────────────────────────────────
-  // ?verify=CODE checks the user's PUBLIC gists for a gist whose description
-  // contains CODE. The founder proves they control the account by creating
-  // such a gist; no OAuth app, no secrets. Returns { verified: boolean }.
-  const verifyCode = String((req.query && req.query.verify) || '').trim();
-  if (verifyCode) {
-    // Codes are short, opaque, and Apparent-issued. Constrain the shape so a
-    // caller can't smuggle a path/query into the GitHub request.
-    if (!/^apparent-verify-[a-z0-9]{6,32}$/.test(verifyCode)) {
-      res.status(400).json({ error: 'invalid verification code' });
-      return;
-    }
-    const gists = await ghRest(`/users/${username}/gists?per_page=100`);
-    const list = Array.isArray(gists) ? gists : [];
-    const verified = list.some((g) => {
-      const inDescription = String(g.description || '').includes(verifyCode);
-      // Also accept the code as a gist filename, which is easier for some
-      // people to set than a description.
-      const inFilenames = Object.keys(g.files || {}).some((name) => name.includes(verifyCode));
-      return inDescription || inFilenames;
-    });
-    res.setHeader('Content-Type', 'application/json; charset=utf-8');
-    // No caching — verification must reflect the gist's current state.
-    res.setHeader('Cache-Control', 'no-store');
-    res.status(200).json({ verified, username });
-    return;
-  }
-
   const user = await ghRest(`/users/${username}`);
   if (!user || user.message === 'Not Found') {
     res.status(404).json({ error: 'not found' });

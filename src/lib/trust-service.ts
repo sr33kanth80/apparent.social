@@ -49,26 +49,86 @@ export const extractGithubLogin = (github: string): string => {
   }
 };
 
+// GitHub OAuth App client id (public — safe in the bundle). Override with
+// VITE_GITHUB_CLIENT_ID if you rotate the app.
+const GITHUB_CLIENT_ID =
+  (import.meta.env.VITE_GITHUB_CLIENT_ID as string | undefined) || 'Ov23li5dwJPP1dGzfy38';
+
+// Must exactly match the OAuth App's registered Authorization callback URL.
+const GITHUB_REDIRECT_URI = 'https://apparentsocial.vercel.app/api/github/callback';
+
+const GH_STATE_KEY = 'apparent:gh-oauth-state';
+
 /**
- * Deterministic per-(user, username) verification code. Stable so we don't need
- * to persist a pending token: only the logged-in user gets this exact code for
- * this exact claimed username, so a code in a public gist proves both identity
- * and account control. djb2-style hash → base36, prefixed for shape-validation
- * on the API side.
+ * Kick off GitHub OAuth. Stores a CSRF nonce in sessionStorage and returns the
+ * authorize URL; the caller redirects the browser to it. Scope read:user is
+ * enough to confirm identity + read the public profile.
  */
-export const githubVerificationCode = (user: AppUser, username: string): string => {
-  const seed = `${user.id}:${username.toLowerCase()}`;
-  let h = 5381;
-  for (let i = 0; i < seed.length; i += 1) {
-    h = ((h << 5) + h + seed.charCodeAt(i)) >>> 0;
+export const buildGithubAuthorizeUrl = (): string => {
+  const nonce = (typeof crypto !== 'undefined' && 'randomUUID' in crypto
+    ? crypto.randomUUID()
+    : `${Date.now()}-${Math.random().toString(36).slice(2)}`
+  ).replace(/-/g, '');
+  try {
+    window.sessionStorage.setItem(GH_STATE_KEY, nonce);
+  } catch {
+    /* sessionStorage blocked — state check will just be skipped */
   }
-  // Mix in a second pass so short seeds still spread well.
-  let h2 = 52711;
-  for (let i = seed.length - 1; i >= 0; i -= 1) {
-    h2 = ((h2 << 5) + h2 + seed.charCodeAt(i)) >>> 0;
+  const params = new URLSearchParams({
+    client_id: GITHUB_CLIENT_ID,
+    redirect_uri: GITHUB_REDIRECT_URI,
+    scope: 'read:user',
+    state: nonce,
+    allow_signup: 'true',
+  });
+  return `https://github.com/login/oauth/authorize?${params.toString()}`;
+};
+
+/** Confirm the CSRF nonce returned by GitHub matches what we stored. */
+export const githubStateMatches = (returnedState: string): boolean => {
+  try {
+    const stored = window.sessionStorage.getItem(GH_STATE_KEY);
+    window.sessionStorage.removeItem(GH_STATE_KEY);
+    return Boolean(stored) && stored === returnedState;
+  } catch {
+    return true; // sessionStorage unavailable — don't hard-block.
   }
-  const token = (h.toString(36) + h2.toString(36)).slice(0, 16);
-  return `apparent-verify-${token}`;
+};
+
+/**
+ * Finish GitHub OAuth: hand the signed blob from the callback to
+ * /api/github/confirm along with the founder's Supabase JWT. The server
+ * verifies both and writes github_verified under their account.
+ */
+export const confirmGithubOAuth = async (
+  blob: string,
+): Promise<{ ok: boolean; username: string; message: string }> => {
+  if (!isSupabaseConfigured || !supabase) {
+    return { ok: false, username: '', message: 'Sign-in required to verify GitHub.' };
+  }
+  const { data } = await supabase.auth.getSession();
+  const jwt = data.session?.access_token;
+  if (!jwt) {
+    return { ok: false, username: '', message: 'Your session expired — sign in again.' };
+  }
+  try {
+    const res = await fetch('/api/github/confirm', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', authorization: `Bearer ${jwt}` },
+      body: JSON.stringify({ token: blob }),
+    });
+    const body = (await res.json().catch(() => ({}))) as { ok?: boolean; username?: string; error?: string };
+    if (res.ok && body.ok) {
+      return { ok: true, username: body.username ?? '', message: 'GitHub connected and verified.' };
+    }
+    return {
+      ok: false,
+      username: '',
+      message: body.error === 'expired' ? 'That link expired — try connecting again.' : 'Could not verify GitHub. Try again.',
+    };
+  } catch {
+    return { ok: false, username: '', message: 'Network error verifying GitHub.' };
+  }
 };
 
 const mapTrustRow = (row: Record<string, unknown> | null): FounderTrustState => {
@@ -106,97 +166,6 @@ export const loadFounderTrust = async (user: AppUser): Promise<FounderTrustState
   }
 };
 
-/**
- * Ask the public-GitHub API whether the founder's gist proof is live, and on
- * success persist github_verified + the resolved username. Returns the updated
- * trust state (or the existing one on failure) plus an ok flag + message.
- */
-export const verifyGithubOwnership = async (
-  user: AppUser,
-  username: string,
-): Promise<{ ok: boolean; message: string; trust: FounderTrustState }> => {
-  const login = extractGithubLogin(username) || username.trim();
-  if (!login) {
-    return { ok: false, message: 'Enter your GitHub username first.', trust: { ...EMPTY_TRUST } };
-  }
-
-  const code = githubVerificationCode(user, login);
-
-  let verified = false;
-  try {
-    const res = await fetch(
-      `/api/github?username=${encodeURIComponent(login)}&verify=${encodeURIComponent(code)}`,
-    );
-    if (res.ok) {
-      const body = (await res.json()) as { verified?: boolean };
-      verified = Boolean(body.verified);
-    }
-  } catch {
-    verified = false;
-  }
-
-  if (!verified) {
-    const current = await loadFounderTrust(user);
-    return {
-      ok: false,
-      message:
-        'No matching gist found yet. Create a public gist containing the code, then check again. It can take a few seconds for GitHub to update.',
-      trust: current,
-    };
-  }
-
-  // Verified — persist. Dev / no-Supabase: just return the verified state.
-  if (!isSupabaseConfigured || !supabase || user.isDev) {
-    return {
-      ok: true,
-      message: 'GitHub ownership verified.',
-      trust: {
-        ...EMPTY_TRUST,
-        githubUsername: login,
-        githubVerified: true,
-        githubVerifiedAt: new Date().toISOString(),
-      },
-    };
-  }
-
-  try {
-    const { error } = await supabase
-      .from('founder_profiles')
-      .update({
-        github_username: login,
-        github_verified: true,
-        github_verified_at: new Date().toISOString(),
-      })
-      .eq('user_id', user.id);
-    if (error) {
-      return { ok: false, message: error.message, trust: await loadFounderTrust(user) };
-    }
-    return {
-      ok: true,
-      message: 'GitHub ownership verified.',
-      trust: await loadFounderTrust(user),
-    };
-  } catch (error) {
-    return {
-      ok: false,
-      message: error instanceof Error ? error.message : 'Unable to save verification.',
-      trust: await loadFounderTrust(user),
-    };
-  }
-};
-
-/** Founder can disconnect/clear their GitHub verification. */
-export const clearGithubVerification = async (user: AppUser): Promise<void> => {
-  if (!isSupabaseConfigured || !supabase || user.isDev) return;
-  try {
-    await supabase
-      .from('founder_profiles')
-      .update({ github_verified: false, github_verified_at: null })
-      .eq('user_id', user.id);
-  } catch {
-    /* non-fatal */
-  }
-};
 
 /** Monthly revenue series for the project-page chart (public-readable for
  *  founders with a public profile). Empty until the Stripe sync populates it. */

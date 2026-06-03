@@ -1,86 +1,106 @@
-import { useEffect, useState } from 'react';
-import { BadgeCheck, Check, Copy, ExternalLink, RefreshCw } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import { BadgeCheck } from 'lucide-react';
 import { GitHubIcon } from './GitHubIcon';
 import type { AppUser } from '@/lib/apparent-types';
 import {
-  clearGithubVerification,
+  buildGithubAuthorizeUrl,
+  confirmGithubOAuth,
   extractGithubLogin,
-  githubVerificationCode,
+  githubStateMatches,
   loadFounderTrust,
-  verifyGithubOwnership,
   type FounderTrustState,
 } from '@/lib/trust-service';
 
 /**
- * Founder-facing GitHub ownership verification. The founder proves they
- * control the account by dropping an Apparent-issued code into a public gist;
- * we check it via the public API (no OAuth app, no secrets). Verified status
- * shows on their public profile so VCs can trust the GitHub link is really
- * theirs.
+ * Founder-facing GitHub connect. One click → GitHub OAuth → we confirm and
+ * flip github_verified server-side. Verified status shows on the public
+ * profile so VCs can trust the GitHub link is really theirs. Handles the
+ * OAuth return (?gh_token / ?gh_error) when GitHub bounces back to the
+ * profile page.
  */
 export const GithubVerifyCard = ({ user, github }: { user: AppUser; github: string }) => {
   const [trust, setTrust] = useState<FounderTrustState | null>(null);
-  const [username, setUsername] = useState('');
-  const [checking, setChecking] = useState(false);
-  const [copied, setCopied] = useState(false);
+  const [status, setStatus] = useState<'idle' | 'connecting' | 'confirming'>('idle');
   const [message, setMessage] = useState('');
   const [messageTone, setMessageTone] = useState<'idle' | 'error' | 'success'>('idle');
+  const handledReturn = useRef(false);
 
   useEffect(() => {
     let cancelled = false;
     loadFounderTrust(user).then((next) => {
-      if (cancelled) return;
-      setTrust(next);
-      // Seed the input from the verified username, else from the profile's
-      // github field so the founder doesn't retype it.
-      setUsername(next.githubUsername || extractGithubLogin(github));
+      if (!cancelled) setTrust(next);
     });
     return () => {
       cancelled = true;
     };
-  }, [user, github]);
+  }, [user]);
 
-  const login = extractGithubLogin(username) || username.trim();
-  const code = login ? githubVerificationCode(user, login) : '';
+  // Handle the OAuth return. GitHub → /api/github/callback → here with
+  // ?gh_token=<blob>&gh_state=<nonce>, or ?gh_error=<reason>.
+  useEffect(() => {
+    if (handledReturn.current) return;
+    const params = new URLSearchParams(window.location.search);
+    const token = params.get('gh_token');
+    const error = params.get('gh_error');
+    const returnedState = params.get('gh_state') ?? '';
+    if (!token && !error) return;
+    handledReturn.current = true;
 
-  const handleCopy = async () => {
-    if (!code) return;
-    try {
-      await navigator.clipboard.writeText(code);
-      setCopied(true);
-      window.setTimeout(() => setCopied(false), 1500);
-    } catch {
-      /* clipboard blocked */
+    // Strip the OAuth params from the URL so a refresh doesn't replay them.
+    const clean = () => {
+      params.delete('gh_token');
+      params.delete('gh_error');
+      params.delete('gh_state');
+      const qs = params.toString();
+      window.history.replaceState(
+        {},
+        '',
+        `${window.location.pathname}${qs ? `?${qs}` : ''}${window.location.hash}`,
+      );
+    };
+
+    if (error) {
+      setMessage('GitHub connection was cancelled or failed. Try again.');
+      setMessageTone('error');
+      clean();
+      return;
     }
-  };
+    if (!githubStateMatches(returnedState)) {
+      setMessage('Security check failed (state mismatch). Try connecting again.');
+      setMessageTone('error');
+      clean();
+      return;
+    }
 
-  const handleCheck = async () => {
-    if (!login || checking) return;
-    setChecking(true);
+    setStatus('confirming');
+    confirmGithubOAuth(token as string).then((result) => {
+      setMessage(result.message);
+      setMessageTone(result.ok ? 'success' : 'error');
+      setStatus('idle');
+      clean();
+      if (result.ok) {
+        // Reload trust so the verified pill + username show immediately.
+        loadFounderTrust(user).then(setTrust);
+      }
+    });
+  }, [user]);
+
+  const handleConnect = () => {
+    setStatus('connecting');
     setMessage('');
     setMessageTone('idle');
-    const result = await verifyGithubOwnership(user, login);
-    setTrust(result.trust);
-    setMessage(result.message);
-    setMessageTone(result.ok ? 'success' : 'error');
-    setChecking(false);
-  };
-
-  const handleDisconnect = async () => {
-    await clearGithubVerification(user);
-    setTrust((prev) => (prev ? { ...prev, githubVerified: false, githubVerifiedAt: '' } : prev));
-    setMessage('');
-    setMessageTone('idle');
+    window.location.href = buildGithubAuthorizeUrl();
   };
 
   const verified = Boolean(trust?.githubVerified);
+  const displayLogin = trust?.githubUsername || extractGithubLogin(github);
 
   return (
     <div className="rounded-[18px] border border-black/10 bg-white p-5 shadow-[0_6px_20px_rgba(0,0,0,0.03)]">
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-center gap-2">
           <GitHubIcon className="h-4 w-4 text-black" />
-          <h3 className="text-sm font-semibold">GitHub verification</h3>
+          <h3 className="text-sm font-semibold">GitHub</h3>
         </div>
         {verified ? (
           <span className="inline-flex items-center gap-1 rounded-full bg-[#42520d] px-2.5 py-1 text-[11px] font-semibold text-white">
@@ -88,7 +108,7 @@ export const GithubVerifyCard = ({ user, github }: { user: AppUser; github: stri
           </span>
         ) : (
           <span className="rounded-full bg-[#f4f1eb] px-2.5 py-1 text-[11px] font-semibold text-black/55">
-            Not verified
+            Not connected
           </span>
         )}
       </div>
@@ -96,91 +116,43 @@ export const GithubVerifyCard = ({ user, github }: { user: AppUser; github: stri
       {verified ? (
         <div className="mt-3">
           <p className="text-sm leading-6 text-black/65">
-            Your GitHub{' '}
+            Connected as{' '}
             <a
-              href={`https://github.com/${trust?.githubUsername}`}
+              href={`https://github.com/${displayLogin}`}
               target="_blank"
               rel="noreferrer"
               className="font-semibold text-[#42520d] hover:underline"
             >
-              @{trust?.githubUsername}
-            </a>{' '}
-            is verified. VCs see a verified badge next to your GitHub on your public profile.
+              @{displayLogin}
+            </a>
+            . VCs see a verified badge next to your GitHub on your public profile.
           </p>
           <button
             type="button"
-            onClick={handleDisconnect}
-            className="mt-3 rounded-full border border-black/10 px-3 py-1.5 text-xs font-medium text-black/60 transition-colors hover:bg-[#fbf8f3]"
+            onClick={handleConnect}
+            disabled={status !== 'idle'}
+            className="mt-3 rounded-full border border-black/10 px-3 py-1.5 text-xs font-medium text-black/60 transition-colors hover:bg-[#fbf8f3] disabled:opacity-60"
           >
-            Remove verification
+            Reconnect a different account
           </button>
         </div>
       ) : (
         <div className="mt-3 space-y-3">
           <p className="text-xs leading-5 text-black/55">
-            Prove you own your GitHub so VCs can trust your shipping history. Quick, free, three steps.
+            Connect your GitHub in one click so VCs can trust your shipping history is really yours. We only read your public profile.
           </p>
-
-          <label className="block">
-            <span className="mb-1 block text-[11px] font-semibold uppercase tracking-[0.14em] text-black/45">
-              GitHub username
-            </span>
-            <input
-              type="text"
-              value={username}
-              onChange={(event) => setUsername(event.target.value)}
-              placeholder="your-handle"
-              className="h-10 w-full rounded-[10px] border border-black/10 bg-white px-3 text-sm outline-none focus:border-[#42520d]"
-            />
-          </label>
-
-          {login && (
-            <ol className="space-y-2 text-xs leading-5 text-black/65">
-              <li className="flex gap-2">
-                <span className="font-semibold text-[#42520d]">1.</span>
-                <span>Copy this code:</span>
-              </li>
-              <li className="flex items-center gap-2 rounded-[10px] bg-[#fbfaf7] px-3 py-2">
-                <code className="flex-1 truncate font-mono text-[11px] text-black/80">{code}</code>
-                <button
-                  type="button"
-                  onClick={handleCopy}
-                  className="inline-flex items-center gap-1 rounded-full border border-black/10 bg-white px-2 py-1 text-[11px] font-semibold text-black/65 hover:bg-[#fbf8f3]"
-                >
-                  {copied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
-                  {copied ? 'Copied' : 'Copy'}
-                </button>
-              </li>
-              <li className="flex gap-2">
-                <span className="font-semibold text-[#42520d]">2.</span>
-                <span>
-                  Create a{' '}
-                  <a
-                    href="https://gist.github.com/"
-                    target="_blank"
-                    rel="noreferrer"
-                    className="inline-flex items-center gap-0.5 font-semibold text-[#42520d] hover:underline"
-                  >
-                    public gist <ExternalLink className="h-3 w-3" />
-                  </a>{' '}
-                  with the code in its description (or as the filename). Keep it public.
-                </span>
-              </li>
-              <li className="flex gap-2">
-                <span className="font-semibold text-[#42520d]">3.</span>
-                <span>Come back and check. You can delete the gist afterward.</span>
-              </li>
-            </ol>
-          )}
-
           <button
             type="button"
-            onClick={handleCheck}
-            disabled={!login || checking}
-            className="inline-flex items-center gap-1.5 rounded-full bg-[#42520d] px-4 py-2 text-xs font-semibold text-white transition-colors hover:bg-[#34420a] disabled:cursor-not-allowed disabled:opacity-60"
+            onClick={handleConnect}
+            disabled={status !== 'idle'}
+            className="inline-flex items-center gap-1.5 rounded-full bg-black px-4 py-2 text-xs font-semibold text-white transition-colors hover:bg-black/85 disabled:cursor-not-allowed disabled:opacity-60"
           >
-            <RefreshCw className={`h-3.5 w-3.5 ${checking ? 'animate-spin' : ''}`} />
-            {checking ? 'Checking…' : 'Check verification'}
+            <GitHubIcon className="h-3.5 w-3.5" />
+            {status === 'connecting'
+              ? 'Redirecting…'
+              : status === 'confirming'
+                ? 'Confirming…'
+                : 'Connect GitHub'}
           </button>
         </div>
       )}
