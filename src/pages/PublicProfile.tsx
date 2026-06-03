@@ -12,6 +12,7 @@ import {
   MapPin,
   MessageSquare,
   Play,
+  Plus,
   Send,
   Share2,
   Target,
@@ -413,10 +414,12 @@ const FounderHero = ({
   profile,
   viewer,
   onMessage,
+  isOwnProfile,
 }: {
   profile: PublicFounderProfile;
   viewer: AppUser | null;
   onMessage: () => void;
+  isOwnProfile?: boolean;
 }) => {
   const ghLogin = extractGhLogin(profile.github);
   const [ghStats, setGhStats] = useState<GhStats>(null);
@@ -567,8 +570,23 @@ const FounderHero = ({
       </div>
 
       {/* ─ Headline ─ */}
-      {headline && (
+      {headline ? (
         <p className="mt-5 max-w-3xl text-base leading-7 text-black/70">{headline}</p>
+      ) : (
+        <div className="mt-5">
+          <div className="space-y-2">
+            <div className="h-4 w-2/3 max-w-md animate-pulse rounded bg-[#e8e4da]" />
+            <div className="h-4 w-1/2 max-w-xs animate-pulse rounded bg-[#e8e4da]" />
+          </div>
+          {isOwnProfile && (
+            <Link
+              to="/dashboard/founder/profile"
+              className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-[#42520d]/55 transition-colors hover:text-[#42520d]"
+            >
+              <Plus className="h-3 w-3" /> Add a headline
+            </Link>
+          )}
+        </div>
       )}
 
       {/* ─ GitHub activity grid ─ */}
@@ -611,6 +629,26 @@ const FounderHero = ({
               Open on GitHub <ArrowUpRight className="h-3 w-3" />
             </a>
           </div>
+        </div>
+      )}
+
+      {/* ─ Connect GitHub prompt (own profile, no github linked) ─ */}
+      {!ghHandle && isOwnProfile && (
+        <div className="mt-10 border-t border-black/10 pt-6">
+          <p className="mb-3 text-[11px] font-semibold uppercase tracking-[0.18em] text-black/45">
+            GitHub activity
+          </p>
+          <Link
+            to="/dashboard/founder/profile"
+            className="flex items-center gap-3 rounded-2xl border border-dashed border-black/15 bg-[#f4f1eb] p-4 transition-colors hover:border-[#42520d]/30 hover:bg-[#edeae3]"
+          >
+            <GitHubIcon className="h-5 w-5 shrink-0 text-black/35" />
+            <div className="min-w-0">
+              <p className="text-sm font-semibold text-black/65">Connect GitHub</p>
+              <p className="text-xs text-black/40">Show your contribution history to investors</p>
+            </div>
+            <ArrowUpRight className="ml-auto h-4 w-4 shrink-0 text-black/25" />
+          </Link>
         </div>
       )}
 
@@ -701,6 +739,26 @@ const FounderHero = ({
 
 // ─── founder profile ──────────────────────────────────────────────────────────
 
+const SkeletonLaunchCard = () => (
+  <div className="rounded-[28px] bg-white/80 p-6">
+    <div className="flex items-center gap-3">
+      <div className="h-10 w-10 animate-pulse rounded-[12px] bg-[#e8e4da]" />
+      <div className="flex-1 space-y-2">
+        <div className="h-4 w-28 animate-pulse rounded bg-[#e8e4da]" />
+        <div className="h-3 w-16 animate-pulse rounded bg-[#e8e4da]" />
+      </div>
+    </div>
+    <div className="mt-4 space-y-2">
+      <div className="h-3 w-full animate-pulse rounded bg-[#e8e4da]" />
+      <div className="h-3 w-3/4 animate-pulse rounded bg-[#e8e4da]" />
+    </div>
+    <div className="mt-4 flex gap-2">
+      <div className="h-6 w-14 animate-pulse rounded-full bg-[#e8e4da]" />
+      <div className="h-6 w-10 animate-pulse rounded-full bg-[#e8e4da]" />
+    </div>
+  </div>
+);
+
 const FounderProfilePage = ({
   profile,
   viewer,
@@ -715,17 +773,54 @@ const FounderProfilePage = ({
     .map((s) => s.trim())
     .filter(Boolean);
 
+  const isOwnProfile = viewer?.id === profile.userId;
+
+  const completionFields = {
+    photo: !!profile.profilePhotoUrl,
+    headline: !!(profile.headline || profile.bio),
+    github: !!(profile.github || profile.githubUsername || profile.githubVerified),
+    launch: profile.launches.length > 0,
+  };
+  const completedCount = Object.values(completionFields).filter(Boolean).length;
+  const totalCount = Object.keys(completionFields).length;
+  const isProfileComplete = completedCount === totalCount;
+
   return (
     <main className="overflow-x-hidden bg-[#fbfaf7] text-black">
-      {/* Dark hero card — replaces the old cream profile card. Pill row,
-          avatar + handle + GitHub-verified badge, headline, GitHub activity,
-          facts grid, pitch row, footer link pills. */}
-      <FounderHero profile={profile} viewer={viewer} onMessage={onMessage} />
+      {/* ── Completion banner (own profile, incomplete) ── */}
+      {isOwnProfile && !isProfileComplete && (
+        <div className="border-b border-black/10 bg-[#f4f1eb] px-5 py-3 sm:px-8">
+          <div className="mx-auto flex max-w-[64rem] items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <div className="flex gap-1">
+                {Object.values(completionFields).map((done, i) => (
+                  <div
+                    key={i}
+                    className={`h-1.5 w-8 rounded-full transition-colors ${done ? 'bg-[#42520d]' : 'bg-[#d4d0c8]'}`}
+                  />
+                ))}
+              </div>
+              <p className="text-xs font-semibold text-black/50">
+                {completedCount}/{totalCount} sections complete
+              </p>
+            </div>
+            <Link
+              to="/dashboard/founder/profile"
+              className="shrink-0 text-xs font-semibold text-[#42520d] hover:underline"
+            >
+              Complete profile →
+            </Link>
+          </div>
+        </div>
+      )}
+
+      {/* Hero: pill row, avatar, headline, GitHub activity, facts, pitch, links */}
+      <FounderHero profile={profile} viewer={viewer} onMessage={onMessage} isOwnProfile={isOwnProfile} />
 
       {/* ── Product launches ── */}
-      {profile.launches.length > 0 && (
-        <section className="mx-auto max-w-[82rem] border-t border-black/10 px-5 py-16 sm:px-8">
-          <SectionLabel>Products &amp; launches</SectionLabel>
+      <section className="mx-auto max-w-[82rem] border-t border-black/10 px-5 py-16 sm:px-8">
+        <SectionLabel>Products &amp; launches</SectionLabel>
+        {profile.launches.length > 0 ? (
           <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
             {profile.launches.map((launch) => (
               <Link
@@ -771,8 +866,32 @@ const FounderProfilePage = ({
               </Link>
             ))}
           </div>
-        </section>
-      )}
+        ) : isOwnProfile ? (
+          /* Own profile, no launches yet — CTA + one skeleton card */
+          <div className="grid gap-5 md:grid-cols-2">
+            <Link
+              to="/dashboard/founder/profile"
+              className="flex flex-col items-center justify-center gap-3 rounded-[28px] border-2 border-dashed border-[#42520d]/20 bg-white/60 p-8 text-center transition-colors hover:border-[#42520d]/35 hover:bg-white/80"
+            >
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#dcefc7]">
+                <Plus className="h-5 w-5 text-[#42520d]" />
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-[#42520d]">Add your first launch</p>
+                <p className="mt-1 text-xs text-black/45">Show investors what you've built</p>
+              </div>
+            </Link>
+            <SkeletonLaunchCard />
+          </div>
+        ) : (
+          /* Visitor viewing incomplete profile — skeleton cards */
+          <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+            <SkeletonLaunchCard />
+            <SkeletonLaunchCard />
+            <SkeletonLaunchCard />
+          </div>
+        )}
+      </section>
 
       {/* ── Past products ── */}
       {pastProductList.length > 0 && (
