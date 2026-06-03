@@ -339,12 +339,14 @@ const mulberry32 = (seed: number) => () => {
   t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
   return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
 };
+// Grid palette tuned for the cream editorial background. Mirrors GitHub's own
+// contribution-calendar greens so the visual language is instantly familiar.
 const COMMIT_LEVELS = [
-  'bg-white/[0.04]',
-  'bg-[#1e3a1e]',
-  'bg-[#2e6b2e]',
-  'bg-[#37a04a]',
-  'bg-[#58d39a]',
+  'bg-black/[0.06]',
+  'bg-[#9be9a8]',
+  'bg-[#40c463]',
+  'bg-[#30a14e]',
+  'bg-[#216e39]',
 ];
 const commitColumnsFor = (seed: string) => {
   const rand = mulberry32(hashSeed(seed));
@@ -405,7 +407,7 @@ const countToLevel = (count: number): number => {
   return 4;
 };
 
-const FounderHeroDark = ({
+const FounderHero = ({
   profile,
   viewer,
   onMessage,
@@ -519,197 +521,196 @@ const FounderHeroDark = ({
   ].filter(Boolean) as { label: string; href: string; icon: React.ElementType }[];
 
   return (
-    <section className="mx-auto max-w-[64rem] px-5 pb-10 pt-12 sm:px-8 md:pt-16">
-      {/* Tiny action bar above the dark card so the on-page interactions stay
-          discoverable without polluting the editorial layout in the card. */}
-      <div className="mb-4 flex flex-wrap items-center justify-end gap-2">
+    <section className="mx-auto max-w-[64rem] px-5 pt-12 sm:px-8 md:pt-16">
+      {/* Action bar — Message + Share — sits inline above the editorial flow.
+          No dark card wrapper anymore; everything below flows on the cream
+          page background with hairline separators between sections. */}
+      <div className="mb-8 flex flex-wrap items-center justify-end gap-2">
         <MessageButton viewer={viewer} name={name} onMessage={onMessage} />
         {profile.shareable !== false && (
           <ShareButton username={profile.username} name={name} />
         )}
       </div>
 
-      <div className="rounded-[28px] bg-[#0f100c] p-7 text-[#f4f1eb] shadow-[0_30px_80px_rgba(0,0,0,0.35)] sm:p-9">
-        {/* ─ Top pill row ─ */}
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="rounded-full bg-[#dcefc7] px-3 py-1 text-xs font-semibold text-[#20300a]">
-            Founder on Apparent
+      {/* ─ Top pill row ─ */}
+      <div className="flex flex-wrap items-center gap-2">
+        <span className="rounded-full bg-[#dcefc7] px-3 py-1 text-xs font-semibold text-[#20300a]">
+          Founder on Apparent
+        </span>
+        {fundraisingPill && (
+          <span className="rounded-full bg-[#42520d] px-3 py-1 text-xs font-semibold text-white">
+            {fundraisingPill}
           </span>
-          {fundraisingPill && (
-            <span className="rounded-full bg-[#42520d] px-3 py-1 text-xs font-semibold text-white">
-              {fundraisingPill}
-            </span>
-          )}
-          {profile.location && (
-            <span className="inline-flex items-center gap-1 text-xs font-semibold text-white/60">
-              <MapPin className="h-3.5 w-3.5" /> {profile.location}
-            </span>
-          )}
-        </div>
-
-        {/* ─ Header row ─ */}
-        <div className="mt-5 flex flex-wrap items-center justify-between gap-4">
-          <div className="flex items-center gap-3 min-w-0">
-            <Avatar src={profile.profilePhotoUrl} name={name} size="sm" bg="#42520d" />
-            <div className="min-w-0">
-              <p className="truncate text-lg font-semibold tracking-[-0.01em]">{name}</p>
-              <p className="mt-0.5 text-xs text-white/55">@{profile.username}</p>
-            </div>
-          </div>
-
-          {/* GitHub verified badge replaces the MRR slot from the mock. Only
-              shown when github_verified is true — otherwise the slot is empty
-              so a profile without proof doesn't display a fake badge. */}
-          {profile.githubVerified && (
-            <div className="flex items-center gap-2 rounded-2xl bg-white/[0.04] px-3 py-2">
-              <GitHubIcon className="h-4 w-4" />
-              <div>
-                <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-white/45">
-                  GitHub Verified
-                </p>
-                <p className="mt-0.5 text-sm font-semibold leading-tight">
-                  @{profile.githubUsername || ghLogin}
-                </p>
-              </div>
-              <BadgeCheck className="h-4 w-4 text-[#58d39a]" />
-            </div>
-          )}
-        </div>
-
-        {/* ─ Headline ─ */}
-        {headline && (
-          <p className="mt-5 text-base leading-7 text-white/75">{headline}</p>
         )}
-
-        {/* ─ GitHub activity grid ─ */}
-        {ghHandle && (
-          <div className="mt-7 rounded-2xl bg-white/[0.02] p-5">
-            <div className="flex flex-wrap items-baseline justify-between gap-2">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-white/45">
-                {headlineCount} · last year{calendar ? ' · verified' : ''}
-              </p>
-              <div className="flex items-center gap-1.5 text-[11px] text-white/45">
-                <span>Less</span>
-                {[0, 1, 2, 3, 4].map((lvl) => (
-                  <span key={lvl} className={`h-2.5 w-2.5 rounded-[2px] ${COMMIT_LEVELS[lvl]}`} />
-                ))}
-                <span>More</span>
-              </div>
-            </div>
-            <div className="mt-4 overflow-x-auto">
-              <div className="flex gap-1">
-                {columns.map((col, i) => (
-                  <div key={i} className="flex flex-col gap-1">
-                    {col.map((level, j) => (
-                      <span
-                        key={j}
-                        className={`h-2.5 w-2.5 rounded-[2px] ${COMMIT_LEVELS[level]}`}
-                      />
-                    ))}
-                  </div>
-                ))}
-              </div>
-            </div>
-            <div className="mt-3 flex items-center justify-between text-[11px] text-white/40">
-              <span>{realStarsLabel}</span>
-              <a
-                href={ghProfileUrl || `https://github.com/${ghHandle}`}
-                target="_blank"
-                rel="noreferrer"
-                className="inline-flex items-center gap-1 text-white/55 transition-colors hover:text-white"
-              >
-                Open on GitHub <ArrowUpRight className="h-3 w-3" />
-              </a>
-            </div>
-          </div>
+        {profile.location && (
+          <span className="inline-flex items-center gap-1 text-xs font-semibold text-black/60">
+            <MapPin className="h-3.5 w-3.5" /> {profile.location}
+          </span>
         )}
-
-        {/* ─ Facts grid ─ */}
-        {facts.length > 0 && (
-          <div className="mt-7 grid gap-px overflow-hidden rounded-2xl bg-white/[0.06] sm:grid-cols-2">
-            {facts.map((f) => (
-              <div key={f.label} className="bg-[#0f100c] px-5 py-4">
-                <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-white/45">
-                  {f.label}
-                </p>
-                <p className="mt-1 text-base font-semibold text-white">{f.value}</p>
-              </div>
-            ))}
-          </div>
-        )}
-
-        {/* ─ Pitch row: video + deck ─ */}
-        {latestLaunch && (latestLaunch.pitchVideoUrl || latestLaunch.demoVideoUrl || latestLaunch.pitchDeckUrl) && (
-          <div className="mt-7">
-            <p className="mb-3 text-[10px] font-semibold uppercase tracking-[0.18em] text-white/45">
-              Pitch
-            </p>
-            <div className="grid gap-3 sm:grid-cols-2">
-              {/* Video card */}
-              {(latestLaunch.pitchVideoUrl || latestLaunch.demoVideoUrl) && (
-                <a
-                  href={latestLaunch.pitchVideoUrl || latestLaunch.demoVideoUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="group relative flex h-44 items-center justify-center overflow-hidden rounded-2xl bg-gradient-to-br from-[#1e3a1e] via-[#2c4a25] to-[#0f100c]"
-                >
-                  <span className="flex h-12 w-12 items-center justify-center rounded-full bg-white/90 text-[#0f100c] transition-transform group-hover:scale-105">
-                    <Play className="h-5 w-5 translate-x-[1px]" />
-                  </span>
-                  <span className="absolute bottom-3 left-3 text-xs font-semibold uppercase tracking-[0.16em] text-white/85">
-                    {latestLaunch.pitchVideoUrl ? 'Seed pitch' : 'Demo'}
-                  </span>
-                </a>
-              )}
-              {/* Deck card */}
-              {latestLaunch.pitchDeckUrl && (
-                <a
-                  href={latestLaunch.pitchDeckUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="relative flex h-44 flex-col justify-between overflow-hidden rounded-2xl bg-[#1a1c16] p-5 transition-colors hover:bg-[#21241c]"
-                >
-                  <div className="space-y-2">
-                    <div className="h-2 w-2/3 rounded-full bg-white/15" />
-                    <div className="h-2 w-1/2 rounded-full bg-white/10" />
-                    <div className="h-2 w-3/5 rounded-full bg-white/10" />
-                  </div>
-                  <div className="flex items-center justify-between text-[11px] font-semibold uppercase tracking-[0.14em] text-white/55">
-                    <span className="inline-flex items-center gap-1.5">
-                      <FileText className="h-3.5 w-3.5" /> Deck
-                    </span>
-                    <span>Open</span>
-                  </div>
-                </a>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* ─ Footer link pills ─ */}
-        {links.length > 0 && (
-          <div className="mt-7 flex flex-wrap gap-2 border-t border-white/[0.06] pt-5">
-            {links.map(({ label, href, icon: Icon }) => (
-              <a
-                key={label}
-                href={href}
-                target="_blank"
-                rel="noreferrer"
-                className="inline-flex items-center gap-1.5 rounded-full border border-white/15 bg-white/[0.04] px-3 py-1.5 text-xs font-semibold text-white/75 transition-colors hover:bg-white/10 hover:text-white"
-              >
-                <Icon className="h-3.5 w-3.5" /> {label}
-                {label === 'GitHub' && profile.githubVerified && (
-                  <BadgeCheck className="h-3 w-3 text-[#58d39a]" />
-                )}
-              </a>
-            ))}
-          </div>
-        )}
-
-        <p className="mt-4 text-[11px] leading-5 text-white/35">
-          Investors see the whole picture. What you&apos;ve shipped counts most.
-        </p>
       </div>
+
+      {/* ─ Header row ─ */}
+      <div className="mt-6 flex flex-wrap items-center justify-between gap-4">
+        <div className="flex items-center gap-3 min-w-0">
+          <Avatar src={profile.profilePhotoUrl} name={name} size="sm" bg="#42520d" />
+          <div className="min-w-0">
+            <p className="truncate text-2xl font-normal tracking-[-0.02em]" style={serif}>{name}</p>
+            <p className="mt-0.5 text-xs font-semibold text-black/55">@{profile.username}</p>
+          </div>
+        </div>
+
+        {/* GitHub verified badge replaces the MRR slot from the mock. Only
+            shown when github_verified is true — otherwise the slot is empty
+            so a profile without proof doesn't display a fake badge. */}
+        {profile.githubVerified && (
+          <div className="flex items-center gap-2 rounded-2xl border border-black/10 bg-white px-3 py-2">
+            <GitHubIcon className="h-4 w-4" />
+            <div>
+              <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-black/45">
+                GitHub Verified
+              </p>
+              <p className="mt-0.5 text-sm font-semibold leading-tight">
+                @{profile.githubUsername || ghLogin}
+              </p>
+            </div>
+            <BadgeCheck className="h-4 w-4 text-[#216e39]" />
+          </div>
+        )}
+      </div>
+
+      {/* ─ Headline ─ */}
+      {headline && (
+        <p className="mt-5 max-w-3xl text-base leading-7 text-black/70">{headline}</p>
+      )}
+
+      {/* ─ GitHub activity grid ─ */}
+      {ghHandle && (
+        <div className="mt-10 border-t border-black/10 pt-6">
+          <div className="flex flex-wrap items-baseline justify-between gap-2">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-black/45">
+              {headlineCount} · last year{calendar ? ' · verified' : ''}
+            </p>
+            <div className="flex items-center gap-1.5 text-[11px] text-black/45">
+              <span>Less</span>
+              {[0, 1, 2, 3, 4].map((lvl) => (
+                <span key={lvl} className={`h-2.5 w-2.5 rounded-[2px] ${COMMIT_LEVELS[lvl]}`} />
+              ))}
+              <span>More</span>
+            </div>
+          </div>
+          <div className="mt-4 overflow-x-auto">
+            <div className="flex gap-1">
+              {columns.map((col, i) => (
+                <div key={i} className="flex flex-col gap-1">
+                  {col.map((level, j) => (
+                    <span
+                      key={j}
+                      className={`h-2.5 w-2.5 rounded-[2px] ${COMMIT_LEVELS[level]}`}
+                    />
+                  ))}
+                </div>
+              ))}
+            </div>
+          </div>
+          <div className="mt-3 flex items-center justify-between text-[11px] text-black/40">
+            <span>{realStarsLabel}</span>
+            <a
+              href={ghProfileUrl || `https://github.com/${ghHandle}`}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center gap-1 text-black/55 transition-colors hover:text-black"
+            >
+              Open on GitHub <ArrowUpRight className="h-3 w-3" />
+            </a>
+          </div>
+        </div>
+      )}
+
+      {/* ─ Facts grid ─ */}
+      {facts.length > 0 && (
+        <div className="mt-10 grid gap-px overflow-hidden rounded-2xl border border-black/10 bg-black/[0.06] sm:grid-cols-2">
+          {facts.map((f) => (
+            <div key={f.label} className="bg-[#fbfaf7] px-5 py-4">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-black/45">
+                {f.label}
+              </p>
+              <p className="mt-1 text-base font-semibold text-black">{f.value}</p>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* ─ Pitch row: video + deck ─ */}
+      {latestLaunch && (latestLaunch.pitchVideoUrl || latestLaunch.demoVideoUrl || latestLaunch.pitchDeckUrl) && (
+        <div className="mt-10 border-t border-black/10 pt-6">
+          <p className="mb-3 text-[10px] font-semibold uppercase tracking-[0.18em] text-[#42520d]">
+            Pitch
+          </p>
+          <div className="grid gap-3 sm:grid-cols-2">
+            {/* Video card */}
+            {(latestLaunch.pitchVideoUrl || latestLaunch.demoVideoUrl) && (
+              <a
+                href={latestLaunch.pitchVideoUrl || latestLaunch.demoVideoUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="group relative flex h-44 items-center justify-center overflow-hidden rounded-2xl bg-gradient-to-br from-[#dcefc7] via-[#a8c890] to-[#42520d]"
+              >
+                <span className="flex h-12 w-12 items-center justify-center rounded-full bg-white text-[#42520d] shadow-lg transition-transform group-hover:scale-105">
+                  <Play className="h-5 w-5 translate-x-[1px]" />
+                </span>
+                <span className="absolute bottom-3 left-3 text-xs font-semibold uppercase tracking-[0.16em] text-white">
+                  {latestLaunch.pitchVideoUrl ? 'Seed pitch' : 'Demo'}
+                </span>
+              </a>
+            )}
+            {/* Deck card */}
+            {latestLaunch.pitchDeckUrl && (
+              <a
+                href={latestLaunch.pitchDeckUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="relative flex h-44 flex-col justify-between overflow-hidden rounded-2xl border border-black/10 bg-white p-5 transition-colors hover:bg-[#fbfaf7]"
+              >
+                <div className="space-y-2">
+                  <div className="h-2 w-2/3 rounded-full bg-black/10" />
+                  <div className="h-2 w-1/2 rounded-full bg-black/08" />
+                  <div className="h-2 w-3/5 rounded-full bg-black/08" />
+                </div>
+                <div className="flex items-center justify-between text-[11px] font-semibold uppercase tracking-[0.14em] text-black/55">
+                  <span className="inline-flex items-center gap-1.5">
+                    <FileText className="h-3.5 w-3.5" /> Deck
+                  </span>
+                  <span>Open</span>
+                </div>
+              </a>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* ─ Footer link pills ─ */}
+      {links.length > 0 && (
+        <div className="mt-10 flex flex-wrap gap-2 border-t border-black/10 pt-6">
+          {links.map(({ label, href, icon: Icon }) => (
+            <a
+              key={label}
+              href={href}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center gap-1.5 rounded-full border border-black/10 bg-white px-3 py-1.5 text-xs font-semibold text-black/70 transition-colors hover:border-black/20 hover:bg-[#fbfaf7] hover:text-black"
+            >
+              <Icon className="h-3.5 w-3.5" /> {label}
+              {label === 'GitHub' && profile.githubVerified && (
+                <BadgeCheck className="h-3 w-3 text-[#216e39]" />
+              )}
+            </a>
+          ))}
+        </div>
+      )}
+
+      <p className="mt-4 text-[11px] leading-5 text-black/40">
+        Investors see the whole picture. What you&apos;ve shipped counts most.
+      </p>
     </section>
   );
 };
@@ -735,7 +736,7 @@ const FounderProfilePage = ({
       {/* Dark hero card — replaces the old cream profile card. Pill row,
           avatar + handle + GitHub-verified badge, headline, GitHub activity,
           facts grid, pitch row, footer link pills. */}
-      <FounderHeroDark profile={profile} viewer={viewer} onMessage={onMessage} />
+      <FounderHero profile={profile} viewer={viewer} onMessage={onMessage} />
 
       {/* ── Product launches ── */}
       {profile.launches.length > 0 && (
