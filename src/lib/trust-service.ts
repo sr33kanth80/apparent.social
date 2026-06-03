@@ -96,6 +96,43 @@ export const githubStateMatches = (returnedState: string): boolean => {
 };
 
 /**
+ * Disconnect GitHub: clears github_verified server-side via the service-role
+ * endpoint. The client can't do this directly because the trust columns are
+ * REVOKE'd from the authenticated role at the Postgres grant level — that's
+ * what makes the verified badge actually mean something.
+ */
+export const disconnectGithub = async (): Promise<{ ok: boolean; message: string }> => {
+  if (!isSupabaseConfigured || !supabase) {
+    return { ok: false, message: 'Sign-in required.' };
+  }
+  const { data } = await supabase.auth.getSession();
+  const jwt = data.session?.access_token;
+  if (!jwt) {
+    return { ok: false, message: 'Your session expired — sign in again.' };
+  }
+  try {
+    const res = await fetch('/api/github/disconnect', {
+      method: 'POST',
+      headers: { authorization: `Bearer ${jwt}` },
+    });
+    const body = (await res.json().catch(() => ({}))) as {
+      ok?: boolean;
+      error?: string;
+      detail?: string;
+    };
+    if (res.ok && body.ok) {
+      return { ok: true, message: 'GitHub disconnected.' };
+    }
+    return {
+      ok: false,
+      message: `Disconnect failed (${body.error || res.status})${body.detail ? `: ${body.detail}` : ''}`,
+    };
+  } catch (error) {
+    return { ok: false, message: error instanceof Error ? error.message : 'Network error.' };
+  }
+};
+
+/**
  * Finish GitHub OAuth: hand the signed blob from the callback to
  * /api/github/confirm along with the founder's Supabase JWT. The server
  * verifies both and writes github_verified under their account.

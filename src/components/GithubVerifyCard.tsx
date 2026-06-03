@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState } from 'react';
-import { BadgeCheck } from 'lucide-react';
+import { BadgeCheck, ExternalLink } from 'lucide-react';
 import { GitHubIcon } from './GitHubIcon';
 import type { AppUser } from '@/lib/apparent-types';
 import {
   buildGithubAuthorizeUrl,
   confirmGithubOAuth,
+  disconnectGithub,
   extractGithubLogin,
   githubStateMatches,
   loadFounderTrust,
@@ -20,7 +21,7 @@ import {
  */
 export const GithubVerifyCard = ({ user, github }: { user: AppUser; github: string }) => {
   const [trust, setTrust] = useState<FounderTrustState | null>(null);
-  const [status, setStatus] = useState<'idle' | 'connecting' | 'confirming'>('idle');
+  const [status, setStatus] = useState<'idle' | 'connecting' | 'confirming' | 'disconnecting'>('idle');
   const [message, setMessage] = useState('');
   const [messageTone, setMessageTone] = useState<'idle' | 'error' | 'success'>('idle');
   const handledReturn = useRef(false);
@@ -92,6 +93,23 @@ export const GithubVerifyCard = ({ user, github }: { user: AppUser; github: stri
     window.location.href = buildGithubAuthorizeUrl();
   };
 
+  const handleDisconnect = async () => {
+    if (status !== 'idle') return;
+    setStatus('disconnecting');
+    setMessage('');
+    setMessageTone('idle');
+    const result = await disconnectGithub();
+    if (result.ok) {
+      setTrust((prev) => (prev ? { ...prev, githubVerified: false, githubUsername: '' } : prev));
+      setMessage('Disconnected. Connect again with a different account if you like.');
+      setMessageTone('success');
+    } else {
+      setMessage(result.message);
+      setMessageTone('error');
+    }
+    setStatus('idle');
+  };
+
   const verified = Boolean(trust?.githubVerified);
   const displayLogin = trust?.githubUsername || extractGithubLogin(github);
 
@@ -127,14 +145,27 @@ export const GithubVerifyCard = ({ user, github }: { user: AppUser; github: stri
             </a>
             . VCs see a verified badge next to your GitHub on your public profile.
           </p>
-          <button
-            type="button"
-            onClick={handleConnect}
-            disabled={status !== 'idle'}
-            className="mt-3 rounded-full border border-black/10 px-3 py-1.5 text-xs font-medium text-black/60 transition-colors hover:bg-[#fbf8f3] disabled:opacity-60"
-          >
-            Reconnect a different account
-          </button>
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              onClick={handleDisconnect}
+              disabled={status !== 'idle'}
+              className="rounded-full border border-black/10 px-3 py-1.5 text-xs font-medium text-black/60 transition-colors hover:bg-[#fbf8f3] disabled:opacity-60"
+            >
+              {status === 'disconnecting' ? 'Disconnecting…' : 'Disconnect GitHub'}
+            </button>
+            <a
+              href={`https://github.com/settings/connections/applications/Ov23li5dwJPP1dGzfy38`}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center gap-1 rounded-full bg-[#fbfaf7] px-3 py-1.5 text-xs font-medium text-black/55 transition-colors hover:bg-[#f4f1eb]"
+            >
+              Manage on GitHub <ExternalLink className="h-3 w-3" />
+            </a>
+          </div>
+          <p className="mt-2 text-[11px] leading-5 text-black/45">
+            To switch accounts: disconnect here, sign out of GitHub or switch the account you&apos;re signed into, then connect again.
+          </p>
         </div>
       ) : (
         <div className="mt-3 space-y-3">
