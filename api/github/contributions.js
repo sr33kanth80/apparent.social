@@ -68,15 +68,43 @@ export default async function handler(req, res) {
       .maybeSingle();
 
     if (error) {
+      // Detect "column does not exist" so the UI degrades gracefully when the
+      // token-storage migration hasn't been applied yet. Postgres / PostgREST
+      // codes this as 42703 — treat as no_token so the grid falls back to
+      // the deterministic mock instead of bricking the profile.
+      const missingColumn =
+        error.code === '42703' ||
+        (typeof error.message === 'string' && error.message.toLowerCase().includes('does not exist'));
+      if (missingColumn) {
+        console.warn('[gh-contributions] token column missing — migration 3 not applied?');
+        res.setHeader('Cache-Control', 'no-store');
+        res.status(404).json({
+          ok: false,
+          error: 'migration_pending',
+          detail:
+            'Apply supabase/migrations/202606030003_github_token_storage.sql to enable real contribution grids.',
+        });
+        return;
+      }
       console.error('[gh-contributions] lookup error', error);
-      res.status(500).json({ ok: false, error: 'lookup_failed', detail: String(error.message || '') });
+      res.status(500).json({
+        ok: false,
+        error: 'lookup_failed',
+        detail: String(error.message || ''),
+        code: error.code || '',
+        hint: error.hint || '',
+      });
       return;
     }
     if (!data || !data.github_verified || !data.github_access_token_enc) {
-      // No verified row, or no stored token (older verification before token
-      // storage was wired). Caller falls back to the deterministic mock.
+      // No verified row, or no stored token (founder verified before the
+      // token-storage migration was live; they need to disconnect + reconnect
+      // to refresh). Caller falls back to the deterministic mock.
       res.setHeader('Cache-Control', 'public, s-maxage=60, stale-while-revalidate=600');
-      res.status(404).json({ ok: false, error: 'no_token' });
+      res.status(404).json({
+        ok: false,
+        error: data && data.github_verified ? 'reconnect_required' : 'no_token',
+      });
       return;
     }
 
