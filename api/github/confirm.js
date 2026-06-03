@@ -30,7 +30,12 @@ export default async function handler(req, res) {
     return;
   }
   if (!CLIENT_SECRET || !SUPABASE_URL || !SERVICE_ROLE_KEY) {
-    res.status(500).json({ ok: false, error: 'server_misconfigured' });
+    const missing = [
+      !CLIENT_SECRET && 'GITHUB_OAUTH_SECRET',
+      !SUPABASE_URL && 'SUPABASE_URL',
+      !SERVICE_ROLE_KEY && 'SUPABASE_SERVICE_ROLE_KEY',
+    ].filter(Boolean);
+    res.status(500).json({ ok: false, error: 'server_misconfigured', missing });
     return;
   }
 

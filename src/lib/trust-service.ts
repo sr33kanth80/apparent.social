@@ -117,16 +117,41 @@ export const confirmGithubOAuth = async (
       headers: { 'content-type': 'application/json', authorization: `Bearer ${jwt}` },
       body: JSON.stringify({ token: blob }),
     });
-    const body = (await res.json().catch(() => ({}))) as { ok?: boolean; username?: string; error?: string };
+    const body = (await res.json().catch(() => ({}))) as {
+      ok?: boolean;
+      username?: string;
+      error?: string;
+      missing?: string[];
+    };
     if (res.ok && body.ok) {
       return { ok: true, username: body.username ?? '', message: 'GitHub connected and verified.' };
     }
+
+    // Surface the real reason so misconfig is diagnosable instead of a black box.
+    const reason = body.error || (res.status === 404 ? 'not_deployed' : `http_${res.status}`);
+    const missingList = (body.missing || []).join(', ');
+    const readable: Record<string, string> = {
+      server_misconfigured: missingList
+        ? `Server is missing env vars on Vercel: ${missingList}. Set them and redeploy.`
+        : 'Server is missing env vars — set SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY in Vercel and redeploy.',
+      write_failed: 'Could not save — the trust-layer DB migration may not have run yet.',
+      expired: 'That link expired — connect again.',
+      bad_token: 'Verification token was malformed. Connect again.',
+      bad_signature: 'Verification signature failed — GITHUB_OAUTH_SECRET may differ between deploys.',
+      no_session: 'Your session expired — sign in again.',
+      invalid_session: 'Your session is invalid — sign in again.',
+      not_deployed: 'Verifier not live yet — redeploy so /api/github/confirm exists.',
+    };
+    // eslint-disable-next-line no-console
+    console.error('[github-verify] confirm failed:', res.status, reason, body);
     return {
       ok: false,
       username: '',
-      message: body.error === 'expired' ? 'That link expired — try connecting again.' : 'Could not verify GitHub. Try again.',
+      message: readable[reason] || `Could not verify GitHub (${reason}).`,
     };
-  } catch {
+  } catch (error) {
+    // eslint-disable-next-line no-console
+    console.error('[github-verify] confirm error:', error);
     return { ok: false, username: '', message: 'Network error verifying GitHub.' };
   }
 };
