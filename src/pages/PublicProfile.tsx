@@ -22,6 +22,7 @@ import { GitHubIcon } from '@/components/GitHubIcon';
 import { loadPublicProfile, saveMessage } from '@/lib/dashboard-service';
 import { getCurrentAppUser } from '@/lib/auth-service';
 import type { AppUser, PublicFounderProfile, PublicInvestorProfile, PublicProfileResult } from '@/lib/apparent-types';
+import { VerifiedAvatar } from '@/components/VerifiedAvatar';
 
 const serif = { fontFamily: 'Georgia, "Times New Roman", serif' };
 
@@ -552,7 +553,7 @@ const FounderHero = ({
       {/* ─ Header row ─ */}
       <div className="mt-6 flex flex-wrap items-center justify-between gap-4">
         <div className="flex items-center gap-3 min-w-0">
-          <Avatar src={profile.profilePhotoUrl} name={name} size="sm" bg="#42520d" />
+          <VerifiedAvatar src={profile.profilePhotoUrl} name={name} size="sm" bg="#42520d" verified={profile.githubVerified} />
           <div className="min-w-0">
             <p className="truncate text-2xl font-normal tracking-[-0.02em]" style={serif}>{name}</p>
             <p className="mt-0.5 text-xs font-semibold text-black/55">@{profile.username}</p>

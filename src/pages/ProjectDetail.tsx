@@ -8,6 +8,7 @@ import type { AppUser, PublicProjectDetail } from '@/lib/apparent-types';
 import { loadPublicProjectDetail, saveMessage } from '@/lib/dashboard-service';
 import { getCurrentAppUser } from '@/lib/auth-service';
 import { getStaticFounderProfile } from '@/lib/static-founder-profiles';
+import { VerifiedAvatar } from '@/components/VerifiedAvatar';
 
 const serifDisplay = {
   fontFamily: 'Georgia, "Times New Roman", serif',
@@ -231,19 +232,12 @@ export const ProjectDetail = () => {
               className="mt-4 flex items-center gap-3 rounded-[18px] p-2 -mx-2 transition-colors hover:bg-[#f4f1eb] group"
             >
               {/* Avatar */}
-              <div className="shrink-0">
-                {founder?.profilePhotoUrl ? (
-                  <img
-                    src={founder.profilePhotoUrl}
-                    alt={founderName}
-                    className="h-12 w-12 rounded-2xl object-cover"
-                  />
-                ) : (
-                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#dcefc7] text-sm font-semibold text-[#42520d]">
-                    {founderName.slice(0, 2).toUpperCase()}
-                  </div>
-                )}
-              </div>
+              <VerifiedAvatar
+                src={founder?.profilePhotoUrl}
+                name={founderName}
+                size="md"
+                verified={founder?.githubVerified}
+              />
 
               {/* Name + headline */}
               <div className="min-w-0 flex-1">

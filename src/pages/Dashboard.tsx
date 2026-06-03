@@ -71,7 +71,8 @@ import type {
   VcOutreachEntry,
   VcOutreachStage,
 } from '@/lib/apparent-types';
-import type { ApparentInvestorRow } from '@/lib/dashboard-service';
+import type { ApparentInvestorRow, LaunchAuthor } from '@/lib/dashboard-service';
+import { VerifiedAvatar } from '@/components/VerifiedAvatar';
 import {
   buildBuilderMapClusters,
   loadApparentInvestors,
@@ -188,6 +189,8 @@ interface DashboardLaunchRow {
   founderSignals?: string[];
   projectPath?: string;
   founderProfilePath?: string;
+  founderPhotoUrl?: string;
+  founderGithubVerified?: boolean;
   proof: string[];
   investors: string[];
 }
@@ -647,6 +650,8 @@ const productLaunchToDashboardRow = (
   index: number,
   ownerLabel = 'Founder on Apparent',
   ownerUsername = '',
+  ownerPhotoUrl = '',
+  ownerGithubVerified = false,
 ): DashboardLaunchRow => ({
   id: `workspace-${launch.id}`,
   name: launch.name,
@@ -665,6 +670,8 @@ const productLaunchToDashboardRow = (
   // Prefer the canonical /@username route so the link lands on the public
   // profile that knows about the founder's display name + handle.
   founderProfilePath: ownerUsername ? `/@${ownerUsername}` : `/profile/${launch.ownerId}`,
+  founderPhotoUrl: ownerPhotoUrl,
+  founderGithubVerified: ownerGithubVerified,
   logoUrl: launch.logoUrl,
   bannerUrl: launch.bannerUrl,
   demoVideoUrl: launch.demoVideoUrl,
@@ -835,7 +842,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
   const [isSavingWorkspace, setIsSavingWorkspace] = useState(false);
   const [productLaunches, setProductLaunches] = useState<ProductLaunch[]>([]);
   const [publicLaunches, setPublicLaunches] = useState<ProductLaunch[]>([]);
-  const [launchAuthors, setLaunchAuthors] = useState<Record<string, { name: string; username: string }>>({});
+  const [launchAuthors, setLaunchAuthors] = useState<Record<string, LaunchAuthor>>({});
   // VC list + Apparent investor list, both used to build the founder's
   // dynamic "Investor Matches" view. Loaded once per session.
   const [vcContactsForMatches, setVcContactsForMatches] = useState<VCContact[]>([]);
@@ -1165,7 +1172,9 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
           : 'Your profile'
         : author?.name || 'Founder on Apparent';
       const ownerUsername = isOwn ? user.username ?? '' : author?.username ?? '';
-      return productLaunchToDashboardRow(launch, index, ownerLabel, ownerUsername);
+      const ownerPhotoUrl = isOwn ? '' : (author?.photoUrl ?? '');
+      const ownerGithubVerified = isOwn ? false : (author?.githubVerified ?? false);
+      return productLaunchToDashboardRow(launch, index, ownerLabel, ownerUsername, ownerPhotoUrl, ownerGithubVerified);
     });
   }, [productLaunches, publicLaunches, launchAuthors, user.id, user.username]);
   const availableDashboardLaunchFilters = isInvestor
@@ -5811,7 +5820,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
                                         ? launch.founderProfilePath.slice(1)
                                         : '';
                                       const subline = handle || 'View profile';
-                                      const initials = launch.founder
+                                      const avatarInitials = launch.founder
                                         .replace(/^You\s*\(@.*\)$/, 'YOU')
                                         .split(/\s+/)
                                         .slice(0, 2)
@@ -5820,9 +5829,13 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
                                         .toUpperCase() || 'FO';
                                       const Inner = (
                                         <>
-                                          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#dcefc7] text-xs font-semibold text-[#42520d]">
-                                            {initials}
-                                          </div>
+                                          <VerifiedAvatar
+                                            src={launch.founderPhotoUrl}
+                                            name={launch.founder}
+                                            fallbackInitials={avatarInitials}
+                                            size="feed"
+                                            verified={launch.founderGithubVerified}
+                                          />
                                           <div className="min-w-0 flex-1">
                                             <p className="truncate text-sm font-semibold">{launch.founder}</p>
                                             <p className="mt-0.5 truncate text-xs text-black/50">{subline}</p>

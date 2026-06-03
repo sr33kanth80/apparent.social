@@ -1343,10 +1343,17 @@ export const loadApparentInvestors = async (): Promise<ApparentInvestorRow[]> =>
  * For You feed can show real founder names + canonical @-handle profile
  * links instead of the placeholder "Founder on Apparent" label.
  */
+export type LaunchAuthor = {
+  name: string;
+  username: string;
+  photoUrl: string;
+  githubVerified: boolean;
+};
+
 export const loadLaunchAuthors = async (
   ownerIds: string[],
-): Promise<Record<string, { name: string; username: string }>> => {
-  const result: Record<string, { name: string; username: string }> = {};
+): Promise<Record<string, LaunchAuthor>> => {
+  const result: Record<string, LaunchAuthor> = {};
   if (!ownerIds.length || !isSupabaseConfigured || !supabase) return result;
 
   const uniqueIds = Array.from(new Set(ownerIds.filter((id) => id && isUuid(id))));
@@ -1355,21 +1362,27 @@ export const loadLaunchAuthors = async (
   try {
     const [{ data: profileRows }, { data: founderRows }] = await Promise.all([
       supabase.from('profiles').select('id, username, display_name, email').in('id', uniqueIds),
-      supabase.from('founder_profiles').select('user_id, profile_name').in('user_id', uniqueIds),
+      supabase
+        .from('founder_profiles')
+        .select('user_id, profile_name, profile_photo_url, github_verified')
+        .in('user_id', uniqueIds),
     ]);
 
-    const founderNameById = new Map(
-      (founderRows ?? []).map((row) => [String(row.user_id), String(row.profile_name ?? '').trim()]),
+    const founderById = new Map(
+      (founderRows ?? []).map((row) => [String(row.user_id), row]),
     );
 
     (profileRows ?? []).forEach((row) => {
       const id = String(row.id);
-      const founderName = founderNameById.get(id) ?? '';
+      const fp = founderById.get(id);
+      const founderName = fp ? String(fp.profile_name ?? '').trim() : '';
       const fallbackName =
         String(row.display_name ?? '').trim() || String(row.email ?? '').split('@')[0] || 'Founder on Apparent';
       result[id] = {
         name: founderName || fallbackName,
         username: String(row.username ?? ''),
+        photoUrl: fp ? String(fp.profile_photo_url ?? '') : '',
+        githubVerified: fp?.github_verified === true,
       };
     });
   } catch {
