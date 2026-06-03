@@ -344,6 +344,8 @@ const mapPublicFounderProfile = (
     raisingAsk: String(row.raising_ask ?? ''),
     openToContact: row.open_to_contact !== false,
     shareable: row.shareable !== false,
+    githubVerified: row.github_verified === true,
+    githubUsername: String(row.github_username ?? ''),
     launches,
   };
 };

@@ -444,7 +444,12 @@ const FounderProfilePage = ({
       </section>
 
       {/* ── GitHub (live public stats + contribution graph) ── */}
-      {profile.github && <GitHubPanel github={profile.github} />}
+      {profile.github && (
+        <GitHubPanel
+          github={profile.github}
+          verified={Boolean(profile.githubVerified)}
+        />
+      )}
 
       {/* ── Product launches ── */}
       {profile.launches.length > 0 && (

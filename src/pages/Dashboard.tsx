@@ -51,6 +51,7 @@ import { HeatMap } from '@/pages/HeatMap';
 import { DiscoverDeck } from '@/pages/DiscoverDeck';
 import { GitHubIcon } from '@/components/GitHubIcon';
 import { LogoIcon } from '@/components/LogoIcon';
+import { GithubVerifyCard } from '@/components/GithubVerifyCard';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import type {
   AppUser,
@@ -3381,6 +3382,24 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
                   <button className={`rounded-full ${accentSurface} px-5 py-2.5 text-sm font-medium ${accentForeground} transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60`} onClick={handleSaveProfile} disabled={isSavingWorkspace}>
                     {isSavingWorkspace ? 'Saving...' : 'Save profile'}
                   </button>
+                </div>
+              </section>
+
+              {/* Trust layer — prove GitHub ownership so VCs trust the link is
+                  really yours. Verified status shows on the public profile. */}
+              <section className="grid gap-6 md:grid-cols-2">
+                <GithubVerifyCard user={user} github={intakeValues.github ?? ''} />
+                {/* Stripe connect lands here in the next phase. */}
+                <div className="rounded-[18px] border border-dashed border-black/15 bg-[#fbfaf7] p-5">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-semibold text-black/70">Connect Stripe</span>
+                    <span className="rounded-full bg-black/5 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-black/45">
+                      Soon
+                    </span>
+                  </div>
+                  <p className="mt-2 text-xs leading-5 text-black/55">
+                    Link your Stripe (read-only) so investors see real monthly revenue on your launches — your numbers, straight from the source. No badge, no claims, just a connected fact.
+                  </p>
                 </div>
               </section>
 

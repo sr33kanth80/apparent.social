@@ -162,6 +162,9 @@ export interface PublicFounderProfile {
   shareable?: boolean;
   /** Optional headline revenue metric, e.g. "$24K MRR · +22% MoM". */
   mrr?: string;
+  /** Trust layer: GitHub ownership proven via gist-code check. */
+  githubVerified?: boolean;
+  githubUsername?: string;
   launches: ProductLaunch[];
 }
 

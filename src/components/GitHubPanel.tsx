@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { FolderGit2, Star, Users } from 'lucide-react';
+import { BadgeCheck, FolderGit2, Star, Users } from 'lucide-react';
 import { GitHubIcon } from './GitHubIcon';
 
 type GitHubData = {
@@ -28,7 +28,14 @@ const extractLogin = (github: string): string => {
  * until data loads, and nothing at all if the username can't be resolved (so it
  * degrades gracefully to the plain GitHub link the profile already shows).
  */
-export const GitHubPanel = ({ github }: { github: string }) => {
+export const GitHubPanel = ({
+  github,
+  verified = false,
+}: {
+  github: string;
+  /** True when the founder proved account ownership via the gist-code check. */
+  verified?: boolean;
+}) => {
   const login = extractLogin(github);
   const [data, setData] = useState<GitHubData | null>(null);
 
@@ -59,7 +66,14 @@ export const GitHubPanel = ({ github }: { github: string }) => {
 
   return (
     <section className="mx-auto max-w-[82rem] border-t border-black/10 px-5 py-16 sm:px-8">
-      <p className="mb-8 text-sm font-semibold uppercase tracking-[0.12em] text-[#42520d]">GitHub</p>
+      <div className="mb-8 flex flex-wrap items-center gap-3">
+        <p className="text-sm font-semibold uppercase tracking-[0.12em] text-[#42520d]">GitHub</p>
+        {verified && (
+          <span className="inline-flex items-center gap-1 rounded-full bg-[#42520d] px-2.5 py-1 text-[11px] font-semibold text-white">
+            <BadgeCheck className="h-3.5 w-3.5" /> Ownership verified
+          </span>
+        )}
+      </div>
 
       <div className="rounded-[28px] border border-black/10 bg-white/80 p-6 sm:p-8">
         <div className="flex flex-wrap items-center justify-between gap-4">
@@ -70,6 +84,7 @@ export const GitHubPanel = ({ github }: { github: string }) => {
             className="inline-flex items-center gap-2 text-sm font-semibold text-black transition hover:text-[#42520d]"
           >
             <GitHubIcon className="h-4 w-4" /> @{data.profile.login}
+            {verified && <BadgeCheck className="h-4 w-4 text-[#42520d]" />}
           </a>
           {stats.topLanguages.length > 0 && (
             <div className="flex flex-wrap gap-2">
