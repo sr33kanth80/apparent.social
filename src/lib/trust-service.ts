@@ -122,6 +122,9 @@ export const confirmGithubOAuth = async (
       username?: string;
       error?: string;
       missing?: string[];
+      detail?: string;
+      code?: string;
+      hint?: string;
     };
     if (res.ok && body.ok) {
       return { ok: true, username: body.username ?? '', message: 'GitHub connected and verified.' };
@@ -134,20 +137,28 @@ export const confirmGithubOAuth = async (
       server_misconfigured: missingList
         ? `Server is missing env vars on Vercel: ${missingList}. Set them and redeploy.`
         : 'Server is missing env vars — set SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY in Vercel and redeploy.',
-      write_failed: 'Could not save — the trust-layer DB migration may not have run yet.',
+      write_failed: 'Could not save to Supabase. The trust-layer migration may not be applied yet.',
       expired: 'That link expired — connect again.',
       bad_token: 'Verification token was malformed. Connect again.',
       bad_signature: 'Verification signature failed — GITHUB_OAUTH_SECRET may differ between deploys.',
       no_session: 'Your session expired — sign in again.',
       invalid_session: 'Your session is invalid — sign in again.',
       not_deployed: 'Verifier not live yet — redeploy so /api/github/confirm exists.',
+      supabase_client_init_failed: 'Supabase client failed to start — check SUPABASE_URL is a real URL.',
+      unhandled: 'Server hit an unhandled error during verification.',
     };
+    // Append the postgres detail when we have it — that's the actual error.
+    const detailSuffix = body.detail
+      ? ` Server said: ${body.detail}${body.code ? ` (code ${body.code})` : ''}${
+          body.hint ? ` Hint: ${body.hint}` : ''
+        }`
+      : '';
     // eslint-disable-next-line no-console
     console.error('[github-verify] confirm failed:', res.status, reason, body);
     return {
       ok: false,
       username: '',
-      message: readable[reason] || `Could not verify GitHub (${reason}).`,
+      message: (readable[reason] || `Could not verify GitHub (${reason}).`) + detailSuffix,
     };
   } catch (error) {
     // eslint-disable-next-line no-console
