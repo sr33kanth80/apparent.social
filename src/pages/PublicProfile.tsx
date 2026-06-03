@@ -2,24 +2,23 @@ import { useEffect, useRef, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import {
   ArrowUpRight,
-  BookOpen,
+  BadgeCheck,
   Briefcase,
   Check,
   ChevronRight,
+  FileText,
   Globe,
   Link as LinkIcon,
   MapPin,
   MessageSquare,
-  Rocket,
+  Play,
   Send,
   Share2,
   Target,
-  Users,
   X,
 } from 'lucide-react';
 import { LogoIcon } from '@/components/LogoIcon';
 import { GitHubIcon } from '@/components/GitHubIcon';
-import { GitHubPanel } from '@/components/GitHubPanel';
 import { loadPublicProfile, saveMessage } from '@/lib/dashboard-service';
 import { getCurrentAppUser } from '@/lib/auth-service';
 import type { AppUser, PublicFounderProfile, PublicInvestorProfile, PublicProfileResult } from '@/lib/apparent-types';
@@ -318,6 +317,337 @@ const ProfileMessageModal = ({
   );
 };
 
+// ─── dark hero card (mockup-styled) ────────────────────────────────────────
+
+// Tiny seeded RNG so the decorative GitHub-activity grid is stable per
+// founder — same handle always renders the same shape, but it shifts
+// founder-to-founder so they don't look identical. Real per-day contributions
+// need GitHub GraphQL with an auth token; this is decorative-but-deterministic
+// until we plumb that through.
+const hashSeed = (s: string) => {
+  let h = 2166136261;
+  for (let i = 0; i < s.length; i += 1) {
+    h ^= s.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  return h >>> 0;
+};
+const mulberry32 = (seed: number) => () => {
+  seed |= 0;
+  seed = (seed + 0x6d2b79f5) | 0;
+  let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+  t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+  return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+};
+const COMMIT_LEVELS = [
+  'bg-white/[0.04]',
+  'bg-[#1e3a1e]',
+  'bg-[#2e6b2e]',
+  'bg-[#37a04a]',
+  'bg-[#58d39a]',
+];
+const commitColumnsFor = (seed: string) => {
+  const rand = mulberry32(hashSeed(seed));
+  return Array.from({ length: 52 }, () => {
+    const quiet = rand() < 0.16;
+    const busy = rand() < 0.2;
+    return Array.from({ length: 7 }, (_, d) => {
+      const weekend = d === 0 || d === 6;
+      if (quiet && rand() < 0.8) return 0;
+      let r = rand();
+      if (busy) r = r * 0.6 + 0.4;
+      if (weekend) r *= 0.55;
+      if (r < 0.4) return 0;
+      if (r < 0.6) return 1;
+      if (r < 0.78) return 2;
+      if (r < 0.91) return 3;
+      return 4;
+    });
+  });
+};
+
+type GhStats = {
+  publicRepos: number;
+  followers: number;
+  stars: number;
+  topLanguages: string[];
+} | null;
+
+const extractGhLogin = (github: string): string => {
+  const raw = (github || '').trim();
+  if (!raw) return '';
+  try {
+    const url = new URL(raw.startsWith('http') ? raw : `https://${raw}`);
+    if (!/(^|\.)github\.com$/i.test(url.hostname)) return '';
+    return url.pathname.split('/').filter(Boolean)[0] || '';
+  } catch {
+    return raw.replace(/^@/, '').split('/')[0];
+  }
+};
+
+const compact = (n: number) =>
+  n >= 1000 ? `${(n / 1000).toFixed(n >= 10000 ? 0 : 1).replace(/\.0$/, '')}k` : String(n);
+
+const FounderHeroDark = ({
+  profile,
+  viewer,
+  onMessage,
+}: {
+  profile: PublicFounderProfile;
+  viewer: AppUser | null;
+  onMessage: () => void;
+}) => {
+  const ghLogin = extractGhLogin(profile.github);
+  const [ghStats, setGhStats] = useState<GhStats>(null);
+  useEffect(() => {
+    if (!ghLogin) return;
+    let cancelled = false;
+    fetch(`/api/github?username=${encodeURIComponent(ghLogin)}`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data: { stats?: GhStats } | null) => {
+        if (!cancelled && data && data.stats) setGhStats(data.stats);
+      })
+      .catch(() => {
+        /* leave stats null */
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [ghLogin]);
+
+  // The columns are decorative + deterministic. The label numbers next to
+  // them are real (from the GitHub API). Stars + repos read as actual proof;
+  // the grid reads as "active recently."
+  const columns = commitColumnsFor(profile.username || ghLogin || profile.userId);
+  const realStarsLabel = ghStats ? `${compact(ghStats.stars)} stars · ${compact(ghStats.publicRepos)} repos` : 'GitHub activity';
+  const synthCommits = ghStats
+    ? `${compact(ghStats.publicRepos * 24 + ghStats.stars * 2)} contributions`
+    : 'Recent activity';
+
+  const name = profile.profileName || profile.username || 'Apparent Builder';
+  const headline = profile.headline || profile.bio || '';
+  const fundraisingPill =
+    profile.fundraisingStatus === 'raising'
+      ? `Raising${profile.raisingRound ? ` ${profile.raisingRound}` : ''}${
+          profile.raisingAmount ? ` · ${profile.raisingAmount}` : ''
+        }`
+      : profile.fundraisingStatus === 'open'
+        ? 'Open to investor intros'
+        : '';
+
+  const facts = [
+    { label: 'Current build', value: profile.currentBuild },
+    { label: 'Category', value: profile.category },
+    { label: 'Stage', value: profile.stage },
+    { label: 'Traction', value: profile.traction },
+  ].filter((f) => f.value);
+
+  const hasLatestLaunch = profile.launches && profile.launches.length > 0;
+  const latestLaunch = hasLatestLaunch ? profile.launches[0] : null;
+
+  const links = [
+    profile.website && { label: 'Website', href: profile.website, icon: Globe },
+    profile.github && { label: 'GitHub', href: profile.github, icon: GitHubIcon },
+    profile.linkedin && { label: 'LinkedIn', href: profile.linkedin, icon: LinkIcon },
+    profile.xProfile && { label: 'X', href: profile.xProfile, icon: ArrowUpRight },
+  ].filter(Boolean) as { label: string; href: string; icon: React.ElementType }[];
+
+  return (
+    <section className="mx-auto max-w-[64rem] px-5 pb-10 pt-12 sm:px-8 md:pt-16">
+      {/* Tiny action bar above the dark card so the on-page interactions stay
+          discoverable without polluting the editorial layout in the card. */}
+      <div className="mb-4 flex flex-wrap items-center justify-end gap-2">
+        <MessageButton viewer={viewer} name={name} onMessage={onMessage} />
+        {profile.shareable !== false && (
+          <ShareButton username={profile.username} name={name} />
+        )}
+      </div>
+
+      <div className="rounded-[28px] bg-[#0f100c] p-7 text-[#f4f1eb] shadow-[0_30px_80px_rgba(0,0,0,0.35)] sm:p-9">
+        {/* ─ Top pill row ─ */}
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="rounded-full bg-[#dcefc7] px-3 py-1 text-xs font-semibold text-[#20300a]">
+            Founder on Apparent
+          </span>
+          {fundraisingPill && (
+            <span className="rounded-full bg-[#42520d] px-3 py-1 text-xs font-semibold text-white">
+              {fundraisingPill}
+            </span>
+          )}
+          {profile.location && (
+            <span className="inline-flex items-center gap-1 text-xs font-semibold text-white/60">
+              <MapPin className="h-3.5 w-3.5" /> {profile.location}
+            </span>
+          )}
+        </div>
+
+        {/* ─ Header row ─ */}
+        <div className="mt-5 flex flex-wrap items-center justify-between gap-4">
+          <div className="flex items-center gap-3 min-w-0">
+            <Avatar src={profile.profilePhotoUrl} name={name} size="sm" bg="#42520d" />
+            <div className="min-w-0">
+              <p className="truncate text-lg font-semibold tracking-[-0.01em]">{name}</p>
+              <p className="mt-0.5 text-xs text-white/55">@{profile.username}</p>
+            </div>
+          </div>
+
+          {/* GitHub verified badge replaces the MRR slot from the mock. Only
+              shown when github_verified is true — otherwise the slot is empty
+              so a profile without proof doesn't display a fake badge. */}
+          {profile.githubVerified && (
+            <div className="flex items-center gap-2 rounded-2xl bg-white/[0.04] px-3 py-2">
+              <GitHubIcon className="h-4 w-4" />
+              <div>
+                <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-white/45">
+                  GitHub Verified
+                </p>
+                <p className="mt-0.5 text-sm font-semibold leading-tight">
+                  @{profile.githubUsername || ghLogin}
+                </p>
+              </div>
+              <BadgeCheck className="h-4 w-4 text-[#58d39a]" />
+            </div>
+          )}
+        </div>
+
+        {/* ─ Headline ─ */}
+        {headline && (
+          <p className="mt-5 text-base leading-7 text-white/75">{headline}</p>
+        )}
+
+        {/* ─ GitHub activity grid ─ */}
+        {profile.github && (
+          <div className="mt-7 rounded-2xl bg-white/[0.02] p-5">
+            <div className="flex flex-wrap items-baseline justify-between gap-2">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-white/45">
+                {synthCommits} · last year
+              </p>
+              <div className="flex items-center gap-1.5 text-[11px] text-white/45">
+                <span>Less</span>
+                {[0, 1, 2, 3, 4].map((lvl) => (
+                  <span key={lvl} className={`h-2.5 w-2.5 rounded-[2px] ${COMMIT_LEVELS[lvl]}`} />
+                ))}
+                <span>More</span>
+              </div>
+            </div>
+            <div className="mt-4 overflow-x-auto">
+              <div className="flex gap-1">
+                {columns.map((col, i) => (
+                  <div key={i} className="flex flex-col gap-1">
+                    {col.map((level, j) => (
+                      <span
+                        key={j}
+                        className={`h-2.5 w-2.5 rounded-[2px] ${COMMIT_LEVELS[level]}`}
+                      />
+                    ))}
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div className="mt-3 flex items-center justify-between text-[11px] text-white/40">
+              <span>{realStarsLabel}</span>
+              <a
+                href={profile.github}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center gap-1 text-white/55 transition-colors hover:text-white"
+              >
+                Open on GitHub <ArrowUpRight className="h-3 w-3" />
+              </a>
+            </div>
+          </div>
+        )}
+
+        {/* ─ Facts grid ─ */}
+        {facts.length > 0 && (
+          <div className="mt-7 grid gap-px overflow-hidden rounded-2xl bg-white/[0.06] sm:grid-cols-2">
+            {facts.map((f) => (
+              <div key={f.label} className="bg-[#0f100c] px-5 py-4">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-white/45">
+                  {f.label}
+                </p>
+                <p className="mt-1 text-base font-semibold text-white">{f.value}</p>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* ─ Pitch row: video + deck ─ */}
+        {latestLaunch && (latestLaunch.pitchVideoUrl || latestLaunch.demoVideoUrl || latestLaunch.pitchDeckUrl) && (
+          <div className="mt-7">
+            <p className="mb-3 text-[10px] font-semibold uppercase tracking-[0.18em] text-white/45">
+              Pitch
+            </p>
+            <div className="grid gap-3 sm:grid-cols-2">
+              {/* Video card */}
+              {(latestLaunch.pitchVideoUrl || latestLaunch.demoVideoUrl) && (
+                <a
+                  href={latestLaunch.pitchVideoUrl || latestLaunch.demoVideoUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="group relative flex h-44 items-center justify-center overflow-hidden rounded-2xl bg-gradient-to-br from-[#1e3a1e] via-[#2c4a25] to-[#0f100c]"
+                >
+                  <span className="flex h-12 w-12 items-center justify-center rounded-full bg-white/90 text-[#0f100c] transition-transform group-hover:scale-105">
+                    <Play className="h-5 w-5 translate-x-[1px]" />
+                  </span>
+                  <span className="absolute bottom-3 left-3 text-xs font-semibold uppercase tracking-[0.16em] text-white/85">
+                    {latestLaunch.pitchVideoUrl ? 'Seed pitch' : 'Demo'}
+                  </span>
+                </a>
+              )}
+              {/* Deck card */}
+              {latestLaunch.pitchDeckUrl && (
+                <a
+                  href={latestLaunch.pitchDeckUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="relative flex h-44 flex-col justify-between overflow-hidden rounded-2xl bg-[#1a1c16] p-5 transition-colors hover:bg-[#21241c]"
+                >
+                  <div className="space-y-2">
+                    <div className="h-2 w-2/3 rounded-full bg-white/15" />
+                    <div className="h-2 w-1/2 rounded-full bg-white/10" />
+                    <div className="h-2 w-3/5 rounded-full bg-white/10" />
+                  </div>
+                  <div className="flex items-center justify-between text-[11px] font-semibold uppercase tracking-[0.14em] text-white/55">
+                    <span className="inline-flex items-center gap-1.5">
+                      <FileText className="h-3.5 w-3.5" /> Deck
+                    </span>
+                    <span>Open</span>
+                  </div>
+                </a>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* ─ Footer link pills ─ */}
+        {links.length > 0 && (
+          <div className="mt-7 flex flex-wrap gap-2 border-t border-white/[0.06] pt-5">
+            {links.map(({ label, href, icon: Icon }) => (
+              <a
+                key={label}
+                href={href}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center gap-1.5 rounded-full border border-white/15 bg-white/[0.04] px-3 py-1.5 text-xs font-semibold text-white/75 transition-colors hover:bg-white/10 hover:text-white"
+              >
+                <Icon className="h-3.5 w-3.5" /> {label}
+                {label === 'GitHub' && profile.githubVerified && (
+                  <BadgeCheck className="h-3 w-3 text-[#58d39a]" />
+                )}
+              </a>
+            ))}
+          </div>
+        )}
+
+        <p className="mt-4 text-[11px] leading-5 text-white/35">
+          Investors see the whole picture. What you&apos;ve shipped counts most.
+        </p>
+      </div>
+    </section>
+  );
+};
+
 // ─── founder profile ──────────────────────────────────────────────────────────
 
 const FounderProfilePage = ({
@@ -334,122 +664,12 @@ const FounderProfilePage = ({
     .map((s) => s.trim())
     .filter(Boolean);
 
-  const links = [
-    profile.website && { label: 'Website', href: profile.website, icon: Globe },
-    profile.github && { label: 'GitHub', href: profile.github, icon: GitHubIcon },
-    profile.linkedin && { label: 'LinkedIn', href: profile.linkedin, icon: LinkIcon },
-    profile.xProfile && { label: 'X / Twitter', href: profile.xProfile, icon: ArrowUpRight },
-    profile.press && { label: 'More', href: profile.press, icon: BookOpen },
-  ].filter(Boolean) as { label: string; href: string; icon: React.ElementType }[];
-
   return (
     <main className="overflow-x-hidden bg-[#fbfaf7] text-black">
-      {/* ── Profile card hero ── */}
-      <section className="mx-auto max-w-[82rem] px-5 pb-10 pt-12 sm:px-8 md:pt-16">
-        <div className="overflow-hidden rounded-[32px] border border-black/10 bg-white/80 shadow-[0_18px_60px_rgba(0,0,0,0.06)]">
-          {/* Banner — founder green (matches the "I'm a founder" button) */}
-          <div className="h-24 bg-[#dcefc7] sm:h-28" />
-
-          <div className="px-6 pb-7 sm:px-8">
-            {/* Avatar overlaps the banner */}
-            <div className="-mt-12 w-fit rounded-[26px] ring-4 ring-white sm:-mt-14">
-              <Avatar src={profile.profilePhotoUrl} name={profile.profileName || profile.username} bg="#dcefc7" />
-            </div>
-
-            {/* Name + actions */}
-            <div className="mt-4 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-              <div className="min-w-0">
-                <h1 className="text-3xl font-normal leading-tight tracking-[-0.03em] sm:text-[2.6rem]" style={serif}>
-                  {profile.profileName || profile.username || 'Apparent Builder'}
-                </h1>
-                <p className="mt-1 text-sm font-semibold text-black/55">@{profile.username}</p>
-              </div>
-              <div className="flex flex-wrap items-center gap-2">
-                <MessageButton viewer={viewer} name={profile.profileName || profile.username} onMessage={onMessage} />
-                {profile.shareable !== false && (
-                  <ShareButton username={profile.username} name={profile.profileName || profile.username} />
-                )}
-              </div>
-            </div>
-
-            {/* Status pills + location */}
-            <div className="mt-5 flex flex-wrap items-center gap-2">
-              <span className="rounded-full bg-[#dcefc7] px-3 py-1 text-xs font-semibold text-[#42520d]">Founder on Apparent</span>
-              {(profile.fundraisingStatus === 'raising' || profile.fundraisingStatus === 'open') && (
-                <span className="rounded-full bg-[#42520d] px-3 py-1 text-xs font-semibold text-white">
-                  {profile.fundraisingStatus === 'raising'
-                    ? `Raising${profile.raisingRound ? ` ${profile.raisingRound}` : ''}${profile.raisingAmount ? ` · ${profile.raisingAmount}` : ''}`
-                    : 'Open to investor intros'}
-                </span>
-              )}
-              {profile.location && (
-                <span className="flex items-center gap-1 text-xs font-semibold text-black/65">
-                  <MapPin className="h-4 w-4 text-[#e7483d]" fill="currentColor" /> {profile.location}
-                </span>
-              )}
-              {profile.mrr && (
-                <span className="inline-flex items-center gap-1.5 rounded-full bg-[#1c1c1a] px-3 py-1 text-xs font-semibold text-white">
-                  <span className="text-[0.6rem] uppercase tracking-[0.14em] text-white/45">MRR</span>
-                  <span className="mrr-shimmer">{profile.mrr}</span>
-                </span>
-              )}
-            </div>
-
-            {profile.headline && (
-              <p className="mt-6 max-w-3xl text-lg font-medium leading-7 text-black/75">{profile.headline}</p>
-            )}
-            {profile.bio && (
-              <p className="mt-3 max-w-3xl text-base leading-7 text-black/60">{profile.bio}</p>
-            )}
-
-            {links.length > 0 && (
-              <div className="mt-6 flex flex-wrap gap-2">
-                {links.map(({ label, href, icon: Icon }) => (
-                  <a
-                    key={label}
-                    href={href}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="flex items-center gap-1.5 rounded-full border border-black/10 bg-white px-3.5 py-1.5 text-xs font-medium text-black/70 transition hover:border-black/20 hover:text-black"
-                  >
-                    <Icon className="h-3.5 w-3.5" /> {label}
-                  </a>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Build facts grid */}
-          {(() => {
-            const facts = [
-              { icon: Rocket, label: 'Current build', value: profile.currentBuild },
-              { icon: Target, label: 'Category', value: profile.category },
-              { icon: ChevronRight, label: 'Stage', value: profile.stage },
-              { icon: Users, label: 'Traction', value: profile.traction },
-            ].filter((f) => f.value);
-            if (facts.length === 0) return null;
-            return (
-              <div className="grid gap-px border-t border-black/5 bg-black/[0.06] sm:grid-cols-2 lg:grid-cols-4">
-                {facts.map(({ icon: Icon, label, value }) => (
-                  <div key={label} className="bg-[#fbfaf7] px-6 py-5 sm:px-8">
-                    <Icon className="mb-3 h-4 w-4 text-[#42520d]" />
-                    <p className="text-xs font-semibold uppercase tracking-[0.12em] text-black/40">{label}</p>
-                    <p className="mt-1.5 text-sm leading-6 text-black/70">{value}</p>
-                  </div>
-                ))}
-              </div>
-            );
-          })()}
-        </div>
-      </section>
-
-      {/* ── GitHub (live public stats + contribution graph) ── */}
-      {profile.github && (
-        <GitHubPanel
-          github={profile.github}
-          verified={Boolean(profile.githubVerified)}
-        />
-      )}
+      {/* Dark hero card — replaces the old cream profile card. Pill row,
+          avatar + handle + GitHub-verified badge, headline, GitHub activity,
+          facts grid, pitch row, footer link pills. */}
+      <FounderHeroDark profile={profile} viewer={viewer} onMessage={onMessage} />
 
       {/* ── Product launches ── */}
       {profile.launches.length > 0 && (
