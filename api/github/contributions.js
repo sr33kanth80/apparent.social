@@ -87,6 +87,7 @@ export default async function handler(req, res) {
         return;
       }
       console.error('[gh-contributions] lookup error', error);
+      res.setHeader('Cache-Control', 'no-store');
       res.status(500).json({
         ok: false,
         error: 'lookup_failed',
@@ -97,10 +98,11 @@ export default async function handler(req, res) {
       return;
     }
     if (!data || !data.github_verified || !data.github_access_token_enc) {
-      // No verified row, or no stored token (founder verified before the
-      // token-storage migration was live; they need to disconnect + reconnect
-      // to refresh). Caller falls back to the deterministic mock.
-      res.setHeader('Cache-Control', 'public, s-maxage=60, stale-while-revalidate=600');
+      // No verified row, or no stored token. Use no-store on 404s — the
+      // state can flip the moment the founder reconnects, and an Edge
+      // cached 404 would pin the public profile to the mock for 10
+      // minutes even after the DB has the token.
+      res.setHeader('Cache-Control', 'no-store');
       res.status(404).json({
         ok: false,
         error: data && data.github_verified ? 'reconnect_required' : 'no_token',
@@ -126,9 +128,10 @@ export default async function handler(req, res) {
     });
 
     if (ghRes.status === 401 || ghRes.status === 403) {
-      // Token was revoked at GitHub or scopes changed — treat as unavailable
-      // so the UI falls back gracefully.
-      res.setHeader('Cache-Control', 'public, s-maxage=60, stale-while-revalidate=600');
+      // Token was revoked at GitHub or scopes changed. Don't cache — the
+      // founder may reconnect right after, and a cached negative would
+      // mask the recovery.
+      res.setHeader('Cache-Control', 'no-store');
       res.status(404).json({ ok: false, error: 'token_revoked' });
       return;
     }

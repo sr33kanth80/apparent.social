@@ -441,7 +441,9 @@ const FounderHeroDark = ({
     const handle = profile.githubUsername || ghLogin;
     if (!handle || !profile.githubVerified) return;
     let cancelled = false;
-    fetch(`/api/github/contributions?username=${encodeURIComponent(handle)}`)
+    // v=2 busts any stale Edge entry from the pre-migration era that's still
+    // pinned to a 404 by the old SWR window. Safe to leave in indefinitely.
+    fetch(`/api/github/contributions?username=${encodeURIComponent(handle)}&v=2`)
       .then(async (r) => {
         if (r.status === 404) return null;
         if (!r.ok) return null;
