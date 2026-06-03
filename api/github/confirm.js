@@ -66,7 +66,15 @@ export default async function handler(req, res) {
       res.status(401).json({ ok: false, error: 'bad_signature' });
       return;
     }
-    const [login, , expStr] = payload.split(':');
+    // Payload format: login:id:exp:encryptedToken. The encrypted token rides
+    // through as the 4th segment so confirm can persist it for the
+    // contributions endpoint to use later. Older blobs that don't carry it
+    // still work — github_access_token_enc just stays empty and the real
+    // contribution grid falls back to the deterministic mock.
+    const segments = payload.split(':');
+    const login = segments[0];
+    const expStr = segments[2];
+    const encryptedToken = segments.slice(3).join(':');
     const exp = Number(expStr);
     if (!login || !Number.isFinite(exp) || Date.now() > exp) {
       res.status(401).json({ ok: false, error: 'expired' });
@@ -117,17 +125,23 @@ export default async function handler(req, res) {
     //    Upsert so it works whether the founder_profiles row exists yet
     //    or not — many founders verify GitHub before filling out the rest
     //    of their profile.
+    // Persist verification + (when present) the encrypted access token. Only
+    // set github_access_token_enc when we actually have one, so a stale blob
+    // without it doesn't blank out an existing token from a previous
+    // connect.
+    const writePayload = {
+      user_id: userId,
+      github_username: login,
+      github_verified: true,
+      github_verified_at: new Date().toISOString(),
+    };
+    if (encryptedToken) {
+      writePayload.github_access_token_enc = encryptedToken;
+    }
+
     const { data: writeData, error: writeError } = await admin
       .from('founder_profiles')
-      .upsert(
-        {
-          user_id: userId,
-          github_username: login,
-          github_verified: true,
-          github_verified_at: new Date().toISOString(),
-        },
-        { onConflict: 'user_id' },
-      )
+      .upsert(writePayload, { onConflict: 'user_id' })
       .select('user_id, github_verified, github_username');
 
     if (writeError) {

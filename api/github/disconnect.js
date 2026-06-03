@@ -53,6 +53,7 @@ export default async function handler(req, res) {
         github_verified: false,
         github_username: '',
         github_verified_at: null,
+        github_access_token_enc: '',
       })
       .eq('user_id', userId);
 

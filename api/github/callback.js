@@ -9,6 +9,7 @@
 // so it doesn't need to know who the Apparent user is.
 
 import crypto from 'crypto';
+import { encryptToken } from './_crypto.js';
 
 const CLIENT_ID = process.env.GITHUB_OAUTH_CLIENT_ID || 'Ov23li5dwJPP1dGzfy38';
 const CLIENT_SECRET = process.env.GITHUB_OAUTH_SECRET || '';
@@ -77,11 +78,15 @@ export default async function handler(req, res) {
       return;
     }
 
-    // 3. Sign { login, id, exp } so the confirm step can trust it without a
-    //    second GitHub round-trip and without the founder being able to forge
-    //    a login.
+    // 3. Sign { login, id, exp, encryptedToken } so the confirm step can
+    //    trust it without a second GitHub round-trip and without the founder
+    //    being able to forge a login. The OAuth access_token rides through
+    //    in the blob, encrypted at rest with our application key (separate
+    //    from the HMAC), so it never appears in the URL in plaintext and a
+    //    Supabase compromise alone never decrypts it.
+    const encryptedAccessToken = encryptToken(accessToken, CLIENT_SECRET);
     const exp = Date.now() + BLOB_TTL_MS;
-    const payload = `${ghUser.login}:${ghUser.id}:${exp}`;
+    const payload = `${ghUser.login}:${ghUser.id}:${exp}:${encryptedAccessToken}`;
     const blob = `${base64url(payload)}.${sign(payload)}`;
 
     redirect(res, { gh_token: blob, gh_state: state });

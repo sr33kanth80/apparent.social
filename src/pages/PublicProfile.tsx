@@ -388,6 +388,23 @@ const extractGhLogin = (github: string): string => {
 const compact = (n: number) =>
   n >= 1000 ? `${(n / 1000).toFixed(n >= 10000 ? 0 : 1).replace(/\.0$/, '')}k` : String(n);
 
+type ContributionCalendar = {
+  totalContributions: number;
+  // [week][day] flattened. Each cell is { date, count }.
+  weeks: Array<Array<{ date: string; count: number }>>;
+};
+
+// Quantize a contribution count into one of our 5 visual levels. Mirrors the
+// thresholds GitHub uses on its own profile so the densest weeks really do
+// stand out.
+const countToLevel = (count: number): number => {
+  if (count <= 0) return 0;
+  if (count < 3) return 1;
+  if (count < 6) return 2;
+  if (count < 10) return 3;
+  return 4;
+};
+
 const FounderHeroDark = ({
   profile,
   viewer,
@@ -399,6 +416,8 @@ const FounderHeroDark = ({
 }) => {
   const ghLogin = extractGhLogin(profile.github);
   const [ghStats, setGhStats] = useState<GhStats>(null);
+  const [calendar, setCalendar] = useState<ContributionCalendar | null>(null);
+
   useEffect(() => {
     if (!ghLogin) return;
     let cancelled = false;
@@ -415,14 +434,52 @@ const FounderHeroDark = ({
     };
   }, [ghLogin]);
 
-  // The columns are decorative + deterministic. The label numbers next to
-  // them are real (from the GitHub API). Stars + repos read as actual proof;
-  // the grid reads as "active recently."
-  const columns = commitColumnsFor(profile.username || ghLogin || profile.userId);
+  // Real contribution calendar — only when the founder is verified (we need
+  // their stored OAuth token to query GitHub GraphQL). A 404 just means we
+  // fall back to the deterministic mock; anything else gets logged.
+  useEffect(() => {
+    const handle = profile.githubUsername || ghLogin;
+    if (!handle || !profile.githubVerified) return;
+    let cancelled = false;
+    fetch(`/api/github/contributions?username=${encodeURIComponent(handle)}`)
+      .then(async (r) => {
+        if (r.status === 404) return null;
+        if (!r.ok) return null;
+        return r.json();
+      })
+      .then((data: { ok?: boolean; weeks?: ContributionCalendar['weeks']; totalContributions?: number } | null) => {
+        if (cancelled || !data || !data.ok || !data.weeks) return;
+        setCalendar({
+          totalContributions: data.totalContributions ?? 0,
+          weeks: data.weeks,
+        });
+      })
+      .catch(() => {
+        /* leave calendar null → fall back to mock */
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [ghLogin, profile.githubUsername, profile.githubVerified]);
+
+  // Real grid when we have it; deterministic mock otherwise. Same render path
+  // either way so the visual stays consistent.
+  const realColumns: number[][] | null = calendar
+    ? calendar.weeks.map((week) => {
+        // Pad short last-week to 7 days so the grid has a uniform height.
+        const padded = [...week];
+        while (padded.length < 7) padded.push({ date: '', count: 0 });
+        return padded.slice(0, 7).map((d) => countToLevel(d.count));
+      })
+    : null;
+  const columns = realColumns || commitColumnsFor(profile.username || ghLogin || profile.userId);
+
   const realStarsLabel = ghStats ? `${compact(ghStats.stars)} stars · ${compact(ghStats.publicRepos)} repos` : 'GitHub activity';
-  const synthCommits = ghStats
-    ? `${compact(ghStats.publicRepos * 24 + ghStats.stars * 2)} contributions`
-    : 'Recent activity';
+  const headlineCount = calendar
+    ? `${compact(calendar.totalContributions)} contributions`
+    : ghStats
+      ? `${compact(ghStats.publicRepos * 24 + ghStats.stars * 2)} contributions`
+      : 'Recent activity';
 
   const name = profile.profileName || profile.username || 'Apparent Builder';
   const headline = profile.headline || profile.bio || '';
@@ -520,7 +577,7 @@ const FounderHeroDark = ({
           <div className="mt-7 rounded-2xl bg-white/[0.02] p-5">
             <div className="flex flex-wrap items-baseline justify-between gap-2">
               <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-white/45">
-                {synthCommits} · last year
+                {headlineCount} · last year{calendar ? ' · verified' : ''}
               </p>
               <div className="flex items-center gap-1.5 text-[11px] text-white/45">
                 <span>Less</span>
