@@ -1,5 +1,3 @@
-import React from 'react';
-
 interface VerifiedAvatarProps {
   src?: string;
   name: string;
