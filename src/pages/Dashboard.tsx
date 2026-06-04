@@ -6912,6 +6912,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
               </div>
             </div>
           ) : (
+          <>
           <AnimatePresence mode="wait" initial={false}>
             {activeView === 'profile' ? (
               renderProfilePage()
@@ -7213,6 +7214,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
               </motion.div>
             )}
           </AnimatePresence>
+          </>
           )} {/* end isDashboardLoading ternary */}
         </div>
       </main>
