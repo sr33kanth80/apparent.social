@@ -1417,6 +1417,12 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
     const unsubscribe = subscribeBuilderNetwork(user, () => {
       if (hasLoaded) {
         applyDashboardData(false);
+        // Keep the public launches feed in sync with real-time changes (inserts,
+        // updates, and deletes from any founder). No onCached arg so we never
+        // flash stale data that still contains the deleted launch.
+        loadPublicProductLaunches().then((launches) => {
+          if (!isCancelled) setPublicLaunches(launches);
+        }).catch(() => { /* non-fatal */ });
       }
     });
 
