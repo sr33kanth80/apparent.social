@@ -553,6 +553,7 @@ const toDatetimeLocalValue = (value: string) => {
 const defaultStartsAt = () => toDatetimeLocalValue(new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString());
 
 const emptyLaunchDraft = () => ({
+  id: '' as string | undefined,
   name: '',
   tagline: '',
   intro: '',
