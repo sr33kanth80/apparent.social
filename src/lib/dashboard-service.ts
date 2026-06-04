@@ -1798,16 +1798,12 @@ export const loadDashboardData = async (
     if (snap) onCachedData(snap.data);
   }
 
-  const { data: settingsRow } = await supabase
-    .from('user_settings')
-    .select('*')
-    .eq('user_id', user.id)
-    .maybeSingle();
-  const settings: UserSettings = {
-    dailyDigestEnabled: settingsRow?.daily_digest_enabled ?? true,
-    slackAlertsEnabled: settingsRow?.slack_alerts_enabled ?? true,
-  };
+  // Fire EVERY query in one parallel batch — 1 RTT instead of 4-5 sequential.
+  // Previously: settings → 8-query batch → role queries → builder network (3
+  // more) → optional RPC. That's 600-1500ms minimum. Now max(all queries).
+  const isInvestor = role === 'investor';
   const [
+    { data: settingsRow },
     { data: productLaunchRows },
     { data: meetupRows },
     { data: meetupRsvpRows },
@@ -1816,7 +1812,15 @@ export const loadDashboardData = async (
     { data: feedActionRows },
     { data: userUpvoteRows },
     { data: commentRows },
+    { data: allProfileRows },
+    { data: allLaunchRows },
+    { data: builderStateRows },
+    { data: criteriaRow },
+    { data: investorStateRows },
+    { data: founderRow },
+    interestRpcResult,
   ] = await Promise.all([
+    supabase.from('user_settings').select('*').eq('user_id', user.id).maybeSingle(),
     supabase.from('product_launches').select('*').eq('owner_id', user.id).order('updated_at', { ascending: false }),
     supabase.from('meetups').select('*').order('starts_at', { ascending: true }),
     supabase.from('meetup_rsvps').select('*'),
@@ -1829,7 +1833,32 @@ export const loadDashboardData = async (
     supabase.from('feed_item_actions').select('*').eq('user_id', user.id),
     supabase.from('launch_upvotes').select('launch_id').eq('user_id', user.id),
     supabase.from('launch_comments').select('launch_id, body').order('created_at', { ascending: false }),
+    // Builder network — was a separate Promise.all in loadBuilderNetwork, now inlined.
+    supabase.from('founder_profiles').select('*').order('updated_at', { ascending: false }),
+    supabase.from('product_launches').select('*').order('updated_at', { ascending: false }),
+    supabase.from('builder_discovery_states').select('*').eq('user_id', user.id),
+    // Role-specific — fire both regardless (the other returns empty/no row).
+    isInvestor
+      ? supabase.from('investor_criteria').select('*').eq('user_id', user.id).maybeSingle()
+      : Promise.resolve({ data: null }),
+    isInvestor
+      ? supabase.from('investor_signal_states').select('*').eq('investor_id', user.id)
+      : Promise.resolve({ data: [] }),
+    !isInvestor
+      ? supabase.from('founder_profiles').select('*').eq('user_id', user.id).maybeSingle()
+      : Promise.resolve({ data: null }),
+    !isInvestor
+      ? supabase.rpc('founder_interest_summary').then(
+          (r) => r,
+          () => ({ data: null }),
+        )
+      : Promise.resolve({ data: null }),
   ]);
+
+  const settings: UserSettings = {
+    dailyDigestEnabled: settingsRow?.daily_digest_enabled ?? true,
+    slackAlertsEnabled: settingsRow?.slack_alerts_enabled ?? true,
+  };
   const rsvpCounts = new Map<string, number>();
   const joinedMeetups = new Set<string>();
   (meetupRsvpRows ?? []).forEach((row) => {
@@ -1883,20 +1912,26 @@ export const loadDashboardData = async (
     return actions;
   }, {});
 
+  // Builder network — was previously a separate Promise.all in loadBuilderNetwork.
+  // Now built from the rows fetched in the mega Promise.all above. The fit
+  // score depends on `values`, so we compute that per-role below.
+  const allLaunchesForNetwork = (allLaunchRows ?? []).map((row) => mapProductLaunchRow(row));
+  const mappedBuildersRaw = mapBuilderProfileRows(
+    (allProfileRows ?? []) as Record<string, unknown>[],
+    allLaunchesForNetwork,
+    user.id,
+  );
+  const builderDiscoveryStates = (builderStateRows ?? []).map((row) => mapBuilderDiscoveryRow(row));
+
   if (role === 'investor') {
     // The legacy `source_signals` table was populated by an Apify scraper
     // (YC / GitHub / Product Hunt / Hacker News). That pipeline is gone, so
     // we no longer read from it. Deal flow now comes entirely from real
     // Apparent builders the investor has added (via mergeBuilderDealFlowSignals).
-    const [{ data: criteriaRow }, { data: stateRows }] = await Promise.all([
-      supabase.from('investor_criteria').select('*').eq('user_id', user.id).maybeSingle(),
-      supabase.from('investor_signal_states').select('*').eq('investor_id', user.id),
-    ]);
-
     const criteria = mapCriteriaRow(criteriaRow as Record<string, unknown> | null);
     const intakeValues = toIntakeRecord(criteria);
     const stateBySignal = new Map(
-      (stateRows ?? []).map((row) => [String(row.signal_id), String(row.stage) as InvestorDealStage]),
+      (investorStateRows ?? []).map((row) => [String(row.signal_id), String(row.stage) as InvestorDealStage]),
     );
     const signalRows: InvestorSignal[] = [];
     // Apply persisted column state on top of the empty base — preserved so
@@ -1904,7 +1939,14 @@ export const loadDashboardData = async (
     void stateBySignal;
 
     const profileSaved = completedLabels(intakeValues, labelByKey).length > 0;
-    const builderNetwork = await loadBuilderNetwork(user, role, criteria, productLaunches);
+    const builderNodes = mappedBuildersRaw
+      .map((builder) => calculateBuilderFit(builder, role, criteria))
+      .sort((a, b) => b.fitScore - a.fitScore);
+    const builderNetwork = {
+      builderNodes,
+      builderClusters: buildBuilderMapClusters(builderNodes, seedMeetups),
+      builderDiscoveryStates,
+    };
     const signalRowsWithBuilders = mergeBuilderDealFlowSignals(
       signalRows,
       builderNetwork.builderNodes,
@@ -1936,30 +1978,32 @@ export const loadDashboardData = async (
     return investorResult;
   }
 
-  const { data: founderRow } = await supabase
-    .from('founder_profiles')
-    .select('*')
-    .eq('user_id', user.id)
-    .maybeSingle();
   const founderProfile = mapFounderRow(founderRow as Record<string, unknown> | null);
   const intakeValues = toIntakeRecord(founderProfile);
   const profileSaved = completedLabels(intakeValues, labelByKey).length > 0;
-  const builderNetwork = await loadBuilderNetwork(user, role, founderProfile, productLaunches);
+  const builderNodes = mappedBuildersRaw
+    .map((builder) => calculateBuilderFit(builder, role, founderProfile))
+    .sort((a, b) => b.fitScore - a.fitScore);
+  const builderNetwork = {
+    builderNodes,
+    builderClusters: buildBuilderMapClusters(builderNodes, seedMeetups),
+    builderDiscoveryStates,
+  };
   const effectiveMeetups = meetups.length ? meetups : seedMeetups;
 
   // Come-back loop: how many investors are tracking this founder.
+  // RPC result was fetched in the parallel batch above; just unpack it.
   let founderInterest = { saveCount: 0, recentSaverNames: [] as string[] };
-  try {
-    const { data: interestRows } = await supabase.rpc('founder_interest_summary');
-    const row = Array.isArray(interestRows) ? interestRows[0] : interestRows;
-    if (row) {
-      founderInterest = {
-        saveCount: Number(row.save_count ?? 0),
-        recentSaverNames: Array.isArray(row.recent_saver_names) ? row.recent_saver_names.filter(Boolean) : [],
-      };
-    }
-  } catch {
-    // RPC missing / not authorized — leave default.
+  const interestRows = (interestRpcResult as { data: unknown })?.data;
+  const interestRow = Array.isArray(interestRows) ? interestRows[0] : interestRows;
+  if (interestRow && typeof interestRow === 'object') {
+    const row = interestRow as Record<string, unknown>;
+    founderInterest = {
+      saveCount: Number(row.save_count ?? 0),
+      recentSaverNames: Array.isArray(row.recent_saver_names)
+        ? (row.recent_saver_names as unknown[]).filter(Boolean).map(String)
+        : [],
+    };
   }
 
   const founderResult: DashboardData = {
