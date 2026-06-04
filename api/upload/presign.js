@@ -1,45 +1,14 @@
 // Generates a short-lived presigned PUT URL so the browser can upload
-// directly to Cloudflare R2 without routing file bytes through this function.
-// Also ensures the bucket CORS policy allows browser PUTs (once per cold start).
+// directly to Cloudflare R2 without routing file bytes through Vercel.
+// Uses native node:crypto for SigV4 signing — no @aws-sdk dependency.
 
-import { S3Client, PutObjectCommand, PutBucketCorsCommand } from '@aws-sdk/client-s3';
-import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
-import { randomUUID } from 'crypto';
+import { createHash, createHmac, randomUUID } from 'node:crypto';
 
-const ACCOUNT_ID  = process.env.R2_ACCOUNT_ID ?? '';
-const BUCKET      = process.env.R2_BUCKET_NAME ?? '';
-const PUBLIC_URL  = (process.env.R2_PUBLIC_URL ?? '').replace(/\/$/, '');
-
-const r2 = new S3Client({
-  region: 'auto',
-  endpoint: `https://${ACCOUNT_ID}.r2.cloudflarestorage.com`,
-  credentials: {
-    accessKeyId:     process.env.R2_ACCESS_KEY_ID ?? '',
-    secretAccessKey: process.env.R2_SECRET_ACCESS_KEY ?? '',
-  },
-});
-
-// Set bucket CORS once per cold start so browsers can PUT directly to R2.
-let corsReady = false;
-async function ensureCors() {
-  if (corsReady) return;
-  try {
-    await r2.send(new PutBucketCorsCommand({
-      Bucket: BUCKET,
-      CORSConfiguration: {
-        CORSRules: [{
-          AllowedOrigins: ['*'],
-          AllowedMethods: ['PUT', 'GET', 'HEAD'],
-          AllowedHeaders: ['*'],
-          MaxAgeSeconds: 3600,
-        }],
-      },
-    }));
-    corsReady = true;
-  } catch {
-    // Non-fatal — presigned PUT will still work if CORS was set previously.
-  }
-}
+const ACCOUNT_ID = process.env.R2_ACCOUNT_ID ?? '';
+const BUCKET     = process.env.R2_BUCKET_NAME ?? '';
+const PUBLIC_URL = (process.env.R2_PUBLIC_URL ?? '').replace(/\/$/, '');
+const ACCESS_KEY = process.env.R2_ACCESS_KEY_ID ?? '';
+const SECRET_KEY = process.env.R2_SECRET_ACCESS_KEY ?? '';
 
 const ALLOWED_TYPES = new Set([
   'image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml',
@@ -50,6 +19,68 @@ const ALLOWED_TYPES = new Set([
 ]);
 
 const ALLOWED_FOLDERS = new Set(['logos', 'banners', 'videos', 'decks', 'photos']);
+
+// ---------- SigV4 primitives ----------
+
+const sha256 = (data) => createHash('sha256').update(data).digest('hex');
+const hmac   = (key, data) => createHmac('sha256', key).update(data).digest();
+
+function sigV4Key(secret, date, region, service) {
+  return hmac(hmac(hmac(hmac(`AWS4${secret}`, date), region), service), 'aws4_request');
+}
+
+/**
+ * Build a presigned PUT URL using Signature Version 4.
+ * R2 is S3-compatible and uses region 'auto'.
+ */
+function presignPut(host, key) {
+  const now = new Date();
+  // Format: 20230615T120000Z
+  const datetime = now.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
+  const date = datetime.slice(0, 8);
+  const region = 'auto';
+
+  const credential = `${ACCESS_KEY}/${date}/${region}/s3/aws4_request`;
+  const signedHeaders = 'host';
+
+  // Query parameters must be sorted lexicographically for canonical form.
+  const qParams = [
+    ['X-Amz-Algorithm', 'AWS4-HMAC-SHA256'],
+    ['X-Amz-Credential', credential],
+    ['X-Amz-Date', datetime],
+    ['X-Amz-Expires', '900'],
+    ['X-Amz-SignedHeaders', signedHeaders],
+  ].sort(([a], [b]) => a.localeCompare(b));
+
+  const canonicalQS = qParams
+    .map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v)}`)
+    .join('&');
+
+  // Canonical request — payload hash is UNSIGNED-PAYLOAD for presigned PUTs.
+  const canonicalRequest = [
+    'PUT',
+    `/${key}`,
+    canonicalQS,
+    `host:${host}\n`, // canonical headers (trailing \n is part of the spec)
+    signedHeaders,
+    'UNSIGNED-PAYLOAD',
+  ].join('\n');
+
+  const stringToSign = [
+    'AWS4-HMAC-SHA256',
+    datetime,
+    `${date}/${region}/s3/aws4_request`,
+    sha256(canonicalRequest),
+  ].join('\n');
+
+  const signature = createHmac('sha256', sigV4Key(SECRET_KEY, date, region, 's3'))
+    .update(stringToSign)
+    .digest('hex');
+
+  return `https://${host}/${key}?${canonicalQS}&X-Amz-Signature=${signature}`;
+}
+
+// ---------- Handler ----------
 
 export default async function handler(req, res) {
   if (req.method !== 'GET') {
@@ -66,23 +97,16 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'File type not allowed' });
   }
 
-  if (!ACCOUNT_ID || !BUCKET || !PUBLIC_URL) {
+  if (!ACCOUNT_ID || !BUCKET || !PUBLIC_URL || !ACCESS_KEY || !SECRET_KEY) {
     return res.status(503).json({ error: 'Storage not configured' });
   }
-
-  await ensureCors();
 
   const safeFolder = ALLOWED_FOLDERS.has(String(folder)) ? String(folder) : 'uploads';
   const rawExt = String(filename).split('.').pop()?.toLowerCase().replace(/[^a-z0-9]/g, '') ?? 'bin';
   const key = `${safeFolder}/${randomUUID()}.${rawExt}`;
+  const host = `${BUCKET}.${ACCOUNT_ID}.r2.cloudflarestorage.com`;
 
-  const command = new PutObjectCommand({
-    Bucket: BUCKET,
-    Key: key,
-    ContentType: String(contentType),
-  });
-
-  const uploadUrl = await getSignedUrl(r2, command, { expiresIn: 900 }); // 15 min
+  const uploadUrl = presignPut(host, key);
   const publicUrl = `${PUBLIC_URL}/${key}`;
 
   res.setHeader('Cache-Control', 'no-store');
