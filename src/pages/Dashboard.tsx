@@ -73,6 +73,7 @@ import type {
 } from '@/lib/apparent-types';
 import type { ApparentInvestorRow, LaunchAuthor } from '@/lib/dashboard-service';
 import { VerifiedAvatar } from '@/components/VerifiedAvatar';
+import { uploadFile } from '@/lib/upload';
 import {
   buildBuilderMapClusters,
   loadApparentInvestors,
@@ -1914,39 +1915,34 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
     setActivity((current) => [item, ...current].slice(0, 6));
   };
 
-  const handleLaunchAssetUpload = (
+  const handleLaunchAssetUpload = async (
     field: 'logoUrl' | 'bannerUrl' | 'demoVideoUrl' | 'pitchVideoUrl' | 'pitchDeckUrl',
     file: File | undefined,
   ) => {
-    if (!file) {
-      return;
-    }
+    if (!file) return;
 
-    if (file.type.startsWith('video/')) {
-      setLaunchDraft((current) => ({ ...current, [field]: URL.createObjectURL(file) }));
-      addActivity(`Added launch media: ${file.name}`);
-      return;
-    }
+    const folder =
+      field === 'logoUrl' ? 'logos' :
+      field === 'bannerUrl' ? 'banners' :
+      field === 'demoVideoUrl' || field === 'pitchVideoUrl' ? 'videos' : 'decks';
 
-    const reader = new FileReader();
-    reader.onload = () => {
-      setLaunchDraft((current) => ({ ...current, [field]: String(reader.result ?? '') }));
+    try {
+      const url = await uploadFile(file, folder);
+      setLaunchDraft((current) => ({ ...current, [field]: url }));
       addActivity(`Added launch media: ${file.name}`);
-    };
-    reader.readAsDataURL(file);
+    } catch {
+      addActivity(`Upload failed for ${file.name} — please try again`);
+    }
   };
 
-  const handleProfileAssetUpload = (file: File | undefined) => {
+  const handleProfileAssetUpload = async (file: File | undefined) => {
     if (!file) return;
-    const reader = new FileReader();
-    reader.onload = async () => {
-      const url = String(reader.result ?? '');
-      // Update state — the debounce will also fire, but we save immediately
-      // here too because photo uploads are discrete user actions
+
+    try {
+      setAutoSaveStatus('saving');
+      const url = await uploadFile(file, 'photos');
       setIntakeValues((current) => {
         const next = { ...current, profilePhotoUrl: url };
-        // Kick off an immediate save with the merged values
-        setAutoSaveStatus('saving');
         saveIntakeValues(user, role, next)
           .then(() => {
             setProfileSaved(true);
@@ -1960,8 +1956,10 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
         return next;
       });
       addActivity(`Updated profile image: ${file.name}`);
-    };
-    reader.readAsDataURL(file);
+    } catch {
+      setAutoSaveStatus('error');
+      setTimeout(() => setAutoSaveStatus('idle'), 3000);
+    }
   };
 
   const toggleLaunchFounderSignal = (signal: string) => {

@@ -73,10 +73,23 @@ const writeLocal = (key: string, value: unknown) => {
 export const readPublicProductLaunches = () =>
   readLocal<ProductLaunch[]>(PUBLIC_LAUNCHES_STORAGE_KEY, []);
 
+/** Strip ephemeral data:/blob: URLs before persisting to localStorage to avoid quota errors. */
+const stripEphemeralUrls = (launch: ProductLaunch): ProductLaunch => {
+  const mediaFields = ['logoUrl', 'bannerUrl', 'demoVideoUrl', 'pitchVideoUrl', 'pitchDeckUrl'] as const;
+  const stripped = { ...launch } as Record<string, unknown>;
+  for (const field of mediaFields) {
+    const val = stripped[field];
+    if (typeof val === 'string' && (val.startsWith('data:') || val.startsWith('blob:'))) {
+      stripped[field] = '';
+    }
+  }
+  return stripped as ProductLaunch;
+};
+
 const publishLocalLaunch = (launch: ProductLaunch) => {
   const current = readPublicProductLaunches();
   writeLocal(PUBLIC_LAUNCHES_STORAGE_KEY, [
-    launch,
+    stripEphemeralUrls(launch),
     ...current.filter((item) => item.id !== launch.id),
   ]);
 };
