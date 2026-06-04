@@ -25,6 +25,7 @@ import {
   SquarePen,
   Star,
   Target,
+  Trash2,
   Users,
   Video,
   X,
@@ -93,6 +94,7 @@ import {
   saveLaunchComment,
   saveMeetup,
   saveMessage,
+  deleteProductLaunch,
   saveProductLaunch,
   saveSettings,
   saveSignalStage,
@@ -2672,6 +2674,23 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
     }
   };
 
+  const handleDeleteProductLaunch = async (launch: ProductLaunch) => {
+    if (!window.confirm(`Delete "${launch.name}"? This cannot be undone.`)) return;
+    try {
+      await deleteProductLaunch(user, launch.id);
+      setProductLaunches((current) => current.filter((l) => l.id !== launch.id));
+      // If the deleted launch was selected, fall back to the next one.
+      setSelectedLaunchId((current) =>
+        current === launch.id
+          ? productLaunches.find((l) => l.id !== launch.id)?.id ?? ''
+          : current,
+      );
+      addActivity(`Deleted launch: ${launch.name}`);
+    } catch {
+      setDashboardError('Unable to delete launch. Please try again.');
+    }
+  };
+
   const handleToggleLaunchUpvote = (launch: ProductLaunch) => {
     const current = getLaunchEngagement(launch);
     const wasUpvoted = current.upvoted;
@@ -4121,6 +4140,14 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
                             onClick={handleOpenFounderProfileFromLaunch}
                           >
                             Founder profile
+                          </button>
+                          <button
+                            type="button"
+                            className="inline-flex items-center gap-1.5 rounded-full border border-red-200 px-3 py-1.5 text-xs font-semibold text-red-500 transition-colors hover:bg-red-50"
+                            onClick={() => handleDeleteProductLaunch(launch)}
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                            Delete
                           </button>
                         </div>
 

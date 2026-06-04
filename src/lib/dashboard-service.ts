@@ -2348,6 +2348,41 @@ export const saveProductLaunch = async (
   return savedLaunch;
 };
 
+export const deleteProductLaunch = async (
+  user: AppUser,
+  launchId: string,
+): Promise<void> => {
+  // Remove from localStorage regardless (handles dev mode and cache).
+  const key = storageKey(user, 'product-launches');
+  const current = readLocal<ProductLaunch[]>(key, []);
+  writeLocal(key, current.filter((l) => l.id !== launchId));
+
+  // Remove from public launches cache too.
+  try {
+    const pubRaw = window.localStorage.getItem(PUB_LAUNCHES_CACHE_KEY);
+    if (pubRaw) {
+      const pub = JSON.parse(pubRaw) as { data: ProductLaunch[]; ts: number };
+      if (pub?.data) {
+        pub.data = pub.data.filter((l) => l.id !== launchId);
+        window.localStorage.setItem(PUB_LAUNCHES_CACHE_KEY, JSON.stringify(pub));
+      }
+    }
+  } catch { /* non-fatal */ }
+
+  if (!isSupabaseConfigured || !supabase || user.isDev) return;
+
+  // Delete team members first (FK constraint).
+  await supabase.from('launch_team_members').delete().eq('launch_id', launchId).eq('owner_id', user.id);
+
+  const { error } = await supabase
+    .from('product_launches')
+    .delete()
+    .eq('id', launchId)
+    .eq('owner_id', user.id); // RLS guard: only owner can delete
+
+  if (error) throw error;
+};
+
 export const saveMeetup = async (
   user: AppUser,
   role: DashboardRole,
