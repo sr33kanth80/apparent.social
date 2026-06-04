@@ -112,9 +112,14 @@ export default async function handler(req, res) {
   const safeFolder = ALLOWED_FOLDERS.has(String(folder)) ? String(folder) : 'uploads';
   const rawExt = String(filename).split('.').pop()?.toLowerCase().replace(/[^a-z0-9]/g, '') ?? 'bin';
   const key = `${safeFolder}/${randomUUID()}.${rawExt}`;
-  const host = `${BUCKET}.${ACCOUNT_ID}.r2.cloudflarestorage.com`;
 
-  const uploadUrl = presignPut(host, key);
+  // Path-style: host = {account}.r2.cloudflarestorage.com, bucket is in the path.
+  // Virtual-hosted style ({bucket}.{account}.r2.cloudflarestorage.com) is a two-level
+  // subdomain that Cloudflare's wildcard DNS does not resolve.
+  const host = `${ACCOUNT_ID}.r2.cloudflarestorage.com`;
+  const objectPath = `${BUCKET}/${key}`;
+
+  const uploadUrl = presignPut(host, objectPath);
   const publicUrl = `${PUBLIC_URL}/${key}`;
 
   res.setHeader('Cache-Control', 'no-store');
