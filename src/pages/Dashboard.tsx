@@ -6838,36 +6838,80 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
             </div>
           )}
 
-          {isDashboardLoading && (
-            // Dead-center overlay with a stationary Apparent logo wrapped by
-            // a rotating ring. Subtle backdrop blur so the workspace stays
-            // visible behind it. pointer-events-none keeps the page reachable
-            // for users who tab through during the load.
-            <div
-              className="pointer-events-none fixed inset-0 z-40 flex items-center justify-center backdrop-blur-[2px]"
-              role="status"
-              aria-live="polite"
-              aria-label="Loading workspace"
-            >
-              <div className="relative flex h-20 w-20 items-center justify-center">
-                {/* Rotating ring — top arc colored, rest transparent, so the
-                    rotation reads as a spinner without a CSS keyframe. */}
-                <span
-                  aria-hidden="true"
-                  className="absolute inset-0 animate-spin rounded-full border-2 border-transparent border-t-[#42520d] border-r-[#42520d]/40"
-                />
-                {/* Soft halo behind the logo so it sits cleanly on top of any
-                    workspace background. */}
-                <span
-                  aria-hidden="true"
-                  className="absolute inset-2 rounded-full bg-white shadow-[0_10px_30px_rgba(0,0,0,0.08)]"
-                />
-                <LogoIcon className="relative h-8 w-8 text-[#42520d]" />
+          {isDashboardLoading ? (
+            /* Skeleton — shown on first-ever load (no cache). Matches the
+               profile/overview card layout so the page feels structured
+               rather than blank. Disappears as soon as any data arrives. */
+            <div className="mx-auto max-w-[1292px] animate-pulse space-y-6" aria-hidden="true">
+              {/* Hero card */}
+              <div className="rounded-[20px] border border-black/10 bg-white px-5 py-5 shadow-[0_10px_34px_rgba(0,0,0,0.04)]">
+                <div className="flex items-center gap-4">
+                  <div className="h-24 w-24 shrink-0 rounded-[24px] bg-gray-200" />
+                  <div className="flex-1 space-y-3">
+                    <div className="h-7 w-48 rounded-lg bg-gray-200" />
+                    <div className="h-4 w-72 rounded bg-gray-200" />
+                    <div className="h-6 w-32 rounded-full bg-gray-200" />
+                  </div>
+                </div>
               </div>
-              <span className="sr-only">Loading workspace data</span>
-            </div>
-          )}
 
+              {/* Two-column grid */}
+              <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_340px]">
+                {/* Main cards */}
+                <div className="space-y-6">
+                  <div className="rounded-[20px] border border-black/10 bg-white px-5 py-5 shadow-[0_10px_34px_rgba(0,0,0,0.04)]">
+                    <div className="mb-4 h-5 w-40 rounded bg-gray-200" />
+                    <div className="space-y-3">
+                      <div className="h-9 rounded-lg bg-gray-100" />
+                      <div className="h-9 rounded-lg bg-gray-100" />
+                      <div className="h-20 rounded-lg bg-gray-100" />
+                    </div>
+                  </div>
+                  <div className="rounded-[20px] border border-black/10 bg-white px-5 py-5 shadow-[0_10px_34px_rgba(0,0,0,0.04)]">
+                    <div className="mb-4 h-5 w-48 rounded bg-gray-200" />
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="h-9 rounded-lg bg-gray-100" />
+                      <div className="h-9 rounded-lg bg-gray-100" />
+                      <div className="h-9 rounded-lg bg-gray-100" />
+                      <div className="h-9 rounded-lg bg-gray-100" />
+                    </div>
+                  </div>
+                  <div className="rounded-[20px] border border-black/10 bg-white px-5 py-5 shadow-[0_10px_34px_rgba(0,0,0,0.04)]">
+                    <div className="mb-4 h-5 w-36 rounded bg-gray-200" />
+                    <div className="space-y-3">
+                      <div className="h-9 rounded-lg bg-gray-100" />
+                      <div className="h-9 rounded-lg bg-gray-100" />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Sidebar cards */}
+                <div className="space-y-6">
+                  <div className="rounded-[20px] border border-black/10 bg-white px-5 py-5 shadow-[0_10px_34px_rgba(0,0,0,0.04)]">
+                    <div className="mb-4 h-5 w-28 rounded bg-gray-200" />
+                    <div className="space-y-2">
+                      <div className="h-8 rounded-lg bg-gray-100" />
+                      <div className="h-8 rounded-lg bg-gray-100" />
+                      <div className="h-8 rounded-lg bg-gray-100" />
+                      <div className="h-8 rounded-lg bg-gray-100" />
+                    </div>
+                  </div>
+                  <div className="rounded-[20px] border border-black/10 bg-white px-5 py-5 shadow-[0_10px_34px_rgba(0,0,0,0.04)]">
+                    <div className="mb-3 h-5 w-32 rounded bg-gray-200" />
+                    <div className="h-28 rounded-lg bg-gray-100" />
+                  </div>
+                  <div className="rounded-[20px] border border-black/10 bg-white px-5 py-5 shadow-[0_10px_34px_rgba(0,0,0,0.04)]">
+                    <div className="mb-3 h-5 w-24 rounded bg-gray-200" />
+                    <div className="space-y-2">
+                      <div className="h-6 w-full rounded bg-gray-100" />
+                      <div className="h-6 w-4/5 rounded bg-gray-100" />
+                      <div className="h-6 w-3/5 rounded bg-gray-100" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ) : (
           <AnimatePresence mode="wait" initial={false}>
             {activeView === 'profile' ? (
               renderProfilePage()
@@ -7169,6 +7213,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
               </motion.div>
             )}
           </AnimatePresence>
+          )} {/* end isDashboardLoading ternary */}
         </div>
       </main>
 
