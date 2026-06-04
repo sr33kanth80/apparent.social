@@ -2351,6 +2351,7 @@ export const saveProductLaunch = async (
 export const deleteProductLaunch = async (
   user: AppUser,
   launchId: string,
+  assetUrls: string[] = [],
 ): Promise<void> => {
   // Remove from localStorage regardless (handles dev mode and cache).
   const key = storageKey(user, 'product-launches');
@@ -2381,6 +2382,18 @@ export const deleteProductLaunch = async (
     .eq('owner_id', user.id); // RLS guard: only owner can delete
 
   if (error) throw error;
+
+  // Best-effort R2 asset cleanup — only HTTPS URLs (skips dev data: fallbacks).
+  const r2Urls = assetUrls.filter((u) => u.startsWith('https://'));
+  if (r2Urls.length > 0) {
+    try {
+      await fetch('/api/upload/delete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ urls: r2Urls }),
+      });
+    } catch { /* non-fatal */ }
+  }
 };
 
 export const saveMeetup = async (

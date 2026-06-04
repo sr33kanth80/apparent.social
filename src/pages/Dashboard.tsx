@@ -2726,8 +2726,16 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
   const handleDeleteProductLaunch = async (launch: ProductLaunch) => {
     if (!window.confirm(`Delete "${launch.name}"? This cannot be undone.`)) return;
     try {
-      await deleteProductLaunch(user, launch.id);
+      const assetUrls = [
+        launch.logoUrl,
+        launch.bannerUrl,
+        launch.demoVideoUrl,
+        launch.pitchVideoUrl,
+        launch.pitchDeckUrl,
+      ].filter(Boolean) as string[];
+      await deleteProductLaunch(user, launch.id, assetUrls);
       setProductLaunches((current) => current.filter((l) => l.id !== launch.id));
+      setPublicLaunches((current) => current.filter((l) => l.id !== launch.id));
       // If the deleted launch was selected, fall back to the next one.
       setSelectedLaunchId((current) =>
         current === launch.id
