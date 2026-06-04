@@ -1250,7 +1250,9 @@ export const loadPublicProductLaunches = async (
   return launches;
 };
 
-export const loadFounderVCContacts = async (): Promise<VCContact[]> => {
+export const loadFounderVCContacts = async (
+  onCached?: (contacts: VCContact[]) => void,
+): Promise<VCContact[]> => {
   const loadSeedContacts = async () => {
     const { vcContactSeed } = await import('@/data/vc-contact-seed');
     return vcContactSeed;
@@ -1281,8 +1283,12 @@ export const loadFounderVCContacts = async (): Promise<VCContact[]> => {
   const VC_CACHE_TTL_MS = 60 * 60 * 1000;
   const vcCached = readCache<VCContact[]>(VC_CACHE_KEY);
   if (vcCached && Date.now() - vcCached.ts < VC_CACHE_TTL_MS) {
+    // Fresh cache — call onCached and return immediately, no network call.
+    if (onCached) onCached(vcCached.data);
     return vcCached.data;
   }
+  // Stale/empty cache — show seed or stale data immediately while fetching.
+  if (onCached) onCached(vcCached?.data ?? seedContacts);
 
   const rows: Record<string, unknown>[] = [];
   const pageSize = 1000;

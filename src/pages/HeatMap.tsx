@@ -616,6 +616,7 @@ export const HeatMap = ({
 }: HeatMapProps) => {
   const [publishedLaunches, setPublishedLaunches] = useState<ProductLaunch[]>([]);
   const [vcContacts, setVcContacts] = useState<VCContact[]>([]);
+  const [isLoadingContacts, setIsLoadingContacts] = useState(true);
   const [mode, setMode] = useState<HeatMapMode>('all');
   const [selectedPoint, setSelectedPoint] = useState<HeatMapPoint | null>(null);
   const [infoDismissed, setInfoDismissed] = useState(false);
@@ -669,14 +670,26 @@ export const HeatMap = ({
 
   useEffect(() => {
     let isMounted = true;
+    setIsLoadingContacts(true);
 
-    Promise.all([
-      loadPublicProductLaunches(),
-      includeVCContacts ? loadFounderVCContacts() : Promise.resolve([]),
-    ]).then(([launches, contacts]) => {
+    const launchesPromise = loadPublicProductLaunches((cached) => {
+      if (isMounted) setPublishedLaunches(cached);
+    });
+
+    const contactsPromise = includeVCContacts
+      ? loadFounderVCContacts((cached) => {
+          if (isMounted) {
+            setVcContacts(cached);
+            setIsLoadingContacts(false); // seed/stale data is enough to show the map
+          }
+        })
+      : Promise.resolve([]);
+
+    Promise.all([launchesPromise, contactsPromise]).then(([launches, contacts]) => {
       if (isMounted) {
         setPublishedLaunches(launches);
         setVcContacts(contacts);
+        setIsLoadingContacts(false);
       }
     });
 
@@ -813,6 +826,16 @@ export const HeatMap = ({
           >
             <ApparentHeatmapLayers points={filteredPoints} selectedId={selectedVisiblePoint?.id} onPointSelect={setSelectedPoint} />
           </Map>
+
+          {/* Loading indicator — shown while VC contacts are being fetched */}
+          {isLoadingContacts && includeVCContacts && (
+            <div className="pointer-events-none absolute bottom-5 left-1/2 z-30 -translate-x-1/2">
+              <div className="flex items-center gap-2 rounded-full border border-black/10 bg-white/90 px-3.5 py-2 text-xs font-medium text-black/60 shadow-[0_4px_20px_rgba(0,0,0,0.10)] backdrop-blur">
+                <span className="h-3 w-3 animate-spin rounded-full border-2 border-black/20 border-t-black/60" />
+                Loading VC data…
+              </div>
+            </div>
+          )}
 
           {/* Founder VC filters — narrow by stage/type/contactability, heat by sector fit */}
           {vcOnly && (
