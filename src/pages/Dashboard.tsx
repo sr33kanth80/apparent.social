@@ -253,6 +253,43 @@ const founderIntakeFields: IntakeField[] = [
   { key: 'pastProducts', label: 'Past products', placeholder: 'List past products or projects, one per line.', kind: 'textarea' },
 ];
 
+// Founder profile sidebar sections — groups the 15 intake fields into 5
+// focused panels so the user isn't staring at one mega-form.
+type ProfileSectionKey = 'about' | 'links' | 'traction' | 'raising' | 'visibility';
+const profileSections: { key: ProfileSectionKey; label: string; description: string; fieldKeys: string[] }[] = [
+  {
+    key: 'about',
+    label: 'About',
+    description: 'Who you are and what you build.',
+    fieldKeys: ['profileName', 'headline', 'bio', 'currentBuild', 'category', 'stage', 'location'],
+  },
+  {
+    key: 'links',
+    label: 'Links',
+    description: 'Where investors can verify and follow you.',
+    fieldKeys: ['website', 'github', 'linkedin', 'xProfile', 'press'],
+  },
+  {
+    key: 'traction',
+    label: 'Traction & History',
+    description: 'Past products, MRR, and who you want to meet.',
+    fieldKeys: ['mrr', 'lookingFor', 'pastProducts'],
+  },
+];
+
+// Founder products wizard — multi-step launch flow for new products only.
+// Editing an existing launch keeps the all-sections-visible layout.
+type WizardStep = { key: string; label: string; description: string };
+const launchWizardSteps: WizardStep[] = [
+  { key: 'basics', label: 'Basics', description: 'Name, tagline, category, links.' },
+  { key: 'brand', label: 'Brand', description: 'Logo and banner image.' },
+  { key: 'story', label: 'Story', description: 'Intro and demo video.' },
+  { key: 'team', label: 'Team', description: 'Who is building this.' },
+  { key: 'pitchbook', label: 'Pitch Book', description: 'Optional investor materials.' },
+  { key: 'traction', label: 'Traction', description: 'Proof and metrics.' },
+  { key: 'review', label: 'Review', description: 'Preview and publish.' },
+];
+
 const dashboardLaunchFilters = ['Today', 'Trending', 'AI', 'Devtools', 'Fintech', 'Data', 'Infra', 'Productivity', 'Audio', 'Security', 'Open Source', 'Climate', 'Health', 'Nearby'];
 const founderSignalOptions = [
   'Women-led',
@@ -881,6 +918,12 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
   const [messageStatusFilter, setMessageStatusFilter] = useState<MessageStatusFilter>('all');
   const [launchDraft, setLaunchDraft] = useState(emptyLaunchDraft);
   const [selectedLaunchId, setSelectedLaunchId] = useState('');
+  // Founder profile sidebar — which section is currently open.
+  const [profileSection, setProfileSection] = useState<'about' | 'links' | 'traction' | 'raising' | 'visibility'>('about');
+  // Founder products page mode + wizard step.
+  // Modes: 'list' (grid view), 'wizard' (new launch flow), 'edit' (full edit form).
+  const [productsMode, setProductsMode] = useState<'list' | 'wizard' | 'edit'>('list');
+  const [wizardStep, setWizardStep] = useState(0);
   const [launchCommentDrafts, setLaunchCommentDrafts] = useState<Record<string, string>>({});
   const [launchEngagement, setLaunchEngagement] = useState<
     Record<string, { upvoted: boolean; upvotes: number; comments: string[] }>
@@ -1151,6 +1194,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
   const launchCompletion = Math.round(
     (launchChecklist.filter((item) => item.done).length / launchChecklist.length) * 100,
   );
+  void launchCompletion;
   const getLaunchEngagement = (launch: ProductLaunch) =>
     launchEngagement[launch.id] ?? {
       upvoted: false,
@@ -3254,6 +3298,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
             </>
           ) : (
             <>
+              {/* HERO — avatar, name, headline, public-profile link, photo upload */}
               <section className="rounded-[20px] border border-black/10 bg-white shadow-[0_10px_34px_rgba(0,0,0,0.04)]">
                 <div className="px-5 py-5">
                   <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
@@ -3279,238 +3324,280 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
                         </a>
                       </div>
                     </div>
-                    <div className="flex flex-wrap gap-2">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="rounded-full bg-[#f4f1eb] px-3 py-1.5 text-xs font-medium text-gray-600">
+                        {completedFieldCount}/{intakeFields.length} complete
+                      </span>
                       <label className="cursor-pointer rounded-full border border-black/10 px-3 py-1.5 text-xs font-semibold hover:bg-[#fbf8f3]">
                         <input type="file" accept="image/*" className="hidden" onChange={(event) => handleProfileAssetUpload(event.target.files?.[0])} />
                         Upload photo
                       </label>
                     </div>
                   </div>
-                  <div className="mt-5">
-                    <input value={intakeValues.profilePhotoUrl ?? ''} onChange={(event) => handleIntakeChange('profilePhotoUrl', event.target.value)} placeholder="Profile photo URL" className="h-9 border border-black/10 bg-white px-3 text-sm outline-none placeholder:text-gray-400 focus:border-black/30" />
-                  </div>
                 </div>
               </section>
 
-              {/* Investor interest — the come-back-next-week loop */}
-              <section className="rounded-[20px] border border-black/10 bg-white shadow-[0_10px_34px_rgba(0,0,0,0.04)]">
-                <div className="flex items-center justify-between gap-3 px-5 py-4">
-                  <div>
-                    <h3 className="text-sm font-semibold">Investor interest</h3>
-                    <p className="mt-1 text-xs text-gray-500">Who&apos;s tracking you on Apparent right now.</p>
+              {/* MAIN LAYOUT — sidebar nav (left) + section content (right) + right rail */}
+              <section className="grid gap-6 lg:grid-cols-[220px_minmax(0,1fr)_320px]">
+                {/* Sidebar nav */}
+                <aside className="space-y-1 self-start rounded-[20px] border border-black/10 bg-white p-3 shadow-[0_10px_34px_rgba(0,0,0,0.04)] lg:sticky lg:top-6">
+                  {[
+                    ...profileSections.map((s) => ({ key: s.key as ProfileSectionKey, label: s.label })),
+                    { key: 'raising' as ProfileSectionKey, label: 'Raising' },
+                    { key: 'visibility' as ProfileSectionKey, label: 'Visibility & Trust' },
+                  ].map((s) => {
+                    const isActive = profileSection === s.key;
+                    return (
+                      <button
+                        key={s.key}
+                        type="button"
+                        onClick={() => setProfileSection(s.key)}
+                        className={`w-full rounded-xl px-3 py-2.5 text-left text-sm font-medium transition-colors ${
+                          isActive ? `${accentSurface} ${accentForeground}` : 'text-gray-600 hover:bg-[#fbf8f3]'
+                        }`}
+                      >
+                        {s.label}
+                      </button>
+                    );
+                  })}
+                  <div className="mt-3 border-t border-black/5 pt-3 px-2">
+                    <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-gray-400">Auto-save</p>
+                    <p className="mt-1 text-xs text-gray-500">
+                      {autoSaveStatus === 'saving' && 'Saving…'}
+                      {autoSaveStatus === 'saved' && '✓ All changes saved'}
+                      {autoSaveStatus === 'error' && 'Save failed — try again'}
+                      {autoSaveStatus === 'idle' && 'Changes save automatically'}
+                    </p>
                   </div>
-                  <span className="shrink-0 rounded-full bg-[#dcefc7] px-3 py-1.5 text-xs font-semibold text-[#42520d]">
-                    {founderInterest.saveCount} tracking
-                  </span>
-                </div>
-                <div className="space-y-3 px-5 pb-5">
-                  {founderInterest.saveCount > 0 ? (
-                    <p className="text-sm leading-relaxed text-gray-600">
-                      {founderInterest.saveCount} investor{founderInterest.saveCount === 1 ? '' : 's'} saved your profile
-                      {founderInterest.recentSaverNames.length > 0 && (
-                        <> — including {founderInterest.recentSaverNames.slice(0, 3).join(', ')}</>
-                      )}
-                      .
-                    </p>
-                  ) : vcInterest.length === 0 ? (
-                    <p className="text-sm leading-relaxed text-gray-500">
-                      No investors are tracking you yet. Set your status to{' '}
-                      <span className="font-medium text-[#42520d]">Raising now</span> and complete your profile so thesis-fit investors surface you.
-                    </p>
-                  ) : null}
+                </aside>
 
-                  {vcInterest.length > 0 && (
-                    <div className="space-y-2 border-t border-black/5 pt-3">
-                      <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[#42520d]">
-                        Investors who liked you
-                      </p>
-                      {vcInterest.map((entry) => (
-                        <div key={entry.id} className="flex items-center gap-3 rounded-xl bg-[#fbfaf7] px-3 py-2.5">
-                          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#42520d] text-xs font-semibold text-white">
-                            {(entry.investorName || 'VC').slice(0, 2).toUpperCase()}
+                {/* Section content */}
+                <div className="space-y-6">
+                  {/* About / Links / Traction sections — driven by profileSections data */}
+                  {profileSections.map((section) => {
+                    if (section.key !== profileSection) return null;
+                    const fields = section.fieldKeys
+                      .map((k) => founderIntakeFields.find((f) => f.key === k))
+                      .filter((f): f is IntakeField => Boolean(f));
+                    return (
+                      <section key={section.key} className="rounded-[20px] border border-black/10 bg-white shadow-[0_10px_34px_rgba(0,0,0,0.04)]">
+                        <div className="border-b border-black/10 px-5 py-4">
+                          <h3 className="text-sm font-semibold">{section.label}</h3>
+                          <p className="mt-1 text-xs text-gray-500">{section.description}</p>
+                        </div>
+                        <div className="divide-y divide-black/10">
+                          {fields.map((field) => (
+                            <label key={field.key} className="grid gap-3 px-5 py-4 transition-colors hover:bg-[#fbf8f3] md:grid-cols-[220px_1fr]">
+                              <div>
+                                <p className="text-sm font-medium">{field.label}</p>
+                                <p className="mt-1 text-xs text-gray-400">{intakeValues[field.key]?.trim() ? 'Captured' : 'Optional'}</p>
+                              </div>
+                              {field.kind === 'textarea' ? (
+                                <textarea value={intakeValues[field.key] ?? ''} onChange={(event) => handleIntakeChange(field.key, event.target.value)} placeholder={field.placeholder} className="min-h-20 w-full resize-none border-0 bg-transparent text-sm leading-relaxed outline-none placeholder:text-gray-400" />
+                              ) : field.kind === 'select' ? (
+                                <select value={intakeValues[field.key] ?? ''} onChange={(event) => handleIntakeChange(field.key, event.target.value)} className="h-8 w-full border-0 bg-transparent text-sm outline-none">
+                                  <option value="">{field.placeholder}</option>
+                                  {field.options?.map((option) => (
+                                    <option key={option} value={option}>{option}</option>
+                                  ))}
+                                </select>
+                              ) : (
+                                <input value={intakeValues[field.key] ?? ''} onChange={(event) => handleIntakeChange(field.key, event.target.value)} placeholder={field.placeholder} className="h-8 w-full border-0 bg-transparent text-sm outline-none placeholder:text-gray-400" />
+                              )}
+                            </label>
+                          ))}
+                        </div>
+                      </section>
+                    );
+                  })}
+
+                  {/* RAISING section */}
+                  {profileSection === 'raising' && (
+                    <section className="rounded-[20px] border border-black/10 bg-white shadow-[0_10px_34px_rgba(0,0,0,0.04)]">
+                      <div className="border-b border-black/10 px-5 py-4">
+                        <h3 className="text-sm font-semibold">Fundraising status</h3>
+                        <p className="mt-1 text-xs text-gray-500">Tell thesis-fit investors whether you&apos;re raising — this is what surfaces you in their &ldquo;Raising now&rdquo; view.</p>
+                      </div>
+                      <div className="space-y-4 px-5 py-4">
+                        <div className="flex flex-wrap gap-2">
+                          {([['raising', 'Raising now'], ['open', 'Open to intros'], ['not_raising', 'Not raising']] as const).map(([value, label]) => {
+                            const active = (intakeValues.fundraisingStatus ?? 'not_raising') === value;
+                            return (
+                              <button
+                                key={value}
+                                type="button"
+                                onClick={() => handleIntakeChange('fundraisingStatus', value)}
+                                className={`rounded-full px-4 py-2 text-xs font-semibold transition-colors ${active ? 'bg-[#42520d] text-white' : 'bg-[#f4f1eb] text-gray-600 hover:bg-[#dcefc7]'}`}
+                              >
+                                {label}
+                              </button>
+                            );
+                          })}
+                        </div>
+                        {(intakeValues.fundraisingStatus === 'raising' || intakeValues.fundraisingStatus === 'open') && (
+                          <div className="grid gap-3 sm:grid-cols-2">
+                            <label className="grid gap-1">
+                              <span className="text-xs font-medium text-gray-500">Round</span>
+                              <input value={intakeValues.raisingRound ?? ''} onChange={(event) => handleIntakeChange('raisingRound', event.target.value)} placeholder="Pre-seed / Seed / Series A" className="h-9 border border-black/10 bg-white px-3 text-sm outline-none placeholder:text-gray-400 focus:border-black/30" />
+                            </label>
+                            <label className="grid gap-1">
+                              <span className="text-xs font-medium text-gray-500">Amount</span>
+                              <input value={intakeValues.raisingAmount ?? ''} onChange={(event) => handleIntakeChange('raisingAmount', event.target.value)} placeholder="$1.5M" className="h-9 border border-black/10 bg-white px-3 text-sm outline-none placeholder:text-gray-400 focus:border-black/30" />
+                            </label>
+                            <label className="grid gap-1 sm:col-span-2">
+                              <span className="text-xs font-medium text-gray-500">What you&apos;re looking for</span>
+                              <textarea value={intakeValues.raisingAsk ?? ''} onChange={(event) => handleIntakeChange('raisingAsk', event.target.value)} placeholder="A lead for our pre-seed; investors who understand devtools GTM." className="min-h-16 resize-none border border-black/10 bg-white px-3 py-2 text-sm outline-none placeholder:text-gray-400 focus:border-black/30" />
+                            </label>
                           </div>
-                          <div className="min-w-0">
-                            <p className="truncate text-sm font-medium">{entry.investorName || 'An investor'}</p>
-                            <p className="text-xs text-gray-500">
-                              {entry.kind === 'superlike' ? 'Wants to talk — check Messages' : 'Liked your profile'}
-                            </p>
-                          </div>
-                          {entry.kind === 'like' && (
+                        )}
+                        <label className="flex items-center justify-between gap-3 rounded-xl bg-[#fbf8f3] px-4 py-3">
+                          <span className="text-sm">
+                            <span className="font-medium">Open to investor contact</span>
+                            <span className="mt-0.5 block text-xs text-gray-500">Let thesis-fit investors reach out to you directly through Apparent.</span>
+                          </span>
+                          <button
+                            type="button"
+                            role="switch"
+                            aria-checked={(intakeValues.openToContact ?? 'true') !== 'false'}
+                            onClick={() => handleIntakeChange('openToContact', (intakeValues.openToContact ?? 'true') !== 'false' ? 'false' : 'true')}
+                            className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors ${(intakeValues.openToContact ?? 'true') !== 'false' ? 'bg-[#42520d]' : 'bg-gray-200'}`}
+                          >
+                            <span className={`inline-block h-3.5 w-3.5 translate-x-0.5 rounded-full bg-white shadow transition-transform ${(intakeValues.openToContact ?? 'true') !== 'false' ? 'translate-x-[1.125rem]' : ''}`} />
+                          </button>
+                        </label>
+                      </div>
+                    </section>
+                  )}
+
+                  {/* VISIBILITY & TRUST section */}
+                  {profileSection === 'visibility' && (
+                    <>
+                      <section className="rounded-[20px] border border-black/10 bg-white shadow-[0_10px_34px_rgba(0,0,0,0.04)]">
+                        <div className="border-b border-black/10 px-5 py-4">
+                          <h3 className="text-sm font-semibold">Public profile</h3>
+                          <p className="mt-1 text-xs text-gray-500">
+                            Control what&apos;s visible on{' '}
+                            <a
+                              href={`/@${user.username ?? user.email.split('@')[0].toLowerCase().replace(/[^a-z0-9]/g, '')}`}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="font-medium text-[#42520d] underline underline-offset-2"
+                            >
+                              /@{user.username ?? user.email.split('@')[0].toLowerCase().replace(/[^a-z0-9]/g, '')}
+                            </a>
+                          </p>
+                        </div>
+                        <div className="space-y-3 px-5 py-4">
+                          <label className="flex items-center justify-between gap-3 rounded-xl bg-[#fbf8f3] px-4 py-3">
+                            <span className="text-sm">
+                              <span className="font-medium">
+                                {intakeValues.publicProfileEnabled === 'true' ? 'Public profile on' : 'Private (platform only)'}
+                              </span>
+                              <span className="mt-0.5 block text-xs text-gray-500">
+                                {intakeValues.publicProfileEnabled === 'true'
+                                  ? 'Visible to the internet. Only checked fields shown.'
+                                  : 'Visible only to signed-in Apparent members.'}
+                              </span>
+                            </span>
                             <button
                               type="button"
-                              onClick={() => handleMessageInterestedVc(entry)}
-                              className="ml-auto shrink-0 rounded-full bg-[#42520d] px-3 py-1.5 text-xs font-semibold text-white transition hover:opacity-90"
+                              role="switch"
+                              aria-checked={intakeValues.publicProfileEnabled === 'true'}
+                              onClick={() => handleIntakeChange('publicProfileEnabled', intakeValues.publicProfileEnabled === 'true' ? 'false' : 'true')}
+                              className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors ${intakeValues.publicProfileEnabled === 'true' ? 'bg-[#42520d]' : 'bg-gray-200'}`}
                             >
-                              Message
+                              <span className={`inline-block h-3.5 w-3.5 translate-x-0.5 rounded-full bg-white shadow transition-transform ${intakeValues.publicProfileEnabled === 'true' ? 'translate-x-[1.125rem]' : ''}`} />
                             </button>
-                          )}
+                          </label>
                         </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </section>
+                      </section>
 
-              {/* Fundraising intent — the opt-in signal pure scrapers can't have */}
-              <section className="rounded-[20px] border border-black/10 bg-white shadow-[0_10px_34px_rgba(0,0,0,0.04)]">
-                <div className="border-b border-black/10 px-5 py-4">
-                  <h3 className="text-sm font-semibold">Fundraising status</h3>
-                  <p className="mt-1 text-xs text-gray-500">Tell thesis-fit investors whether you&apos;re raising — this is what surfaces you in their &ldquo;Raising now&rdquo; view.</p>
-                </div>
-                <div className="space-y-4 px-5 py-4">
-                  <div className="flex flex-wrap gap-2">
-                    {([['raising', 'Raising now'], ['open', 'Open to intros'], ['not_raising', 'Not raising']] as const).map(([value, label]) => {
-                      const active = (intakeValues.fundraisingStatus ?? 'not_raising') === value;
-                      return (
-                        <button
-                          key={value}
-                          type="button"
-                          onClick={() => handleIntakeChange('fundraisingStatus', value)}
-                          className={`rounded-full px-4 py-2 text-xs font-semibold transition-colors ${active ? 'bg-[#42520d] text-white' : 'bg-[#f4f1eb] text-gray-600 hover:bg-[#dcefc7]'}`}
-                        >
-                          {label}
-                        </button>
-                      );
-                    })}
-                  </div>
-                  {(intakeValues.fundraisingStatus === 'raising' || intakeValues.fundraisingStatus === 'open') && (
-                    <div className="grid gap-3 sm:grid-cols-2">
-                      <label className="grid gap-1">
-                        <span className="text-xs font-medium text-gray-500">Round</span>
-                        <input value={intakeValues.raisingRound ?? ''} onChange={(event) => handleIntakeChange('raisingRound', event.target.value)} placeholder="Pre-seed / Seed / Series A" className="h-9 border border-black/10 bg-white px-3 text-sm outline-none placeholder:text-gray-400 focus:border-black/30" />
-                      </label>
-                      <label className="grid gap-1">
-                        <span className="text-xs font-medium text-gray-500">Amount</span>
-                        <input value={intakeValues.raisingAmount ?? ''} onChange={(event) => handleIntakeChange('raisingAmount', event.target.value)} placeholder="$1.5M" className="h-9 border border-black/10 bg-white px-3 text-sm outline-none placeholder:text-gray-400 focus:border-black/30" />
-                      </label>
-                      <label className="grid gap-1 sm:col-span-2">
-                        <span className="text-xs font-medium text-gray-500">What you&apos;re looking for</span>
-                        <textarea value={intakeValues.raisingAsk ?? ''} onChange={(event) => handleIntakeChange('raisingAsk', event.target.value)} placeholder="A lead for our pre-seed; investors who understand devtools GTM." className="min-h-16 resize-none border border-black/10 bg-white px-3 py-2 text-sm outline-none placeholder:text-gray-400 focus:border-black/30" />
-                      </label>
-                    </div>
-                  )}
-                  <label className="flex items-center justify-between gap-3 rounded-xl bg-[#fbf8f3] px-4 py-3">
-                    <span className="text-sm">
-                      <span className="font-medium">Open to investor contact</span>
-                      <span className="mt-0.5 block text-xs text-gray-500">Let thesis-fit investors reach out to you directly through Apparent.</span>
-                    </span>
-                    <button
-                      type="button"
-                      role="switch"
-                      aria-checked={(intakeValues.openToContact ?? 'true') !== 'false'}
-                      onClick={() => handleIntakeChange('openToContact', (intakeValues.openToContact ?? 'true') !== 'false' ? 'false' : 'true')}
-                      className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors ${(intakeValues.openToContact ?? 'true') !== 'false' ? 'bg-[#42520d]' : 'bg-gray-200'}`}
-                    >
-                      <span className={`inline-block h-3.5 w-3.5 translate-x-0.5 rounded-full bg-white shadow transition-transform ${(intakeValues.openToContact ?? 'true') !== 'false' ? 'translate-x-[1.125rem]' : ''}`} />
-                    </button>
-                  </label>
-                </div>
-              </section>
-
-              <section className="rounded-[20px] border border-black/10 bg-white shadow-[0_10px_34px_rgba(0,0,0,0.04)]">
-                <div className="flex flex-col gap-3 border-b border-black/10 px-5 py-4 md:flex-row md:items-center md:justify-between">
-                  <div>
-                    <h3 className="text-sm font-semibold">Your Profile</h3>
-                    <p className="mt-1 text-xs text-gray-500">Build your founder presence for people you want to meet. Product traction belongs on individual launches.</p>
-                  </div>
-                  <span className="rounded-full bg-[#f4f1eb] px-3 py-1.5 text-xs text-gray-600">{completedFieldCount}/{intakeFields.length} complete</span>
-                </div>
-                <div className="divide-y divide-black/10">
-                  {founderIntakeFields.map((field) => (
-                    <label key={field.key} className="grid gap-3 px-5 py-4 transition-colors hover:bg-[#fbf8f3] md:grid-cols-[260px_1fr]">
-                      <div>
-                        <p className="text-sm font-medium">{field.label}</p>
-                        <p className="mt-1 text-xs text-gray-400">{intakeValues[field.key]?.trim() ? 'Captured' : 'Optional'}</p>
-                      </div>
-                      {field.kind === 'textarea' ? (
-                        <textarea value={intakeValues[field.key] ?? ''} onChange={(event) => handleIntakeChange(field.key, event.target.value)} placeholder={field.placeholder} className="min-h-20 w-full resize-none border-0 bg-transparent text-sm leading-relaxed outline-none placeholder:text-gray-400" />
-                      ) : field.kind === 'select' ? (
-                        <select value={intakeValues[field.key] ?? ''} onChange={(event) => handleIntakeChange(field.key, event.target.value)} className="h-8 w-full border-0 bg-transparent text-sm outline-none">
-                          <option value="">{field.placeholder}</option>
-                          {field.options?.map((option) => (
-                            <option key={option} value={option}>{option}</option>
-                          ))}
-                        </select>
-                      ) : (
-                        <input value={intakeValues[field.key] ?? ''} onChange={(event) => handleIntakeChange(field.key, event.target.value)} placeholder={field.placeholder} className="h-8 w-full border-0 bg-transparent text-sm outline-none placeholder:text-gray-400" />
-                      )}
-                    </label>
-                  ))}
-                </div>
-                <div className="flex flex-col gap-3 border-t border-black/10 px-5 py-4 sm:flex-row sm:items-center sm:justify-end">
-                  <button className={`rounded-full ${accentSurface} px-5 py-2.5 text-sm font-medium ${accentForeground} transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60`} onClick={handleSaveProfile} disabled={isSavingWorkspace}>
-                    {isSavingWorkspace ? 'Saving...' : 'Save profile'}
-                  </button>
-                </div>
-              </section>
-
-              {/* Trust layer — prove GitHub ownership so VCs trust the link is
-                  really yours. Verified status shows on the public profile. */}
-              <section className="grid gap-6 md:grid-cols-2">
-                <GithubVerifyCard user={user} github={intakeValues.github ?? ''} />
-                {/* Stripe connect lands here in the next phase. */}
-                <div className="rounded-[18px] border border-dashed border-black/15 bg-[#fbfaf7] p-5">
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-semibold text-black/70">Connect Stripe</span>
-                    <span className="rounded-full bg-black/5 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-black/45">
-                      Soon
-                    </span>
-                  </div>
-                  <p className="mt-2 text-xs leading-5 text-black/55">
-                    Link your Stripe (read-only) so investors see real monthly revenue on your launches — your numbers, straight from the source. No badge, no claims, just a connected fact.
-                  </p>
-                </div>
-              </section>
-
-              <section className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">
-                <div className="rounded-[20px] border border-black/10 bg-white shadow-[0_10px_34px_rgba(0,0,0,0.04)]">
-                  <div className="flex items-center justify-between border-b border-black/10 px-5 py-4">
-                    <div>
-                      <h3 className="text-sm font-semibold">Products launched on Apparent</h3>
-                      <p className="mt-1 text-xs text-gray-500">Anything you launch from Products appears here automatically.</p>
-                    </div>
-                    <button type="button" className={`rounded-full ${accentSurface} px-3 py-1.5 text-xs font-semibold ${accentForeground}`} onClick={() => handleDashboardViewChange('products')}>
-                      Add product
-                    </button>
-                  </div>
-                  <div className="divide-y divide-black/10">
-                    {productLaunches.map((launch) => (
-                      <article key={launch.id} className="px-5 py-4">
-                        <div className="flex items-start gap-3">
-                          <div className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-[14px] bg-[#fbfaf7]">
-                            {launch.logoUrl ? <img src={launch.logoUrl} alt="" className="h-full w-full object-cover" /> : <LogoIcon className="h-5 w-5 text-black" />}
+                      <section className="grid gap-6 md:grid-cols-2">
+                        <GithubVerifyCard user={user} github={intakeValues.github ?? ''} />
+                        <div className="rounded-[18px] border border-dashed border-black/15 bg-[#fbfaf7] p-5">
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm font-semibold text-black/70">Connect Stripe</span>
+                            <span className="rounded-full bg-black/5 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-black/45">
+                              Soon
+                            </span>
                           </div>
-                          <div>
-                            <p className="text-sm font-semibold">{launch.name}</p>
-                            <p className="mt-1 text-sm leading-6 text-gray-600">{launch.tagline}</p>
-                            <div className="mt-2 flex flex-wrap gap-2 text-xs text-gray-500">
-                              <span>{launch.category || 'Product'}</span>
-                              <span>-</span>
-                              <span>{launch.stage || 'Launched'}</span>
+                          <p className="mt-2 text-xs leading-5 text-black/55">
+                            Link your Stripe (read-only) so investors see real monthly revenue on your launches — your numbers, straight from the source.
+                          </p>
+                        </div>
+                      </section>
+                    </>
+                  )}
+                </div>
+
+                {/* Right rail — investor interest preview */}
+                <aside className="space-y-6 self-start lg:sticky lg:top-6">
+                  <section className="rounded-[20px] border border-black/10 bg-white shadow-[0_10px_34px_rgba(0,0,0,0.04)]">
+                    <div className="flex items-center justify-between gap-3 px-5 py-4">
+                      <h3 className="text-sm font-semibold">Investor interest</h3>
+                      <span className="shrink-0 rounded-full bg-[#dcefc7] px-3 py-1 text-xs font-semibold text-[#42520d]">
+                        {founderInterest.saveCount} tracking
+                      </span>
+                    </div>
+                    <div className="space-y-3 px-5 pb-5">
+                      {founderInterest.saveCount > 0 ? (
+                        <p className="text-xs leading-5 text-gray-600">
+                          {founderInterest.saveCount} investor{founderInterest.saveCount === 1 ? '' : 's'} saved your profile
+                          {founderInterest.recentSaverNames.length > 0 && (
+                            <> — including {founderInterest.recentSaverNames.slice(0, 3).join(', ')}</>
+                          )}.
+                        </p>
+                      ) : vcInterest.length === 0 ? (
+                        <p className="text-xs leading-5 text-gray-500">
+                          No investors tracking you yet. Set status to{' '}
+                          <span className="font-medium text-[#42520d]">Raising now</span> to surface.
+                        </p>
+                      ) : null}
+                      {vcInterest.length > 0 && (
+                        <div className="space-y-2 border-t border-black/5 pt-3">
+                          <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-[#42520d]">
+                            Who liked you
+                          </p>
+                          {vcInterest.slice(0, 4).map((entry) => (
+                            <div key={entry.id} className="flex items-center gap-2 rounded-xl bg-[#fbfaf7] px-2.5 py-2">
+                              <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#42520d] text-[10px] font-semibold text-white">
+                                {(entry.investorName || 'VC').slice(0, 2).toUpperCase()}
+                              </div>
+                              <div className="min-w-0 flex-1">
+                                <p className="truncate text-xs font-medium">{entry.investorName || 'An investor'}</p>
+                                <p className="text-[10px] text-gray-500">
+                                  {entry.kind === 'superlike' ? 'Wants to talk' : 'Liked'}
+                                </p>
+                              </div>
+                              {entry.kind === 'like' && (
+                                <button
+                                  type="button"
+                                  onClick={() => handleMessageInterestedVc(entry)}
+                                  className="shrink-0 rounded-full bg-[#42520d] px-2.5 py-1 text-[10px] font-semibold text-white hover:opacity-90"
+                                >
+                                  Message
+                                </button>
+                              )}
                             </div>
-                          </div>
+                          ))}
                         </div>
-                      </article>
-                    ))}
-                    {productLaunches.length === 0 && (
-                      <div className="px-5 py-10 text-sm leading-6 text-gray-500">No Apparent launches yet. You can still use your profile to meet founders, investors, and collaborators.</div>
-                    )}
-                  </div>
-                </div>
+                      )}
+                    </div>
+                  </section>
 
-                <aside className="rounded-[20px] border border-black/10 bg-white shadow-[0_10px_34px_rgba(0,0,0,0.04)]">
-                  <div className="border-b border-black/10 px-5 py-4">
-                    <h3 className="text-sm font-semibold">Past products</h3>
-                    <p className="mt-1 text-xs text-gray-500">Projects you list on your profile, even if they were not launched here.</p>
-                  </div>
-                  <div className="divide-y divide-black/10">
-                    {pastProducts.map((product) => (
-                      <div key={product} className="px-5 py-3 text-sm text-gray-700">{product}</div>
-                    ))}
-                    {pastProducts.length === 0 && (
-                      <div className="px-5 py-8 text-sm leading-6 text-gray-500">Add past products in your profile details to show your build history.</div>
-                    )}
-                  </div>
+                  <section className="rounded-[20px] border border-black/10 bg-white shadow-[0_10px_34px_rgba(0,0,0,0.04)]">
+                    <div className="border-b border-black/10 px-5 py-3">
+                      <h3 className="text-sm font-semibold">Past products</h3>
+                    </div>
+                    <div className="divide-y divide-black/10">
+                      {pastProducts.slice(0, 5).map((product) => (
+                        <div key={product} className="px-5 py-2.5 text-xs text-gray-700">{product}</div>
+                      ))}
+                      {pastProducts.length === 0 && (
+                        <div className="px-5 py-5 text-xs leading-5 text-gray-500">Add past products under Traction & History.</div>
+                      )}
+                    </div>
+                  </section>
                 </aside>
               </section>
             </>
@@ -3520,9 +3607,54 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
     );
   };
 
+  // Start a fresh new-launch wizard: reset draft, mode=wizard, step=0.
+  const startNewLaunch = () => {
+    setLaunchDraft(emptyLaunchDraft());
+    setWizardStep(0);
+    setProductsMode('wizard');
+  };
+
+  // Open the all-sections edit form for an existing launch.
+  const startEditLaunch = (launch: ProductLaunch) => {
+    setLaunchDraft({
+      id: launch.id,
+      name: launch.name,
+      tagline: launch.tagline,
+      intro: launch.intro ?? '',
+      category: launch.category,
+      stage: launch.stage,
+      location: launch.location ?? '',
+      launchUrl: launch.launchUrl,
+      proofUrl: launch.proofUrl,
+      logoUrl: launch.logoUrl ?? '',
+      bannerUrl: launch.bannerUrl ?? '',
+      demoVideoUrl: launch.demoVideoUrl ?? '',
+      pitchVideoUrl: launch.pitchVideoUrl ?? '',
+      pitchDeckUrl: launch.pitchDeckUrl ?? '',
+      pitchBookNote: launch.pitchBookNote ?? '',
+      pitchVisibility: launch.pitchVisibility ?? 'public',
+      founderSignals: launch.founderSignals ?? [],
+      teamSummary: launch.teamSummary ?? '',
+      teamMembersText: (launch.teamMembers ?? []).map((m) => `${m.name} - ${m.role} - ${m.bio} - ${m.profileUrl ?? ''}`).join('\n'),
+      customerSummary: launch.customerSummary ?? '',
+      techStack: launch.techStack ?? '',
+      fundingStatus: launch.fundingStatus ?? '',
+      lookingFor: launch.lookingFor ?? '',
+      metrics: launch.metrics ?? '',
+    });
+    setProductsMode('edit');
+  };
+
+  const exitLaunchForm = () => {
+    setProductsMode('list');
+    setLaunchDraft(emptyLaunchDraft());
+    setWizardStep(0);
+  };
+
   const renderProductsPage = () => {
     const liveLaunch = selectedLiveLaunch;
     const liveEngagement = liveLaunch ? getLaunchEngagement(liveLaunch) : null;
+    void liveLaunch; void liveEngagement;
 
     return (
       <motion.div
@@ -3533,6 +3665,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
         transition={{ duration: 0.22, ease: 'easeOut' }}
       >
         <div id="products" className="mx-auto max-w-[1292px] scroll-mt-24 space-y-6">
+          {/* HERO — adapts label/CTA based on mode */}
           <section className="rounded-[20px] border border-black/10 bg-white shadow-[0_10px_34px_rgba(0,0,0,0.04)]">
             <div className="flex flex-col gap-4 px-5 py-5 md:flex-row md:items-center md:justify-between">
               <div className="flex items-start gap-3">
@@ -3540,23 +3673,426 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
                   <Rocket className="h-5 w-5" />
                 </span>
                 <div>
-                  <h2 className="mt-1 text-2xl font-normal tracking-[-0.03em] font-serif">Launch into Apparent</h2>
+                  <h2 className="mt-1 text-2xl font-normal tracking-[-0.03em] font-serif">
+                    {productsMode === 'list'
+                      ? 'Your launches'
+                      : productsMode === 'wizard'
+                        ? `New launch — ${launchWizardSteps[wizardStep].label}`
+                        : `Editing ${launchDraft.name || 'launch'}`}
+                  </h2>
                   <p className="mt-2 max-w-2xl text-sm leading-6 text-gray-600">
-                    Add the product, proof, and traction investors need to evaluate the launch. Once it is live, the launch can be discovered, upvoted, commented on, and connected back to your founder profile.
+                    {productsMode === 'list'
+                      ? 'Manage products you have launched on Apparent. Edit details, replace media, or delete a launch.'
+                      : productsMode === 'wizard'
+                        ? launchWizardSteps[wizardStep].description
+                        : 'All sections visible. Changes save when you click Save.'}
                   </p>
                 </div>
               </div>
               <div className="flex items-center gap-3 text-sm">
-                <span className="rounded-full bg-[#f4f1eb] px-3 py-1.5 font-medium text-gray-600">
-                  {productLaunches.length} live
-                </span>
-                <span className="rounded-full bg-[#dcefc7] px-3 py-1.5 font-semibold text-black">
-                  {launchCompletion}% ready
-                </span>
+                {productsMode === 'list' ? (
+                  <>
+                    <span className="rounded-full bg-[#f4f1eb] px-3 py-1.5 font-medium text-gray-600">
+                      {productLaunches.length} live
+                    </span>
+                    <button
+                      type="button"
+                      onClick={startNewLaunch}
+                      className={`inline-flex items-center gap-1.5 rounded-full ${accentSurface} px-4 py-2 text-sm font-semibold ${accentForeground} transition-opacity hover:opacity-90`}
+                    >
+                      <Plus className="h-4 w-4" /> New launch
+                    </button>
+                  </>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={exitLaunchForm}
+                    className="inline-flex items-center gap-1.5 rounded-full border border-black/10 px-4 py-2 text-sm font-semibold hover:bg-[#fbf8f3]"
+                  >
+                    <ChevronLeft className="h-4 w-4" /> Back to launches
+                  </button>
+                )}
               </div>
             </div>
           </section>
 
+          {/* GRID VIEW — default landing for the Products page */}
+          {productsMode === 'list' && (
+            <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {/* New launch tile — first card */}
+              <button
+                type="button"
+                onClick={startNewLaunch}
+                className="flex h-full min-h-[220px] flex-col items-center justify-center gap-3 rounded-[20px] border-2 border-dashed border-black/15 bg-white p-6 text-center transition-colors hover:border-[#42520d]/40 hover:bg-[#fbf8f3]"
+              >
+                <span className={`flex h-12 w-12 items-center justify-center rounded-full ${accentSurface} ${accentForeground}`}>
+                  <Plus className="h-6 w-6" />
+                </span>
+                <span className="text-sm font-semibold">Launch a new product</span>
+                <span className="text-xs text-gray-500">7-step guided flow</span>
+              </button>
+
+              {productLaunches.map((launch) => {
+                const engagement = getLaunchEngagement(launch);
+                return (
+                  <article key={launch.id} className="flex flex-col overflow-hidden rounded-[20px] border border-black/10 bg-white shadow-[0_10px_34px_rgba(0,0,0,0.04)]">
+                    {/* Banner / fallback */}
+                    <div className="aspect-[16/8] bg-[#fbfaf7]">
+                      {launch.bannerUrl ? (
+                        <img src={launch.bannerUrl} alt="" className="h-full w-full object-cover" />
+                      ) : (
+                        <div className="flex h-full items-center justify-center text-xs font-semibold uppercase tracking-[0.12em] text-gray-300">
+                          No banner
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex flex-1 flex-col gap-3 p-4">
+                      <div className="flex items-start gap-3">
+                        <div className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-[12px] bg-[#fbfaf7]">
+                          {launch.logoUrl ? (
+                            <img src={launch.logoUrl} alt="" className="h-full w-full object-cover" />
+                          ) : (
+                            <LogoIcon className="h-5 w-5 text-black" />
+                          )}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <div className="flex flex-wrap items-center gap-1.5">
+                            <p className="truncate text-base font-semibold tracking-[-0.01em]">{launch.name}</p>
+                            <span className="rounded-full bg-[#dcefc7] px-2 py-0.5 text-[10px] font-semibold text-black">Live</span>
+                          </div>
+                          <p className="mt-1 line-clamp-2 text-xs leading-5 text-gray-600">{launch.tagline}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2 text-[11px] text-gray-500">
+                        <span>{launch.category || 'Product'}</span>
+                        <span>·</span>
+                        <span>{launch.stage || 'Launched'}</span>
+                        <span className="ml-auto inline-flex items-center gap-1">
+                          <ChevronUp className="h-3 w-3" />
+                          {engagement.upvotes}
+                        </span>
+                        <span className="inline-flex items-center gap-1">
+                          <MessageSquare className="h-3 w-3" />
+                          {engagement.comments.length}
+                        </span>
+                      </div>
+                      <div className="mt-auto flex gap-2 pt-2">
+                        <button
+                          type="button"
+                          onClick={() => startEditLaunch(launch)}
+                          className={`flex-1 rounded-full ${accentSurface} px-3 py-2 text-xs font-semibold ${accentForeground} transition-opacity hover:opacity-90`}
+                        >
+                          Edit
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteProductLaunch(launch)}
+                          className="inline-flex items-center gap-1 rounded-full border border-red-200 px-3 py-2 text-xs font-semibold text-red-500 hover:bg-red-50"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                    </div>
+                  </article>
+                );
+              })}
+
+              {productLaunches.length === 0 && (
+                <div className="col-span-full rounded-[20px] border border-black/10 bg-white p-10 text-center shadow-[0_10px_34px_rgba(0,0,0,0.04)]">
+                  <Rocket className="mx-auto h-8 w-8 text-[#42520d]" />
+                  <h3 className="mt-3 text-base font-semibold">Launch your first product</h3>
+                  <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-gray-600">
+                    Publishing a product puts you on Builder Radar and in front of thesis-fit investors. The wizard walks you through it.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={startNewLaunch}
+                    className={`mt-4 inline-flex items-center gap-1.5 rounded-full ${accentSurface} px-4 py-2 text-sm font-semibold ${accentForeground}`}
+                  >
+                    <Plus className="h-4 w-4" /> Start launch wizard
+                  </button>
+                </div>
+              )}
+            </section>
+          )}
+
+          {/* WIZARD VIEW — progress dots + step content */}
+          {productsMode === 'wizard' && (
+            <section className="rounded-[20px] border border-black/10 bg-white shadow-[0_10px_34px_rgba(0,0,0,0.04)]">
+              {/* Progress bar */}
+              <div className="border-b border-black/10 px-5 py-4">
+                <div className="flex items-center gap-2">
+                  {launchWizardSteps.map((step, idx) => {
+                    const isDone = idx < wizardStep;
+                    const isActive = idx === wizardStep;
+                    return (
+                      <div key={step.key} className="flex flex-1 items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => setWizardStep(idx)}
+                          className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-semibold transition-colors ${
+                            isDone ? 'bg-[#42520d] text-white' : isActive ? `${accentSurface} ${accentForeground}` : 'bg-[#f4f1eb] text-gray-500'
+                          }`}
+                          title={step.label}
+                        >
+                          {isDone ? <Check className="h-3.5 w-3.5" /> : idx + 1}
+                        </button>
+                        {idx < launchWizardSteps.length - 1 && (
+                          <div className={`h-px flex-1 ${idx < wizardStep ? 'bg-[#42520d]' : 'bg-black/10'}`} />
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+                <p className="mt-3 text-xs text-gray-500">
+                  Step {wizardStep + 1} of {launchWizardSteps.length} — {launchWizardSteps[wizardStep].label}
+                </p>
+              </div>
+
+              {/* Step content */}
+              <div className="px-5 py-5 space-y-5">
+                {/* STEP 0: BASICS */}
+                {wizardStep === 0 && (
+                  <div className="grid gap-4">
+                    <label className="grid gap-1">
+                      <span className="text-sm font-medium">Product name</span>
+                      <input className="h-10 rounded-lg border border-black/10 bg-white px-3 text-sm outline-none focus:border-black/30" placeholder="KernelTrace" value={launchDraft.name} onChange={(e) => setLaunchDraft((c) => ({ ...c, name: e.target.value }))} />
+                    </label>
+                    <label className="grid gap-1">
+                      <span className="text-sm font-medium">Tagline</span>
+                      <input className="h-10 rounded-lg border border-black/10 bg-white px-3 text-sm outline-none focus:border-black/30" placeholder="GitHub-native analytics for engineering leaders." value={launchDraft.tagline} onChange={(e) => setLaunchDraft((c) => ({ ...c, tagline: e.target.value }))} />
+                    </label>
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      <label className="grid gap-1">
+                        <span className="text-sm font-medium">Category</span>
+                        <input className="h-10 rounded-lg border border-black/10 bg-white px-3 text-sm outline-none focus:border-black/30" placeholder="AI devtools" value={launchDraft.category} onChange={(e) => setLaunchDraft((c) => ({ ...c, category: e.target.value }))} />
+                      </label>
+                      <label className="grid gap-1">
+                        <span className="text-sm font-medium">Stage</span>
+                        <select className="h-10 rounded-lg border border-black/10 bg-white px-3 text-sm outline-none focus:border-black/30" value={launchDraft.stage} onChange={(e) => setLaunchDraft((c) => ({ ...c, stage: e.target.value }))}>
+                          {founderStageOptions.map((s) => (<option key={s} value={s}>{s}</option>))}
+                        </select>
+                      </label>
+                    </div>
+                    <label className="grid gap-1">
+                      <span className="text-sm font-medium">Location</span>
+                      <input className="h-10 rounded-lg border border-black/10 bg-white px-3 text-sm outline-none focus:border-black/30" placeholder={intakeValues.location || 'San Francisco, Remote, New York'} value={launchDraft.location} onChange={(e) => setLaunchDraft((c) => ({ ...c, location: e.target.value }))} />
+                    </label>
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      <label className="grid gap-1">
+                        <span className="text-sm font-medium">Product URL</span>
+                        <input className="h-10 rounded-lg border border-black/10 bg-white px-3 text-sm outline-none focus:border-black/30" placeholder="https://yourproduct.com" value={launchDraft.launchUrl} onChange={(e) => setLaunchDraft((c) => ({ ...c, launchUrl: e.target.value }))} />
+                      </label>
+                      <label className="grid gap-1">
+                        <span className="text-sm font-medium">Proof URL</span>
+                        <input className="h-10 rounded-lg border border-black/10 bg-white px-3 text-sm outline-none focus:border-black/30" placeholder="GitHub, demo, customer story" value={launchDraft.proofUrl} onChange={(e) => setLaunchDraft((c) => ({ ...c, proofUrl: e.target.value }))} />
+                      </label>
+                    </div>
+                  </div>
+                )}
+
+                {/* STEP 1: BRAND */}
+                {wizardStep === 1 && (
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <label className="cursor-pointer rounded-[14px] border border-dashed border-black/15 p-4 transition-colors hover:bg-[#fbf8f3]">
+                      <input type="file" accept="image/*" className="hidden" onChange={(e) => handleLaunchAssetUpload('logoUrl', e.target.files?.[0])} />
+                      <div className="flex h-24 w-24 mx-auto items-center justify-center overflow-hidden rounded-xl bg-[#fbfaf7]">
+                        {launchDraft.logoUrl ? <img src={launchDraft.logoUrl} alt="" className="h-full w-full object-cover" /> : <Image className="h-8 w-8 text-gray-400" />}
+                      </div>
+                      <p className="mt-3 text-center text-sm font-semibold">Upload logo</p>
+                      <p className="mt-1 text-center text-xs text-gray-500">Square mark, 512×512+</p>
+                    </label>
+                    <label className="cursor-pointer rounded-[14px] border border-dashed border-black/15 p-4 transition-colors hover:bg-[#fbf8f3]">
+                      <input type="file" accept="image/*" className="hidden" onChange={(e) => handleLaunchAssetUpload('bannerUrl', e.target.files?.[0])} />
+                      <div className="aspect-[16/8] overflow-hidden rounded-xl bg-[#fbfaf7]">
+                        {launchDraft.bannerUrl ? <img src={launchDraft.bannerUrl} alt="" className="h-full w-full object-cover" /> : <div className="flex h-full items-center justify-center"><Image className="h-8 w-8 text-gray-400" /></div>}
+                      </div>
+                      <p className="mt-3 text-center text-sm font-semibold">Upload banner</p>
+                      <p className="mt-1 text-center text-xs text-gray-500">Wide image, 1600×800+</p>
+                    </label>
+                  </div>
+                )}
+
+                {/* STEP 2: STORY */}
+                {wizardStep === 2 && (
+                  <div className="grid gap-4">
+                    <label className="grid gap-1">
+                      <span className="text-sm font-medium">Intro</span>
+                      <textarea className="min-h-32 rounded-lg border border-black/10 bg-white px-3 py-2 text-sm leading-relaxed outline-none focus:border-black/30" placeholder="What did you build, who is it for, and why does it matter now?" value={launchDraft.intro} onChange={(e) => setLaunchDraft((c) => ({ ...c, intro: e.target.value }))} />
+                    </label>
+                    <label className="flex cursor-pointer items-center gap-3 rounded-[14px] border border-dashed border-black/15 p-4 transition-colors hover:bg-[#fbf8f3]">
+                      <input type="file" accept="video/*" className="hidden" onChange={(e) => handleLaunchAssetUpload('demoVideoUrl', e.target.files?.[0])} />
+                      <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#fbfaf7]"><Video className="h-6 w-6 text-gray-500" /></span>
+                      <div>
+                        <p className="text-sm font-semibold">{launchDraft.demoVideoUrl ? 'Replace demo video' : 'Upload demo video'}</p>
+                        <p className="text-xs text-gray-500">Product walkthrough, 1-2 min</p>
+                      </div>
+                    </label>
+                  </div>
+                )}
+
+                {/* STEP 3: TEAM */}
+                {wizardStep === 3 && (
+                  <div className="grid gap-4">
+                    <label className="grid gap-1">
+                      <span className="text-sm font-medium">Team members</span>
+                      <span className="text-xs text-gray-500">One per line: name - role - bio - Apparent profile URL</span>
+                      <textarea className="min-h-28 rounded-lg border border-black/10 bg-white px-3 py-2 text-sm leading-relaxed outline-none focus:border-black/30" placeholder="Maya Chen - Founder & CEO - Built infra tooling at scale - /profile/user-id" value={launchDraft.teamMembersText} onChange={(e) => setLaunchDraft((c) => ({ ...c, teamMembersText: e.target.value }))} />
+                    </label>
+                    <label className="grid gap-1">
+                      <span className="text-sm font-medium">Team summary</span>
+                      <textarea className="min-h-20 rounded-lg border border-black/10 bg-white px-3 py-2 text-sm leading-relaxed outline-none focus:border-black/30" placeholder="Who is building this, why this team, notable background." value={launchDraft.teamSummary} onChange={(e) => setLaunchDraft((c) => ({ ...c, teamSummary: e.target.value }))} />
+                    </label>
+                    <label className="grid gap-1">
+                      <span className="text-sm font-medium">Customer summary</span>
+                      <textarea className="min-h-20 rounded-lg border border-black/10 bg-white px-3 py-2 text-sm leading-relaxed outline-none focus:border-black/30" placeholder="Customer pull, usage, revenue, pilots, waitlist, or deployment context." value={launchDraft.customerSummary} onChange={(e) => setLaunchDraft((c) => ({ ...c, customerSummary: e.target.value }))} />
+                    </label>
+                    <label className="grid gap-1">
+                      <span className="text-sm font-medium">Tech stack</span>
+                      <input className="h-10 rounded-lg border border-black/10 bg-white px-3 text-sm outline-none focus:border-black/30" placeholder="React, Postgres, agents, evals, Python" value={launchDraft.techStack} onChange={(e) => setLaunchDraft((c) => ({ ...c, techStack: e.target.value }))} />
+                    </label>
+                  </div>
+                )}
+
+                {/* STEP 4: PITCH BOOK */}
+                {wizardStep === 4 && (
+                  <div className="grid gap-4">
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      <label className="cursor-pointer rounded-[14px] border border-dashed border-black/15 p-4 transition-colors hover:bg-[#fbf8f3]">
+                        <input type="file" accept="video/*" className="hidden" onChange={(e) => handleLaunchAssetUpload('pitchVideoUrl', e.target.files?.[0])} />
+                        <div className="flex items-center gap-3">
+                          <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#fbfaf7]"><Video className="h-6 w-6 text-gray-500" /></span>
+                          <div>
+                            <p className="text-sm font-semibold">{launchDraft.pitchVideoUrl ? 'Replace pitch video' : '30-second pitch'}</p>
+                            <p className="text-xs text-gray-500">Founder talking-head</p>
+                          </div>
+                        </div>
+                      </label>
+                      <label className="cursor-pointer rounded-[14px] border border-dashed border-black/15 p-4 transition-colors hover:bg-[#fbf8f3]">
+                        <input type="file" accept=".pdf,.ppt,.pptx,application/pdf,application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.presentationml.presentation" className="hidden" onChange={(e) => handleLaunchAssetUpload('pitchDeckUrl', e.target.files?.[0])} />
+                        <div className="flex items-center gap-3">
+                          <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#fbfaf7]"><FileText className="h-6 w-6 text-gray-500" /></span>
+                          <div>
+                            <p className="text-sm font-semibold">{launchDraft.pitchDeckUrl ? 'Replace pitch deck' : 'Pitch deck'}</p>
+                            <p className="text-xs text-gray-500">PDF or PPT</p>
+                          </div>
+                        </div>
+                      </label>
+                    </div>
+                    <label className="grid gap-1">
+                      <span className="text-sm font-medium">Investor note</span>
+                      <textarea className="min-h-24 rounded-lg border border-black/10 bg-white px-3 py-2 text-sm leading-relaxed outline-none focus:border-black/30" placeholder="Why now, who is pulling, and what kind of help or capital would be useful." value={launchDraft.pitchBookNote} onChange={(e) => setLaunchDraft((c) => ({ ...c, pitchBookNote: e.target.value }))} />
+                    </label>
+                    <div className="grid gap-2">
+                      <span className="text-sm font-medium">Pitch Book visibility</span>
+                      <div className="flex flex-wrap gap-2">
+                        {(['public', 'investors'] as const).map((v) => (
+                          <button key={v} type="button" onClick={() => setLaunchDraft((c) => ({ ...c, pitchVisibility: v }))} className={`rounded-full px-3 py-1.5 text-xs font-semibold transition-colors ${launchDraft.pitchVisibility === v ? `${accentSurface} ${accentForeground}` : 'bg-[#fbfaf7] text-black/60 hover:bg-[#f4f1eb]'}`}>
+                            {v === 'public' ? 'Public' : 'Investors only'}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                    <div className="grid gap-2">
+                      <span className="text-sm font-medium">Founder background signals</span>
+                      <p className="text-xs text-gray-500">Optional, self-selected, used for investor discovery filters.</p>
+                      <div className="flex flex-wrap gap-2">
+                        {founderSignalOptions.map((s) => {
+                          const isSelected = launchDraft.founderSignals.includes(s);
+                          return (
+                            <button key={s} type="button" onClick={() => toggleLaunchFounderSignal(s)} className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors ${isSelected ? `${accentSurface} border-transparent ${accentForeground}` : 'border-black/10 text-black/60 hover:bg-[#fbfaf7]'}`}>
+                              {s}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* STEP 5: TRACTION */}
+                {wizardStep === 5 && (
+                  <div className="grid gap-4">
+                    <label className="grid gap-1">
+                      <span className="text-sm font-medium">Metrics & traction</span>
+                      <textarea className="min-h-32 rounded-lg border border-black/10 bg-white px-3 py-2 text-sm leading-relaxed outline-none focus:border-black/30" placeholder="Two design partners, 1,200 weekly runs, 340 GitHub stars." value={launchDraft.metrics} onChange={(e) => setLaunchDraft((c) => ({ ...c, metrics: e.target.value }))} />
+                    </label>
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      <label className="grid gap-1">
+                        <span className="text-sm font-medium">Funding status</span>
+                        <input className="h-10 rounded-lg border border-black/10 bg-white px-3 text-sm outline-none focus:border-black/30" placeholder="Pre-seed closing" value={launchDraft.fundingStatus} onChange={(e) => setLaunchDraft((c) => ({ ...c, fundingStatus: e.target.value }))} />
+                      </label>
+                      <label className="grid gap-1">
+                        <span className="text-sm font-medium">Looking for</span>
+                        <input className="h-10 rounded-lg border border-black/10 bg-white px-3 text-sm outline-none focus:border-black/30" placeholder="Design partners in fintech" value={launchDraft.lookingFor} onChange={(e) => setLaunchDraft((c) => ({ ...c, lookingFor: e.target.value }))} />
+                      </label>
+                    </div>
+                  </div>
+                )}
+
+                {/* STEP 6: REVIEW */}
+                {wizardStep === 6 && (
+                  <div className="grid gap-4">
+                    <div className="rounded-[16px] border border-black/10 bg-[#fbfaf7] p-5">
+                      <p className="text-xs font-semibold uppercase tracking-[0.14em] text-gray-500">Preview</p>
+                      <div className="mt-3 flex items-start gap-3">
+                        <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-[12px] bg-white">
+                          {launchDraft.logoUrl ? <img src={launchDraft.logoUrl} alt="" className="h-full w-full object-cover" /> : <LogoIcon className="h-5 w-5 text-black" />}
+                        </div>
+                        <div>
+                          <p className="text-lg font-semibold">{launchDraft.name || 'Your product'}</p>
+                          <p className="mt-1 text-sm text-gray-600">{launchDraft.tagline || 'Your tagline'}</p>
+                          <p className="mt-1 text-xs text-gray-500">{launchDraft.category} · {launchDraft.stage} · {launchDraft.location}</p>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="rounded-[12px] border border-black/10 bg-[#fbf8f3] px-4 py-3 text-xs leading-5 text-gray-600">
+                      Launching here makes the product eligible for the Apparent front page, investor discovery, comments, and founder profile traffic.
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Wizard nav buttons */}
+              <div className="flex flex-col gap-3 border-t border-black/10 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+                <button
+                  type="button"
+                  onClick={() => setWizardStep((s) => Math.max(0, s - 1))}
+                  disabled={wizardStep === 0}
+                  className="inline-flex items-center gap-1.5 rounded-full border border-black/10 px-4 py-2 text-sm font-semibold disabled:opacity-40"
+                >
+                  <ChevronLeft className="h-4 w-4" /> Back
+                </button>
+                {wizardStep < launchWizardSteps.length - 1 ? (
+                  <button
+                    type="button"
+                    onClick={() => setWizardStep((s) => Math.min(launchWizardSteps.length - 1, s + 1))}
+                    disabled={wizardStep === 0 && !launchDraft.name.trim()}
+                    className={`inline-flex items-center gap-1.5 rounded-full ${accentSurface} px-5 py-2 text-sm font-semibold ${accentForeground} disabled:cursor-not-allowed disabled:opacity-60`}
+                  >
+                    Continue <ChevronRight className="h-4 w-4" />
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      await handleSaveProductLaunch();
+                      setProductsMode('list');
+                      setWizardStep(0);
+                    }}
+                    disabled={savingWorkflow === 'launch' || !launchDraft.name.trim()}
+                    className={`inline-flex items-center gap-1.5 rounded-full ${accentSurface} px-5 py-2 text-sm font-semibold ${accentForeground} disabled:cursor-not-allowed disabled:opacity-60`}
+                  >
+                    <LogoIcon className="h-4 w-4" />
+                    {savingWorkflow === 'launch' ? 'Launching…' : 'Launch on Apparent'}
+                  </button>
+                )}
+              </div>
+            </section>
+          )}
+
+          {/* EDIT MODE — existing all-sections form (retained as-is below) */}
+          {productsMode === 'edit' && (
           <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
             <section className="rounded-[20px] border border-black/10 bg-white shadow-[0_10px_34px_rgba(0,0,0,0.04)]">
               <div className="flex items-center justify-between border-b border-black/10 px-5 py-4">
@@ -3933,17 +4469,29 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
 
               <div className="flex flex-col gap-3 border-t border-black/10 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
                 <p className="text-xs leading-5 text-gray-500">
-                  Launching here makes the product eligible for the Apparent front page, investor discovery, comments, and founder profile traffic.
+                  All sections visible. Changes save when you click below.
                 </p>
-                <button
-                  type="button"
-                  className={`inline-flex items-center justify-center gap-2 rounded-full ${accentSurface} px-5 py-2.5 text-sm font-semibold ${accentForeground} transition-colors hover:bg-[#cfe8b8] disabled:cursor-not-allowed disabled:opacity-60`}
-                  onClick={handleSaveProductLaunch}
-                  disabled={savingWorkflow === 'launch'}
-                >
-                  <LogoIcon className="h-4 w-4 shrink-0 text-current" />
-                  {savingWorkflow === 'launch' ? 'Launching...' : 'Launch on Apparent'}
-                </button>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={exitLaunchForm}
+                    className="rounded-full border border-black/10 px-4 py-2 text-sm font-semibold hover:bg-[#fbf8f3]"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    className={`inline-flex items-center justify-center gap-2 rounded-full ${accentSurface} px-5 py-2.5 text-sm font-semibold ${accentForeground} transition-colors hover:bg-[#cfe8b8] disabled:cursor-not-allowed disabled:opacity-60`}
+                    onClick={async () => {
+                      await handleSaveProductLaunch();
+                      setProductsMode('list');
+                    }}
+                    disabled={savingWorkflow === 'launch'}
+                  >
+                    <Check className="h-4 w-4" />
+                    {savingWorkflow === 'launch' ? 'Saving…' : 'Save changes'}
+                  </button>
+                </div>
               </div>
             </section>
 
@@ -4065,12 +4613,17 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
               </section>
             </aside>
           </div>
+          )} {/* end productsMode === 'edit' wrapper */}
 
+          {/* Live launches list — kept available in list mode for inline engagement
+              (upvotes, comments). The card grid above is for browsing/managing;
+              this section is the social-engagement surface. */}
+          {productsMode === 'list' && productLaunches.length > 0 && (
           <section className="rounded-[20px] border border-black/10 bg-white shadow-[0_10px_34px_rgba(0,0,0,0.04)]">
             <div className="flex flex-col gap-2 border-b border-black/10 px-5 py-4 md:flex-row md:items-center md:justify-between">
               <div>
-                <h3 className="text-sm font-semibold">Live launches</h3>
-                <p className="mt-1 text-xs text-gray-500">This is the interaction surface investors and other founders will use.</p>
+                <h3 className="text-sm font-semibold">Engagement</h3>
+                <p className="mt-1 text-xs text-gray-500">Upvotes and comments on your live launches.</p>
               </div>
               {liveLaunch && (
                 <button
@@ -4182,19 +4735,11 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
                 );
               })}
 
-              {productLaunches.length === 0 && (
-                <EmptyState
-                  icon={<Rocket className="h-5 w-5" />}
-                  title="Launch your first product"
-                  body="Publishing a product is what gets you discovered — it puts you on Builder Radar and in front of thesis-fit investors. Add proof, traction, and a link."
-                  ctaLabel="Launch a product"
-                  onCta={() => setIsLaunchFormOpen(true)}
-                />
-              )}
             </div>
           </section>
+          )} {/* end productsMode === 'list' engagement wrapper */}
 
-          {liveLaunch && liveEngagement && (
+          {productsMode === 'list' && liveLaunch && liveEngagement && (
             <section className="overflow-hidden rounded-[20px] border border-black/10 bg-white shadow-[0_10px_34px_rgba(0,0,0,0.04)]">
               {liveLaunch.bannerUrl && (
                 <div className="aspect-[5/1] min-h-32 bg-[#fbfaf7]">
