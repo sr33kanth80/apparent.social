@@ -5,7 +5,6 @@ import {
   BadgeCheck,
   Briefcase,
   Check,
-  ChevronRight,
   FileText,
   Globe,
   Link as LinkIcon,
@@ -15,7 +14,6 @@ import {
   Plus,
   Send,
   Share2,
-  Target,
   X,
 } from 'lucide-react';
 import { LogoIcon } from '@/components/LogoIcon';
@@ -963,12 +961,14 @@ const InvestorProfilePage = ({
 }) => {
   const visible = (key: string) => profile.publicFields.includes(key);
 
-  const infoRows = [
-    visible('sectors') && profile.sectors && { icon: Target, label: 'Sectors', value: profile.sectors },
-    visible('stage') && profile.stage && { icon: ChevronRight, label: 'Stage', value: profile.stage },
-    visible('geography') && profile.geography && { icon: MapPin, label: 'Geography', value: profile.geography },
-    visible('checkSize') && profile.checkSize && { icon: Briefcase, label: 'Check size', value: profile.checkSize },
-  ].filter(Boolean) as { icon: React.ElementType; label: string; value: string }[];
+  const name = profile.displayName || profile.username;
+
+  const facts = [
+    visible('sectors') && profile.sectors && { label: 'Sectors', value: profile.sectors },
+    visible('stage') && profile.stage && { label: 'Stage', value: profile.stage },
+    visible('geography') && profile.geography && { label: 'Geography', value: profile.geography },
+    visible('checkSize') && profile.checkSize && { label: 'Check size', value: profile.checkSize },
+  ].filter(Boolean) as { label: string; value: string }[];
 
   const portfolioList = visible('portfolioExamples')
     ? profile.portfolioExamples.split(',').map((s) => s.trim()).filter(Boolean)
@@ -976,62 +976,55 @@ const InvestorProfilePage = ({
 
   return (
     <main className="overflow-x-hidden bg-[#fbfaf7] text-black">
-      {/* ── Profile card hero ── */}
-      <section className="mx-auto max-w-[82rem] px-5 pb-10 pt-12 sm:px-8 md:pt-16">
-        <div className="overflow-hidden rounded-[32px] border border-black/10 bg-white/80 shadow-[0_18px_60px_rgba(0,0,0,0.06)]">
-          {/* Banner */}
-          <div className="h-24 bg-gradient-to-r from-[#42520d] via-[#6b8222] to-[#42520d] sm:h-28" />
-
-          <div className="px-6 pb-7 sm:px-8">
-            {/* Avatar overlaps the banner */}
-            <div className="-mt-12 w-fit rounded-[26px] ring-4 ring-white sm:-mt-14">
-              <Avatar src={profile.profilePhotoUrl} name={profile.displayName || profile.username} bg="#42520d" />
-            </div>
-
-            {/* Name + actions */}
-            <div className="mt-4 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-              <div className="min-w-0">
-                <h1 className="text-3xl font-normal leading-tight tracking-[-0.03em] sm:text-[2.6rem]" style={serif}>
-                  {profile.displayName || profile.username}
-                </h1>
-                <p className="mt-1 text-sm font-semibold text-black/55">@{profile.username}</p>
-              </div>
-              <div className="flex flex-wrap items-center gap-2">
-                <MessageButton viewer={viewer} name={profile.displayName || profile.username} onMessage={onMessage} />
-                {profile.shareable !== false && (
-                  <ShareButton username={profile.username} name={profile.displayName || profile.username} />
-                )}
-              </div>
-            </div>
-
-            {/* Status pills + geography */}
-            <div className="mt-5 flex flex-wrap items-center gap-2">
-              <span className="rounded-full bg-[#42520d] px-3 py-1 text-xs font-semibold text-white">Investor on Apparent</span>
-              {visible('geography') && profile.geography && (
-                <span className="flex items-center gap-1 text-xs font-semibold text-black/65">
-                  <MapPin className="h-4 w-4 text-[#e7483d]" fill="currentColor" /> {profile.geography}
-                </span>
-              )}
-            </div>
-
-            {visible('thesis') && profile.thesis && (
-              <p className="mt-6 max-w-3xl text-lg leading-7 text-black/70">{profile.thesis}</p>
-            )}
-          </div>
-
-          {/* Investment parameters grid */}
-          {infoRows.length > 0 && (
-            <div className="grid gap-px border-t border-black/5 bg-black/[0.06] sm:grid-cols-2 lg:grid-cols-4">
-              {infoRows.map(({ icon: Icon, label, value }) => (
-                <div key={label} className="bg-[#fbfaf7] px-6 py-5 sm:px-8">
-                  <Icon className="mb-3 h-4 w-4 text-[#42520d]" />
-                  <p className="text-xs font-semibold uppercase tracking-[0.12em] text-black/40">{label}</p>
-                  <p className="mt-1.5 text-sm leading-6 text-black/70">{value}</p>
-                </div>
-              ))}
-            </div>
+      {/* ── Hero — open editorial layout, mirrors FounderHero ── */}
+      <section className="mx-auto max-w-[64rem] px-5 pt-12 sm:px-8 md:pt-16">
+        {/* Action bar */}
+        <div className="mb-8 flex flex-wrap items-center justify-end gap-2">
+          <MessageButton viewer={viewer} name={name} onMessage={onMessage} />
+          {profile.shareable !== false && (
+            <ShareButton username={profile.username} name={name} />
           )}
         </div>
+
+        {/* Pill row */}
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="rounded-full bg-[#42520d] px-3 py-1 text-xs font-semibold text-white">
+            Investor on Apparent
+          </span>
+        </div>
+
+        {/* Header row: avatar + name */}
+        <div className="mt-6 flex flex-wrap items-center gap-4">
+          <Avatar src={profile.profilePhotoUrl} name={name} bg="#42520d" />
+          <div className="min-w-0">
+            <p className="truncate text-2xl font-normal tracking-[-0.02em]" style={serif}>{name}</p>
+            <p className="mt-0.5 text-xs font-semibold text-black/55">@{profile.username}</p>
+          </div>
+        </div>
+
+        {/* Thesis — where founder's headline lives */}
+        {visible('thesis') && profile.thesis ? (
+          <p className="mt-5 max-w-3xl text-base leading-7 text-black/70">{profile.thesis}</p>
+        ) : (
+          <div className="mt-5 space-y-2">
+            <div className="h-4 w-2/3 max-w-md rounded bg-[#e8e4da]" />
+            <div className="h-4 w-1/2 max-w-xs rounded bg-[#e8e4da]" />
+          </div>
+        )}
+
+        {/* Facts grid: Sectors / Stage / Geography / Check size */}
+        {facts.length > 0 && (
+          <div className="mt-10 grid gap-px overflow-hidden rounded-2xl border border-black/10 bg-black/[0.06] sm:grid-cols-2">
+            {facts.map((f) => (
+              <div key={f.label} className="bg-[#fbfaf7] px-5 py-4">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-black/45">
+                  {f.label}
+                </p>
+                <p className="mt-1 text-base font-semibold text-black">{f.value}</p>
+              </div>
+            ))}
+          </div>
+        )}
       </section>
 
       {/* ── Portfolio calibration ── */}
@@ -1046,7 +1039,7 @@ const InvestorProfilePage = ({
         </section>
       )}
 
-      {/* ── Founder signals ── */}
+      {/* ── What they back ── */}
       {visible('founderSignals') && profile.founderSignals && (
         <section className="mx-auto max-w-[82rem] border-t border-black/10 px-5 py-16 sm:px-8">
           <SectionLabel>What they back</SectionLabel>
@@ -1055,7 +1048,7 @@ const InvestorProfilePage = ({
       )}
 
       {/* ── Connect / message ── */}
-      <ConnectSection viewer={viewer} name={profile.displayName || profile.username} onMessage={onMessage} tone="light" />
+      <ConnectSection viewer={viewer} name={name} onMessage={onMessage} tone="light" />
     </main>
   );
 };
