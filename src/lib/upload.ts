@@ -22,7 +22,9 @@ const toDataUrl = (file: File): Promise<string> =>
  * 2. PUTs the file directly from the browser to R2 (no Vercel bandwidth used)
  * 3. Returns the permanent public CDN URL
  *
- * Falls back to a base64 data URL if R2 is not configured (dev mode).
+ * In local dev without R2 env vars, falls back to a base64 data URL so the
+ * UI stays functional. In production, errors are thrown so callers can surface
+ * them to the user instead of silently storing ephemeral data: strings.
  */
 export async function uploadFile(file: File, folder: UploadFolder): Promise<string> {
   try {
@@ -35,9 +37,12 @@ export async function uploadFile(file: File, folder: UploadFolder): Promise<stri
     const presignRes = await fetch(`/api/upload/presign?${params.toString()}`);
 
     if (!presignRes.ok) {
-      // R2 not configured — fall back to base64 for local dev
-      console.warn('[upload] Presign endpoint unavailable, using data URL fallback');
-      return toDataUrl(file);
+      if (import.meta.env.DEV) {
+        console.warn('[upload] Presign endpoint unavailable, using data URL fallback (dev only)');
+        return toDataUrl(file);
+      }
+      const body = await presignRes.json().catch(() => ({})) as { error?: string };
+      throw new Error(body.error ?? `Presign failed: ${presignRes.status}`);
     }
 
     const { uploadUrl, publicUrl } = (await presignRes.json()) as {
@@ -57,7 +62,10 @@ export async function uploadFile(file: File, folder: UploadFolder): Promise<stri
 
     return publicUrl;
   } catch (err) {
-    console.error('[upload] Upload failed, falling back to data URL:', err);
-    return toDataUrl(file);
+    if (import.meta.env.DEV) {
+      console.error('[upload] Upload failed, falling back to data URL (dev only):', err);
+      return toDataUrl(file);
+    }
+    throw err;
   }
 }

@@ -73,6 +73,10 @@ const writeLocal = (key: string, value: unknown) => {
 export const readPublicProductLaunches = () =>
   readLocal<ProductLaunch[]>(PUBLIC_LAUNCHES_STORAGE_KEY, []);
 
+/** Returns empty string for data:/blob: URLs — safe to write to Supabase or localStorage. */
+const safeUrl = (url: string | undefined): string =>
+  url && !url.startsWith('data:') && !url.startsWith('blob:') ? url : '';
+
 /** Strip ephemeral data:/blob: URLs before persisting to localStorage to avoid quota errors. */
 const stripEphemeralUrls = (launch: ProductLaunch): ProductLaunch => {
   const mediaFields = ['logoUrl', 'bannerUrl', 'demoVideoUrl', 'pitchVideoUrl', 'pitchDeckUrl'] as const;
@@ -1967,7 +1971,7 @@ export const saveIntakeValues = async (
     profile_name: values.profileName ?? '',
     headline: values.headline ?? '',
     bio: values.bio ?? '',
-    profile_photo_url: values.profilePhotoUrl ?? '',
+    profile_photo_url: safeUrl(values.profilePhotoUrl),
     current_build: values.currentBuild ?? '',
     category: values.category ?? '',
     stage: values.stage ?? '',
@@ -2119,11 +2123,11 @@ export const saveProductLaunch = async (
       location: nextLaunch.location,
       launch_url: nextLaunch.launchUrl,
       proof_url: nextLaunch.proofUrl,
-      logo_url: nextLaunch.logoUrl,
-      banner_url: nextLaunch.bannerUrl,
-      demo_video_url: nextLaunch.demoVideoUrl,
-      pitch_video_url: nextLaunch.pitchVideoUrl,
-      pitch_deck_url: nextLaunch.pitchDeckUrl,
+      logo_url: safeUrl(nextLaunch.logoUrl),
+      banner_url: safeUrl(nextLaunch.bannerUrl),
+      demo_video_url: safeUrl(nextLaunch.demoVideoUrl),
+      pitch_video_url: safeUrl(nextLaunch.pitchVideoUrl),
+      pitch_deck_url: safeUrl(nextLaunch.pitchDeckUrl),
       pitch_book_note: nextLaunch.pitchBookNote,
       pitch_visibility: nextLaunch.pitchVisibility,
       founder_signals: nextLaunch.founderSignals,
