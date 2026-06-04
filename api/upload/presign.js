@@ -97,8 +97,16 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'File type not allowed' });
   }
 
-  if (!ACCOUNT_ID || !BUCKET || !PUBLIC_URL || !ACCESS_KEY || !SECRET_KEY) {
-    return res.status(503).json({ error: 'Storage not configured' });
+  const missing = [
+    !ACCOUNT_ID    && 'R2_ACCOUNT_ID',
+    !BUCKET        && 'R2_BUCKET_NAME',
+    !PUBLIC_URL    && 'R2_PUBLIC_URL',
+    !ACCESS_KEY    && 'R2_ACCESS_KEY_ID',
+    !SECRET_KEY    && 'R2_SECRET_ACCESS_KEY',
+  ].filter(Boolean);
+
+  if (missing.length > 0) {
+    return res.status(503).json({ error: 'Storage not configured', missing });
   }
 
   const safeFolder = ALLOWED_FOLDERS.has(String(folder)) ? String(folder) : 'uploads';
