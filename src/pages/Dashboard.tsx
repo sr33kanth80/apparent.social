@@ -1941,22 +1941,26 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
 
     try {
       const url = await uploadFile(file, folder);
-      // Immediately persist the URL so it survives a refresh — same pattern as
-      // handleProfileAssetUpload. Without this, the R2 file exists but the URL
-      // is lost if the user closes the page before clicking Save.
       setLaunchDraft((current) => {
         const next = { ...current, [field]: url };
-        setAutoSaveStatus('saving');
-        saveProductLaunch(user, next)
-          .then((saved) => {
-            setProductLaunches((launches) => [saved, ...launches.filter((l) => l.id !== saved.id)]);
-            setAutoSaveStatus('saved');
-            setTimeout(() => setAutoSaveStatus('idle'), 2000);
-          })
-          .catch(() => {
-            setAutoSaveStatus('error');
-            setTimeout(() => setAutoSaveStatus('idle'), 3000);
-          });
+
+        // Only auto-save if this launch already exists in Supabase (has a real
+        // id). New drafts must wait for the explicit "Launch on Apparent" click —
+        // auto-saving here would create duplicate/premature live launches.
+        if (next.id) {
+          setAutoSaveStatus('saving');
+          saveProductLaunch(user, next)
+            .then((saved) => {
+              setProductLaunches((launches) => [saved, ...launches.filter((l) => l.id !== saved.id)]);
+              setAutoSaveStatus('saved');
+              setTimeout(() => setAutoSaveStatus('idle'), 2000);
+            })
+            .catch(() => {
+              setAutoSaveStatus('error');
+              setTimeout(() => setAutoSaveStatus('idle'), 3000);
+            });
+        }
+
         return next;
       });
       addActivity(`Added launch media: ${file.name}`);
