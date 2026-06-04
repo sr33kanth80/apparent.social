@@ -58,6 +58,7 @@ import type {
   BuilderDiscoveryState,
   BuilderMapCluster,
   BuilderNode,
+  DashboardData,
   FeedItem,
   Meetup,
   NetworkInterestPin,
@@ -1286,75 +1287,70 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
     let isCancelled = false;
     let hasLoaded = false;
 
+    // Extracted so cached data and fresh data go through the same setter calls.
+    const applyData = (data: DashboardData) => {
+      if (isCancelled) return;
+      setIntakeValues(data.intakeValues);
+      hasLoadedRef.current = true;
+      setProfileSaved(data.profileSaved);
+      setSignalRows(data.signalRows);
+      setDailyDigestEnabled(data.settings.dailyDigestEnabled);
+      setSlackAlertsEnabled(data.settings.slackAlertsEnabled);
+      setProductLaunches(data.productLaunches);
+      setSelectedLaunchId((current) => current || data.productLaunches[0]?.id || '');
+      setMeetups(data.meetups);
+      setBuilderNodes(data.builderNodes);
+      setBuilderClusters(data.builderClusters);
+      setBuilderDiscoveryStates(data.builderDiscoveryStates);
+      setTermReviews(data.termReviews);
+      setMessages(data.messages);
+      setFeedRows(data.feedItems);
+      setSavedInvestorMatchNames(data.savedInvestorMatchNames);
+      setLaunchEngagement(data.launchEngagement);
+      setFounderInterest(data.founderInterest);
+      setSelectedClusterCity((current) =>
+        data.builderClusters.some((cluster) => cluster.city === current)
+          ? current
+          : '',
+      );
+      setSelectedBuilderId((current) =>
+        data.builderNodes.some((builder) => builder.id === current)
+          ? current
+          : data.builderNodes[0]?.id ?? '',
+      );
+      setActiveView(viewFromLocation(window.location.pathname, window.location.hash));
+      setActivity([
+        data.profileSaved
+          ? isInvestor
+            ? 'Investor criteria loaded'
+            : 'Founder profile loaded'
+          : isInvestor
+            ? 'Investor intake started'
+            : 'Founder profile started',
+        data.profileSaved ? 'For You includes personalized feed items' : 'For You is showing the front page feed',
+      ]);
+    };
+
     const applyDashboardData = (showLoading: boolean) => {
-      if (showLoading) {
-        setIsDashboardLoading(true);
-      }
+      if (showLoading) setIsDashboardLoading(true);
       setDashboardError('');
 
-      loadDashboardData(user, role, labelByKey)
-      .then((data) => {
-        if (isCancelled) {
-          return;
-        }
-
-        setIntakeValues(data.intakeValues);
-        hasLoadedRef.current = true;
-        setProfileSaved(data.profileSaved);
-        setSignalRows(data.signalRows);
-        setDailyDigestEnabled(data.settings.dailyDigestEnabled);
-        setSlackAlertsEnabled(data.settings.slackAlertsEnabled);
-        setProductLaunches(data.productLaunches);
-        setSelectedLaunchId((current) => current || data.productLaunches[0]?.id || '');
-        setMeetups(data.meetups);
-        setBuilderNodes(data.builderNodes);
-        setBuilderClusters(data.builderClusters);
-        setBuilderDiscoveryStates(data.builderDiscoveryStates);
-        setTermReviews(data.termReviews);
-        setMessages(data.messages);
-        setFeedRows(data.feedItems);
-        setSavedInvestorMatchNames(data.savedInvestorMatchNames);
-        setLaunchEngagement(data.launchEngagement);
-        setFounderInterest(data.founderInterest);
-        setSelectedClusterCity((current) =>
-          data.builderClusters.some((cluster) => cluster.city === current)
-            ? current
-            : '',
-        );
-        setSelectedBuilderId((current) =>
-          data.builderNodes.some((builder) => builder.id === current)
-            ? current
-            : data.builderNodes[0]?.id ?? '',
-        );
-        // Respect the URL: whatever section the user is on stays the active
-        // section. The pre-migration code auto-flipped Overview -> For You
-        // for "activated" users when no hash was present, which after the
-        // path-based URL migration fires on every dashboard load and yanks
-        // the user away from Overview without warning.
-        setActiveView(viewFromLocation(window.location.pathname, window.location.hash));
-        setActivity([
-          data.profileSaved
-            ? isInvestor
-              ? 'Investor criteria loaded'
-              : 'Founder profile loaded'
-            : isInvestor
-              ? 'Investor intake started'
-              : 'Founder profile started',
-          data.profileSaved ? 'For You includes personalized feed items' : 'For You is showing the front page feed',
-        ]);
+      loadDashboardData(user, role, labelByKey, (cached) => {
+        // Cache hit — render stale data instantly, skip the spinner.
+        applyData(cached);
+        if (!isCancelled) setIsDashboardLoading(false);
+      })
+      .then((fresh) => {
+        applyData(fresh);
         hasLoaded = true;
       })
       .catch((error) => {
-        if (isCancelled) {
-          return;
+        if (!isCancelled) {
+          setDashboardError(error instanceof Error ? error.message : 'Unable to load workspace data.');
         }
-
-        setDashboardError(error instanceof Error ? error.message : 'Unable to load workspace data.');
       })
       .finally(() => {
-        if (!isCancelled) {
-          setIsDashboardLoading(false);
-        }
+        if (!isCancelled) setIsDashboardLoading(false);
       });
     };
 
@@ -1391,7 +1387,10 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
   // real launches from across the platform (not a static seed list).
   useEffect(() => {
     let cancelled = false;
-    loadPublicProductLaunches()
+    loadPublicProductLaunches((cached) => {
+      // Render cached feed instantly while fresh data loads in background.
+      if (!cancelled) setPublicLaunches(cached);
+    })
       .then(async (launches) => {
         if (cancelled) return;
         setPublicLaunches(launches);

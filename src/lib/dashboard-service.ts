@@ -70,6 +70,28 @@ const writeLocal = (key: string, value: unknown) => {
   window.localStorage.setItem(key, JSON.stringify(value));
 };
 
+// ---------- Timed cache (stale-while-revalidate) ----------
+// Each entry is { data, ts } where ts is Date.now() at write time.
+// readCache returns null on miss, parse error, or missing fields.
+const readCache = <T>(key: string): { data: T; ts: number } | null => {
+  try {
+    const raw = window.localStorage.getItem(key);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as { data: T; ts: number };
+    return parsed?.data !== undefined && typeof parsed.ts === 'number' ? parsed : null;
+  } catch {
+    return null;
+  }
+};
+
+const writeCache = (key: string, data: unknown): void => {
+  try {
+    window.localStorage.setItem(key, JSON.stringify({ data, ts: Date.now() }));
+  } catch {
+    // localStorage quota exceeded — silently ignore
+  }
+};
+
 export const readPublicProductLaunches = () =>
   readLocal<ProductLaunch[]>(PUBLIC_LAUNCHES_STORAGE_KEY, []);
 
@@ -1200,10 +1222,18 @@ export const subscribeBuilderNetwork = (
 const isUuid = (value: string) =>
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
 
-export const loadPublicProductLaunches = async (): Promise<ProductLaunch[]> => {
+const PUB_LAUNCHES_CACHE_KEY = 'apparent:pub-launches-v1';
+
+export const loadPublicProductLaunches = async (
+  onCached?: (launches: ProductLaunch[]) => void,
+): Promise<ProductLaunch[]> => {
   if (!isSupabaseConfigured || !supabase) {
     return readPublicProductLaunches();
   }
+
+  // Serve stale cache immediately before the network round-trip.
+  const cached = readCache<ProductLaunch[]>(PUB_LAUNCHES_CACHE_KEY);
+  if (cached && onCached) onCached(cached.data);
 
   const { data, error } = await supabase
     .from('product_launches')
@@ -1212,10 +1242,12 @@ export const loadPublicProductLaunches = async (): Promise<ProductLaunch[]> => {
     .order('updated_at', { ascending: false });
 
   if (error) {
-    return readPublicProductLaunches();
+    return cached?.data ?? readPublicProductLaunches();
   }
 
-  return (data ?? []).map((row) => mapProductLaunchRow(row));
+  const launches = (data ?? []).map((row) => mapProductLaunchRow(row));
+  writeCache(PUB_LAUNCHES_CACHE_KEY, launches);
+  return launches;
 };
 
 export const loadFounderVCContacts = async (): Promise<VCContact[]> => {
@@ -1242,6 +1274,14 @@ export const loadFounderVCContacts = async (): Promise<VCContact[]> => {
 
   if (!isSupabaseConfigured || !supabase) {
     return seedContacts;
+  }
+
+  // 10K-row pagination is expensive — cache for 1 hour.
+  const VC_CACHE_KEY = 'apparent:vc-contacts-v1';
+  const VC_CACHE_TTL_MS = 60 * 60 * 1000;
+  const vcCached = readCache<VCContact[]>(VC_CACHE_KEY);
+  if (vcCached && Date.now() - vcCached.ts < VC_CACHE_TTL_MS) {
+    return vcCached.data;
   }
 
   const rows: Record<string, unknown>[] = [];
@@ -1286,7 +1326,9 @@ export const loadFounderVCContacts = async (): Promise<VCContact[]> => {
     const key = contactKey(contact);
     if (!merged.has(key)) merged.set(key, contact);
   }
-  return Array.from(merged.values());
+  const result = Array.from(merged.values());
+  writeCache(VC_CACHE_KEY, result);
+  return result;
 };
 
 /**
@@ -1736,9 +1778,18 @@ export const loadDashboardData = async (
   user: AppUser,
   role: DashboardRole,
   labelByKey: Record<string, string>,
+  onCachedData?: (data: DashboardData) => void,
 ): Promise<DashboardData> => {
   if (!isSupabaseConfigured || !supabase || user.isDev) {
     return loadLocalDashboard(user, role, labelByKey);
+  }
+
+  // Synchronously serve the last snapshot before the first network await so
+  // callers can render stale data immediately (no spinner on re-visits).
+  const snapshotKey = storageKey(user, 'dash-v1');
+  if (onCachedData) {
+    const snap = readCache<DashboardData>(snapshotKey);
+    if (snap) onCachedData(snap.data);
   }
 
   const { data: settingsRow } = await supabase
@@ -1856,7 +1907,7 @@ export const loadDashboardData = async (
     );
     const effectiveMeetups = meetups.length ? meetups : seedMeetups;
 
-    return {
+    const investorResult: DashboardData = {
       intakeValues,
       completedLabels: completedLabels(intakeValues, labelByKey),
       profileSaved,
@@ -1875,6 +1926,8 @@ export const loadDashboardData = async (
       launchEngagement,
       founderInterest: { saveCount: 0, recentSaverNames: [] },
     };
+    writeCache(snapshotKey, investorResult);
+    return investorResult;
   }
 
   const { data: founderRow } = await supabase
@@ -1903,7 +1956,7 @@ export const loadDashboardData = async (
     // RPC missing / not authorized — leave default.
   }
 
-  return {
+  const founderResult: DashboardData = {
     intakeValues,
     completedLabels: completedLabels(intakeValues, labelByKey),
     profileSaved,
@@ -1922,6 +1975,8 @@ export const loadDashboardData = async (
     launchEngagement,
     founderInterest,
   };
+  writeCache(snapshotKey, founderResult);
+  return founderResult;
 };
 
 export const saveIntakeValues = async (
