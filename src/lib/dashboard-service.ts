@@ -76,14 +76,14 @@ export const readPublicProductLaunches = () =>
 /** Strip ephemeral data:/blob: URLs before persisting to localStorage to avoid quota errors. */
 const stripEphemeralUrls = (launch: ProductLaunch): ProductLaunch => {
   const mediaFields = ['logoUrl', 'bannerUrl', 'demoVideoUrl', 'pitchVideoUrl', 'pitchDeckUrl'] as const;
-  const stripped = { ...launch } as Record<string, unknown>;
+  let stripped = { ...launch };
   for (const field of mediaFields) {
     const val = stripped[field];
     if (typeof val === 'string' && (val.startsWith('data:') || val.startsWith('blob:'))) {
-      stripped[field] = '';
+      stripped = { ...stripped, [field]: '' };
     }
   }
-  return stripped as ProductLaunch;
+  return stripped;
 };
 
 const publishLocalLaunch = (launch: ProductLaunch) => {
