@@ -1335,11 +1335,23 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
       if (showLoading) setIsDashboardLoading(true);
       setDashboardError('');
 
-      loadDashboardData(user, role, labelByKey, (cached) => {
-        // Cache hit — render stale data instantly, skip the spinner.
-        applyData(cached);
-        if (!isCancelled) setIsDashboardLoading(false);
-      })
+      loadDashboardData(
+        user,
+        role,
+        labelByKey,
+        (cached) => {
+          // Cache hit — render stale data instantly, skip the spinner.
+          applyData(cached);
+          if (!isCancelled) setIsDashboardLoading(false);
+        },
+        (partial) => {
+          // Overview-critical batch landed — render the page now even though
+          // Messages / For You feed engagement / interest counter haven't
+          // arrived yet. Spinner clears immediately.
+          applyData(partial);
+          if (!isCancelled) setIsDashboardLoading(false);
+        },
+      )
       .then((fresh) => {
         applyData(fresh);
         hasLoaded = true;

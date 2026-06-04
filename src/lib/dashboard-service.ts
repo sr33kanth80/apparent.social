@@ -1785,6 +1785,7 @@ export const loadDashboardData = async (
   role: DashboardRole,
   labelByKey: Record<string, string>,
   onCachedData?: (data: DashboardData) => void,
+  onOverviewReady?: (partial: DashboardData) => void,
 ): Promise<DashboardData> => {
   if (!isSupabaseConfigured || !supabase || user.isDev) {
     return loadLocalDashboard(user, role, labelByKey);
@@ -1798,60 +1799,62 @@ export const loadDashboardData = async (
     if (snap) onCachedData(snap.data);
   }
 
-  // Fire EVERY query in one parallel batch — 1 RTT instead of 4-5 sequential.
-  // Previously: settings → 8-query batch → role queries → builder network (3
-  // more) → optional RPC. That's 600-1500ms minimum. Now max(all queries).
+  // Two-phase load: critical-for-Overview queries fire first so the user sees
+  // a populated page ASAP. Deferred queries (Messages, For You feed engagement,
+  // sidebar interest counter) start as soon as critical lands but don't block
+  // the Overview render.
   const isInvestor = role === 'investor';
+
+  // ---------- Phase 1: critical (Overview content) — 9 queries ----------
+  const deferredPromise = (async () => {
+    // Fire deferred queries in parallel with the critical batch — they just
+    // can't block the first render. This array starts evaluating immediately.
+    return Promise.all([
+      supabase!
+        .from('user_messages')
+        .select('*')
+        .or(`owner_id.eq.${user.id},recipient_id.eq.${user.id}`)
+        .order('updated_at', { ascending: false }),
+      supabase!.from('feed_item_actions').select('*').eq('user_id', user.id),
+      supabase!.from('launch_upvotes').select('launch_id').eq('user_id', user.id),
+      supabase!.from('launch_comments').select('launch_id, body').order('created_at', { ascending: false }),
+      isInvestor
+        ? supabase!.from('investor_signal_states').select('*').eq('investor_id', user.id)
+        : Promise.resolve({ data: [] }),
+      !isInvestor
+        ? supabase!.rpc('founder_interest_summary').then(
+            (r) => r,
+            () => ({ data: null }),
+          )
+        : Promise.resolve({ data: null }),
+    ]);
+  })();
+
   const [
     { data: settingsRow },
     { data: productLaunchRows },
     { data: meetupRows },
     { data: meetupRsvpRows },
     { data: termRows },
-    { data: messageRows },
-    { data: feedActionRows },
-    { data: userUpvoteRows },
-    { data: commentRows },
     { data: allProfileRows },
     { data: allLaunchRows },
     { data: builderStateRows },
     { data: criteriaRow },
-    { data: investorStateRows },
     { data: founderRow },
-    interestRpcResult,
   ] = await Promise.all([
     supabase.from('user_settings').select('*').eq('user_id', user.id).maybeSingle(),
     supabase.from('product_launches').select('*').eq('owner_id', user.id).order('updated_at', { ascending: false }),
     supabase.from('meetups').select('*').order('starts_at', { ascending: true }),
     supabase.from('meetup_rsvps').select('*'),
     supabase.from('term_reviews').select('*').eq('user_id', user.id).order('updated_at', { ascending: false }),
-    supabase
-      .from('user_messages')
-      .select('*')
-      .or(`owner_id.eq.${user.id},recipient_id.eq.${user.id}`)
-      .order('updated_at', { ascending: false }),
-    supabase.from('feed_item_actions').select('*').eq('user_id', user.id),
-    supabase.from('launch_upvotes').select('launch_id').eq('user_id', user.id),
-    supabase.from('launch_comments').select('launch_id, body').order('created_at', { ascending: false }),
-    // Builder network — was a separate Promise.all in loadBuilderNetwork, now inlined.
     supabase.from('founder_profiles').select('*').order('updated_at', { ascending: false }),
     supabase.from('product_launches').select('*').order('updated_at', { ascending: false }),
     supabase.from('builder_discovery_states').select('*').eq('user_id', user.id),
-    // Role-specific — fire both regardless (the other returns empty/no row).
     isInvestor
       ? supabase.from('investor_criteria').select('*').eq('user_id', user.id).maybeSingle()
       : Promise.resolve({ data: null }),
-    isInvestor
-      ? supabase.from('investor_signal_states').select('*').eq('investor_id', user.id)
-      : Promise.resolve({ data: [] }),
     !isInvestor
       ? supabase.from('founder_profiles').select('*').eq('user_id', user.id).maybeSingle()
-      : Promise.resolve({ data: null }),
-    !isInvestor
-      ? supabase.rpc('founder_interest_summary').then(
-          (r) => r,
-          () => ({ data: null }),
-        )
       : Promise.resolve({ data: null }),
   ]);
 
@@ -1875,45 +1878,9 @@ export const loadDashboardData = async (
     ),
   );
   const termReviews = (termRows ?? []).map((row) => mapTermReviewRow(row));
-  const messages = (messageRows ?? []).map((row) => mapMessageRow(row));
-
-  // Which launches has this user upvoted?
-  const userUpvotedIds = new Set((userUpvoteRows ?? []).map((row) => String(row.launch_id)));
-
-  // Group comments by launch_id
-  const commentsByLaunch = (commentRows ?? []).reduce<Record<string, string[]>>((acc, row) => {
-    const lid = String(row.launch_id);
-    if (!acc[lid]) acc[lid] = [];
-    acc[lid].push(String(row.body));
-    return acc;
-  }, {});
-
-  // Build engagement map for every known real launch
-  const launchEngagement: Record<string, LaunchEngagementEntry> = {};
-  for (const launch of productLaunches) {
-    launchEngagement[launch.id] = {
-      upvoted: userUpvotedIds.has(launch.id),
-      upvotes: launch.upvoteCount ?? 0,
-      comments: commentsByLaunch[launch.id] ?? [],
-    };
-  }
-
-  // Saved investor match names (stored as feed_item_actions with "inv-match:" prefix)
-  const savedInvestorMatchNames = (feedActionRows ?? [])
-    .filter((row) => String(row.item_id).startsWith('inv-match:') && Boolean(row.saved))
-    .map((row) => String(row.item_id).slice('inv-match:'.length));
-
-  const feedActions = (feedActionRows ?? []).reduce<Record<string, Partial<FeedItem>>>((actions, row) => {
-    actions[String(row.item_id)] = {
-      saved: Boolean(row.saved),
-      reposted: Boolean(row.reposted),
-      reply: String(row.reply ?? ''),
-    };
-    return actions;
-  }, {});
 
   // Builder network — was previously a separate Promise.all in loadBuilderNetwork.
-  // Now built from the rows fetched in the mega Promise.all above. The fit
+  // Now built from the rows fetched in the critical batch above. The fit
   // score depends on `values`, so we compute that per-role below.
   const allLaunchesForNetwork = (allLaunchRows ?? []).map((row) => mapProductLaunchRow(row));
   const mappedBuildersRaw = mapBuilderProfileRows(
@@ -1923,6 +1890,75 @@ export const loadDashboardData = async (
   );
   const builderDiscoveryStates = (builderStateRows ?? []).map((row) => mapBuilderDiscoveryRow(row));
 
+  // Derives the deferred-data-dependent fields. Called twice — once with empty
+  // arrays so onOverviewReady can fire immediately, once with real deferred
+  // data after it resolves.
+  type DeferredData = {
+    messageRows: Record<string, unknown>[] | null;
+    feedActionRows: Record<string, unknown>[] | null;
+    userUpvoteRows: Record<string, unknown>[] | null;
+    commentRows: Record<string, unknown>[] | null;
+    investorStateRows: Record<string, unknown>[] | null;
+    interestRpcResult: { data: unknown } | null;
+  };
+
+  const deriveDeferred = (d: DeferredData) => {
+    const messages = (d.messageRows ?? []).map((row) => mapMessageRow(row));
+    const userUpvotedIds = new Set((d.userUpvoteRows ?? []).map((row) => String(row.launch_id)));
+    const commentsByLaunch = (d.commentRows ?? []).reduce<Record<string, string[]>>((acc, row) => {
+      const lid = String(row.launch_id);
+      if (!acc[lid]) acc[lid] = [];
+      acc[lid].push(String(row.body));
+      return acc;
+    }, {});
+    const launchEngagement: Record<string, LaunchEngagementEntry> = {};
+    for (const launch of productLaunches) {
+      launchEngagement[launch.id] = {
+        upvoted: userUpvotedIds.has(launch.id),
+        upvotes: launch.upvoteCount ?? 0,
+        comments: commentsByLaunch[launch.id] ?? [],
+      };
+    }
+    const savedInvestorMatchNames = (d.feedActionRows ?? [])
+      .filter((row) => String(row.item_id).startsWith('inv-match:') && Boolean(row.saved))
+      .map((row) => String(row.item_id).slice('inv-match:'.length));
+    const feedActions = (d.feedActionRows ?? []).reduce<Record<string, Partial<FeedItem>>>(
+      (actions, row) => {
+        actions[String(row.item_id)] = {
+          saved: Boolean(row.saved),
+          reposted: Boolean(row.reposted),
+          reply: String(row.reply ?? ''),
+        };
+        return actions;
+      },
+      {},
+    );
+    let founderInterest = { saveCount: 0, recentSaverNames: [] as string[] };
+    const interestRows = (d.interestRpcResult as { data: unknown } | null)?.data;
+    const interestRow = Array.isArray(interestRows) ? interestRows[0] : interestRows;
+    if (interestRow && typeof interestRow === 'object') {
+      const row = interestRow as Record<string, unknown>;
+      founderInterest = {
+        saveCount: Number(row.save_count ?? 0),
+        recentSaverNames: Array.isArray(row.recent_saver_names)
+          ? (row.recent_saver_names as unknown[]).filter(Boolean).map(String)
+          : [],
+      };
+    }
+    return { messages, launchEngagement, savedInvestorMatchNames, feedActions, founderInterest };
+  };
+
+  // Empty defaults so we can build the Overview-ready snapshot before the
+  // deferred batch resolves.
+  const emptyDeferred = deriveDeferred({
+    messageRows: null,
+    feedActionRows: null,
+    userUpvoteRows: null,
+    commentRows: null,
+    investorStateRows: null,
+    interestRpcResult: null,
+  });
+
   if (role === 'investor') {
     // The legacy `source_signals` table was populated by an Apify scraper
     // (YC / GitHub / Product Hunt / Hacker News). That pipeline is gone, so
@@ -1930,13 +1966,7 @@ export const loadDashboardData = async (
     // Apparent builders the investor has added (via mergeBuilderDealFlowSignals).
     const criteria = mapCriteriaRow(criteriaRow as Record<string, unknown> | null);
     const intakeValues = toIntakeRecord(criteria);
-    const stateBySignal = new Map(
-      (investorStateRows ?? []).map((row) => [String(row.signal_id), String(row.stage) as InvestorDealStage]),
-    );
     const signalRows: InvestorSignal[] = [];
-    // Apply persisted column state on top of the empty base — preserved so
-    // future, non-ingested signal sources can plug in here without rewiring.
-    void stateBySignal;
 
     const profileSaved = completedLabels(intakeValues, labelByKey).length > 0;
     const builderNodes = mappedBuildersRaw
@@ -1955,7 +1985,7 @@ export const loadDashboardData = async (
     );
     const effectiveMeetups = meetups.length ? meetups : seedMeetups;
 
-    const investorResult: DashboardData = {
+    const buildInvestor = (d: ReturnType<typeof deriveDeferred>): DashboardData => ({
       intakeValues,
       completedLabels: completedLabels(intakeValues, labelByKey),
       profileSaved,
@@ -1968,12 +1998,39 @@ export const loadDashboardData = async (
       builderClusters: buildBuilderMapClusters(builderNetwork.builderNodes, effectiveMeetups),
       builderDiscoveryStates: builderNetwork.builderDiscoveryStates,
       termReviews,
-      messages,
-      feedItems: buildFeedItems(role, profileSaved, signalRowsWithBuilders, effectiveMeetups, productLaunches, feedActions),
-      savedInvestorMatchNames,
-      launchEngagement,
+      messages: d.messages,
+      feedItems: buildFeedItems(role, profileSaved, signalRowsWithBuilders, effectiveMeetups, productLaunches, d.feedActions),
+      savedInvestorMatchNames: d.savedInvestorMatchNames,
+      launchEngagement: d.launchEngagement,
       founderInterest: { saveCount: 0, recentSaverNames: [] },
-    };
+    });
+
+    // Render Overview immediately with empty deferred data.
+    if (onOverviewReady) onOverviewReady(buildInvestor(emptyDeferred));
+
+    // Wait for the deferred batch (already in flight since critical started).
+    const [
+      { data: messageRows },
+      { data: feedActionRows },
+      { data: userUpvoteRows },
+      { data: commentRows },
+      // investorStateRows kept for future signal sources — not used today.
+      _investorStateRowsRes,
+      _interestRpcRes,
+    ] = await deferredPromise;
+
+    const realDeferred = deriveDeferred({
+      messageRows: (messageRows ?? []) as Record<string, unknown>[],
+      feedActionRows: (feedActionRows ?? []) as Record<string, unknown>[],
+      userUpvoteRows: (userUpvoteRows ?? []) as Record<string, unknown>[],
+      commentRows: (commentRows ?? []) as Record<string, unknown>[],
+      investorStateRows: null,
+      interestRpcResult: null,
+    });
+    void _investorStateRowsRes;
+    void _interestRpcRes;
+
+    const investorResult = buildInvestor(realDeferred);
     writeCache(snapshotKey, investorResult);
     return investorResult;
   }
@@ -1991,22 +2048,7 @@ export const loadDashboardData = async (
   };
   const effectiveMeetups = meetups.length ? meetups : seedMeetups;
 
-  // Come-back loop: how many investors are tracking this founder.
-  // RPC result was fetched in the parallel batch above; just unpack it.
-  let founderInterest = { saveCount: 0, recentSaverNames: [] as string[] };
-  const interestRows = (interestRpcResult as { data: unknown })?.data;
-  const interestRow = Array.isArray(interestRows) ? interestRows[0] : interestRows;
-  if (interestRow && typeof interestRow === 'object') {
-    const row = interestRow as Record<string, unknown>;
-    founderInterest = {
-      saveCount: Number(row.save_count ?? 0),
-      recentSaverNames: Array.isArray(row.recent_saver_names)
-        ? (row.recent_saver_names as unknown[]).filter(Boolean).map(String)
-        : [],
-    };
-  }
-
-  const founderResult: DashboardData = {
+  const buildFounder = (d: ReturnType<typeof deriveDeferred>): DashboardData => ({
     intakeValues,
     completedLabels: completedLabels(intakeValues, labelByKey),
     profileSaved,
@@ -2019,12 +2061,37 @@ export const loadDashboardData = async (
     builderClusters: buildBuilderMapClusters(builderNetwork.builderNodes, effectiveMeetups),
     builderDiscoveryStates: builderNetwork.builderDiscoveryStates,
     termReviews,
-    messages,
-    feedItems: buildFeedItems(role, profileSaved, [], effectiveMeetups, productLaunches, feedActions),
-    savedInvestorMatchNames,
-    launchEngagement,
-    founderInterest,
-  };
+    messages: d.messages,
+    feedItems: buildFeedItems(role, profileSaved, [], effectiveMeetups, productLaunches, d.feedActions),
+    savedInvestorMatchNames: d.savedInvestorMatchNames,
+    launchEngagement: d.launchEngagement,
+    founderInterest: d.founderInterest,
+  });
+
+  // Render Overview immediately with empty deferred data.
+  if (onOverviewReady) onOverviewReady(buildFounder(emptyDeferred));
+
+  // Wait for the deferred batch (already in flight since critical started).
+  const [
+    { data: messageRows },
+    { data: feedActionRows },
+    { data: userUpvoteRows },
+    { data: commentRows },
+    _investorStateRowsRes,
+    interestRpcResult,
+  ] = await deferredPromise;
+
+  const realDeferred = deriveDeferred({
+    messageRows: (messageRows ?? []) as Record<string, unknown>[],
+    feedActionRows: (feedActionRows ?? []) as Record<string, unknown>[],
+    userUpvoteRows: (userUpvoteRows ?? []) as Record<string, unknown>[],
+    commentRows: (commentRows ?? []) as Record<string, unknown>[],
+    investorStateRows: null,
+    interestRpcResult: interestRpcResult as { data: unknown } | null,
+  });
+  void _investorStateRowsRes;
+
+  const founderResult = buildFounder(realDeferred);
   writeCache(snapshotKey, founderResult);
   return founderResult;
 };
