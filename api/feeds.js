@@ -14,35 +14,50 @@ const FEEDS = {
   'daily-digest': 'feeds/daily-digest.json',
 };
 
+// Don't cache empty / error / not-yet-uploaded responses — otherwise a stale
+// "missing file" response can keep the dashboard empty even after the scraper
+// uploads real data. Only successful responses with actual launches get cached.
+const NO_CACHE = 'no-store, no-cache, must-revalidate, max-age=0';
+const FRESH_CACHE = 's-maxage=60, stale-while-revalidate=600';
+
 export default async function handler(req, res) {
   const name = String(req.query.name ?? '');
   const key = FEEDS[name];
 
   if (!key) {
+    res.setHeader('Cache-Control', NO_CACHE);
     return res.status(400).json({ error: 'unknown feed', launches: [] });
   }
 
   // R2 not configured — hand back an empty feed so the client stays happy.
   if (!PUBLIC_URL) {
-    return res.status(200).json({ launches: [] });
+    res.setHeader('Cache-Control', NO_CACHE);
+    return res.status(200).json({ launches: [], _diag: 'R2_PUBLIC_URL not set' });
   }
 
-  try {
-    // Pull the freshest file from R2; our own response is edge-cached below.
-    const upstream = await fetch(`${PUBLIC_URL}/${key}`, { cache: 'no-store' });
+  const upstreamUrl = `${PUBLIC_URL}/${key}`;
 
-    // 404 = scraper hasn't written this file yet. Treat as empty, not an error.
+  try {
+    // Pull the freshest file from R2 (the edge handles the actual caching below).
+    const upstream = await fetch(upstreamUrl, { cache: 'no-store' });
+
+    // 404 = scraper hasn't written this file yet. Treat as empty, not an error,
+    // but DON'T cache the empty — the file might appear any second.
     if (!upstream.ok) {
-      return res.status(200).json({ launches: [] });
+      res.setHeader('Cache-Control', NO_CACHE);
+      return res.status(200).json({ launches: [], _diag: `upstream ${upstream.status}` });
     }
 
     const data = await upstream.json();
+    const launches = Array.isArray(data?.launches) ? data.launches : [];
 
-    // Cache at Vercel's edge for 5 min, serve stale up to 1h while revalidating.
-    // The scraper only writes once a day, so this is plenty fresh and shields R2.
-    res.setHeader('Cache-Control', 's-maxage=300, stale-while-revalidate=3600');
+    // Only cache when there's actual data — otherwise we risk pinning an empty
+    // result at the edge across uploads. Daily scraper write + 60s edge TTL is
+    // a comfortable balance: R2 isn't hammered, but new uploads land within ~1min.
+    res.setHeader('Cache-Control', launches.length > 0 ? FRESH_CACHE : NO_CACHE);
     return res.status(200).json(data);
-  } catch {
-    return res.status(200).json({ launches: [] });
+  } catch (err) {
+    res.setHeader('Cache-Control', NO_CACHE);
+    return res.status(200).json({ launches: [], _diag: `fetch failed: ${err?.message ?? 'unknown'}` });
   }
 }
