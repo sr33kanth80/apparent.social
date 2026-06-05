@@ -919,7 +919,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
   const [launchDraft, setLaunchDraft] = useState(emptyLaunchDraft);
   const [selectedLaunchId, setSelectedLaunchId] = useState('');
   // Founder profile sidebar — which section is currently open.
-  const [profileSection, setProfileSection] = useState<'about' | 'links' | 'traction' | 'raising' | 'visibility'>('about');
+  const [profileSection, setProfileSection] = useState<'about' | 'links' | 'traction' | 'raising' | 'visibility' | 'thesis' | 'criteria' | 'portfolio'>(isInvestor ? 'thesis' : 'about');
   // Founder products page mode + wizard step.
   // Modes: 'list' (grid view), 'wizard' (new launch flow), 'edit' (full edit form).
   const [productsMode, setProductsMode] = useState<'list' | 'wizard' | 'edit'>('list');
@@ -3110,7 +3110,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
         <div id="profile" className="mx-auto max-w-[1292px] scroll-mt-24 space-y-6">
           {isInvestor ? (
             <>
-              {/* Header — mirrors founder avatar/name card exactly */}
+              {/* HERO — avatar, name, public-profile link, progress badge */}
               <section className="rounded-[20px] border border-black/10 bg-white shadow-[0_10px_34px_rgba(0,0,0,0.04)]">
                 <div className="px-5 py-5">
                   <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
@@ -3134,179 +3134,267 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
                         </a>
                       </div>
                     </div>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="rounded-full bg-[#f4f1eb] px-3 py-1.5 text-xs font-medium text-gray-600">
+                        {completedFieldCount}/{intakeFields.length} complete
+                      </span>
+                    </div>
                   </div>
                 </div>
               </section>
 
-              {/* Thesis fields — same divide-y card as founder "Your Profile" */}
-              <section className="rounded-[20px] border border-black/10 bg-white shadow-[0_10px_34px_rgba(0,0,0,0.04)]">
-                <div className="flex flex-col gap-3 border-b border-black/10 px-5 py-4 md:flex-row md:items-center md:justify-between">
-                  <div>
-                    <h3 className="text-sm font-semibold">Your Thesis</h3>
-                    <p className="mt-1 text-xs text-gray-500">Capture the thesis, stage, geography, and founder signals that shape your sourcing and rank your deal flow.</p>
-                  </div>
-                  <span className="rounded-full bg-[#f4f1eb] px-3 py-1.5 text-xs text-gray-600">{completedFieldCount}/{intakeFields.length} complete</span>
-                </div>
-                <div className="divide-y divide-black/10">
-                  {investorIntakeFields.map((field) => (
-                    <label key={field.key} className="grid gap-3 px-5 py-4 transition-colors hover:bg-[#fbf8f3] md:grid-cols-[260px_1fr]">
-                      <div>
-                        <p className="text-sm font-medium">{field.label}</p>
-                        <p className="mt-1 text-xs text-gray-400">{intakeValues[field.key]?.trim() ? 'Captured' : 'Optional'}</p>
-                      </div>
-                      {field.kind === 'textarea' ? (
-                        <textarea value={intakeValues[field.key] ?? ''} onChange={(event) => handleIntakeChange(field.key, event.target.value)} placeholder={field.placeholder} className="min-h-20 w-full resize-none border-0 bg-transparent text-sm leading-relaxed outline-none placeholder:text-gray-400" />
-                      ) : field.kind === 'select' ? (
-                        <select value={intakeValues[field.key] ?? ''} onChange={(event) => handleIntakeChange(field.key, event.target.value)} className="h-8 w-full border-0 bg-transparent text-sm outline-none">
-                          <option value="">{field.placeholder}</option>
-                          {field.options?.map((option) => (
-                            <option key={option} value={option}>{option}</option>
-                          ))}
-                        </select>
-                      ) : (
-                        <input value={intakeValues[field.key] ?? ''} onChange={(event) => handleIntakeChange(field.key, event.target.value)} placeholder={field.placeholder} className="h-8 w-full border-0 bg-transparent text-sm outline-none placeholder:text-gray-400" />
-                      )}
-                    </label>
-                  ))}
-                </div>
-                <div className="flex flex-col gap-3 border-t border-black/10 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
-                  <span className="text-xs text-gray-400">
-                    {autoSaveStatus === 'saving' && 'Auto-saving…'}
-                    {autoSaveStatus === 'saved' && '✓ Saved'}
-                    {autoSaveStatus === 'error' && 'Auto-save failed — use the button'}
-                  </span>
-                  <button className={`rounded-full ${accentSurface} px-5 py-2.5 text-sm font-medium ${accentForeground} transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60`} onClick={handleSaveProfile} disabled={isSavingWorkspace}>
-                    {isSavingWorkspace ? 'Saving...' : 'Save thesis'}
-                  </button>
-                </div>
-              </section>
-
-              {/* Public profile visibility controls */}
-              <section className="rounded-[20px] border border-black/10 bg-white shadow-[0_10px_34px_rgba(0,0,0,0.04)]">
-                <div className="flex flex-col gap-3 border-b border-black/10 px-5 py-4 md:flex-row md:items-center md:justify-between">
-                  <div>
-                    <h3 className="text-sm font-semibold">Public profile</h3>
-                    <p className="mt-1 text-xs text-gray-500">
-                      Control what's visible on your public Apparent page at{' '}
-                      <a
-                        href={`/@${user.username ?? user.email.split('@')[0].toLowerCase().replace(/[^a-z0-9]/g, '')}`}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="font-medium text-[#42520d] underline underline-offset-2"
-                      >
-                        /@{user.username ?? user.email.split('@')[0].toLowerCase().replace(/[^a-z0-9]/g, '')}
-                      </a>
-                    </p>
-                  </div>
-                  <label className="flex cursor-pointer items-center gap-2 select-none">
-                    <span className="text-xs font-medium text-gray-600">
-                      {intakeValues.publicProfileEnabled === 'true' ? 'Public profile on' : 'Private (platform only)'}
-                    </span>
-                    <button
-                      type="button"
-                      role="switch"
-                      aria-checked={intakeValues.publicProfileEnabled === 'true'}
-                      onClick={() => handleIntakeChange('publicProfileEnabled', intakeValues.publicProfileEnabled === 'true' ? 'false' : 'true')}
-                      className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors ${intakeValues.publicProfileEnabled === 'true' ? 'bg-[#42520d]' : 'bg-gray-200'}`}
-                    >
-                      <span className={`inline-block h-3.5 w-3.5 translate-x-0.5 rounded-full bg-white shadow transition-transform ${intakeValues.publicProfileEnabled === 'true' ? 'translate-x-[1.125rem]' : ''}`} />
-                    </button>
-                  </label>
-                </div>
-                {/* Field-level visibility checkboxes */}
-                <div className="grid gap-1 px-5 py-4 sm:grid-cols-2 lg:grid-cols-3">
-                  {[
-                    { key: 'thesis', label: 'Investment thesis' },
-                    { key: 'sectors', label: 'Sectors' },
-                    { key: 'stage', label: 'Preferred stage' },
-                    { key: 'geography', label: 'Geography' },
-                    { key: 'checkSize', label: 'Check size' },
-                    { key: 'portfolioExamples', label: 'Portfolio companies' },
-                    { key: 'founderSignals', label: 'What you back' },
-                  ].map(({ key, label }) => {
-                    const currentFields: string[] = (() => {
-                      try { return JSON.parse(intakeValues.publicFields ?? '[]'); } catch { return []; }
-                    })();
-                    const isChecked = currentFields.includes(key);
-                    const toggleField = () => {
-                      const next = isChecked ? currentFields.filter((f) => f !== key) : [...currentFields, key];
-                      handleIntakeChange('publicFields', JSON.stringify(next));
-                    };
+              {/* MAIN LAYOUT — sidebar nav + section content + right rail */}
+              <section className="grid gap-6 lg:grid-cols-[220px_minmax(0,1fr)_320px]">
+                {/* Sidebar nav */}
+                <aside className="space-y-1 self-start rounded-[20px] border border-black/10 bg-white p-3 shadow-[0_10px_34px_rgba(0,0,0,0.04)] lg:sticky lg:top-6">
+                  {([
+                    { key: 'thesis', label: 'Thesis' },
+                    { key: 'criteria', label: 'Criteria' },
+                    { key: 'portfolio', label: 'Portfolio' },
+                    { key: 'visibility', label: 'Visibility' },
+                  ] as const).map((s) => {
+                    const isActive = profileSection === s.key;
                     return (
-                      <label key={key} className="flex cursor-pointer items-center gap-2 rounded-lg px-2 py-2 text-sm transition hover:bg-[#fbf8f3]">
-                        <input
-                          type="checkbox"
-                          checked={isChecked}
-                          onChange={toggleField}
-                          className="h-3.5 w-3.5 rounded accent-[#42520d]"
-                        />
-                        <span className="text-gray-700">{label}</span>
-                      </label>
+                      <button
+                        key={s.key}
+                        type="button"
+                        onClick={() => setProfileSection(s.key)}
+                        className={`w-full rounded-xl px-3 py-2.5 text-left text-sm font-medium transition-colors ${
+                          isActive ? `${accentSurface} ${accentForeground}` : 'text-gray-600 hover:bg-[#fbf8f3]'
+                        }`}
+                      >
+                        {s.label}
+                      </button>
                     );
                   })}
-                </div>
-                <div className="border-t border-black/10 px-5 py-3">
-                  <p className="text-xs text-gray-400">
-                    {intakeValues.publicProfileEnabled === 'true'
-                      ? 'Your profile is visible to the internet. Only checked fields are shown to non-members.'
-                      : 'Your profile is only visible to signed-in Apparent members — no public indexing.'}
-                  </p>
-                </div>
-              </section>
+                  <div className="mt-3 border-t border-black/5 pt-3 px-2">
+                    <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-gray-400">Auto-save</p>
+                    <p className="mt-1 text-xs text-gray-500">
+                      {autoSaveStatus === 'saving' && 'Saving…'}
+                      {autoSaveStatus === 'saved' && '✓ All changes saved'}
+                      {autoSaveStatus === 'error' && 'Save failed — try again'}
+                      {autoSaveStatus === 'idle' && 'Changes save automatically'}
+                    </p>
+                  </div>
+                </aside>
 
-              {/* Bottom grid — mirrors founder "Products + Past products" layout */}
-              <section className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">
-                <div className="rounded-[20px] border border-black/10 bg-white shadow-[0_10px_34px_rgba(0,0,0,0.04)]">
-                  <div className="flex items-center justify-between border-b border-black/10 px-5 py-4">
-                    <div>
-                      <h3 className="text-sm font-semibold">Top ranked signals</h3>
-                      <p className="mt-1 text-xs text-gray-500">Your highest-scoring deals based on your current thesis. Goes up as you refine your criteria above.</p>
+                {/* Section content */}
+                <div className="space-y-6">
+                  {/* THESIS — investment narrative, founder signals, pass signals */}
+                  {profileSection === 'thesis' && (
+                    <section className="rounded-[20px] border border-black/10 bg-white shadow-[0_10px_34px_rgba(0,0,0,0.04)]">
+                      <div className="border-b border-black/10 px-5 py-4">
+                        <h3 className="text-sm font-semibold">Thesis</h3>
+                        <p className="mt-1 text-xs text-gray-500">Your investment narrative and the founder signals that shape your sourcing.</p>
+                      </div>
+                      <div className="divide-y divide-black/10">
+                        {['thesis', 'founderSignals', 'passSignals'].map((key) => {
+                          const field = investorIntakeFields.find((f) => f.key === key);
+                          if (!field) return null;
+                          return (
+                            <label key={field.key} className="grid gap-3 px-5 py-4 transition-colors hover:bg-[#fbf8f3] md:grid-cols-[220px_1fr]">
+                              <div>
+                                <p className="text-sm font-medium">{field.label}</p>
+                                <p className="mt-1 text-xs text-gray-400">{intakeValues[field.key]?.trim() ? 'Captured' : 'Optional'}</p>
+                              </div>
+                              <textarea value={intakeValues[field.key] ?? ''} onChange={(event) => handleIntakeChange(field.key, event.target.value)} placeholder={field.placeholder} className="min-h-20 w-full resize-none border-0 bg-transparent text-sm leading-relaxed outline-none placeholder:text-gray-400" />
+                            </label>
+                          );
+                        })}
+                      </div>
+                    </section>
+                  )}
+
+                  {/* CRITERIA — stage, sectors, check size, geography */}
+                  {profileSection === 'criteria' && (
+                    <section className="rounded-[20px] border border-black/10 bg-white shadow-[0_10px_34px_rgba(0,0,0,0.04)]">
+                      <div className="border-b border-black/10 px-5 py-4">
+                        <h3 className="text-sm font-semibold">Criteria</h3>
+                        <p className="mt-1 text-xs text-gray-500">Stage, sectors, geography, and check size that define your deal parameters.</p>
+                      </div>
+                      <div className="divide-y divide-black/10">
+                        {['sectors', 'stage', 'checkSize', 'geography'].map((key) => {
+                          const field = investorIntakeFields.find((f) => f.key === key);
+                          if (!field) return null;
+                          return (
+                            <label key={field.key} className="grid gap-3 px-5 py-4 transition-colors hover:bg-[#fbf8f3] md:grid-cols-[220px_1fr]">
+                              <div>
+                                <p className="text-sm font-medium">{field.label}</p>
+                                <p className="mt-1 text-xs text-gray-400">{intakeValues[field.key]?.trim() ? 'Captured' : 'Optional'}</p>
+                              </div>
+                              {field.kind === 'select' ? (
+                                <select value={intakeValues[field.key] ?? ''} onChange={(event) => handleIntakeChange(field.key, event.target.value)} className="h-8 w-full border-0 bg-transparent text-sm outline-none">
+                                  <option value="">{field.placeholder}</option>
+                                  {field.options?.map((option) => (
+                                    <option key={option} value={option}>{option}</option>
+                                  ))}
+                                </select>
+                              ) : (
+                                <input value={intakeValues[field.key] ?? ''} onChange={(event) => handleIntakeChange(field.key, event.target.value)} placeholder={field.placeholder} className="h-8 w-full border-0 bg-transparent text-sm outline-none placeholder:text-gray-400" />
+                              )}
+                            </label>
+                          );
+                        })}
+                      </div>
+                    </section>
+                  )}
+
+                  {/* PORTFOLIO — companies that calibrate signal ranking */}
+                  {profileSection === 'portfolio' && (
+                    <section className="rounded-[20px] border border-black/10 bg-white shadow-[0_10px_34px_rgba(0,0,0,0.04)]">
+                      <div className="border-b border-black/10 px-5 py-4">
+                        <h3 className="text-sm font-semibold">Portfolio</h3>
+                        <p className="mt-1 text-xs text-gray-500">Companies that match your taste — used to calibrate deal-flow signal ranking.</p>
+                      </div>
+                      <div className="divide-y divide-black/10">
+                        {(() => {
+                          const field = investorIntakeFields.find((f) => f.key === 'portfolioExamples');
+                          if (!field) return null;
+                          return (
+                            <label className="grid gap-3 px-5 py-4 transition-colors hover:bg-[#fbf8f3] md:grid-cols-[220px_1fr]">
+                              <div>
+                                <p className="text-sm font-medium">{field.label}</p>
+                                <p className="mt-1 text-xs text-gray-400">{intakeValues[field.key]?.trim() ? 'Captured' : 'Optional'}</p>
+                              </div>
+                              <input value={intakeValues[field.key] ?? ''} onChange={(event) => handleIntakeChange(field.key, event.target.value)} placeholder={field.placeholder} className="h-8 w-full border-0 bg-transparent text-sm outline-none placeholder:text-gray-400" />
+                            </label>
+                          );
+                        })()}
+                      </div>
+                    </section>
+                  )}
+
+                  {/* VISIBILITY — public profile toggle + field-level checkboxes */}
+                  {profileSection === 'visibility' && (
+                    <section className="rounded-[20px] border border-black/10 bg-white shadow-[0_10px_34px_rgba(0,0,0,0.04)]">
+                      <div className="border-b border-black/10 px-5 py-4">
+                        <h3 className="text-sm font-semibold">Public profile</h3>
+                        <p className="mt-1 text-xs text-gray-500">
+                          Control what&apos;s visible on your public page at{' '}
+                          <a
+                            href={`/@${user.username ?? user.email.split('@')[0].toLowerCase().replace(/[^a-z0-9]/g, '')}`}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="font-medium text-[#42520d] underline underline-offset-2"
+                          >
+                            /@{user.username ?? user.email.split('@')[0].toLowerCase().replace(/[^a-z0-9]/g, '')}
+                          </a>
+                        </p>
+                      </div>
+                      <div className="space-y-3 px-5 py-4">
+                        <label className="flex items-center justify-between gap-3 rounded-xl bg-[#fbf8f3] px-4 py-3">
+                          <span className="text-sm">
+                            <span className="font-medium">
+                              {intakeValues.publicProfileEnabled === 'true' ? 'Public profile on' : 'Private (platform only)'}
+                            </span>
+                            <span className="mt-0.5 block text-xs text-gray-500">
+                              {intakeValues.publicProfileEnabled === 'true'
+                                ? 'Visible to the internet. Only checked fields shown.'
+                                : 'Visible only to signed-in Apparent members.'}
+                            </span>
+                          </span>
+                          <button
+                            type="button"
+                            role="switch"
+                            aria-checked={intakeValues.publicProfileEnabled === 'true'}
+                            onClick={() => handleIntakeChange('publicProfileEnabled', intakeValues.publicProfileEnabled === 'true' ? 'false' : 'true')}
+                            className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors ${intakeValues.publicProfileEnabled === 'true' ? 'bg-[#42520d]' : 'bg-gray-200'}`}
+                          >
+                            <span className={`inline-block h-3.5 w-3.5 translate-x-0.5 rounded-full bg-white shadow transition-transform ${intakeValues.publicProfileEnabled === 'true' ? 'translate-x-[1.125rem]' : ''}`} />
+                          </button>
+                        </label>
+                      </div>
+                      <div className="grid gap-1 border-t border-black/10 px-5 py-4 sm:grid-cols-2">
+                        {[
+                          { key: 'thesis', label: 'Investment thesis' },
+                          { key: 'sectors', label: 'Sectors' },
+                          { key: 'stage', label: 'Preferred stage' },
+                          { key: 'geography', label: 'Geography' },
+                          { key: 'checkSize', label: 'Check size' },
+                          { key: 'portfolioExamples', label: 'Portfolio companies' },
+                          { key: 'founderSignals', label: 'What you back' },
+                        ].map(({ key, label }) => {
+                          const currentFields: string[] = (() => {
+                            try { return JSON.parse(intakeValues.publicFields ?? '[]'); } catch { return []; }
+                          })();
+                          const isChecked = currentFields.includes(key);
+                          const toggleField = () => {
+                            const next = isChecked ? currentFields.filter((f) => f !== key) : [...currentFields, key];
+                            handleIntakeChange('publicFields', JSON.stringify(next));
+                          };
+                          return (
+                            <label key={key} className="flex cursor-pointer items-center gap-2 rounded-lg px-2 py-2 text-sm transition hover:bg-[#fbf8f3]">
+                              <input type="checkbox" checked={isChecked} onChange={toggleField} className="h-3.5 w-3.5 rounded accent-[#42520d]" />
+                              <span className="text-gray-700">{label}</span>
+                            </label>
+                          );
+                        })}
+                      </div>
+                      <div className="border-t border-black/10 px-5 py-3">
+                        <p className="text-xs text-gray-400">
+                          {intakeValues.publicProfileEnabled === 'true'
+                            ? 'Your profile is visible to the internet. Only checked fields are shown to non-members.'
+                            : 'Your profile is only visible to signed-in Apparent members — no public indexing.'}
+                        </p>
+                      </div>
+                    </section>
+                  )}
+                </div>
+
+                {/* Right rail — top signals + portfolio calibration */}
+                <aside className="space-y-6 self-start lg:sticky lg:top-6">
+                  <section className="rounded-[20px] border border-black/10 bg-white shadow-[0_10px_34px_rgba(0,0,0,0.04)]">
+                    <div className="flex items-center justify-between border-b border-black/10 px-5 py-4">
+                      <div>
+                        <h3 className="text-sm font-semibold">Top ranked signals</h3>
+                        <p className="mt-1 text-xs text-gray-500">Highest-scoring deals based on your thesis.</p>
+                      </div>
+                      <button type="button" className={`rounded-full ${accentSurface} px-3 py-1.5 text-xs font-semibold ${accentForeground}`} onClick={() => handleDashboardViewChange('deals')}>
+                        View all
+                      </button>
                     </div>
-                    <button type="button" className={`rounded-full ${accentSurface} px-3 py-1.5 text-xs font-semibold ${accentForeground}`} onClick={() => handleDashboardViewChange('deals')}>
-                      View all
-                    </button>
-                  </div>
-                  <div className="divide-y divide-black/10">
-                    {signalRows.slice(0, 5).map((signal) => (
-                      <article key={signal.id} className="px-5 py-4">
-                        <div className="flex items-start gap-3">
-                          <div className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-[14px] bg-[#f7f3e4] text-xs font-semibold text-[#42520d]">
-                            {signal.company.slice(0, 2).toUpperCase()}
-                          </div>
-                          <div className="min-w-0 flex-1">
-                            <div className="flex items-center justify-between gap-2">
-                              <p className="text-sm font-semibold">{signal.company}</p>
-                              <span className="shrink-0 rounded-full bg-[#f4f1eb] px-2 py-0.5 text-xs text-gray-600">{signal.relevance}</span>
+                    <div className="divide-y divide-black/10">
+                      {signalRows.slice(0, 5).map((signal) => (
+                        <article key={signal.id} className="px-5 py-4">
+                          <div className="flex items-start gap-3">
+                            <div className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-[14px] bg-[#f7f3e4] text-xs font-semibold text-[#42520d]">
+                              {signal.company.slice(0, 2).toUpperCase()}
                             </div>
-                            <p className="mt-1 line-clamp-2 text-sm leading-5 text-gray-500">{signal.detail}</p>
-                            <div className="mt-2 flex flex-wrap gap-2 text-xs text-gray-400">
-                              <span>{signal.source}</span>
-                              <span>·</span>
-                              <span>{signal.freshness}</span>
+                            <div className="min-w-0 flex-1">
+                              <div className="flex items-center justify-between gap-2">
+                                <p className="text-sm font-semibold">{signal.company}</p>
+                                <span className="shrink-0 rounded-full bg-[#f4f1eb] px-2 py-0.5 text-xs text-gray-600">{signal.relevance}</span>
+                              </div>
+                              <p className="mt-1 line-clamp-2 text-sm leading-5 text-gray-500">{signal.detail}</p>
+                              <div className="mt-2 flex flex-wrap gap-2 text-xs text-gray-400">
+                                <span>{signal.source}</span>
+                                <span>·</span>
+                                <span>{signal.freshness}</span>
+                              </div>
                             </div>
                           </div>
-                        </div>
-                      </article>
-                    ))}
-                    {signalRows.length === 0 && (
-                      <div className="px-5 py-10 text-sm leading-6 text-gray-500">No signals yet. Save your thesis above to start seeing ranked deal flow.</div>
-                    )}
-                  </div>
-                </div>
+                        </article>
+                      ))}
+                      {signalRows.length === 0 && (
+                        <div className="px-5 py-10 text-sm leading-6 text-gray-500">No signals yet. Fill in your thesis to start seeing ranked deal flow.</div>
+                      )}
+                    </div>
+                  </section>
 
-                <aside className="rounded-[20px] border border-black/10 bg-white shadow-[0_10px_34px_rgba(0,0,0,0.04)]">
-                  <div className="border-b border-black/10 px-5 py-4">
-                    <h3 className="text-sm font-semibold">Portfolio calibration</h3>
-                    <p className="mt-1 text-xs text-gray-500">Companies from your taste list, used to calibrate signal ranking.</p>
-                  </div>
-                  <div className="divide-y divide-black/10">
-                    {(intakeValues.portfolioExamples ?? '').split(',').map((s) => s.trim()).filter(Boolean).map((company) => (
-                      <div key={company} className="px-5 py-3 text-sm text-gray-700">{company}</div>
-                    ))}
-                    {!(intakeValues.portfolioExamples ?? '').trim() && (
-                      <div className="px-5 py-8 text-sm leading-6 text-gray-500">Add portfolio examples in your thesis to calibrate your signal ranking.</div>
-                    )}
-                  </div>
+                  <section className="rounded-[20px] border border-black/10 bg-white shadow-[0_10px_34px_rgba(0,0,0,0.04)]">
+                    <div className="border-b border-black/10 px-5 py-4">
+                      <h3 className="text-sm font-semibold">Portfolio calibration</h3>
+                      <p className="mt-1 text-xs text-gray-500">Companies from your taste list.</p>
+                    </div>
+                    <div className="divide-y divide-black/10">
+                      {(intakeValues.portfolioExamples ?? '').split(',').map((s) => s.trim()).filter(Boolean).map((company) => (
+                        <div key={company} className="px-5 py-3 text-sm text-gray-700">{company}</div>
+                      ))}
+                      {!(intakeValues.portfolioExamples ?? '').trim() && (
+                        <div className="px-5 py-8 text-sm leading-6 text-gray-500">Add companies under Portfolio to calibrate signal ranking.</div>
+                      )}
+                    </div>
+                  </section>
                 </aside>
               </section>
             </>
