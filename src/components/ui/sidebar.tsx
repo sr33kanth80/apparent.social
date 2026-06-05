@@ -9,6 +9,7 @@ import {
   Layers,
   Layout,
   LayoutDashboard,
+  Sunrise,
   LogOut,
   Map,
   MessageSquareText,
@@ -157,6 +158,7 @@ const roleConfig = {
     groups: [
       [
         { label: 'Overview', path: '/dashboard/investor', icon: LayoutDashboard },
+        { label: 'Daily', path: '/dashboard/investor/daily', icon: Sunrise, badge: 'New' },
         { label: 'Your Thesis', path: '/dashboard/investor/profile', icon: Target },
         { label: 'Discover', path: '/dashboard/investor/discover', icon: Layers, badge: 'New' },
         { label: 'Builder Discovery', path: '/dashboard/investor/matches', icon: Search, badge: 'AI' },

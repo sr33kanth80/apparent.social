@@ -25,6 +25,7 @@ import {
   Smile,
   SquarePen,
   Star,
+  Sunrise,
   Target,
   Trash2,
   Users,
@@ -104,14 +105,14 @@ import {
   toggleLaunchUpvote,
   toggleMeetupRsvp,
 } from '@/lib/dashboard-service';
-import { loadExternalLaunches } from '@/lib/external-feed';
+import { loadDailyDigest, loadExternalLaunches } from '@/lib/external-feed';
 import { cityGeoCoordinates } from '@/lib/app-defaults';
 import { signOut } from '@/lib/auth-service';
 
 type DashboardRole = 'founder' | 'investor';
 type ActionMode = 'profile' | 'launch' | 'thesis' | 'meetup';
 type FieldKind = 'input' | 'textarea' | 'select';
-type ViewMode = 'overview' | 'profile' | 'products' | 'matches' | 'messages' | 'deals' | 'terms' | 'knowledge' | 'feedback' | 'settings' | 'for-you' | 'vc-heatmap' | 'discover' | 'outreach';
+type ViewMode = 'overview' | 'profile' | 'products' | 'matches' | 'messages' | 'deals' | 'terms' | 'knowledge' | 'feedback' | 'settings' | 'for-you' | 'vc-heatmap' | 'discover' | 'outreach' | 'daily';
 type InvestorDealStage = 'New' | 'Reviewing' | 'Reached Out' | 'Meeting' | 'Watchlist';
 
 interface DashboardProps {
@@ -457,6 +458,7 @@ const PATH_TO_VIEW: Record<string, ViewMode> = {
   'for-you': 'for-you',
   outreach: 'outreach',
   'vc-heatmap': 'vc-heatmap',
+  daily: 'daily',
 };
 
 /**
@@ -534,6 +536,10 @@ const viewFromSectionId = (id: string): ViewMode => {
     return 'outreach';
   }
 
+  if (id === 'daily') {
+    return 'daily';
+  }
+
   return 'overview';
 };
 
@@ -584,6 +590,10 @@ const sectionIdFromView = (view: ViewMode) => {
 
   if (view === 'outreach') {
     return 'outreach';
+  }
+
+  if (view === 'daily') {
+    return 'daily';
   }
 
   return 'overview';
@@ -905,6 +915,16 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
   const [publicLaunches, setPublicLaunches] = useState<ProductLaunch[]>([]);
   // External launches ingested from the R2 scraper feed (Product Hunt, YC, etc).
   const [externalLaunches, setExternalLaunches] = useState<ProductLaunch[]>([]);
+  // Curated daily VC deal flow (refreshed by the scraper at 07:00 PST). Powers
+  // the investor "Daily" tab. Investor-only.
+  const [dailyDigest, setDailyDigest] = useState<ProductLaunch[]>([]);
+  // Daily-tab filter state.
+  const [dailyFilters, setDailyFilters] = useState<{ query: string; sector: string; stage: string; location: string }>({
+    query: '',
+    sector: '',
+    stage: '',
+    location: '',
+  });
   const [launchAuthors, setLaunchAuthors] = useState<Record<string, LaunchAuthor>>({});
   // VC list + Apparent investor list, both used to build the founder's
   // dynamic "Investor Matches" view. Loaded once per session.
@@ -1520,6 +1540,25 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
       cancelled = true;
     };
   }, []);
+
+  // Investor side: load the curated daily digest (R2 feed, refreshed 07:00 PST)
+  // that powers the "Daily" tab. No-op / empty when unconfigured.
+  useEffect(() => {
+    if (!isInvestor) return;
+    let cancelled = false;
+    loadDailyDigest((cached) => {
+      if (!cancelled) setDailyDigest(cached);
+    })
+      .then((launches) => {
+        if (!cancelled) setDailyDigest(launches);
+      })
+      .catch(() => {
+        if (!cancelled) setDailyDigest([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [isInvestor]);
 
   // Founder side: load the full VC list + active Apparent investors once so the
   // "Investor Matches" tab can rank them against the founder's launches and
@@ -6317,6 +6356,172 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
     </motion.div>
   );
 
+  const renderDailyDigestPage = () => {
+    // Distinct filter options derived from whatever the scraper delivered today.
+    const uniq = (values: string[]) => Array.from(new Set(values.map((v) => v.trim()).filter(Boolean))).sort();
+    const sectorOptions = uniq(dailyDigest.map((l) => l.category));
+    const stageOptions = uniq(dailyDigest.map((l) => l.stage));
+    const locationOptions = uniq(dailyDigest.map((l) => l.location ?? ''));
+
+    const q = dailyFilters.query.trim().toLowerCase();
+    const filtered = dailyDigest.filter((l) => {
+      if (dailyFilters.sector && l.category !== dailyFilters.sector) return false;
+      if (dailyFilters.stage && l.stage !== dailyFilters.stage) return false;
+      if (dailyFilters.location && (l.location ?? '') !== dailyFilters.location) return false;
+      if (q) {
+        const hay = `${l.name} ${l.tagline} ${l.intro ?? ''} ${l.category} ${l.location ?? ''} ${l.metrics}`.toLowerCase();
+        if (!hay.includes(q)) return false;
+      }
+      return true;
+    });
+
+    const hasActiveFilter = Boolean(dailyFilters.query || dailyFilters.sector || dailyFilters.stage || dailyFilters.location);
+    const todayLabel = new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' });
+    const selectCls =
+      'h-9 rounded-full border border-black/10 bg-white px-3 text-xs font-semibold text-black/70 outline-none focus:border-black/30';
+
+    return (
+      <motion.div
+        key="daily-main"
+        initial={{ opacity: 0, y: 10, filter: 'blur(2px)' }}
+        animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+        exit={{ opacity: 0, y: -8, filter: 'blur(2px)' }}
+        transition={{ duration: 0.22, ease: 'easeOut' }}
+      >
+        <section id="daily" className="scroll-mt-24">
+          <div className="mx-auto max-w-[1292px] space-y-6">
+            {/* Header */}
+            <div className="rounded-[20px] border border-black/10 bg-white px-6 py-5 shadow-[0_10px_34px_rgba(0,0,0,0.04)]">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-11 w-11 items-center justify-center rounded-[14px] bg-[#dcefc7]">
+                    <Sunrise className="h-5 w-5 text-[#42520d]" />
+                  </div>
+                  <div>
+                    <h2 className="text-xl font-semibold tracking-[-0.02em]">Today&apos;s deal flow</h2>
+                    <p className="mt-0.5 text-xs text-black/50">{todayLabel} · refreshes daily at 7:00 AM PST</p>
+                  </div>
+                </div>
+                <span className="rounded-full bg-[#f4f1eb] px-3 py-1.5 text-xs font-semibold text-black/60">
+                  {filtered.length} {filtered.length === 1 ? 'launch' : 'launches'}
+                </span>
+              </div>
+
+              {/* Filter bar */}
+              {dailyDigest.length > 0 && (
+                <div className="mt-4 flex flex-wrap items-center gap-2 border-t border-black/10 pt-4">
+                  <div className="relative min-w-[12rem] flex-1">
+                    <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-black/30" />
+                    <input
+                      value={dailyFilters.query}
+                      onChange={(e) => setDailyFilters((f) => ({ ...f, query: e.target.value }))}
+                      placeholder="Search today's launches"
+                      className="h-9 w-full rounded-full border border-black/10 bg-white pl-9 pr-3 text-xs font-medium outline-none focus:border-black/30"
+                    />
+                  </div>
+                  <select value={dailyFilters.sector} onChange={(e) => setDailyFilters((f) => ({ ...f, sector: e.target.value }))} className={selectCls}>
+                    <option value="">All sectors</option>
+                    {sectorOptions.map((s) => <option key={s} value={s}>{s}</option>)}
+                  </select>
+                  <select value={dailyFilters.stage} onChange={(e) => setDailyFilters((f) => ({ ...f, stage: e.target.value }))} className={selectCls}>
+                    <option value="">All stages</option>
+                    {stageOptions.map((s) => <option key={s} value={s}>{s}</option>)}
+                  </select>
+                  <select value={dailyFilters.location} onChange={(e) => setDailyFilters((f) => ({ ...f, location: e.target.value }))} className={selectCls}>
+                    <option value="">All locations</option>
+                    {locationOptions.map((s) => <option key={s} value={s}>{s}</option>)}
+                  </select>
+                  {hasActiveFilter && (
+                    <button
+                      type="button"
+                      onClick={() => setDailyFilters({ query: '', sector: '', stage: '', location: '' })}
+                      className="inline-flex items-center gap-1 rounded-full px-3 py-2 text-xs font-semibold text-black/50 hover:text-black"
+                    >
+                      <X className="h-3.5 w-3.5" /> Clear
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* List */}
+            {dailyDigest.length === 0 ? (
+              <div className="rounded-[20px] border border-black/10 bg-white p-10 text-center shadow-[0_10px_34px_rgba(0,0,0,0.04)]">
+                <Sunrise className="mx-auto h-8 w-8 text-black/25" />
+                <h3 className="mt-4 text-lg font-semibold tracking-[-0.02em]">No deal flow yet today</h3>
+                <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-black/55">
+                  A fresh, thesis-ranked list of founders and launches lands here every morning at 7:00 AM PST. Check back shortly.
+                </p>
+              </div>
+            ) : filtered.length === 0 ? (
+              <div className="rounded-[20px] border border-black/10 bg-white p-10 text-center shadow-[0_10px_34px_rgba(0,0,0,0.04)]">
+                <ListFilter className="mx-auto h-7 w-7 text-black/25" />
+                <p className="mt-3 text-sm font-semibold">No launches match these filters</p>
+                <button
+                  type="button"
+                  onClick={() => setDailyFilters({ query: '', sector: '', stage: '', location: '' })}
+                  className="mt-3 text-xs font-semibold text-[#42520d] hover:underline"
+                >
+                  Clear filters
+                </button>
+              </div>
+            ) : (
+              <div className="overflow-hidden rounded-[20px] border border-black/10 bg-white shadow-[0_10px_34px_rgba(0,0,0,0.04)]">
+                <div className="divide-y divide-black/10">
+                  {filtered.map((launch, index) => {
+                    const domain = dashboardLaunchDomain(launch.launchUrl || launch.sourceUrl || '');
+                    const href = launch.sourceUrl || launch.launchUrl || '';
+                    return (
+                      <a
+                        key={launch.id}
+                        href={href || undefined}
+                        target={href ? '_blank' : undefined}
+                        rel="noreferrer"
+                        className="group grid items-center gap-4 px-5 py-4 transition-colors hover:bg-[#fbf8f3] md:grid-cols-[3.25rem_1fr_auto]"
+                      >
+                        <div className="flex items-center gap-3 md:block">
+                          <div className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-[16px] bg-[#fbfaf7]">
+                            <img
+                              src={launch.logoUrl || `https://www.google.com/s2/favicons?domain=${domain}&sz=128`}
+                              alt=""
+                              className="h-7 w-7 object-contain"
+                              onError={(e) => { e.currentTarget.style.visibility = 'hidden'; }}
+                            />
+                          </div>
+                          <span className="text-xs font-semibold text-black/30 md:mt-2 md:block">0{index + 1}</span>
+                        </div>
+                        <div className="min-w-0">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <h3 className="text-base font-semibold tracking-[-0.01em]">{launch.name}</h3>
+                            {launch.source && (
+                              <span className="inline-flex items-center gap-1 rounded-full border border-black/10 bg-[#fbf8f3] px-2 py-0.5 text-[11px] font-semibold text-black/55">
+                                <Globe className="h-3 w-3" /> via {launch.source}
+                              </span>
+                            )}
+                          </div>
+                          {launch.tagline && <p className="mt-1 line-clamp-1 text-sm text-black/60">{launch.tagline}</p>}
+                          <div className="mt-2 flex flex-wrap gap-x-2 gap-y-1 text-xs font-semibold text-black/45">
+                            {launch.category && <span>{launch.category}</span>}
+                            {launch.location && <><span>·</span><span className="inline-flex items-center gap-1"><MapPin className="h-3 w-3" />{launch.location}</span></>}
+                            {launch.stage && <><span>·</span><span>{launch.stage}</span></>}
+                            {launch.metrics && <><span>·</span><span className="text-[#42520d]">{launch.metrics}</span></>}
+                          </div>
+                        </div>
+                        <span className="hidden shrink-0 items-center gap-1 rounded-full bg-[#f4f1eb] px-3.5 py-2 text-xs font-semibold text-black/70 transition-colors group-hover:bg-[#42520d] group-hover:text-white md:inline-flex">
+                          View <ArrowUpRight className="h-3.5 w-3.5" />
+                        </span>
+                      </a>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </div>
+        </section>
+      </motion.div>
+    );
+  };
+
   const renderForYouLaunchPage = () => {
     // No Apparent launches loaded yet (or none exist) — render an empty state
     // instead of crashing on selectedForYouLaunch. The first founder who
@@ -7760,6 +7965,8 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
                 </div>
               )}
               </motion.div>
+            ) : activeView === 'daily' && isInvestor ? (
+              renderDailyDigestPage()
             ) : activeView === 'for-you' ? (
               renderForYouLaunchPage()
             ) : activeView === 'outreach' && !isInvestor ? (
