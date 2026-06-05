@@ -40,6 +40,9 @@ supabase/.temp/
 coverage/
 *.local
 
+# Scraper feed temp files written by the scheduled launch-feed task
+scripts/.feed-*.json
+
 # Agent skills / tooling (installed via `npx skills add`, not project code)
 .agents/
 .claude/skills/
