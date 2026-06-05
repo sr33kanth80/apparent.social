@@ -7708,18 +7708,50 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
     );
   }
 
+  // Notification bell + dropdown — reused across the overview flow header and
+  // the floating top-right placement on section pages.
+  const notificationBell = (
+    <div className="relative">
+      <button
+        className="rounded-full border border-black/10 bg-white p-2.5 text-gray-700 transition-colors hover:text-black"
+        onClick={() => setShowNotifications((current) => !current)}
+        aria-label="Toggle notifications"
+      >
+        <Bell className="h-4 w-4" />
+      </button>
+      {showNotifications && (
+        <div className="absolute right-0 top-12 z-30 w-80 rounded-2xl border border-black/10 bg-white p-4 shadow-xl">
+          <div className="mb-3 flex items-center justify-between">
+            <p className="font-semibold">Activity</p>
+            <button onClick={() => setShowNotifications(false)} aria-label="Close notifications">
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+          <div className="space-y-2">
+            {activity.map((item) => (
+              <div key={item} className="rounded-xl bg-gray-50 p-3 text-sm text-gray-700">
+                {item}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+
   return (
     <div className="min-h-screen bg-[#fbf8f3] text-black">
       <SessionNavBar role={role} user={user} activated={profileSaved} />
 
       <main className="min-h-screen pl-[15rem]">
-        <div className={isVCHeatMapView ? 'min-h-screen' : isMessagesView ? 'mx-auto flex h-screen w-full max-w-[1440px] flex-col overflow-hidden px-6 pt-6' : 'mx-auto max-w-[1440px] px-6 py-6'}>
-          {!isVCHeatMapView && (
-          <header className={`${isMessagesView ? 'mb-0 shrink-0 pb-4' : activeView === 'overview' ? 'mb-6' : 'mb-2'} flex flex-col gap-4 md:flex-row md:items-center md:justify-between`}>
-            {/* The workspace/For-You toggle is only meaningful on the overview
-                landing page — both target views are reachable from there.
-                Hidden elsewhere so deeper sections aren't cluttered by it. */}
-            {activeView === 'overview' ? (
+        <div className={isVCHeatMapView ? 'min-h-screen' : isMessagesView ? 'relative mx-auto flex h-screen w-full max-w-[1440px] flex-col overflow-hidden px-6 pt-6' : activeView === 'overview' ? 'mx-auto max-w-[1440px] px-6 py-6' : 'relative mx-auto max-w-[1440px] px-6 pb-6 pt-6'}>
+          {/* Overview: full header with the workspace/For-You toggle + global
+              search. Section pages drop both — the toggle's targets are reachable
+              from overview, and sections carry their own in-context controls —
+              so the bell floats in the top-right and the header reserves no
+              vertical band (no leftover whitespace). */}
+          {!isVCHeatMapView && activeView === 'overview' && (
+            <header className="mb-6 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
               <Switch
                 name="dashboard-view"
                 value={activeView}
@@ -7738,14 +7770,8 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
                   activeClassName={`${accentSurface} ${accentSwitchForeground}`}
                 />
               </Switch>
-            ) : (
-              <span />
-            )}
 
-            <div className="flex w-full max-w-4xl items-center gap-3 md:justify-end">
-              {/* Global search is also overview-only — section pages have their
-                  own in-context search/filter controls. */}
-              {activeView === 'overview' && (
+              <div className="flex w-full max-w-4xl items-center gap-3 md:justify-end">
                 <ActionSearchBar
                   value={query}
                   onValueChange={setQuery}
@@ -7759,36 +7785,21 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
                         : 'Search builders, investors, cities'
                   }
                 />
-              )}
-              <div className="relative">
-                <button
-                  className="rounded-full border border-black/10 bg-white p-2.5 text-gray-700 transition-colors hover:text-black"
-                  onClick={() => setShowNotifications((current) => !current)}
-                  aria-label="Toggle notifications"
-                >
-                  <Bell className="h-4 w-4" />
-                </button>
-                {showNotifications && (
-                  <div className="absolute right-0 top-12 z-30 w-80 rounded-2xl border border-black/10 bg-white p-4 shadow-xl">
-                    <div className="mb-3 flex items-center justify-between">
-                      <p className="font-semibold">Activity</p>
-                      <button onClick={() => setShowNotifications(false)} aria-label="Close notifications">
-                        <X className="h-4 w-4" />
-                      </button>
-                    </div>
-                    <div className="space-y-2">
-                      {activity.map((item) => (
-                        <div key={item} className="rounded-xl bg-gray-50 p-3 text-sm text-gray-700">
-                          {item}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
+                {notificationBell}
               </div>
-            </div>
-          </header>
+            </header>
           )}
+
+          {/* Messages has a distinct full-height layout — keep the bell in a
+              tight in-flow bar so it can't overlap the conversation header. */}
+          {!isVCHeatMapView && activeView !== 'overview' && isMessagesView && (
+            <div className="mb-2 flex shrink-0 justify-end">{notificationBell}</div>
+          )}
+
+          {/* Standard section pages render no header band at all — content sits
+              flush at the top. The bell would otherwise either leave an empty
+              band (whitespace) or float over the section's own top-right action
+              buttons (e.g. profile upload), so it stays on Overview + Messages. */}
 
           {dashboardError && (
             <div className="mb-4 border-y border-red-200 bg-red-50 px-5 py-3 text-sm text-red-700">
