@@ -7716,41 +7716,50 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
         <div className={isVCHeatMapView ? 'min-h-screen' : isMessagesView ? 'mx-auto flex h-screen w-full max-w-[1440px] flex-col overflow-hidden px-6 pt-6' : 'mx-auto max-w-[1440px] px-6 py-6'}>
           {!isVCHeatMapView && (
           <header className={`${isMessagesView ? 'mb-0 shrink-0 pb-4' : 'mb-6'} flex flex-col gap-4 md:flex-row md:items-center md:justify-between`}>
-            <Switch
-              name="dashboard-view"
-              value={activeView}
-              onValueChange={handleDashboardViewChange}
-              size="medium"
-              style={{ width: 'min(100%, 360px)' }}
-            >
-              <Switch.Control
-                label={isInvestor ? 'Investor workspace' : 'Founder workspace'}
-                value="overview"
-                activeClassName={`${accentSurface} ${accentSwitchForeground}`}
-              />
-              <Switch.Control
-                label="For You"
-                value="for-you"
-                activeClassName={`${accentSurface} ${accentSwitchForeground}`}
-              />
-            </Switch>
+            {/* The workspace/For-You toggle is only meaningful on the overview
+                landing page — both target views are reachable from there.
+                Hidden elsewhere so deeper sections aren't cluttered by it. */}
+            {activeView === 'overview' ? (
+              <Switch
+                name="dashboard-view"
+                value={activeView}
+                onValueChange={handleDashboardViewChange}
+                size="medium"
+                style={{ width: 'min(100%, 360px)' }}
+              >
+                <Switch.Control
+                  label={isInvestor ? 'Investor workspace' : 'Founder workspace'}
+                  value="overview"
+                  activeClassName={`${accentSurface} ${accentSwitchForeground}`}
+                />
+                <Switch.Control
+                  label="For You"
+                  value="for-you"
+                  activeClassName={`${accentSurface} ${accentSwitchForeground}`}
+                />
+              </Switch>
+            ) : (
+              <span />
+            )}
 
             <div className="flex w-full max-w-4xl items-center gap-3 md:justify-end">
-              <ActionSearchBar
-                value={query}
-                onValueChange={setQuery}
-                onActionSelect={handleDashboardSearchAction}
-                actions={dashboardSearchActions}
-                className="max-w-none"
-                label="Search Apparent"
-                placeholder={
-                    activeView === 'for-you'
-                      ? 'Search the front page'
-                      : isInvestor
+              {/* Global search is also overview-only — section pages have their
+                  own in-context search/filter controls. */}
+              {activeView === 'overview' && (
+                <ActionSearchBar
+                  value={query}
+                  onValueChange={setQuery}
+                  onActionSelect={handleDashboardSearchAction}
+                  actions={dashboardSearchActions}
+                  className="max-w-none"
+                  label="Search Apparent"
+                  placeholder={
+                      isInvestor
                         ? 'Search signals, founders, deal flow'
                         : 'Search builders, investors, cities'
-                }
-              />
+                  }
+                />
+              )}
               <div className="relative">
                 <button
                   className="rounded-full border border-black/10 bg-white p-2.5 text-gray-700 transition-colors hover:text-black"
