@@ -1,0 +1,36 @@
+{
+  "_comment": "Throwaway test fixture for smoke-testing the R2 feed pipe end-to-end. Upload it with scripts/upload-feed.mjs, confirm the entries appear in the dashboard, then overwrite with real data (or an empty feed) when done. Safe to delete.",
+  "launches": [
+    {
+      "id": "test-northwind",
+      "name": "Northwind",
+      "tagline": "AI weather routing for cargo ships",
+      "description": "Cuts fuel burn 12% by replanning routes around live ocean weather. Smoke-test entry.",
+      "category": "Climate / Logistics",
+      "stage": "Seed",
+      "location": "Rotterdam",
+      "url": "https://example.com/northwind",
+      "metrics": "$14K MRR · 3 design partners",
+      "mrr": "$14K MRR",
+      "source": "Product Hunt",
+      "sourceUrl": "https://example.com/northwind",
+      "launchedAt": "2026-06-05",
+      "founderSignals": ["Technical founder"]
+    },
+    {
+      "id": "test-ledgerly",
+      "name": "Ledgerly",
+      "tagline": "Close the books in one click",
+      "description": "Automated month-end close for seed-stage startups. Smoke-test entry.",
+      "category": "Fintech",
+      "stage": "Pre-seed",
+      "location": "Remote",
+      "url": "https://example.com/ledgerly",
+      "metrics": "Launched this week",
+      "source": "Y Combinator",
+      "sourceUrl": "https://example.com/ledgerly",
+      "launchedAt": "2026-06-05",
+      "founderSignals": ["First-time founder", "Technical founder"]
+    }
+  ]
+}
