@@ -116,6 +116,51 @@ export interface ProductLaunch {
   /** Aggregate upvote count from the DB (populated for real launches). */
   upvoteCount?: number;
   updatedAt: string;
+  /**
+   * Provenance. 'apparent' = launched by a real founder on the platform.
+   * 'external' = ingested from a scraper feed (Product Hunt, YC, HN, etc.).
+   * Undefined is treated as 'apparent' for backward compatibility.
+   */
+  origin?: 'apparent' | 'external';
+  /** For external launches: human-readable source, e.g. "Product Hunt". */
+  source?: string;
+  /** For external launches: link back to the original listing. */
+  sourceUrl?: string;
+}
+
+/**
+ * One raw record in an R2-hosted scraper feed file
+ * (feeds/external-launches.json, feeds/daily-digest.json). Mirrors what the
+ * Perplexity/scraper pipeline writes — intentionally loose so the ingestion
+ * side stays simple; loadExternalLaunches() normalizes it into ProductLaunch.
+ */
+export interface ExternalLaunchRecord {
+  id?: string;
+  name: string;
+  tagline?: string;
+  description?: string;
+  category?: string;
+  stage?: string;
+  location?: string;
+  url?: string;
+  logoUrl?: string;
+  bannerUrl?: string;
+  metrics?: string;
+  mrr?: string;
+  /** Where it was scraped from, e.g. "Product Hunt", "YC", "Hacker News". */
+  source?: string;
+  /** Link to the original listing. */
+  sourceUrl?: string;
+  /** ISO date the product launched / was discovered. */
+  launchedAt?: string;
+  founderSignals?: string[];
+}
+
+/** Top-level shape of an R2 feed file. */
+export interface ExternalLaunchFeed {
+  /** ISO timestamp the scraper last refreshed this file. */
+  updatedAt?: string;
+  launches: ExternalLaunchRecord[];
 }
 
 export interface LaunchTeamMember {

@@ -1,0 +1,39 @@
+{
+  "_comment": "SAMPLE / SCHEMA REFERENCE — this is the exact shape the scraper (Perplexity Computer, cron @ 07:00 PST) must write to Cloudflare R2 at feeds/external-launches.json and feeds/daily-digest.json. Apparent fetches it from ${VITE_R2_PUBLIC_URL}/feeds/external-launches.json and merges it into the For You feed. Only `name` is strictly required per launch; everything else is optional but improves the card. URLs must be absolute https:// links. This .sample.json file is documentation only and is NOT read by the app.",
+  "updatedAt": "2026-06-05T14:00:00Z",
+  "launches": [
+    {
+      "id": "ph-acme-ai-2026-06-05",
+      "name": "Acme AI",
+      "tagline": "AI copilot for accountants",
+      "description": "Acme AI automates month-end close for small accounting teams. Launched #1 Product of the Day with 1.2k upvotes.",
+      "category": "AI / Fintech",
+      "stage": "Launched",
+      "location": "San Francisco",
+      "url": "https://acme.ai",
+      "logoUrl": "https://acme.ai/logo.png",
+      "bannerUrl": "https://acme.ai/og.png",
+      "metrics": "#1 Product of the Day · 1.2k upvotes",
+      "mrr": "$8K MRR",
+      "source": "Product Hunt",
+      "sourceUrl": "https://www.producthunt.com/posts/acme-ai",
+      "launchedAt": "2026-06-05",
+      "founderSignals": ["Technical founder", "First-time founder"]
+    },
+    {
+      "id": "yc-w26-brightloop",
+      "name": "Brightloop",
+      "tagline": "Observability for LLM agents",
+      "description": "YC W26 company building tracing and eval tooling for production agent systems.",
+      "category": "Devtools / AI infra",
+      "stage": "Seed",
+      "location": "Remote",
+      "url": "https://brightloop.dev",
+      "logoUrl": "https://brightloop.dev/favicon.png",
+      "source": "Y Combinator",
+      "sourceUrl": "https://www.ycombinator.com/companies/brightloop",
+      "launchedAt": "2026-06-04",
+      "founderSignals": ["Technical founder"]
+    }
+  ]
+}

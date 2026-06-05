@@ -9,6 +9,7 @@ import {
   ChevronUp,
   FileText,
   Flame,
+  Globe,
   Image,
   LocateFixed,
   ListFilter,
@@ -103,6 +104,7 @@ import {
   toggleLaunchUpvote,
   toggleMeetupRsvp,
 } from '@/lib/dashboard-service';
+import { loadExternalLaunches } from '@/lib/external-feed';
 import { cityGeoCoordinates } from '@/lib/app-defaults';
 import { signOut } from '@/lib/auth-service';
 
@@ -197,6 +199,12 @@ interface DashboardLaunchRow {
   founderGithubVerified?: boolean;
   proof: string[];
   investors: string[];
+  /** 'apparent' (real platform founder) or 'external' (scraped feed). */
+  origin?: 'apparent' | 'external';
+  /** For external rows: source label, e.g. "Product Hunt". */
+  source?: string;
+  /** For external rows: link to the original listing. */
+  sourceUrl?: string;
 }
 
 type WeightedKnownPlaceSuggestion = PlaceSuggestion & { source: 'Apparent'; networkWeight: number };
@@ -694,24 +702,32 @@ const productLaunchToDashboardRow = (
   ownerUsername = '',
   ownerPhotoUrl = '',
   ownerGithubVerified = false,
-): DashboardLaunchRow => ({
+): DashboardLaunchRow => {
+  const isExternal = launch.origin === 'external';
+  return {
   id: `workspace-${launch.id}`,
   name: launch.name,
-  founder: ownerLabel,
+  founder: isExternal ? `via ${launch.source || 'External'}` : ownerLabel,
   tagline: launch.tagline || 'New product launched into Apparent.',
   description: launch.intro || launch.metrics || launch.tagline || 'This founder has launched a new product for investor and builder discovery.',
   category: launch.category || 'Builder product',
-  location: launch.location || 'Apparent',
+  location: launch.location || (isExternal ? 'Web' : 'Apparent'),
   stage: launch.stage || 'Launched',
   fit: Math.max(72, 94 - index * 3),
   saves: Math.max(18, launch.name.length * 5),
   comments: Math.max(3, launch.category.length || 3),
   momentum: launch.metrics || 'Fresh founder launch',
-  website: launch.launchUrl || launch.proofUrl || 'https://apparent.dev/',
-  projectPath: `/projects/${launch.slug || launch.id}`,
+  website: launch.launchUrl || launch.proofUrl || launch.sourceUrl || 'https://apparent.dev/',
+  // External launches have no Apparent project page or founder profile — the
+  // card links straight out to the original listing instead.
+  projectPath: isExternal ? undefined : `/projects/${launch.slug || launch.id}`,
   // Prefer the canonical /@username route so the link lands on the public
   // profile that knows about the founder's display name + handle.
-  founderProfilePath: ownerUsername ? `/@${ownerUsername}` : `/profile/${launch.ownerId}`,
+  founderProfilePath: isExternal
+    ? undefined
+    : ownerUsername
+      ? `/@${ownerUsername}`
+      : `/profile/${launch.ownerId}`,
   founderPhotoUrl: ownerPhotoUrl,
   founderGithubVerified: ownerGithubVerified,
   logoUrl: launch.logoUrl,
@@ -726,7 +742,11 @@ const productLaunchToDashboardRow = (
     (item): item is string => Boolean(item),
   ),
   investors: [launch.category || 'Builder proof', launch.stage || 'Fresh launch', 'Founder profile'],
-});
+  origin: launch.origin ?? 'apparent',
+  source: launch.source,
+  sourceUrl: launch.sourceUrl,
+  };
+};
 
 const matchKnownPlace = (query: string): NetworkInterestPin | null => {
   const normalizedQuery = query.trim().toLowerCase();
@@ -883,6 +903,8 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
   const [dashboardError, setDashboardError] = useState('');
   const [productLaunches, setProductLaunches] = useState<ProductLaunch[]>([]);
   const [publicLaunches, setPublicLaunches] = useState<ProductLaunch[]>([]);
+  // External launches ingested from the R2 scraper feed (Product Hunt, YC, etc).
+  const [externalLaunches, setExternalLaunches] = useState<ProductLaunch[]>([]);
   const [launchAuthors, setLaunchAuthors] = useState<Record<string, LaunchAuthor>>({});
   // VC list + Apparent investor list, both used to build the founder's
   // dynamic "Investor Matches" view. Loaded once per session.
@@ -1203,10 +1225,12 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
     };
   const dashboardLaunchRows = useMemo(() => {
     // Merge the current user's own launches with all public Apparent launches,
-    // dedupe by id so the user's own launches don't appear twice.
+    // then append external (scraped) launches. Apparent-native launches lead so
+    // real platform founders always rank above scraped discovery content.
+    // Dedupe by id so the user's own launches don't appear twice.
     const seen = new Set<string>();
     const merged: ProductLaunch[] = [];
-    for (const launch of [...productLaunches, ...publicLaunches]) {
+    for (const launch of [...productLaunches, ...publicLaunches, ...externalLaunches]) {
       if (seen.has(launch.id)) continue;
       seen.add(launch.id);
       merged.push(launch);
@@ -1224,7 +1248,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
       const ownerGithubVerified = isOwn ? false : (author?.githubVerified ?? false);
       return productLaunchToDashboardRow(launch, index, ownerLabel, ownerUsername, ownerPhotoUrl, ownerGithubVerified);
     });
-  }, [productLaunches, publicLaunches, launchAuthors, user.id, user.username]);
+  }, [productLaunches, publicLaunches, externalLaunches, launchAuthors, user.id, user.username]);
   const availableDashboardLaunchFilters = isInvestor
     ? [...dashboardLaunchFilters, ...investorFounderSignalFilters]
     : dashboardLaunchFilters;
@@ -1476,6 +1500,26 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
       cancelled = true;
     };
   }, [user.id]);
+
+  // Load external (scraped) launches from the R2 feed and merge them into
+  // "For You" alongside real Apparent launches. No-op when the feed isn't
+  // configured (VITE_R2_PUBLIC_URL unset) or unreachable — degrades to
+  // Apparent-only content.
+  useEffect(() => {
+    let cancelled = false;
+    loadExternalLaunches((cached) => {
+      if (!cancelled) setExternalLaunches(cached);
+    })
+      .then((launches) => {
+        if (!cancelled) setExternalLaunches(launches);
+      })
+      .catch(() => {
+        if (!cancelled) setExternalLaunches([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   // Founder side: load the full VC list + active Apparent investors once so the
   // "Investor Matches" tab can rank them against the founder's launches and
@@ -6367,7 +6411,12 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
                   {visibleDashboardLaunches.map((launch, index) => {
                     const isExpanded = selectedForYouLaunchId === launch.id;
                     const domain = dashboardLaunchDomain(launch.website);
-                    const projectHref = launch.projectPath ?? `/projects/${launch.id}`;
+                    // External launches have no Apparent project page — open the
+                    // original listing (website/source) instead of a dead route.
+                    const projectHref =
+                      launch.origin === 'external'
+                        ? launch.sourceUrl || launch.website
+                        : launch.projectPath ?? `/projects/${launch.id}`;
 
                     return (
                       <div key={launch.id} className={isExpanded ? 'bg-[#fbfaf7]' : 'bg-white'}>
@@ -6399,6 +6448,11 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
                               <span className="rounded-full bg-[#dcefc7] px-2.5 py-0.5 text-xs font-semibold text-black">
                                 {launch.fit}% thesis fit
                               </span>
+                              {launch.origin === 'external' && (
+                                <span className="inline-flex items-center gap-1 rounded-full border border-black/10 bg-[#fbf8f3] px-2.5 py-0.5 text-xs font-semibold text-black/55">
+                                  <Globe className="h-3 w-3" /> via {launch.source || 'External'}
+                                </span>
+                              )}
                             </div>
                             <p className="mt-1.5 text-sm leading-6 text-black/70">{launch.tagline}</p>
                             <div className="mt-3 flex flex-wrap gap-2 text-xs font-semibold text-black/45">
