@@ -1521,9 +1521,9 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
     };
   }, [user.id]);
 
-  // Load external (scraped) launches from the R2 feed and merge them into
-  // "For You" alongside real Apparent launches. No-op when the feed isn't
-  // configured (VITE_R2_PUBLIC_URL unset) or unreachable — degrades to
+  // Load external (scraped) launches from the R2 feed (via the /api/feeds
+  // proxy) and merge them into "For You" alongside real Apparent launches.
+  // No-op when the feed isn't configured or unreachable — degrades to
   // Apparent-only content.
   useEffect(() => {
     let cancelled = false;

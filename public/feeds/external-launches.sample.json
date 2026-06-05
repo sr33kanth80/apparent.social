@@ -1,5 +1,5 @@
 {
-  "_comment": "SAMPLE / SCHEMA REFERENCE — this is the exact shape the scraper (Perplexity Computer, cron @ 07:00 PST) must write to Cloudflare R2 at feeds/external-launches.json and feeds/daily-digest.json. Apparent fetches it from ${VITE_R2_PUBLIC_URL}/feeds/external-launches.json and merges it into the For You feed. Only `name` is strictly required per launch; everything else is optional but improves the card. URLs must be absolute https:// links. This .sample.json file is documentation only and is NOT read by the app.",
+  "_comment": "SAMPLE / SCHEMA REFERENCE — this is the exact shape the scraper (Perplexity Computer, cron @ 07:00 PST) must write to Cloudflare R2 at feeds/external-launches.json and feeds/daily-digest.json. Upload with: node scripts/upload-feed.mjs <file> external-launches|daily-digest. Apparent reads it server-side via /api/feeds (which pulls from R2_PUBLIC_URL) and merges it into the For You feed / Daily tab. Only `name` is strictly required per launch; everything else is optional but improves the card. URLs must be absolute https:// links. This .sample.json file is documentation only and is NOT read by the app.",
   "updatedAt": "2026-06-05T14:00:00Z",
   "launches": [
     {
