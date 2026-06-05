@@ -7715,7 +7715,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
       <main className="min-h-screen pl-[15rem]">
         <div className={isVCHeatMapView ? 'min-h-screen' : isMessagesView ? 'mx-auto flex h-screen w-full max-w-[1440px] flex-col overflow-hidden px-6 pt-6' : 'mx-auto max-w-[1440px] px-6 py-6'}>
           {!isVCHeatMapView && (
-          <header className={`${isMessagesView ? 'mb-0 shrink-0 pb-4' : 'mb-6'} flex flex-col gap-4 md:flex-row md:items-center md:justify-between`}>
+          <header className={`${isMessagesView ? 'mb-0 shrink-0 pb-4' : activeView === 'overview' ? 'mb-6' : 'mb-2'} flex flex-col gap-4 md:flex-row md:items-center md:justify-between`}>
             {/* The workspace/For-You toggle is only meaningful on the overview
                 landing page — both target views are reachable from there.
                 Hidden elsewhere so deeper sections aren't cluttered by it. */}
