@@ -268,10 +268,13 @@ export function SessionNavBar({ role, user, activated = true }: SessionNavBarPro
         <motion.ul variants={staggerVariants} className="flex h-full flex-col">
           <div className="flex grow flex-col items-center">
             <div className="flex w-full shrink-0 flex-col border-b">
-              <div className={cn('flex h-[50px] w-full items-center gap-2 px-2', isCollapsed ? 'justify-center' : 'justify-start')}>
+              <div className="relative flex h-[50px] w-full items-center justify-start gap-2 px-2">
                 <Link
                   to={`${config.basePath}`}
-                  className="flex min-w-0 flex-1 items-center gap-2 transition hover:opacity-80"
+                  className={cn(
+                    'flex items-center gap-2 transition hover:opacity-80',
+                    isCollapsed ? 'justify-center' : 'min-w-0 flex-1',
+                  )}
                 >
                   <LogoIcon className="h-6 w-6 shrink-0 text-black" />
                   <motion.li variants={variants} className="min-w-0">
@@ -294,6 +297,7 @@ export function SessionNavBar({ role, user, activated = true }: SessionNavBarPro
                   className={cn(
                     'h-7 w-7 shrink-0 text-muted-foreground hover:text-foreground',
                     isPinned && config.active,
+                    isCollapsed && 'absolute right-0 translate-x-full rounded-l-none rounded-r-md border border-l-0 border-black/10 bg-white shadow-sm',
                   )}
                   onClick={() => setIsPinned((current) => !current)}
                 >
