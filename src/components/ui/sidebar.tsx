@@ -268,26 +268,22 @@ export function SessionNavBar({ role, user, activated = true }: SessionNavBarPro
         <motion.ul variants={staggerVariants} className="flex h-full flex-col">
           <div className="flex grow flex-col items-center">
             <div className="flex w-full shrink-0 flex-col border-b">
-              <Link
-                to={`${config.basePath}`}
-                className={cn(
-                  'flex h-[50px] w-full items-center gap-2 px-2 transition hover:bg-muted',
-                  isCollapsed ? 'justify-center' : 'justify-start',
-                )}
-              >
-                <LogoIcon className="h-6 w-6 shrink-0 text-black" />
-                <motion.li variants={variants} className="min-w-0">
-                  {!isCollapsed && (
-                    <img
-                      src="/apparent-wordmark.png"
-                      alt="Apparent"
-                      className="h-7 w-auto max-w-[8.75rem] object-contain"
-                    />
-                  )}
-                </motion.li>
-              </Link>
-
-              <div className="flex h-[46px] w-full items-center justify-end px-2 pb-2">
+              <div className={cn('flex h-[50px] w-full items-center gap-2 px-2', isCollapsed ? 'justify-center' : 'justify-start')}>
+                <Link
+                  to={`${config.basePath}`}
+                  className="flex min-w-0 flex-1 items-center gap-2 transition hover:opacity-80"
+                >
+                  <LogoIcon className="h-6 w-6 shrink-0 text-black" />
+                  <motion.li variants={variants} className="min-w-0">
+                    {!isCollapsed && (
+                      <img
+                        src="/apparent-wordmark.png"
+                        alt="Apparent"
+                        className="h-7 w-auto max-w-[8.75rem] object-contain"
+                      />
+                    )}
+                  </motion.li>
+                </Link>
                 <Button
                   type="button"
                   variant="ghost"
@@ -296,9 +292,8 @@ export function SessionNavBar({ role, user, activated = true }: SessionNavBarPro
                   aria-label={isPinned ? 'Unpin sidebar' : 'Pin sidebar'}
                   title={isPinned ? 'Unpin sidebar' : 'Pin sidebar'}
                   className={cn(
-                    'ml-auto h-7 w-7 shrink-0 text-muted-foreground hover:text-foreground',
+                    'h-7 w-7 shrink-0 text-muted-foreground hover:text-foreground',
                     isPinned && config.active,
-                    isCollapsed && 'ml-0',
                   )}
                   onClick={() => setIsPinned((current) => !current)}
                 >
