@@ -26,13 +26,41 @@
  * { launches: [...] } shape before uploading, so a malformed scrape never
  * reaches production.
  */
+import { existsSync, readFileSync } from 'node:fs';
 import { readFile } from 'node:fs/promises';
 import { createHash, createHmac } from 'node:crypto';
+import { fileURLToPath } from 'node:url';
+import { dirname, join } from 'node:path';
 
 const FEEDS = {
   'external-launches': 'feeds/external-launches.json',
   'daily-digest': 'feeds/daily-digest.json',
 };
+
+// Load R2 secrets from a gitignored .env file at the repo root if env vars
+// aren't already set. Lets a locally-scheduled run (Claude routine / cron) pick
+// up credentials without them being exported in the shell or baked into a
+// task prompt. Looked-up files, in order: .env.r2.local, .env.local, .env
+const loadLocalEnv = () => {
+  const root = join(dirname(fileURLToPath(import.meta.url)), '..');
+  for (const name of ['.env.r2.local', '.env.local', '.env']) {
+    const path = join(root, name);
+    if (!existsSync(path)) continue;
+    try {
+      const text = readFileSync(path, 'utf8');
+      for (const line of text.split(/\r?\n/)) {
+        const m = line.match(/^\s*([A-Z0-9_]+)\s*=\s*(.*)\s*$/);
+        if (!m) continue;
+        const key = m[1];
+        let val = m[2].replace(/^["']|["']$/g, ''); // strip surrounding quotes
+        if (process.env[key] === undefined && val) process.env[key] = val;
+      }
+    } catch {
+      /* unreadable file — ignore, fall through to whatever's in process.env */
+    }
+  }
+};
+loadLocalEnv();
 
 const ACCOUNT_ID = process.env.R2_ACCOUNT_ID ?? '';
 const BUCKET = process.env.R2_BUCKET_NAME ?? '';
