@@ -988,16 +988,15 @@ export const loadBuilderNetwork = async (
   }
 
   const [{ data: profileRows }, { data: launchRows }, { data: stateRows }] = await Promise.all([
-    supabase.from('founder_profiles').select('*').order('updated_at', { ascending: false }),
-    supabase.from('product_launches').select('*').order('updated_at', { ascending: false }),
+    supabase.from('founder_profiles').select('*').eq('public_profile_enabled', true).order('updated_at', { ascending: false }),
+    supabase.from('product_launches').select('*').eq('public_profile_enabled', true).order('updated_at', { ascending: false }),
     supabase.from('builder_discovery_states').select('*').eq('user_id', user.id),
   ]);
 
   const allLaunches = (launchRows ?? []).map((row) => mapProductLaunchRow(row));
-  const mappedBuilders = mapBuilderProfileRows((profileRows ?? []) as Record<string, unknown>[], allLaunches, user.id);
-  // Only show real Apparent founders on the radar. We previously merged
-  // ingested public signals (YC / GitHub / Product Hunt / Hacker News) but the
-  // scraped pipeline was removed; this keeps the radar clean of leftover dots.
+  // Only founders who have public profiles AND at least one published launch.
+  const mappedBuilders = mapBuilderProfileRows((profileRows ?? []) as Record<string, unknown>[], allLaunches, user.id)
+    .filter((b) => b.launchCount > 0);
   const builderNodes = mappedBuilders
     .map((builder) => calculateBuilderFit(builder, role, values))
     .sort((a, b) => b.fitScore - a.fitScore);
@@ -1847,8 +1846,8 @@ export const loadDashboardData = async (
     supabase.from('meetups').select('*').order('starts_at', { ascending: true }),
     supabase.from('meetup_rsvps').select('*'),
     supabase.from('term_reviews').select('*').eq('user_id', user.id).order('updated_at', { ascending: false }),
-    supabase.from('founder_profiles').select('*').order('updated_at', { ascending: false }),
-    supabase.from('product_launches').select('*').order('updated_at', { ascending: false }),
+    supabase.from('founder_profiles').select('*').eq('public_profile_enabled', true).order('updated_at', { ascending: false }),
+    supabase.from('product_launches').select('*').eq('public_profile_enabled', true).order('updated_at', { ascending: false }),
     supabase.from('builder_discovery_states').select('*').eq('user_id', user.id),
     isInvestor
       ? supabase.from('investor_criteria').select('*').eq('user_id', user.id).maybeSingle()
@@ -1883,11 +1882,12 @@ export const loadDashboardData = async (
   // Now built from the rows fetched in the critical batch above. The fit
   // score depends on `values`, so we compute that per-role below.
   const allLaunchesForNetwork = (allLaunchRows ?? []).map((row) => mapProductLaunchRow(row));
+  // Only founders with a published profile AND at least one live launch appear on the radar.
   const mappedBuildersRaw = mapBuilderProfileRows(
     (allProfileRows ?? []) as Record<string, unknown>[],
     allLaunchesForNetwork,
     user.id,
-  );
+  ).filter((b) => b.launchCount > 0);
   const builderDiscoveryStates = (builderStateRows ?? []).map((row) => mapBuilderDiscoveryRow(row));
 
   // Derives the deferred-data-dependent fields. Called twice — once with empty
