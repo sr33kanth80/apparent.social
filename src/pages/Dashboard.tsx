@@ -881,7 +881,6 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
   const [pointerDrag, setPointerDrag] = useState<{ company: string; label: string; x: number; y: number } | null>(null);
   const [isDashboardLoading, setIsDashboardLoading] = useState(true);
   const [dashboardError, setDashboardError] = useState('');
-  const [isSavingWorkspace, setIsSavingWorkspace] = useState(false);
   const [productLaunches, setProductLaunches] = useState<ProductLaunch[]>([]);
   const [publicLaunches, setPublicLaunches] = useState<ProductLaunch[]>([]);
   const [launchAuthors, setLaunchAuthors] = useState<Record<string, LaunchAuthor>>({});
@@ -2457,23 +2456,6 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
     }
   };
 
-  const handleSaveProfile = async () => {
-    setIsSavingWorkspace(true);
-    setDashboardError('');
-
-    try {
-      await saveIntakeValues(user, role, intakeValues);
-      setProfileSaved(true);
-      setAutoSaveStatus('saved');
-      setTimeout(() => setAutoSaveStatus('idle'), 2000);
-      addActivity(isInvestor ? 'Investor thesis saved. For You personalized.' : 'Founder profile saved. For You personalized.');
-    } catch (error) {
-      setDashboardError(error instanceof Error ? error.message : 'Unable to save workspace.');
-      addActivity('Workspace save failed');
-    } finally {
-      setIsSavingWorkspace(false);
-    }
-  };
 
   const handleToggleShareable = async () => {
     const next = intakeValues.shareable === 'false' ? 'true' : 'false';
