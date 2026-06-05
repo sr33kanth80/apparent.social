@@ -3,7 +3,6 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
   ArrowUpRight,
-  Blocks,
   ChevronsUpDown,
   FileClock,
   GraduationCap,
@@ -23,7 +22,6 @@ import {
   Settings,
   Target,
   UserCircle,
-  UserCog,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
@@ -289,44 +287,7 @@ export function SessionNavBar({ role, user, activated = true }: SessionNavBarPro
                 </motion.li>
               </Link>
 
-              <div className="flex h-[46px] w-full items-center gap-1 px-2 pb-2">
-                <DropdownMenu modal={false}>
-                  <DropdownMenuTrigger className="w-full" asChild>
-                    <Button variant="ghost" size="sm" className="flex w-fit items-center gap-2 px-2">
-                      <Avatar className="size-4 rounded">
-                        <AvatarFallback className="bg-black text-[10px] text-white">
-                          {initials}
-                        </AvatarFallback>
-                      </Avatar>
-                      <motion.li variants={variants} className="flex w-fit items-center gap-2">
-                        {!isCollapsed && (
-                          <>
-                            <p className="text-sm font-medium">{config.workspace}</p>
-                            <ChevronsUpDown className="h-4 w-4 text-muted-foreground/50" />
-                          </>
-                        )}
-                      </motion.li>
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="start">
-                    <DropdownMenuItem asChild className="flex items-center gap-2">
-                      <Link to={`${config.basePath}/profile`}>
-                        <UserCog className="h-4 w-4" /> Manage profile
-                      </Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem asChild className="flex items-center gap-2">
-                      <Link to={`${config.basePath}/settings`}>
-                        <Blocks className="h-4 w-4" /> Integrations
-                      </Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem asChild>
-                      <Link to={`${config.basePath}`} className="flex items-center gap-2">
-                        <Plus className="h-4 w-4" />
-                        Create workspace
-                      </Link>
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
+              <div className="flex h-[46px] w-full items-center justify-end px-2 pb-2">
                 <Button
                   type="button"
                   variant="ghost"
