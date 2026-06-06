@@ -37,3 +37,5 @@ alter table public.waitlist_signups enable row level security;
 drop policy if exists "waitlist anon insert" on public.waitlist_signups;
 create policy "waitlist anon insert" on public.waitlist_signups
   for insert with check (true);
+
+grant insert on public.waitlist_signups to anon, authenticated;
