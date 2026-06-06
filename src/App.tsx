@@ -8,6 +8,7 @@ import { ForFounders } from './pages/ForFounders';
 import { ForVCs } from './pages/ForVCs';
 import { HeatMap } from './pages/HeatMap';
 import { AboutUs } from './pages/AboutUs';
+import { Blog, BlogPost } from './pages/Blog';
 import { Contact } from './pages/Contact';
 import { ProjectDetail } from './pages/ProjectDetail';
 import { PublicProfile } from './pages/PublicProfile';
@@ -158,6 +159,26 @@ function App() {
               <>
                 <EditorialNavbar />
                 <Resources />
+                <Footer />
+              </>
+            }
+          />
+          <Route
+            path="/blog"
+            element={
+              <>
+                <EditorialNavbar />
+                <Blog />
+                <Footer />
+              </>
+            }
+          />
+          <Route
+            path="/blog/:slug"
+            element={
+              <>
+                <EditorialNavbar />
+                <BlogPost />
                 <Footer />
               </>
             }

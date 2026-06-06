@@ -7,6 +7,7 @@ const navLinks = [
   { label: 'For Founders', to: '/for-founders' },
   { label: 'For VCs', to: '/for-vcs' },
   { label: 'Heat Map', to: '/heat-map' },
+  { label: 'Blog', to: '/blog' },
   { label: 'About Us', to: '/about' },
 ];
 
