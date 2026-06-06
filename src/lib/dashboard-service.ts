@@ -38,7 +38,6 @@ import type {
   VcOutreachTemplate,
 } from '@/lib/apparent-types';
 import { isSupabaseConfigured, supabase } from '@/lib/supabase';
-import { getStaticFounderProfile } from '@/lib/static-founder-profiles';
 
 const settingsDefault: UserSettings = {
   dailyDigestEnabled: true,
@@ -1227,7 +1226,7 @@ export const loadPublicProductLaunches = async (
   onCached?: (launches: ProductLaunch[]) => void,
 ): Promise<ProductLaunch[]> => {
   if (!isSupabaseConfigured || !supabase) {
-    return readPublicProductLaunches();
+    return [];
   }
 
   // Serve stale cache immediately before the network round-trip.
@@ -1241,7 +1240,7 @@ export const loadPublicProductLaunches = async (
     .order('updated_at', { ascending: false });
 
   if (error) {
-    return cached?.data ?? readPublicProductLaunches();
+    return cached?.data ?? [];
   }
 
   const launches = (data ?? []).map((row) => mapProductLaunchRow(row));
@@ -1556,8 +1555,7 @@ export const loadPublicFounderProfile = async (profileId: string): Promise<Publi
  */
 export const loadPublicProfile = async (username: string): Promise<PublicProfileResult> => {
   if (!isSupabaseConfigured || !supabase) {
-    // No DB — serve curated static profiles as the sole source.
-    return getStaticFounderProfile(username) ?? { kind: 'not_found' };
+    return { kind: 'not_found' };
   }
 
   try {
@@ -1579,8 +1577,7 @@ export const loadPublicProfile = async (username: string): Promise<PublicProfile
   }
 
   if (!profileRow) {
-    // Not in Supabase — fall back to curated static profiles.
-    return getStaticFounderProfile(username) ?? { kind: 'not_found' };
+    return { kind: 'not_found' };
   }
 
   const userId = String(profileRow.id);
@@ -1697,7 +1694,7 @@ export const loadPublicProfile = async (username: string): Promise<PublicProfile
     },
   };
   } catch {
-    return getStaticFounderProfile(username) ?? { kind: 'not_found' };
+    return { kind: 'not_found' };
   }
 };
 
@@ -2721,16 +2718,7 @@ const mapTemplateRow = (row: Record<string, unknown>): VcOutreachTemplate => ({
   updatedAt: String(row.updated_at ?? row.updatedAt ?? nowIso()),
 });
 
-/**
- * Real-world cold-email examples shown as inspiration in the Compose dialog.
- * Read-only — the founder writes their own copy after reading these. This is
- * deliberate UX: founder feels they're the one reaching out, Apparent is just
- * the automation layer underneath.
- *
- * Each example carries an attribution note so the founder knows where the
- * pattern comes from (paraphrased from public founder threads + investor
- * write-ups; never word-for-word).
- */
+/** Optional outreach examples for the Heat Map compose dialog. */
 export interface OutreachInspiration {
   id: string;
   /** Short label shown on the tab/pill. */
@@ -2741,95 +2729,7 @@ export interface OutreachInspiration {
   body: string;
 }
 
-export const OUTREACH_INSPIRATION_EXAMPLES: OutreachInspiration[] = [
-  {
-    id: 'sample-traction',
-    label: 'Traction-led',
-    note: 'Best when you have hard numbers. Lead with the metric.',
-    subject: 'Lemonade: $2.4M ARR, 17% MoM — would you take a look?',
-    body: `Hi Sarah,
-
-Quick context: I'm Alex, founder of Lemonade. We help fintech ops teams reconcile transactions across rails in under 30 seconds (today this takes them 4-6 hours).
-
-Three things I thought you'd care about given Foundry's thesis on workflow infra:
-1. $2.4M ARR, 17% MoM
-2. 4 design partners turned paying (Brex, Mercury, Ramp, Truelayer)
-3. Net dollar retention 142% over the last 6 months
-
-We're putting together a $4M seed and have already had first conversations with two of your peers. Would love 20 minutes if it's a fit.
-
-Best,
-Alex
-lemonade.so | linkedin.com/in/alexsmith`,
-  },
-  {
-    id: 'sample-thesis',
-    label: 'Thesis-fit',
-    note: 'Best when you can name something specific they wrote or backed.',
-    subject: 'Your "API as the new UI" post — and what we\'re building',
-    body: `Hi James,
-
-I read your "API as the new UI" post last week. The line about API ergonomics being the moat for the next wave of devtools really stuck with me.
-
-I'm Priya, founder of Cinder. We're building the OAuth + permission layer that B2B SaaS teams keep rebuilding from scratch. Drop-in SDK, ships in an afternoon.
-
-We're 6 months in, 9 paying customers, and I'd love your honest take — even if it's "this isn't a fit." Open to a 15-minute Zoom?
-
-Priya
-cinder.dev`,
-  },
-  {
-    id: 'sample-warm-cold',
-    label: 'Warm-cold',
-    note: 'Best when you share a portfolio company or mutual context.',
-    subject: 'Building in the same space as [PortCo] — fast intro',
-    body: `Hi Mike,
-
-I noticed you led Stencil's seed last year. We're building in a parallel space: developer-first observability, but for batch + ETL workloads instead of online services.
-
-Numbers so far:
-- 1,200 GitHub stars in 4 months
-- 11 design partners
-- 3 paid pilots ($2K MRR + $8K committed)
-
-We're closing a $1.5M pre-seed in the next 6 weeks. Would 15 minutes work next week?
-
-Cheers,
-Marcus
-marcus.dev | github.com/marcus`,
-  },
-  {
-    id: 'sample-short',
-    label: 'Three-line',
-    note: 'Best for partners who get hundreds of pitches and reward brevity.',
-    subject: 'AI-native code review, 30 sec read',
-    body: `Hi Talia,
-
-Reviewly is an AI-native code review tool. 2K paid devs, $18K MRR, 28% WoW growth. Raising a $2M seed.
-
-If interesting: would love a quick chat. If not: no worries at all, would still love feedback when you have a sec.
-
-Tom
-reviewly.ai`,
-  },
-  {
-    id: 'sample-narrative',
-    label: 'Story-led',
-    note: 'Best when your founder narrative is the wedge.',
-    subject: 'Why I left Datadog to build SLO Tracker',
-    body: `Hi Daniel,
-
-I spent 5 years at Datadog watching engineering orgs spend $200K+ a year on observability stacks they never fully use. The actual problem is that SLOs are still written in Notion docs and never tied to alerts.
-
-So three months ago I left to build SLO Tracker. The MVP went live last week and 14 teams have already signed up.
-
-Vivek's writeup on "Observability 2.0" matches almost exactly what I think the next decade looks like — would love 20 minutes to share what I'm seeing on the ground.
-
-Thanks,
-Maya
-slo.so | x.com/mayadev`,
-  },
-];
+export const OUTREACH_INSPIRATION_EXAMPLES: OutreachInspiration[] = [];
 
 /**
  * Pre-baked subject lines — five short patterns the founder can swap into the

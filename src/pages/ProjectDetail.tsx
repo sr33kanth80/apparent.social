@@ -3,11 +3,9 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import { ArrowUpRight, FileText, Globe2, Link as LinkIcon, MapPin, MessageCircle, Star, Users } from 'lucide-react';
 import { LogoIcon } from '@/components/LogoIcon';
 import { GitHubIcon } from '@/components/GitHubIcon';
-import { productLaunches } from '@/data/showcase-launches';
 import type { AppUser, PublicProjectDetail } from '@/lib/apparent-types';
 import { loadPublicProjectDetail, saveMessage } from '@/lib/dashboard-service';
 import { getCurrentAppUser } from '@/lib/auth-service';
-import { getStaticFounderProfile } from '@/lib/static-founder-profiles';
 import { VerifiedAvatar } from '@/components/VerifiedAvatar';
 
 const serifDisplay = {
@@ -20,72 +18,6 @@ const getDomain = (url: string) => {
   } catch {
     return 'apparent.dev';
   }
-};
-
-const fallbackProjectDetail = (projectId: string): PublicProjectDetail | null => {
-  const launch = productLaunches.find((item) => item.id === projectId);
-  if (!launch) return null;
-
-  const slug = launch.founderProfilePath.replace('/profile/', '');
-  // Pull rich data from the static profiles map so the "Launched by"
-  // card gets the real photo, headline, and social links.
-  const staticResult = getStaticFounderProfile(slug);
-  const sf = staticResult?.kind === 'founder' ? staticResult.profile : null;
-
-  return {
-    launch: {
-      id: launch.id,
-      ownerId: slug,
-      slug: launch.id,
-      name: launch.name,
-      tagline: launch.tagline,
-      intro: launch.description,
-      category: launch.category,
-      stage: launch.stage,
-      location: launch.location,
-      launchUrl: launch.website,
-      proofUrl: '', // no separate proof URL for curated static launches
-      metrics: launch.momentum,
-      founderSignals: launch.proof,
-      lookingFor: launch.investors.join(', '),
-      updatedAt: new Date().toISOString(),
-    },
-    founder: {
-      userId: slug,
-      username: slug,
-      profileName: sf?.profileName || launch.founder,
-      headline: sf?.headline || `${launch.founder} · ${launch.name}`,
-      bio: sf?.bio || launch.description,
-      profilePhotoUrl: sf?.profilePhotoUrl || '',
-      currentBuild: sf?.currentBuild || launch.name,
-      category: sf?.category || launch.category,
-      stage: sf?.stage || launch.stage,
-      github: sf?.github || '',
-      traction: sf?.traction || launch.momentum,
-      lookingFor: sf?.lookingFor || launch.investors.join(', '),
-      location: sf?.location || launch.location,
-      press: sf?.press || launch.website,
-      website: sf?.website || launch.website,
-      linkedin: sf?.linkedin || '',
-      xProfile: sf?.xProfile || '',
-      pastProducts: sf?.pastProducts || '',
-      launches: [],
-    },
-    teamMembers: [
-      {
-        name: sf?.profileName || launch.founder,
-        role: 'Founder',
-        bio: sf?.bio || `Leading ${launch.name}.`,
-        location: sf?.location || launch.location,
-        avatarUrl: sf?.profilePhotoUrl || '',
-        profileUrl: launch.founderProfilePath,
-        linkedinUrl: sf?.linkedin || '',
-        xProfileUrl: sf?.xProfile || '',
-        githubUrl: sf?.github || '',
-        sortOrder: 0,
-      },
-    ],
-  };
 };
 
 export const ProjectDetail = () => {
@@ -103,7 +35,7 @@ export const ProjectDetail = () => {
     setIsLoading(true);
     loadPublicProjectDetail(projectId).then((loadedDetail) => {
       if (!isMounted) return;
-      setDetail(loadedDetail ?? fallbackProjectDetail(projectId));
+      setDetail(loadedDetail);
       setIsLoading(false);
     });
 
@@ -420,3 +352,4 @@ export const ProjectDetail = () => {
     </main>
   );
 };
+

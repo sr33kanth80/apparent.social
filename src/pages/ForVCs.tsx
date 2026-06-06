@@ -13,55 +13,48 @@ const serifDisplay = {
 // expands the founder's profile card (same style as the For Founders mock).
 const rankedFounders = [
   {
-    handle: 'ariakim',
-    company: 'AgentKit',
-    name: 'Aria Kim',
-    meta: 'AI agents · Seed · San Francisco',
-    fit: 92,
-    photo: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=160&h=160&q=80',
-    headline: 'AgentKit — open-source agents teams actually ship to production.',
-    mrr: '$24K · +22% MoM',
+    handle: 'founder-profile',
+    company: 'Founder profile',
+    name: 'Founder',
+    meta: 'Category - stage - location',
+    fit: 'Thesis fit',
+    headline: 'A concise founder-supplied summary of the company, proof, and current ask.',
     facts: [
-      ['Current build', 'AgentKit v2'],
-      ['Stage', 'Seed'],
-      ['Traction', '4.2k GitHub stars'],
-      ['Raising', '$1.5M seed'],
+      ['Current build', 'Product summary'],
+      ['Stage', 'Founder selected'],
+      ['Traction', 'Owner supplied'],
+      ['Raising', 'Founder selected'],
     ],
   },
   {
-    handle: 'devsharma',
-    company: 'Ledgerline',
-    name: 'Dev Sharma',
-    meta: 'Fintech infra · Pre-seed · New York',
-    fit: 88,
-    photo: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=160&h=160&q=80',
-    headline: 'Ledgerline — reconciliation infrastructure for modern fintechs.',
-    mrr: '$11K · +31% MoM',
+    handle: 'product-profile',
+    company: 'Product profile',
+    name: 'Builder',
+    meta: 'Sector - stage - geography',
+    fit: 'Fresh proof',
+    headline: 'A second preview row showing how another founder profile expands in the inbox.',
     facts: [
-      ['Current build', 'Ledgerline API'],
-      ['Stage', 'Pre-seed'],
-      ['Traction', '9 paying fintechs'],
-      ['Raising', '$800K'],
+      ['Current build', 'Launch summary'],
+      ['Stage', 'Founder selected'],
+      ['Traction', 'Owner supplied'],
+      ['Raising', 'Founder selected'],
     ],
   },
   {
-    handle: 'maraolsen',
-    company: 'Northwind',
-    name: 'Mara Olsen',
-    meta: 'Climate · Seed · Berlin',
-    fit: 81,
-    photo: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?auto=format&fit=crop&w=160&h=160&q=80',
-    headline: 'Northwind — grid-balancing software for renewable utilities.',
-    mrr: '$18K · +14% MoM',
+    handle: 'launch-profile',
+    company: 'Launch profile',
+    name: 'Team',
+    meta: 'Market - stage - location',
+    fit: 'Review',
+    headline: 'A reusable preview card for the product, team, proof links, and investor materials.',
     facts: [
-      ['Current build', 'Northwind OS'],
-      ['Stage', 'Seed'],
-      ['Traction', '2 utility pilots'],
-      ['Raising', '$2M'],
+      ['Current build', 'Launch details'],
+      ['Stage', 'Founder selected'],
+      ['Traction', 'Owner supplied'],
+      ['Raising', 'Founder selected'],
     ],
   },
 ];
-
 // Interactive ranked inbox: each row expands into the founder's profile card on
 // hover (or keyboard focus), using the smooth grid-rows height transition.
 const RankedByFitCard = () => {
@@ -88,12 +81,12 @@ const RankedByFitCard = () => {
             >
               {/* Row */}
               <div className="flex items-center gap-3">
-                <img src={f.photo} alt={f.name} className="h-10 w-10 rounded-xl object-cover" />
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#dcefc7] text-xs font-semibold text-[#42520d]">AP</div>
                 <div className="min-w-0">
                   <p className="text-sm font-semibold">{f.company}</p>
                   <p className="text-xs text-white/45">{f.meta}</p>
                 </div>
-                <span className="ml-auto rounded-full bg-[#dcefc7] px-2.5 py-1 text-xs font-semibold text-black">{f.fit}%</span>
+                <span className="ml-auto rounded-full bg-[#dcefc7] px-2.5 py-1 text-xs font-semibold text-black">{f.fit}</span>
               </div>
 
               {/* Expanded founder card (smooth height via grid-rows) */}
@@ -106,8 +99,8 @@ const RankedByFitCard = () => {
                         <p className="text-xs text-white/50">@{f.handle}</p>
                       </div>
                       <div className="ml-auto text-right">
-                        <p className="text-[0.55rem] font-semibold uppercase tracking-[0.14em] text-white/40">MRR</p>
-                        <p className="mrr-shimmer text-sm font-semibold leading-none">{f.mrr}</p>
+                        <p className="text-[0.55rem] font-semibold uppercase tracking-[0.14em] text-white/40">Proof</p>
+                        <p className="text-sm font-semibold leading-none">Owner supplied</p>
                       </div>
                     </div>
                     <p className="mt-3 text-sm leading-6 text-white/70">{f.headline}</p>
@@ -124,10 +117,10 @@ const RankedByFitCard = () => {
                         <GitHubIcon className="h-3.5 w-3.5" /> GitHub
                       </span>
                       <span className="inline-flex items-center gap-1.5 rounded-full bg-white/[0.06] px-3 py-1.5 text-xs font-medium text-white/75">
-                        <Play className="h-3.5 w-3.5" /> Pitch · 2:14
+                        <Play className="h-3.5 w-3.5" /> Pitch video
                       </span>
                       <span className="inline-flex items-center gap-1.5 rounded-full bg-white/[0.06] px-3 py-1.5 text-xs font-medium text-white/75">
-                        <FileText className="h-3.5 w-3.5" /> Deck · 12 slides
+                        <FileText className="h-3.5 w-3.5" /> Deck
                       </span>
                     </div>
                   </div>

@@ -8,7 +8,7 @@
  *   to the R2 bucket via the S3 API (see scripts/upload-feed.mjs):
  *     - feeds/external-launches.json  → broad discovery feed (Idea 1)
  *     - feeds/daily-digest.json       → curated daily VC deal flow (Idea 2)
- *   See public/feeds/external-launches.sample.json for the expected schema.
+ *   Feed files must be JSON objects with a `launches` array.
  *
  * Read side (this module): fetches a SAME-ORIGIN proxy route (/api/feeds) that
  * pulls the file from R2 server-side and returns it. Going through the proxy

@@ -112,7 +112,7 @@ async function main() {
     die('File is not valid JSON.');
   }
   if (!parsed || !Array.isArray(parsed.launches)) {
-    die('JSON must be an object with a "launches" array. See public/feeds/external-launches.sample.json.');
+    die('JSON must be an object with a "launches" array.');
   }
   const named = parsed.launches.filter((l) => l && typeof l.name === 'string' && l.name.trim());
   if (named.length === 0) {

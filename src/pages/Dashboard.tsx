@@ -315,88 +315,6 @@ const founderSignalOptions = [
 const investorFounderSignalFilters = ['Women-led', 'LGBTQ+ founder(s)', 'Underrepresented founders', 'Immigrant founder(s)', 'First-time founder', 'Solo founder', 'Technical founder'];
 const underrepresentedFounderSignals = ['Women-led', 'LGBTQ+ founder(s)', 'Black founder(s)', 'Latino/a founder(s)', 'Immigrant founder(s)', 'Veteran founder'];
 
-
-
-const investorSignals: InvestorSignal[] = [
-  {
-    company: 'KernelTrace',
-    founder: 'Maya Chen',
-    detail: 'GitHub-native analytics for engineering leaders. New repository activity, two design partners, and repeat weekly usage.',
-    source: 'GitHub + launch post',
-    sourceUrl: '#github-kerneltrace',
-    profileUrl: '#profile-maya-chen',
-    relevance: 96,
-    freshness: '18 min ago',
-    stage: 'Seed',
-    location: 'Brooklyn',
-    column: 'New',
-    outreach: 'Maya, saw KernelTrace showing repeat usage from eng leads. Your GitHub proof lines up with our devtools thesis. Open to a quick chat this week?',
-  },
-  {
-    company: 'AgentDock',
-    founder: 'Arjun Patel',
-    detail: 'Open-source agent deployment control plane with launch traction from infra-heavy teams and strong technical documentation.',
-    source: 'Product launch + docs',
-    sourceUrl: '#launch-agentdock',
-    profileUrl: '#profile-arjun-patel',
-    relevance: 91,
-    freshness: '41 min ago',
-    stage: 'Pre-seed',
-    location: 'San Francisco',
-    column: 'Reviewing',
-    outreach: 'Arjun, AgentDock hits a few things we look for: hard technical wedge, public proof, and infra buyer pull. Worth comparing notes?',
-  },
-  {
-    company: 'HelpLoop AI',
-    founder: 'Nora Ellis',
-    detail: 'AI support automation with a public customer case study and visible hiring signal around implementation engineering.',
-    source: 'Customer story',
-    sourceUrl: '#story-helploop',
-    profileUrl: '#profile-nora-ellis',
-    relevance: 88,
-    freshness: '2h ago',
-    stage: 'Seed',
-    location: 'Seattle',
-    column: 'Reached Out',
-    outreach: 'Nora, the customer proof around HelpLoop stood out. We spend a lot of time on applied AI workflows and would like to learn more.',
-  },
-  {
-    company: 'SchemaPilot',
-    founder: 'Elena Morris',
-    detail: 'Database migration assistant showing fresh Hacker News attention, CLI usage, and a sharp wedge for platform teams.',
-    source: 'HN + package installs',
-    sourceUrl: '#hn-schemapilot',
-    profileUrl: '#profile-elena-morris',
-    relevance: 84,
-    freshness: 'Today',
-    stage: 'Pre-seed',
-    location: 'Remote',
-    column: 'Meeting',
-    outreach: 'Elena, SchemaPilot is exactly the kind of boring-but-urgent infra workflow we like. Would be useful to hear what teams are pulling hardest.',
-  },
-  {
-    company: 'Briefwise',
-    founder: 'Samir Rao',
-    detail: 'Workflow automation for legal ops with a fast-moving founder, early pilots, and narrow ICP clarity.',
-    source: 'Founder profile',
-    sourceUrl: '#profile-briefwise-source',
-    profileUrl: '#profile-samir-rao',
-    relevance: 79,
-    freshness: 'Yesterday',
-    stage: 'Seed',
-    location: 'Austin',
-    column: 'Watchlist',
-    outreach: 'Samir, Briefwise has a focused wedge and the pilot motion is interesting. We are tracking legal ops workflows and would like to stay close.',
-  },
-];
-
-const investorDigestItems = [
-  '5 new builder signals ranked above 75% relevance',
-  '2 fresh devtools launches with GitHub proof',
-  '1 founder moved from source inbox to meeting',
-  'Slack alert ready for SF infra founders this week',
-];
-
 const investorDealStages: InvestorDealStage[] = ['New', 'Reviewing', 'Reached Out', 'Meeting', 'Watchlist'];
 
 const buildInitialIntake = (fields: IntakeField[]) =>
@@ -903,7 +821,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
   const [savedInvestorMatchNames, setSavedInvestorMatchNames] = useState<string[]>([]);
   const [actionMode, setActionMode] = useState<ActionMode | null>(null);
   const [showNotifications, setShowNotifications] = useState(false);
-  const [signalRows, setSignalRows] = useState(investorSignals);
+  const [signalRows, setSignalRows] = useState<InvestorSignal[]>([]);
   const [slackAlertsEnabled, setSlackAlertsEnabled] = useState(true);
   const [dailyDigestEnabled, setDailyDigestEnabled] = useState(true);
   const [draggedSignalCompany, setDraggedSignalCompany] = useState<string | null>(null);
@@ -1239,9 +1157,8 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
   const getLaunchEngagement = (launch: ProductLaunch) =>
     launchEngagement[launch.id] ?? {
       upvoted: false,
-      // Real DB launches get upvoteCount from the DB; seed/decorative ones fall back to a stable fake count
-      upvotes: launch.upvoteCount ?? Math.max(12, launch.name.length * 7 + launch.category.length * 3),
-      comments: ['This is now visible to Apparent founders and investors.'],
+      upvotes: launch.upvoteCount ?? 0,
+      comments: [],
     };
   const dashboardLaunchRows = useMemo(() => {
     // Merge the current user's own launches with all public Apparent launches,
@@ -1269,6 +1186,14 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
       return productLaunchToDashboardRow(launch, index, ownerLabel, ownerUsername, ownerPhotoUrl, ownerGithubVerified);
     });
   }, [productLaunches, publicLaunches, externalLaunches, launchAuthors, user.id, user.username]);
+  const investorDigestRows = useMemo(
+    () =>
+      dailyDigest.slice(0, 4).map((launch) => ({
+        id: launch.id,
+        label: `${launch.name}${launch.tagline ? ` - ${launch.tagline}` : ''}`,
+      })),
+    [dailyDigest],
+  );
   const availableDashboardLaunchFilters = isInvestor
     ? [...dashboardLaunchFilters, ...investorFounderSignalFilters]
     : dashboardLaunchFilters;
@@ -3679,19 +3604,8 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
                         </div>
                       </section>
 
-                      <section className="grid gap-6 md:grid-cols-2">
+                      <section className="grid gap-6">
                         <GithubVerifyCard user={user} github={intakeValues.github ?? ''} />
-                        <div className="rounded-[18px] border border-dashed border-black/15 bg-[#fbfaf7] p-5">
-                          <div className="flex items-center gap-2">
-                            <span className="text-sm font-semibold text-black/70">Connect Stripe</span>
-                            <span className="rounded-full bg-black/5 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-black/45">
-                              Soon
-                            </span>
-                          </div>
-                          <p className="mt-2 text-xs leading-5 text-black/55">
-                            Link your Stripe (read-only) so investors see real monthly revenue on your launches — your numbers, straight from the source.
-                          </p>
-                        </div>
                       </section>
                     </>
                   )}
@@ -4023,16 +3937,16 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
                   <div className="grid gap-4">
                     <label className="grid gap-1">
                       <span className="text-sm font-medium">Product name</span>
-                      <input className="h-10 rounded-lg border border-black/10 bg-white px-3 text-sm outline-none focus:border-black/30" placeholder="KernelTrace" value={launchDraft.name} onChange={(e) => setLaunchDraft((c) => ({ ...c, name: e.target.value }))} />
+                      <input className="h-10 rounded-lg border border-black/10 bg-white px-3 text-sm outline-none focus:border-black/30" placeholder="Product name" value={launchDraft.name} onChange={(e) => setLaunchDraft((c) => ({ ...c, name: e.target.value }))} />
                     </label>
                     <label className="grid gap-1">
                       <span className="text-sm font-medium">Tagline</span>
-                      <input className="h-10 rounded-lg border border-black/10 bg-white px-3 text-sm outline-none focus:border-black/30" placeholder="GitHub-native analytics for engineering leaders." value={launchDraft.tagline} onChange={(e) => setLaunchDraft((c) => ({ ...c, tagline: e.target.value }))} />
+                      <input className="h-10 rounded-lg border border-black/10 bg-white px-3 text-sm outline-none focus:border-black/30" placeholder="One-line product pitch." value={launchDraft.tagline} onChange={(e) => setLaunchDraft((c) => ({ ...c, tagline: e.target.value }))} />
                     </label>
                     <div className="grid gap-3 sm:grid-cols-2">
                       <label className="grid gap-1">
                         <span className="text-sm font-medium">Category</span>
-                        <input className="h-10 rounded-lg border border-black/10 bg-white px-3 text-sm outline-none focus:border-black/30" placeholder="AI devtools" value={launchDraft.category} onChange={(e) => setLaunchDraft((c) => ({ ...c, category: e.target.value }))} />
+                        <input className="h-10 rounded-lg border border-black/10 bg-white px-3 text-sm outline-none focus:border-black/30" placeholder="Category" value={launchDraft.category} onChange={(e) => setLaunchDraft((c) => ({ ...c, category: e.target.value }))} />
                       </label>
                       <label className="grid gap-1">
                         <span className="text-sm font-medium">Stage</span>
@@ -4104,7 +4018,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
                     <label className="grid gap-1">
                       <span className="text-sm font-medium">Team members</span>
                       <span className="text-xs text-gray-500">One per line: name - role - bio - Apparent profile URL</span>
-                      <textarea className="min-h-28 rounded-lg border border-black/10 bg-white px-3 py-2 text-sm leading-relaxed outline-none focus:border-black/30" placeholder="Maya Chen - Founder & CEO - Built infra tooling at scale - /profile/user-id" value={launchDraft.teamMembersText} onChange={(e) => setLaunchDraft((c) => ({ ...c, teamMembersText: e.target.value }))} />
+                      <textarea className="min-h-28 rounded-lg border border-black/10 bg-white px-3 py-2 text-sm leading-relaxed outline-none focus:border-black/30" placeholder="Founder name - Role - Short bio - /profile/username" value={launchDraft.teamMembersText} onChange={(e) => setLaunchDraft((c) => ({ ...c, teamMembersText: e.target.value }))} />
                     </label>
                     <label className="grid gap-1">
                       <span className="text-sm font-medium">Team summary</span>
@@ -4182,7 +4096,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
                   <div className="grid gap-4">
                     <label className="grid gap-1">
                       <span className="text-sm font-medium">Metrics & traction</span>
-                      <textarea className="min-h-32 rounded-lg border border-black/10 bg-white px-3 py-2 text-sm leading-relaxed outline-none focus:border-black/30" placeholder="Two design partners, 1,200 weekly runs, 340 GitHub stars." value={launchDraft.metrics} onChange={(e) => setLaunchDraft((c) => ({ ...c, metrics: e.target.value }))} />
+                      <textarea className="min-h-32 rounded-lg border border-black/10 bg-white px-3 py-2 text-sm leading-relaxed outline-none focus:border-black/30" placeholder="Customer pull, usage, revenue, pilots, stars, or other proof." value={launchDraft.metrics} onChange={(e) => setLaunchDraft((c) => ({ ...c, metrics: e.target.value }))} />
                     </label>
                     <div className="grid gap-3 sm:grid-cols-2">
                       <label className="grid gap-1">
@@ -4284,7 +4198,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
                   </span>
                   <input
                     className="h-9 w-full border-0 bg-transparent text-sm outline-none placeholder:text-gray-400"
-                    placeholder="KernelTrace"
+                    placeholder="Product name"
                     value={launchDraft.name}
                     onChange={(event) => setLaunchDraft((current) => ({ ...current, name: event.target.value }))}
                   />
@@ -4297,7 +4211,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
                   </span>
                   <input
                     className="h-9 w-full border-0 bg-transparent text-sm outline-none placeholder:text-gray-400"
-                    placeholder="GitHub-native analytics for engineering leaders."
+                    placeholder="One-line product pitch."
                     value={launchDraft.tagline}
                     onChange={(event) => setLaunchDraft((current) => ({ ...current, tagline: event.target.value }))}
                   />
@@ -4311,7 +4225,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
                   <div className="grid gap-3 sm:grid-cols-2">
                     <input
                       className="h-9 w-full border-0 bg-transparent text-sm outline-none placeholder:text-gray-400"
-                      placeholder="AI devtools"
+                      placeholder="Category"
                       value={launchDraft.category}
                       onChange={(event) => setLaunchDraft((current) => ({ ...current, category: event.target.value }))}
                     />
@@ -4470,7 +4384,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
                   <div className="grid gap-3">
                     <textarea
                       className="min-h-20 w-full resize-none border-0 bg-transparent text-sm leading-relaxed outline-none placeholder:text-gray-400"
-                      placeholder="Maya Chen - Founder & CEO - Built infra tooling at scale - /profile/user-id"
+                      placeholder="Founder name - Role - Short bio - /profile/username"
                       value={launchDraft.teamMembersText}
                       onChange={(event) => setLaunchDraft((current) => ({ ...current, teamMembersText: event.target.value }))}
                     />
@@ -4627,7 +4541,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
                   </span>
                   <textarea
                     className="min-h-24 w-full resize-none border-0 bg-transparent text-sm leading-relaxed outline-none placeholder:text-gray-400"
-                    placeholder="Two design partners, 1,200 weekly runs, 340 GitHub stars."
+                    placeholder="Customer pull, usage, revenue, pilots, stars, or other proof."
                     value={launchDraft.metrics}
                     onChange={(event) => setLaunchDraft((current) => ({ ...current, metrics: event.target.value }))}
                   />
@@ -7965,15 +7879,19 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
                         <h3 className="text-sm font-semibold">Daily digest</h3>
                       </div>
                       <div className="mt-3 divide-y divide-black/10">
-                        {investorDigestItems.map((item) => (
+                        {investorDigestRows.length > 0 ? investorDigestRows.map((item) => (
                           <button
-                            key={item}
+                            key={item.id}
                             className="w-full px-4 py-3 text-left text-xs leading-relaxed text-gray-600 transition-colors hover:bg-[#fbf8f3]"
-                            onClick={() => addActivity(`Opened digest item: ${item}`)}
+                            onClick={() => addActivity(`Opened digest item: ${item.label}`)}
                           >
-                            {item}
+                            {item.label}
                           </button>
-                        ))}
+                        )) : (
+                          <p className="px-4 py-3 text-xs leading-relaxed text-gray-500">
+                            No digest items yet. Live deal-flow items appear here after the daily feed syncs.
+                          </p>
+                        )}
                       </div>
                       <button
                         className="mx-4 mt-3 w-[calc(100%-2rem)] rounded-full border border-black/10 px-4 py-2 text-sm font-medium hover:bg-[#fbf8f3]"
@@ -8312,7 +8230,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
                   </span>
                   <input
                     className="mt-2 h-10 w-full rounded-xl border border-black/10 px-3 text-sm outline-none focus:border-black"
-                    placeholder={isInvestor ? 'Developer tools at seed' : 'GitHub-native analytics'}
+                    placeholder={isInvestor ? 'Sector and stage focus' : 'Product or market focus'}
                   />
                 </label>
                 <label className="block">

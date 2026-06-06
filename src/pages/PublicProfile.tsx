@@ -320,28 +320,7 @@ const ProfileMessageModal = ({
 
 // ─── dark hero card (mockup-styled) ────────────────────────────────────────
 
-// Tiny seeded RNG so the decorative GitHub-activity grid is stable per
-// founder — same handle always renders the same shape, but it shifts
-// founder-to-founder so they don't look identical. Real per-day contributions
-// need GitHub GraphQL with an auth token; this is decorative-but-deterministic
-// until we plumb that through.
-const hashSeed = (s: string) => {
-  let h = 2166136261;
-  for (let i = 0; i < s.length; i += 1) {
-    h ^= s.charCodeAt(i);
-    h = Math.imul(h, 16777619);
-  }
-  return h >>> 0;
-};
-const mulberry32 = (seed: number) => () => {
-  seed |= 0;
-  seed = (seed + 0x6d2b79f5) | 0;
-  let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
-  t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
-  return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-};
-// Grid palette tuned for the cream editorial background. Mirrors GitHub's own
-// contribution-calendar greens so the visual language is instantly familiar.
+// Verified GitHub contribution-calendar palette.
 const COMMIT_LEVELS = [
   'bg-black/[0.06]',
   'bg-[#9be9a8]',
@@ -349,26 +328,6 @@ const COMMIT_LEVELS = [
   'bg-[#30a14e]',
   'bg-[#216e39]',
 ];
-const commitColumnsFor = (seed: string) => {
-  const rand = mulberry32(hashSeed(seed));
-  return Array.from({ length: 52 }, () => {
-    const quiet = rand() < 0.16;
-    const busy = rand() < 0.2;
-    return Array.from({ length: 7 }, (_, d) => {
-      const weekend = d === 0 || d === 6;
-      if (quiet && rand() < 0.8) return 0;
-      let r = rand();
-      if (busy) r = r * 0.6 + 0.4;
-      if (weekend) r *= 0.55;
-      if (r < 0.4) return 0;
-      if (r < 0.6) return 1;
-      if (r < 0.78) return 2;
-      if (r < 0.91) return 3;
-      return 4;
-    });
-  });
-};
-
 type GhStats = {
   publicRepos: number;
   followers: number;
@@ -439,9 +398,7 @@ const FounderHero = ({
     };
   }, [ghLogin]);
 
-  // Real contribution calendar — only when the founder is verified (we need
-  // their stored OAuth token to query GitHub GraphQL). A 404 just means we
-  // fall back to the deterministic mock; anything else gets logged.
+  // Real contribution calendar only when the founder is verified.
   useEffect(() => {
     const handle = profile.githubUsername || ghLogin;
     if (!handle || !profile.githubVerified) return;
@@ -462,31 +419,24 @@ const FounderHero = ({
         });
       })
       .catch(() => {
-        /* leave calendar null → fall back to mock */
+        /* leave calendar null; the grid stays hidden */
       });
     return () => {
       cancelled = true;
     };
   }, [ghLogin, profile.githubUsername, profile.githubVerified]);
 
-  // Real grid when we have it; deterministic mock otherwise. Same render path
-  // either way so the visual stays consistent.
-  const realColumns: number[][] | null = calendar
+  const columns: number[][] = calendar
     ? calendar.weeks.map((week) => {
         // Pad short last-week to 7 days so the grid has a uniform height.
         const padded = [...week];
         while (padded.length < 7) padded.push({ date: '', count: 0 });
         return padded.slice(0, 7).map((d) => countToLevel(d.count));
       })
-    : null;
-  const columns = realColumns || commitColumnsFor(profile.username || ghLogin || profile.userId);
+    : [];
 
-  const realStarsLabel = ghStats ? `${compact(ghStats.stars)} stars · ${compact(ghStats.publicRepos)} repos` : 'GitHub activity';
-  const headlineCount = calendar
-    ? `${compact(calendar.totalContributions)} contributions`
-    : ghStats
-      ? `${compact(ghStats.publicRepos * 24 + ghStats.stars * 2)} contributions`
-      : 'Recent activity';
+  const realStarsLabel = ghStats ? `${compact(ghStats.stars)} stars · ${compact(ghStats.publicRepos)} repos` : 'GitHub';
+  const headlineCount = `${compact(calendar?.totalContributions ?? 0)} contributions`;
 
   const name = profile.profileName || profile.username || 'Apparent Builder';
   const headline = profile.headline || profile.bio || '';
@@ -593,7 +543,7 @@ const FounderHero = ({
       )}
 
       {/* ─ GitHub activity grid ─ */}
-      {ghHandle && (
+      {ghHandle && calendar && (
         <div className="mt-10 border-t border-black/10 pt-6">
           <div className="flex flex-wrap items-baseline justify-between gap-2">
             <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-black/45">
@@ -1204,3 +1154,5 @@ export const PublicProfile = () => {
     </>
   );
 };
+
+

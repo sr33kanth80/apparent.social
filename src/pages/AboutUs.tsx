@@ -48,7 +48,7 @@ type Match = {
   rows: MatchRow[];
 };
 
-// Initials for the monogram avatars / logos, e.g. "Aria Kim" -> "AK", "Atlas Capital" -> "AC".
+// Initials for the monogram avatars and logos.
 const initials = (name: string) =>
   name
     .split(' ')
@@ -60,46 +60,45 @@ const initials = (name: string) =>
 // A deck of founder ⇄ investor matches. Each row's weights sum to that match's total.
 const matches: Match[] = [
   {
-    founder: 'Aria Kim',
-    investor: 'Northstar',
+    founder: 'Founder profile',
+    investor: 'Investor thesis',
     total: 92,
     founderAvatar: 'from-rose-400 to-orange-300',
     investorLogo: 'bg-emerald-500',
     rows: [
-      { id: 'proof', founder: '4.2k GitHub stars', investor: 'Technical founders', weight: 24 },
-      { id: 'sector', founder: 'AI agents', investor: 'Seed AI thesis', weight: 30 },
-      { id: 'stage', founder: 'Seed · pre-revenue', investor: 'Pre-revenue checks', weight: 23 },
-      { id: 'geo', founder: 'San Francisco', investor: 'United States', weight: 15 },
+      { id: 'proof', founder: 'Owner-supplied proof', investor: 'Technical founder fit', weight: 24 },
+      { id: 'sector', founder: 'Selected category', investor: 'Sector thesis', weight: 30 },
+      { id: 'stage', founder: 'Selected stage', investor: 'Stage fit', weight: 23 },
+      { id: 'geo', founder: 'Builder location', investor: 'Geography fit', weight: 15 },
     ],
   },
   {
-    founder: 'Diego Santos',
-    investor: 'Atlas Capital',
+    founder: 'Product profile',
+    investor: 'Fund criteria',
     total: 88,
     founderAvatar: 'from-sky-400 to-cyan-300',
     investorLogo: 'bg-amber-500',
     rows: [
-      { id: 'proof', founder: '1.2k deploys / week', investor: 'Usage-led growth', weight: 22 },
-      { id: 'sector', founder: 'Open-source DB', investor: 'Dev-tools thesis', weight: 28 },
-      { id: 'stage', founder: 'Seed round', investor: 'Leads seed rounds', weight: 20 },
-      { id: 'geo', founder: 'Berlin', investor: 'Europe focus', weight: 18 },
+      { id: 'proof', founder: 'Launch evidence', investor: 'Proof preference', weight: 22 },
+      { id: 'sector', founder: 'Selected sector', investor: 'Thesis match', weight: 28 },
+      { id: 'stage', founder: 'Fundraising stage', investor: 'Check strategy', weight: 20 },
+      { id: 'geo', founder: 'Operating market', investor: 'Market focus', weight: 18 },
     ],
   },
   {
-    founder: 'Mara Lin',
-    investor: 'Vertex Labs',
+    founder: 'Launch signal',
+    investor: 'Partner focus',
     total: 95,
     founderAvatar: 'from-violet-400 to-fuchsia-300',
     investorLogo: 'bg-indigo-500',
     rows: [
-      { id: 'proof', founder: 'PhD · 2 patents', investor: 'Technical depth', weight: 25 },
-      { id: 'sector', founder: 'Robotics', investor: 'Deep-tech thesis', weight: 32 },
-      { id: 'stage', founder: 'Pre-seed', investor: 'Pre-seed checks', weight: 20 },
-      { id: 'geo', founder: 'Toronto', investor: 'North America', weight: 18 },
+      { id: 'proof', founder: 'Founder proof', investor: 'Signal quality', weight: 25 },
+      { id: 'sector', founder: 'Company category', investor: 'Investment focus', weight: 32 },
+      { id: 'stage', founder: 'Current stage', investor: 'Stage mandate', weight: 20 },
+      { id: 'geo', founder: 'Founder location', investor: 'Geography mandate', weight: 18 },
     ],
   },
 ];
-
 // A single match: animates its connectors and counts the score up whenever it activates.
 const MatchView = ({ match, play }: { match: Match; play: boolean }) => {
   const [pct, setPct] = useState(0);

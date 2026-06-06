@@ -263,13 +263,3 @@ export const loadFounderRevenueSeries = async (
   }
 };
 
-// ── Stripe Connect — wiring lands in the Edge Function scaffold (next phase) ──
-// startStripeConnect() will return the Connect OAuth URL; the callback Edge
-// Function exchanges the code, stores stripe_account_id, and the sync job
-// writes mrr_cents + founder_revenue_monthly. Placeholder kept here so the UI
-// has a stable import target.
-export const startStripeConnect = async (_user: AppUser): Promise<{ url: string } | null> => {
-  // Until the Connect app + Edge Function exist this is a no-op the UI treats
-  // as "coming soon".
-  return null;
-};

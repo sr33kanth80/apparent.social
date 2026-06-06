@@ -1,4 +1,4 @@
-import { ArrowUpRight, CheckCircle2, FileText, Map, MapPin, Play, Rocket, Search, TrendingUp, Users } from 'lucide-react';
+import { ArrowUpRight, CheckCircle2, FileText, Map, MapPin, Play, Rocket, Search, Users } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { GitHubIcon } from '../components/GitHubIcon';
 import { useReveal } from '../lib/useReveal';
@@ -6,37 +6,6 @@ import { useReveal } from '../lib/useReveal';
 const serifDisplay = {
   fontFamily: 'Georgia, "Times New Roman", serif',
 };
-
-// GitHub-style contribution grid for the mock profile. Seeded PRNG so it's
-// deterministic (never reflows) yet realistic: 52 weeks x 7 days with quiet
-// weeks, lighter weekends, and clustered activity.
-const COMMIT_LEVELS = ['bg-white/[0.05]', 'bg-[#1e3a1e]', 'bg-[#2e6b2e]', 'bg-[#37a04a]', 'bg-[#58d39a]'];
-const mulberry32 = (seed: number) => () => {
-  seed |= 0;
-  seed = (seed + 0x6d2b79f5) | 0;
-  let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
-  t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
-  return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-};
-const commitColumns = (() => {
-  const rand = mulberry32(20260530);
-  return Array.from({ length: 52 }, () => {
-    const quietWeek = rand() < 0.14; // occasional dead weeks
-    const busyWeek = rand() < 0.22; // occasional sprint weeks
-    return Array.from({ length: 7 }, (_, d) => {
-      const weekend = d === 0 || d === 6;
-      if (quietWeek && rand() < 0.8) return 0;
-      let r = rand();
-      if (busyWeek) r = r * 0.6 + 0.4;
-      if (weekend) r *= 0.55;
-      if (r < 0.4) return 0;
-      if (r < 0.6) return 1;
-      if (r < 0.78) return 2;
-      if (r < 0.91) return 3;
-      return 4;
-    });
-  });
-})();
 
 const founderRows = [
   ['01', 'Make proof legible', 'Products, GitHub, press, traction, launches, location, and capital goals sit in one focused profile.'],
@@ -125,67 +94,35 @@ export const ForFounders = () => {
           </button>
         </div>
 
-        {/* Mock founder profile — mirrors the real public profile an investor sees. */}
+        {/* Example profile layout; real profiles are populated from founder data. */}
         <div className="relative flex min-h-[520px] flex-col justify-between overflow-hidden rounded-[32px] bg-[#1c1c1a] p-7 text-white">
           <div>
             <div className="flex flex-wrap items-center gap-2">
               <span className="rounded-full bg-[#dcefc7] px-3 py-1 text-xs font-semibold text-[#42520d]">Founder on Apparent</span>
-              <span className="rounded-full bg-[#42520d] px-3 py-1 text-xs font-semibold text-white">Raising Seed · $1.5M</span>
-              <span className="flex items-center gap-1 text-xs text-white/50"><MapPin className="h-3 w-3" /> San Francisco</span>
+              <span className="rounded-full bg-[#42520d] px-3 py-1 text-xs font-semibold text-white">Raise context</span>
+              <span className="flex items-center gap-1 text-xs text-white/50"><MapPin className="h-3 w-3" /> Founder location</span>
             </div>
             <div className="mt-6 flex items-center gap-4">
-              <img
-                src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=160&h=160&q=80"
-                alt="Aria Kim"
-                className="h-12 w-12 rounded-full object-cover"
-              />
+              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#dcefc7] text-sm font-semibold text-[#42520d]">
+                AP
+              </div>
               <div className="min-w-0">
-                <p className="text-lg font-semibold">Aria Kim</p>
-                <p className="text-sm text-white/55">@ariakim</p>
+                <p className="text-lg font-semibold">Founder profile</p>
+                <p className="text-sm text-white/55">@username</p>
               </div>
               <div className="shrink-0 border-l border-white/10 pl-4">
-                <p className="text-[0.6rem] font-semibold uppercase tracking-[0.14em] text-white/40">MRR</p>
-                <p className="mrr-shimmer text-lg font-semibold leading-none">$24K</p>
-                <span className="mt-1 inline-flex items-center gap-0.5 text-[0.65rem] font-semibold text-[#58d39a]">
-                  <TrendingUp className="h-3 w-3" /> +22% MoM
-                </span>
+                <p className="text-[0.6rem] font-semibold uppercase tracking-[0.14em] text-white/40">Proof</p>
+                <p className="text-lg font-semibold leading-none">Verified</p>
+                <span className="mt-1 inline-flex text-[0.65rem] font-semibold text-[#58d39a]">Owner supplied</span>
               </div>
             </div>
-            <p className="mt-4 text-sm leading-6 text-white/70">Building AgentKit, open-source agents teams actually ship to production.</p>
-
-            {/* GitHub contribution graph */}
-            <div className="mt-6 border-t border-white/10 pt-6">
-              <div className="mb-3 flex items-center justify-between">
-                <p className="text-[0.65rem] font-semibold uppercase tracking-[0.12em] text-white/40">1,284 commits · last year</p>
-                <span className="flex items-center gap-1 text-[0.6rem] text-white/35">
-                  Less
-                  <span className="flex gap-0.5">
-                    {COMMIT_LEVELS.map((c, i) => <span key={i} className={`h-2 w-2 rounded-[2px] ${c}`} />)}
-                  </span>
-                  More
-                </span>
-              </div>
-              <div className="flex gap-1 overflow-x-auto pb-2.5 [scrollbar-color:rgba(188,217,154,0.35)_transparent] [scrollbar-width:thin] [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-[#bcd99a]/30 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar]:h-1.5 hover:[&::-webkit-scrollbar-thumb]:bg-[#bcd99a]/55">
-                {commitColumns.map((col, w) => (
-                  <div key={w} className="flex flex-col gap-1">
-                    {col.map((lvl, d) => (
-                      <span
-                        key={d}
-                        title={lvl ? `${lvl * 4 + (w % 4)} commits` : 'No commits'}
-                        className={`h-2.5 w-2.5 shrink-0 rounded-[3px] ${COMMIT_LEVELS[lvl]} transition-transform duration-150 hover:scale-[1.6]`}
-                      />
-                    ))}
-                  </div>
-                ))}
-              </div>
-            </div>
-
+            <p className="mt-4 text-sm leading-6 text-white/70">A focused snapshot of what the founder is building, shipping, and looking for.</p>
             <div className="mt-6 grid grid-cols-2 gap-3 border-t border-white/10 pt-6">
               {[
-                ['Current build', 'AgentKit v2'],
-                ['Category', 'AI agents'],
-                ['Stage', 'Seed'],
-                ['Traction', '4.2k GitHub stars'],
+                ['Current build', 'Product summary'],
+                ['Category', 'Founder selected'],
+                ['Stage', 'Founder selected'],
+                ['Traction', 'Owner supplied'],
               ].map(([label, value]) => (
                 <div key={label}>
                   <p className="text-[0.65rem] font-semibold uppercase tracking-[0.12em] text-white/40">{label}</p>
@@ -202,7 +139,7 @@ export const ForFounders = () => {
                 <button
                   type="button"
                   className="group relative flex aspect-video w-full overflow-hidden rounded-xl bg-gradient-to-br from-[#42520d] via-[#1c1c1a] to-[#02402f]"
-                  aria-label="Play AgentKit pitch video"
+                  aria-label="Play founder pitch video"
                 >
                   <span className="absolute inset-0 flex items-center justify-center">
                     <span className="flex h-9 w-9 items-center justify-center rounded-full bg-white/90 text-[#1c1c1a] shadow-lg transition-transform duration-200 group-hover:scale-110">
@@ -210,8 +147,8 @@ export const ForFounders = () => {
                     </span>
                   </span>
                   <span className="absolute bottom-2 left-2 right-2 flex items-center justify-between">
-                    <span className="text-[0.6rem] font-semibold text-white">Seed pitch</span>
-                    <span className="rounded bg-black/55 px-1 py-0.5 text-[0.55rem] font-medium text-white/90">2:14</span>
+                    <span className="text-[0.6rem] font-semibold text-white">Pitch video</span>
+                    <span className="rounded bg-black/55 px-1 py-0.5 text-[0.55rem] font-medium text-white/90">Uploaded</span>
                   </span>
                 </button>
 
@@ -224,7 +161,7 @@ export const ForFounders = () => {
                     <div className="mt-1.5 h-1 w-4/5 rounded-full bg-white/10" />
                     <div className="mt-auto flex items-center justify-between">
                       <span className="flex items-center gap-1 text-[0.6rem] text-white/45"><FileText className="h-3 w-3" /> Deck</span>
-                      <span className="rounded bg-black/40 px-1 py-0.5 text-[0.55rem] font-medium text-white/70">12 slides</span>
+                      <span className="rounded bg-black/40 px-1 py-0.5 text-[0.55rem] font-medium text-white/70">Uploaded</span>
                     </div>
                   </div>
                 </div>

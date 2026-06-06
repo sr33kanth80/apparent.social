@@ -4,7 +4,7 @@ import type { GeoJSONSource, MapLayerMouseEvent } from 'maplibre-gl';
 import { Link } from 'react-router-dom';
 import { Map, useMap } from '@/components/ui/map';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { cityGeoCoordinates, seedBuilderNodes } from '@/lib/app-defaults';
+import { cityGeoCoordinates } from '@/lib/app-defaults';
 import {
   OUTREACH_INSPIRATION_EXAMPLES,
   PREBAKED_SUBJECT_LINES,
@@ -92,21 +92,6 @@ const cityImageByName: Record<string, string> = {
   Singapore: 'https://images.unsplash.com/photo-1525625293386-3f8f99389edd?auto=format&fit=crop&w=600&q=80',
   Remote: 'https://images.unsplash.com/photo-1497366754035-f200968a6e72?auto=format&fit=crop&w=600&q=80',
 };
-
-const ecosystemPoints: HeatMapPoint[] = [
-  { id: 'eco-builder-sf', name: 'SF builder market', kind: 'builder', source: 'ecosystem', city: 'San Francisco', ...cityGeoCoordinates['San Francisco'], intensity: 94, label: 'AI, devtools, infra', imageUrl: cityImageByName['San Francisco'] },
-  { id: 'eco-vc-sf', name: 'SF venture density', kind: 'vc', source: 'ecosystem', city: 'San Francisco', ...cityGeoCoordinates['San Francisco'], intensity: 96, label: 'Seed to growth capital', imageUrl: cityImageByName['San Francisco'] },
-  { id: 'eco-builder-ny', name: 'NY builder market', kind: 'builder', source: 'ecosystem', city: 'New York', ...cityGeoCoordinates['New York'], intensity: 78, label: 'Fintech, SaaS, AI apps', imageUrl: cityImageByName['New York'] },
-  { id: 'eco-vc-ny', name: 'NY venture density', kind: 'vc', source: 'ecosystem', city: 'New York', ...cityGeoCoordinates['New York'], intensity: 82, label: 'Fintech and enterprise capital', imageUrl: cityImageByName['New York'] },
-  { id: 'eco-builder-austin', name: 'Austin builder market', kind: 'builder', source: 'ecosystem', city: 'Austin', ...cityGeoCoordinates.Austin, intensity: 58, label: 'Workflow and infra builders', imageUrl: cityImageByName.Austin },
-  { id: 'eco-vc-boston', name: 'Boston venture density', kind: 'vc', source: 'ecosystem', city: 'Boston', ...cityGeoCoordinates.Boston, intensity: 63, label: 'Deep tech and AI capital', imageUrl: cityImageByName.Boston },
-  { id: 'eco-builder-london', name: 'London builder market', kind: 'builder', source: 'ecosystem', city: 'London', ...cityGeoCoordinates.London, intensity: 66, label: 'AI, fintech, creator tools', imageUrl: cityImageByName.London },
-  { id: 'eco-vc-london', name: 'London venture density', kind: 'vc', source: 'ecosystem', city: 'London', ...cityGeoCoordinates.London, intensity: 68, label: 'European venture hub', imageUrl: cityImageByName.London },
-  { id: 'eco-builder-paris', name: 'Paris builder market', kind: 'builder', source: 'ecosystem', city: 'Paris', ...cityGeoCoordinates.Paris, intensity: 55, label: 'AI models and infra', imageUrl: cityImageByName.Paris },
-  { id: 'eco-vc-berlin', name: 'Berlin venture density', kind: 'vc', source: 'ecosystem', city: 'Berlin', ...cityGeoCoordinates.Berlin, intensity: 52, label: 'European seed capital', imageUrl: cityImageByName.Berlin },
-  { id: 'eco-builder-bengaluru', name: 'Bengaluru builder market', kind: 'builder', source: 'ecosystem', city: 'Bengaluru', ...cityGeoCoordinates.Bengaluru, intensity: 74, label: 'Developer tools and AI apps', imageUrl: cityImageByName.Bengaluru },
-  { id: 'eco-vc-singapore', name: 'Singapore venture density', kind: 'vc', source: 'ecosystem', city: 'Singapore', ...cityGeoCoordinates.Singapore, intensity: 64, label: 'APAC venture hub', imageUrl: cityImageByName.Singapore },
-];
 
 const offsetByKind = (point: HeatMapPoint): HeatMapPoint => {
   if (point.kind === 'builder') {
@@ -721,22 +706,7 @@ export const HeatMap = ({
   }, [currentUser, isFounderLoggedIn]);
 
   const heatPoints = useMemo(() => {
-    const apparentBuilders: HeatMapPoint[] = [
-      ...seedBuilderNodes.map((builder) => ({
-        id: `apparent-builder-${builder.id}`,
-        name: builder.company,
-        kind: 'builder' as const,
-        source: 'apparent' as const,
-        city: builder.location,
-        latitude: builder.latitude,
-        longitude: builder.longitude,
-        intensity: builder.fitScore,
-        label: builder.category,
-        profilePath: builder.profileUrl,
-        imageUrl: cityImageByName[builder.location] || cityImageByName.Remote,
-      })),
-      ...publishedLaunches.map((launch, index) => launchToPoint(launch, index)),
-    ];
+    const apparentBuilders: HeatMapPoint[] = publishedLaunches.map((launch, index) => launchToPoint(launch, index));
     const vcContactPoints = vcContacts
       .filter((contact) => vcPassesHardFilters(contact, vcFilters))
       .map((contact, index) => {
@@ -753,8 +723,7 @@ export const HeatMap = ({
       })
       .filter(Boolean) as HeatMapPoint[];
 
-    const ecosystemVCPoints = ecosystemPoints.filter((point) => point.kind === 'vc');
-    const points = vcOnly ? [...vcContactPoints, ...ecosystemVCPoints] : [...apparentBuilders, ...vcContactPoints, ...ecosystemPoints];
+    const points = vcOnly ? vcContactPoints : [...apparentBuilders, ...vcContactPoints];
 
     return points.map(offsetByKind);
   }, [publishedLaunches, vcContacts, vcOnly, vcFilters]);
@@ -1162,6 +1131,8 @@ function ComposeDialog({
     [founderName, founderCompany, founderTraction, vc.investorName, vc.partnerName],
   );
 
+  const hasInspirationExamples = OUTREACH_INSPIRATION_EXAMPLES.length > 0;
+
   // Hydration order (no bundled template fallback anymore):
   // 1. Prior draft for this VC → resume where the founder left off
   // 2. User's saved default template → their own words, applied to this VC
@@ -1186,7 +1157,7 @@ function ComposeDialog({
   const [copied, setCopied] = useState(false);
   // Inspiration panel is collapsed on subsequent opens (when the user already
   // has a saved template) and expanded on first use so they see the examples.
-  const [inspirationOpen, setInspirationOpen] = useState(!hasSavedTemplate);
+  const [inspirationOpen, setInspirationOpen] = useState(!hasSavedTemplate && hasInspirationExamples);
   const [activeExampleId, setActiveExampleId] = useState<string>(
     OUTREACH_INSPIRATION_EXAMPLES[0]?.id ?? '',
   );
@@ -1362,8 +1333,8 @@ function ComposeDialog({
                 Write your own outreach — the way you'd actually say it.
               </p>
               <p className="mt-1 text-[11px] leading-5 text-black/60">
-                Read the inspiration below for shape and tone, then put it in your own words. Once
-                you're happy, hit "Save as my default" so future composes start from your template.
+                Use the subject patterns if helpful, then write the body from scratch. Once you're
+                happy, hit "Save as my default" so future composes start from your template.
               </p>
             </div>
           )}
@@ -1433,12 +1404,11 @@ function ComposeDialog({
               className="w-full resize-y rounded-[12px] border border-black/10 bg-white px-3 py-2.5 text-sm leading-6 text-black outline-none focus:border-[#42520d]"
               placeholder={hasSavedTemplate
                 ? 'Edit or write the body…'
-                : 'Write the body in your own voice. The inspiration below is a guide, not a script.'}
+                : 'Write the body in your own voice.'}
             />
           </label>
 
-          {/* Inspiration drawer — collapsible, real cold emails to read.
-              Never pasted into the editor automatically. */}
+          {hasInspirationExamples && (
           <div className="mb-4 rounded-[14px] border border-black/10 bg-[#fbfaf7]">
             <button
               type="button"
@@ -1491,6 +1461,7 @@ function ComposeDialog({
               </div>
             )}
           </div>
+          )}
 
           <p className="text-[11px] leading-5 text-black/45">
             You can use <code>{'{{founder_name}}'}</code>, <code>{'{{vc_partner}}'}</code>,
