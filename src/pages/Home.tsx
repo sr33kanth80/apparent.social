@@ -1,11 +1,8 @@
-import { useEffect, useState, type FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ArrowUpRight, Check, MapPin, Radar, Send, Zap } from 'lucide-react';
 import { EditorialNavbar } from '../components/EditorialNavbar';
 import { LogoIcon } from '../components/LogoIcon';
 import { LogoCloud } from '../components/logo-cloud';
-import { FireworksBackground } from '../components/ui/fireworks-show';
-import { signupForWaitlist, type WaitlistRole } from '../lib/waitlist-service';
 import { HeatMap } from './HeatMap';
 
 const serifDisplay = {
@@ -29,7 +26,7 @@ export const Home = () => {
     <main className="min-h-screen overflow-x-hidden bg-[#fbfaf7] text-black">
       <EditorialNavbar />
 
-      {/* HERO — founder-led: state what Apparent is and the wedge in one breath. */}
+      {/* HERO - founder-led: state what Apparent is and the wedge in one breath. */}
       <section className="mx-auto max-w-[78rem] px-5 pb-6 pt-10 sm:px-8 md:pt-16">
         <div className="mb-6 flex justify-center">
           <div className="inline-flex items-center gap-2.5 rounded-full border border-black/10 bg-white/80 py-1.5 pl-2 pr-4 text-xs font-semibold text-[#42520d] shadow-[0_4px_14px_rgba(0,0,0,0.05)]">
@@ -80,9 +77,7 @@ export const Home = () => {
 
       <LogoCloud />
 
-      <WaitlistSection />
-
-      {/* HEATMAP MAGNET — the free front door, mirrors OpenVC's investor list but alive. */}
+      {/* HEATMAP MAGNET - the free front door, mirrors OpenVC's investor list but alive. */}
       <section className="mx-auto max-w-[78rem] px-5 pb-12 sm:px-8">
         <div className="mb-4 flex justify-end">
           <Link
@@ -97,7 +92,7 @@ export const Home = () => {
         </div>
       </section>
 
-      {/* WHO IT'S FOR — the section that makes a stranger self-identify in 5 seconds. */}
+      {/* WHO IT'S FOR - the section that makes a stranger self-identify in 5 seconds. */}
       <section className="mx-auto max-w-[78rem] border-t border-black/10 px-5 py-12 sm:px-8">
         <h2 className="max-w-2xl text-3xl font-normal leading-tight tracking-[-0.035em] md:text-4xl" style={serifDisplay}>
           One map. Two sides of the table.
@@ -111,7 +106,7 @@ export const Home = () => {
               {[
                 'Match to funds by thesis, stage, and sector, not a generic list of thousands.',
                 'See which investors fit your raise and which are already tracking you.',
-                'Flip on “raising now” so the right funds know you’re open, and approach them with context.',
+                "Flip on 'raising now' so the right funds know you're open, and approach them with context.",
               ].map((item) => (
                 <li key={item} className="flex items-start gap-2.5">
                   <Check className="mt-0.5 h-4 w-4 shrink-0 text-[#42520d]" />
@@ -135,7 +130,7 @@ export const Home = () => {
             <ul className="mt-5 grid gap-3 text-sm leading-6 text-white/70">
               {[
                 'A live map of builders who fit your stage, sector, and geography.',
-                'Filter by thesis fit and who’s raising right now, not a static directory.',
+                "Filter by thesis fit and who's raising right now, not a static directory.",
                 'Approach the founders who actually fit, the moment the signal is fresh.',
               ].map((item) => (
                 <li key={item} className="flex items-start gap-2.5">
@@ -155,7 +150,7 @@ export const Home = () => {
         </div>
       </section>
 
-      {/* THE WEDGE — fit beats volume, on both sides. */}
+      {/* THE WEDGE - fit beats volume, on both sides. */}
       <section className="mx-auto max-w-[78rem] border-t border-black/10 px-5 py-12 sm:px-8">
         <div className="grid gap-8 md:grid-cols-2 md:items-center">
           <div>
@@ -185,7 +180,7 @@ export const Home = () => {
         </div>
       </section>
 
-      {/* HOW IT WORKS — the two-sided loop. */}
+      {/* HOW IT WORKS - the two-sided loop. */}
       <section id="how-to" className="mx-auto max-w-[78rem] border-t border-black/10 px-5 py-10 sm:px-8">
         <div className="grid gap-6 lg:grid-cols-[0.8fr_1.2fr] lg:items-start">
           <div>
@@ -197,7 +192,7 @@ export const Home = () => {
             {[
               { icon: Zap, title: 'Show your work', text: 'Launches, commits, and traction become a profile that proves itself.' },
               { icon: Radar, title: 'Match on fit', text: 'See the investors whose thesis, stage, and sector actually fit your raise.' },
-              { icon: Send, title: 'Start the right conversation', text: 'Approach the funds that fit, or signal you’re raising and let them come to you.' },
+              { icon: Send, title: 'Start the right conversation', text: "Approach the funds that fit, or signal you're raising and let them come to you." },
             ].map((item, i) => (
               <li key={item.title} className="border-t border-black/10 pt-4">
                 <div className="flex items-baseline justify-between">
@@ -244,224 +239,5 @@ export const Home = () => {
         </div>
       </section>
     </main>
-  );
-};
-
-// ── Waitlist signup CTA ───────────────────────────────────────────────────
-// Email-only capture. Stored in waitlist_signups (anon-insert, admin-read).
-// Editorial design language: cream surface, olive accent, serif headline,
-// matches the rest of the landing page.
-
-const WaitlistSection = () => {
-  const [email, setEmail] = useState('');
-  const [role, setRole] = useState<WaitlistRole>('');
-  const [status, setStatus] = useState<'idle' | 'submitting' | 'success' | 'error'>('idle');
-  const [message, setMessage] = useState('');
-  // Brief celebratory fireworks burst when a NEW signup lands. Keyed by a
-  // counter so a duplicate-email re-submit doesn't replay the effect.
-  const [fireworksKey, setFireworksKey] = useState(0);
-
-  // Auto-clear the fireworks overlay ~3.5s after a successful signup so it
-  // stays celebratory (not annoying). The success message itself stays put.
-  useEffect(() => {
-    if (fireworksKey === 0) return;
-    const timer = window.setTimeout(() => setFireworksKey(0), 3500);
-    return () => window.clearTimeout(timer);
-  }, [fireworksKey]);
-
-  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    if (status === 'submitting') return;
-    // Role is required — friendly nudge before we hit the network so the
-    // user knows we need the segmentation hint to sort their email.
-    if (!role) {
-      setStatus('error');
-      setMessage("Oops — pick one: Founder, Investor, or Just curious.");
-      return;
-    }
-    setStatus('submitting');
-    setMessage('');
-    try {
-      const result = await signupForWaitlist({ email, role, source: 'landing-cta' });
-      if (result.ok) {
-        setStatus('success');
-        setMessage(result.message);
-        if (result.isNew) {
-          setEmail('');
-          // Bump the key so the FireworksBackground remounts and replays the
-          // burst. Skipped on duplicate re-submit (isNew=false) so people
-          // don't farm the animation by spamming the button.
-          setFireworksKey((current) => current + 1);
-        }
-      } else {
-        setStatus('error');
-        setMessage(result.message);
-      }
-    } catch (error) {
-      setStatus('error');
-      setMessage(error instanceof Error ? error.message : 'Unable to save your email.');
-    }
-  };
-
-  const roleChips: { value: WaitlistRole; label: string }[] = [
-    { value: 'founder', label: 'Founder' },
-    { value: 'investor', label: 'Investor' },
-    { value: 'curious', label: 'Just curious' },
-  ];
-
-  return (
-    <section className="mx-auto max-w-[78rem] px-5 pb-12 pt-6 sm:px-8">
-      <div className="relative overflow-hidden rounded-[32px] bg-[#f4f1eb] px-6 py-10 shadow-[0_18px_44px_rgba(0,0,0,0.05)] sm:px-12 sm:py-14 md:px-16">
-        {/* Background flourish: same warm-cream → mint gradient sweep the rest
-            of the page leans on, kept subtle. */}
-        <div
-          aria-hidden="true"
-          className="pointer-events-none absolute inset-0 opacity-70"
-          style={{
-            background:
-              'radial-gradient(circle at 15% 25%, rgba(220,239,199,0.55) 0%, transparent 45%), radial-gradient(circle at 85% 75%, rgba(66,82,13,0.07) 0%, transparent 50%)',
-          }}
-        />
-
-        <div className="relative grid gap-8 md:grid-cols-[1.05fr_minmax(0,1fr)] md:items-end md:gap-12">
-          <div>
-            <h2
-              className="max-w-2xl text-3xl font-normal leading-[1.05] tracking-[-0.035em] sm:text-4xl md:text-[2.85rem]"
-              style={serifDisplay}
-            >
-              Be first in when Apparent opens.
-            </h2>
-            <p className="mt-4 max-w-xl text-base leading-7 text-black/65">
-              Founders meet thesis-fit investors; investors source thesis-fit founders. Drop your email and we&apos;ll email you the moment public access lands.
-            </p>
-          </div>
-
-          <form onSubmit={handleSubmit} className="w-full" noValidate>
-            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-0">
-              <label htmlFor="waitlist-email" className="sr-only">
-                Email address
-              </label>
-              <input
-                id="waitlist-email"
-                type="email"
-                required
-                value={email}
-                onChange={(event) => {
-                  setEmail(event.target.value);
-                  if (status !== 'idle') {
-                    setStatus('idle');
-                    setMessage('');
-                  }
-                }}
-                placeholder="you@startup.com"
-                className="h-12 w-full flex-1 rounded-full border border-black/10 bg-white px-5 text-sm text-black outline-none transition-colors placeholder:text-black/35 focus:border-[#42520d] sm:rounded-r-none sm:border-r-0"
-                disabled={status === 'submitting' || status === 'success'}
-              />
-              <button
-                type="submit"
-                disabled={status === 'submitting' || status === 'success'}
-                className="inline-flex h-12 items-center justify-center gap-1.5 rounded-full bg-[#42520d] px-6 text-sm font-semibold text-white transition-colors hover:bg-[#34420a] disabled:cursor-not-allowed disabled:opacity-70 sm:rounded-l-none"
-              >
-                {status === 'submitting' ? (
-                  'Adding…'
-                ) : status === 'success' ? (
-                  <>
-                    <Check className="h-4 w-4" /> On the list
-                  </>
-                ) : (
-                  <>
-                    Join the waitlist <ArrowUpRight className="h-4 w-4" />
-                  </>
-                )}
-              </button>
-            </div>
-
-            {/* Required role selector — segmentation hint we need before we
-                accept the signup. Asterisk + red outline on the chip row
-                signal the requirement; submit handler nudges them if they
-                forget. */}
-            <div
-              className={`mt-3 flex flex-wrap items-center gap-1.5 rounded-full border border-dashed px-2 py-1 text-[11px] font-medium text-black/55 transition-colors ${
-                status === 'error' && !role ? 'border-red-400 bg-red-50/40' : 'border-transparent'
-              }`}
-              aria-invalid={status === 'error' && !role}
-            >
-              <span className="mr-1 uppercase tracking-[0.14em] text-black/40">
-                I&apos;m a
-                <span aria-hidden="true" className="ml-1 text-red-600">*</span>
-              </span>
-              {roleChips.map((chip) => {
-                const isActive = role === chip.value;
-                return (
-                  <button
-                    key={chip.value}
-                    type="button"
-                    onClick={() => {
-                      setRole(isActive ? '' : chip.value);
-                      // Picking a chip clears the prior "missing role" nudge
-                      // so the user gets immediate feedback they fixed it.
-                      if (status === 'error' && message.startsWith('Oops')) {
-                        setStatus('idle');
-                        setMessage('');
-                      }
-                    }}
-                    disabled={status === 'submitting' || status === 'success'}
-                    className={`rounded-full border px-2.5 py-1 transition-colors disabled:cursor-not-allowed disabled:opacity-60 ${
-                      isActive
-                        ? 'border-[#42520d] bg-[#42520d] text-white'
-                        : 'border-black/15 bg-white/70 text-black/65 hover:border-[#42520d]/60 hover:text-[#42520d]'
-                    }`}
-                  >
-                    {chip.label}
-                  </button>
-                );
-              })}
-            </div>
-
-            {message && (
-              <p
-                role={status === 'error' ? 'alert' : 'status'}
-                className={`mt-3 text-xs leading-5 ${
-                  status === 'error' ? 'text-red-700' : 'text-[#42520d]'
-                }`}
-              >
-                {message}
-              </p>
-            )}
-
-            <p className="mt-2 text-[11px] leading-5 text-black/40">
-              No spam. One email when we open, and one if there&apos;s a real reason to write.
-            </p>
-          </form>
-        </div>
-      </div>
-
-      {/* Celebratory fireworks burst — only on a fresh successful signup, and
-          auto-dismissed after ~3.5s by the useEffect above. Fixed viewport
-          overlay with pointer-events-none so the page stays interactive. The
-          FireworksBackground itself takes the cue from spawnDurationMs to
-          stop spawning new rockets just before unmount, so the trailing
-          particles get to finish their lifetime gracefully. */}
-      {fireworksKey > 0 && (
-        <div
-          aria-hidden="true"
-          // Soft light-grey scrim sits beneath the canvas to make the
-          // bursts pop without fully hiding the page. Tiny backdrop blur
-          // adds a touch of depth. Canvas itself keeps its transparent
-          // destination-out trail so the grey tint stays even.
-          className="pointer-events-none fixed inset-0 z-[60] bg-black/20 backdrop-blur-[2px]"
-        >
-          <FireworksBackground
-            key={fireworksKey}
-            spawnDurationMs={2800}
-            // Brand-tuned palette: warmer fireworks so the burst feels of-a-
-            // piece with the cream + olive landing-page system instead of
-            // generic rainbow confetti.
-            colors={['#42520d', '#dcefc7', '#f4d27a', '#f97316', '#cce8ae', '#fff7bc']}
-            className="h-full w-full"
-          />
-        </div>
-      )}
-    </section>
   );
 };
