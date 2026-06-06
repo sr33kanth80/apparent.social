@@ -190,6 +190,10 @@ export const signInWithEmail = async (
     throw signInResult.error ?? signUpResult.error ?? new Error('Unable to sign in.');
   }
 
+  if (!signUpResult.data.session) {
+    throw new Error('Account created. Check your email to confirm it, then sign in.');
+  }
+
   const appUser = { ...toAppUser(signUpResult.data.user), role };
   const username = await ensureProfile(appUser, role);
   return { ...appUser, username, isNew: true };
