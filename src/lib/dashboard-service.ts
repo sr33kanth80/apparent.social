@@ -1267,6 +1267,16 @@ export const loadFounderVCContacts = async (
     return `nw:${name}|${website}`;
   };
 
+  const unionWithSeed = (contacts: VCContact[]): VCContact[] => {
+    const merged = new Map<string, VCContact>();
+    for (const contact of contacts) merged.set(contactKey(contact), contact);
+    for (const contact of seedContacts) {
+      const key = contactKey(contact);
+      if (!merged.has(key)) merged.set(key, contact);
+    }
+    return Array.from(merged.values());
+  };
+
   // Always start with the bundled seed so the logged-in dashboard sees the
   // same baseline coverage as the logged-out /heat-map page. The seed is
   // bundled at build time and ships with the app, so this is free.
@@ -1277,16 +1287,17 @@ export const loadFounderVCContacts = async (
   }
 
   // 10K-row pagination is expensive — cache for 1 hour.
-  const VC_CACHE_KEY = 'apparent:vc-contacts-v1';
+  const VC_CACHE_KEY = 'apparent:vc-contacts-v2';
   const VC_CACHE_TTL_MS = 60 * 60 * 1000;
   const vcCached = readCache<VCContact[]>(VC_CACHE_KEY);
   if (vcCached && Date.now() - vcCached.ts < VC_CACHE_TTL_MS) {
     // Fresh cache — call onCached and return immediately, no network call.
-    if (onCached) onCached(vcCached.data);
-    return vcCached.data;
+    const cachedWithSeed = unionWithSeed(vcCached.data);
+    if (onCached) onCached(cachedWithSeed);
+    return cachedWithSeed;
   }
   // Stale/empty cache — show seed or stale data immediately while fetching.
-  if (onCached) onCached(vcCached?.data ?? seedContacts);
+  if (onCached) onCached(vcCached ? unionWithSeed(vcCached.data) : seedContacts);
 
   const rows: Record<string, unknown>[] = [];
   const pageSize = 1000;
@@ -1323,14 +1334,7 @@ export const loadFounderVCContacts = async (
   // fresher (admin can update vc_contacts post-deploy without re-shipping
   // the bundle), but every seed contact the DB doesn't have still appears.
   // Result: the logged-in dashboard sees >= the logged-out /heat-map count.
-  const dbContacts = rows.map((row) => mapVCContactRow(row));
-  const merged = new Map<string, VCContact>();
-  for (const contact of dbContacts) merged.set(contactKey(contact), contact);
-  for (const contact of seedContacts) {
-    const key = contactKey(contact);
-    if (!merged.has(key)) merged.set(key, contact);
-  }
-  const result = Array.from(merged.values());
+  const result = unionWithSeed(rows.map((row) => mapVCContactRow(row)));
   writeCache(VC_CACHE_KEY, result);
   return result;
 };
