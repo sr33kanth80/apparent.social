@@ -2287,7 +2287,8 @@ export const saveIntakeValues = async (
     traction_value: values.tractionValue ?? '',
     team_size: values.teamSize ?? '',
     prior_raise_amount: values.priorRaiseAmount ?? '',
-    target_close_date: values.targetCloseDate ?? '',
+    // Postgres `date` columns reject empty strings — coerce to null when blank.
+    target_close_date: values.targetCloseDate?.trim() ? values.targetCloseDate : null,
     profile_completeness: computeFounderCompleteness(values as Partial<FounderProfileValues>),
   };
 
