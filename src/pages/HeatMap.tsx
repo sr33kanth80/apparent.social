@@ -761,6 +761,17 @@ export const HeatMap = ({
       setComposeOpen(true);
     }
   };
+
+  // Lets the founder click through every visible pin on the map, in order,
+  // straight from the detail panel — no need to hunt for the next dot.
+  const goToNextPoint = () => {
+    if (!filteredPoints.length) return;
+    const currentIndex = selectedPoint
+      ? filteredPoints.findIndex((point) => point.id === selectedPoint.id)
+      : -1;
+    const nextIndex = (currentIndex + 1 + filteredPoints.length) % filteredPoints.length;
+    setSelectedPoint(filteredPoints[nextIndex]);
+  };
   const apparentCount = heatPoints.filter((point) => point.source === 'apparent').length;
   const builderCount = heatPoints.filter((point) => point.kind === 'builder').length;
   const vcCount = heatPoints.filter((point) => point.kind === 'vc').length;
@@ -987,7 +998,7 @@ export const HeatMap = ({
           </Card>
 
           {selectedVisiblePoint && (
-            <div className="w-full">
+            <div className="relative w-full">
               <HeatMapDetailPanel
                 point={selectedVisiblePoint}
                 onClose={() => setSelectedPoint(null)}
@@ -1000,6 +1011,18 @@ export const HeatMap = ({
                 canCompose={isFounderLoggedIn && Boolean(selectedVisiblePoint.email && selectedVisiblePoint.vcContact)}
                 onOpenCompose={() => setComposeOpen(true)}
               />
+              {filteredPoints.length > 1 && (
+                <button
+                  type="button"
+                  onClick={goToNextPoint}
+                  className="absolute left-full top-1/2 ml-2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full text-white shadow-[0_10px_28px_rgba(0,0,0,0.18)] transition-opacity hover:opacity-90"
+                  style={{ backgroundColor: '#42520d' }}
+                  aria-label="Go to next pin"
+                  title="Jump to the next pin on the map"
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </button>
+              )}
             </div>
           )}
           </div>
