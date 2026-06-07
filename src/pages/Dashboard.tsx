@@ -63,6 +63,7 @@ import type {
   BuilderNode,
   DashboardData,
   FeedItem,
+  FounderProfileValues,
   Meetup,
   NetworkInterestPin,
   NetworkMapFilters,
@@ -104,6 +105,8 @@ import {
   subscribeBuilderNetwork,
   toggleLaunchUpvote,
   toggleMeetupRsvp,
+  computeFounderCompleteness,
+  missingRequiredFounderFields,
 } from '@/lib/dashboard-service';
 import { loadDailyDigest, loadExternalLaunches } from '@/lib/external-feed';
 import { cityGeoCoordinates } from '@/lib/app-defaults';
@@ -244,14 +247,16 @@ const investorIntakeFields: IntakeField[] = [
   { key: 'portfolioExamples', label: 'Companies that match your taste', placeholder: 'Linear, Supabase, Vercel, Cursor', kind: 'input' },
 ];
 
+const teamSizeOptions = ['1', '2', '3-5', '6-10', '11+'];
+
 const founderIntakeFields: IntakeField[] = [
   { key: 'profileName', label: 'Name', placeholder: 'Your name', kind: 'input' },
   { key: 'headline', label: 'Headline', placeholder: 'Founder building AI tools for engineering teams.', kind: 'input' },
   { key: 'bio', label: 'Bio', placeholder: 'A short founder bio: what you care about, where you have built, and what kind of people you want to meet.', kind: 'textarea' },
   { key: 'currentBuild', label: 'What are you building or exploring?', placeholder: 'A GitHub-native analytics layer for engineering leaders.', kind: 'textarea' },
-  { key: 'mrr', label: 'MRR (optional)', placeholder: '$24K MRR · +22% MoM', kind: 'input' },
   { key: 'category', label: 'Primary interests', placeholder: 'Devtools, AI infra, SaaS, marketplace', kind: 'input' },
   { key: 'stage', label: 'Current stage', placeholder: 'Select stage', kind: 'select', options: founderStageOptions },
+  { key: 'teamSize', label: 'Team size', placeholder: 'Including co-founders', kind: 'select', options: teamSizeOptions },
   { key: 'lookingFor', label: 'Who do you want to meet?', placeholder: 'Founders, investors, operators, design partners, collaborators.', kind: 'textarea' },
   { key: 'location', label: 'Location', placeholder: 'Brooklyn / remote', kind: 'input' },
   { key: 'website', label: 'Website', placeholder: 'https://yourname.com', kind: 'input' },
@@ -262,6 +267,18 @@ const founderIntakeFields: IntakeField[] = [
   { key: 'pastProducts', label: 'Past products', placeholder: 'List past products or projects, one per line.', kind: 'textarea' },
 ];
 
+// Typed traction picker — VCs sort by the type, so we capture a discrete
+// category alongside the founder's chosen metric instead of one freeform string.
+type TractionTypeOption = { value: string; label: string; placeholder: string };
+const tractionTypeOptions: TractionTypeOption[] = [
+  { value: 'mrr', label: 'Revenue (MRR / ARR)', placeholder: '$24K MRR · +22% MoM' },
+  { value: 'users', label: 'Users (DAU / WAU / signups)', placeholder: '12K WAU · 3.4K signups last month' },
+  { value: 'gmv', label: 'GMV / transactions', placeholder: '$180K GMV last month' },
+  { value: 'loi', label: 'LOIs / pilots', placeholder: '3 signed LOIs, 2 paid pilots' },
+  { value: 'prototype', label: 'Working prototype', placeholder: 'Live demo at demo.acme.com' },
+  { value: 'pmf', label: 'PMF signal', placeholder: 'Sean Ellis score 42%, retention 38% W4' },
+];
+
 // Founder profile sidebar sections — groups the 15 intake fields into 5
 // focused panels so the user isn't staring at one mega-form.
 type ProfileSectionKey = 'about' | 'links' | 'traction' | 'raising' | 'visibility';
@@ -270,7 +287,7 @@ const profileSections: { key: ProfileSectionKey; label: string; description: str
     key: 'about',
     label: 'About',
     description: 'Who you are and what you build.',
-    fieldKeys: ['profileName', 'headline', 'bio', 'currentBuild', 'category', 'stage', 'location'],
+    fieldKeys: ['profileName', 'headline', 'bio', 'currentBuild', 'category', 'stage', 'teamSize', 'location'],
   },
   {
     key: 'links',
@@ -281,8 +298,8 @@ const profileSections: { key: ProfileSectionKey; label: string; description: str
   {
     key: 'traction',
     label: 'Traction & History',
-    description: 'Past products, MRR, and who you want to meet.',
-    fieldKeys: ['mrr', 'lookingFor', 'pastProducts'],
+    description: 'The signal VCs sort by — pick the metric that best represents where you are.',
+    fieldKeys: ['lookingFor', 'pastProducts'],
   },
 ];
 
@@ -595,7 +612,23 @@ const defaultNetworkFilters = (): NetworkMapFilters => ({
   raisingOnly: false,
   radiusMiles: 50,
   pin: null,
+  minCompleteness: 40,
+  raisingAmountMin: '',
 });
+
+// Parses a freeform raising amount like "$1.5M", "500K", "$250k - $1.5M" into a
+// USD number. Returns 0 when nothing usable is found, so it can be compared
+// directly against a min-floor in VC filters.
+const parseRaisingAmount = (raw: string | undefined): number => {
+  if (!raw) return 0;
+  const match = raw.replace(/,/g, '').match(/\$?\s*(\d+(?:\.\d+)?)\s*([kKmMbB])?/);
+  if (!match) return 0;
+  const value = parseFloat(match[1]);
+  if (Number.isNaN(value)) return 0;
+  const unit = (match[2] || '').toLowerCase();
+  const multiplier = unit === 'b' ? 1_000_000_000 : unit === 'm' ? 1_000_000 : unit === 'k' ? 1_000 : 1;
+  return value * multiplier;
+};
 
 const toRadians = (value: number) => (value * Math.PI) / 180;
 
@@ -970,7 +1003,15 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
   const dmBubbleMeta = isInvestor ? 'bg-white/15 text-white/75' : 'bg-white/70 text-black/60';
   const feedItems = feedRows;
   const completedFieldCount = intakeFields.filter((field) => intakeValues[field.key].trim()).length;
-  const profileStrength = Math.round((completedFieldCount / intakeFields.length) * 100);
+  // Founders see two scores: legacy "fields filled" + the weighted VC-grade
+  // completeness used to gate visibility in investor views.
+  const profileStrength = isInvestor
+    ? Math.round((completedFieldCount / intakeFields.length) * 100)
+    : computeFounderCompleteness(intakeValues as Partial<FounderProfileValues>);
+  const founderMissingRequired = isInvestor
+    ? []
+    : missingRequiredFounderFields(intakeValues as Partial<FounderProfileValues>);
+  const founderVcReady = !isInvestor && founderMissingRequired.length === 0 && profileStrength >= 40;
   const averageSignalScore = Math.round(
     signalRows.length ? signalRows.reduce((sum, signal) => sum + signal.relevance, 0) / signalRows.length : 0,
   );
@@ -1728,6 +1769,12 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
       '30d': 30 * 24 * 60 * 60 * 1000,
     };
 
+    // VCs only see real Apparent founders whose profile clears the bar. Ingested
+    // scraper signals stay visible because they're our cold-start fallback and
+    // never have a "profile completeness" of their own.
+    const minCompleteness = isInvestor ? networkFilters.minCompleteness ?? 40 : 0;
+    const raisingAmountFloor = parseRaisingAmount(networkFilters.raisingAmountMin);
+
     return builderNodes
       .filter((builder) => !builderDiscoveryById.get(builder.id)?.hidden)
       .filter((builder) => {
@@ -1744,6 +1791,18 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
           return false;
         }
 
+        // VC view: hide low-completeness Apparent founders. Ingested signals
+        // bypass this — they have no profile to score.
+        if (builder.origin === 'apparent' && isInvestor) {
+          const score = builder.profileCompleteness ?? 0;
+          if (score < minCompleteness) return false;
+        }
+
+        if (raisingAmountFloor > 0) {
+          const amount = parseRaisingAmount(builder.raisingAmount);
+          if (amount < raisingAmountFloor) return false;
+        }
+
         const ageMs = Date.now() - new Date(builder.latestActivity).getTime();
         if (ageMs > maxAgeByFreshness[networkFilters.freshness]) return false;
 
@@ -1754,9 +1813,16 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
           return distanceMiles(networkFilters.pin, a) - distanceMiles(networkFilters.pin, b);
         }
 
+        // VCs default-sort by completeness desc so the highest-signal founders
+        // float to the top; everyone else keeps the fit-score sort.
+        if (isInvestor) {
+          const completenessDelta = (b.profileCompleteness ?? 0) - (a.profileCompleteness ?? 0);
+          if (completenessDelta !== 0) return completenessDelta;
+        }
+
         return b.fitScore - a.fitScore;
       });
-  }, [builderDiscoveryById, builderNodes, networkFilters]);
+  }, [builderDiscoveryById, builderNodes, isInvestor, networkFilters]);
   const radarClusters = useMemo(
     () => buildBuilderMapClusters(filteredBuilderNodes, meetups),
     [filteredBuilderNodes, meetups],
@@ -3420,6 +3486,22 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
                       <span className="rounded-full bg-[#f4f1eb] px-3 py-1.5 text-xs font-medium text-gray-600">
                         {completedFieldCount}/{intakeFields.length} complete
                       </span>
+                      {!isInvestor && (
+                        <span
+                          className={`rounded-full px-3 py-1.5 text-xs font-semibold ${
+                            founderVcReady
+                              ? 'bg-[#dcefc7] text-[#42520d]'
+                              : 'bg-[#fde7c7] text-[#7a3d00]'
+                          }`}
+                          title={
+                            founderVcReady
+                              ? 'Your profile meets every VC-visibility requirement.'
+                              : `Fill these to appear in investor searches: ${founderMissingRequired.join(', ')}`
+                          }
+                        >
+                          {founderVcReady ? `${profileStrength}% · VC-ready` : `${profileStrength}% · ${founderMissingRequired.length} required field${founderMissingRequired.length === 1 ? '' : 's'} missing`}
+                        </span>
+                      )}
                       <label className="cursor-pointer rounded-full border border-black/10 px-3 py-1.5 text-xs font-semibold hover:bg-[#fbf8f3]">
                         <input type="file" accept="image/*" className="hidden" onChange={(event) => handleProfileAssetUpload(event.target.files?.[0])} />
                         Upload photo
@@ -3478,6 +3560,40 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
                           <p className="mt-1 text-xs text-gray-500">{section.description}</p>
                         </div>
                         <div className="divide-y divide-black/10">
+                          {section.key === 'traction' && (
+                            <div className="space-y-3 px-5 py-4">
+                              <div className="flex flex-wrap gap-2">
+                                {tractionTypeOptions.map((option) => {
+                                  const active = (intakeValues.tractionType ?? '') === option.value;
+                                  return (
+                                    <button
+                                      key={option.value}
+                                      type="button"
+                                      onClick={() => handleIntakeChange('tractionType', active ? '' : option.value)}
+                                      className={`rounded-full px-3 py-1.5 text-xs font-semibold transition-colors ${active ? 'bg-[#42520d] text-white' : 'bg-[#f4f1eb] text-gray-600 hover:bg-[#dcefc7]'}`}
+                                    >
+                                      {option.label}
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                              <label className="grid gap-1">
+                                <span className="text-xs font-medium text-gray-500">Traction value</span>
+                                <input
+                                  value={intakeValues.tractionValue ?? ''}
+                                  onChange={(event) => handleIntakeChange('tractionValue', event.target.value)}
+                                  placeholder={
+                                    tractionTypeOptions.find((o) => o.value === intakeValues.tractionType)?.placeholder
+                                    || 'Pick a type above, then drop in your metric.'
+                                  }
+                                  className="h-9 border border-black/10 bg-white px-3 text-sm outline-none placeholder:text-gray-400 focus:border-black/30"
+                                />
+                                <span className="text-[11px] text-gray-400">
+                                  This is the single signal investors will sort by — keep it specific (revenue, users, LOIs, prototype link, PMF metric).
+                                </span>
+                              </label>
+                            </div>
+                          )}
                           {fields.map((field) => (
                             <label key={field.key} className="grid gap-3 px-5 py-4 transition-colors hover:bg-[#fbf8f3] md:grid-cols-[220px_1fr]">
                               <div>
@@ -3539,6 +3655,14 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
                             <label className="grid gap-1 sm:col-span-2">
                               <span className="text-xs font-medium text-gray-500">What you&apos;re looking for</span>
                               <textarea value={intakeValues.raisingAsk ?? ''} onChange={(event) => handleIntakeChange('raisingAsk', event.target.value)} placeholder="A lead for our pre-seed; investors who understand devtools GTM." className="min-h-16 resize-none border border-black/10 bg-white px-3 py-2 text-sm outline-none placeholder:text-gray-400 focus:border-black/30" />
+                            </label>
+                            <label className="grid gap-1">
+                              <span className="text-xs font-medium text-gray-500">Total raised before this round</span>
+                              <input value={intakeValues.priorRaiseAmount ?? ''} onChange={(event) => handleIntakeChange('priorRaiseAmount', event.target.value)} placeholder="$500K pre-seed (or 'None')" className="h-9 border border-black/10 bg-white px-3 text-sm outline-none placeholder:text-gray-400 focus:border-black/30" />
+                            </label>
+                            <label className="grid gap-1">
+                              <span className="text-xs font-medium text-gray-500">Target close date</span>
+                              <input type="date" value={intakeValues.targetCloseDate ?? ''} onChange={(event) => handleIntakeChange('targetCloseDate', event.target.value)} className="h-9 border border-black/10 bg-white px-3 text-sm outline-none placeholder:text-gray-400 focus:border-black/30" />
                             </label>
                           </div>
                         )}
@@ -5299,6 +5423,34 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
           >
             Raising now
           </button>
+          {isInvestor && (
+            <>
+              <select
+                value={networkFilters.raisingAmountMin ?? ''}
+                onChange={(event) => setNetworkFilters((current) => ({ ...current, raisingAmountMin: event.target.value }))}
+                className="h-9 flex-1 whitespace-nowrap rounded-full border border-black/10 bg-white px-3 text-xs font-medium text-gray-600 outline-none transition-colors hover:bg-[#fbf8f3] sm:flex-none"
+                title="Filter founders by minimum round size"
+              >
+                <option value="">Any round size</option>
+                <option value="$250K">≥ $250K</option>
+                <option value="$500K">≥ $500K</option>
+                <option value="$1M">≥ $1M</option>
+                <option value="$2M">≥ $2M</option>
+                <option value="$5M">≥ $5M</option>
+              </select>
+              <select
+                value={String(networkFilters.minCompleteness ?? 40)}
+                onChange={(event) => setNetworkFilters((current) => ({ ...current, minCompleteness: Number(event.target.value) || 0 }))}
+                className="h-9 flex-1 whitespace-nowrap rounded-full border border-black/10 bg-white px-3 text-xs font-medium text-gray-600 outline-none transition-colors hover:bg-[#fbf8f3] sm:flex-none"
+                title="Hide founders whose profiles fall below this completeness score"
+              >
+                <option value="0">All profiles</option>
+                <option value="40">40%+ complete</option>
+                <option value="60">60%+ complete</option>
+                <option value="80">80%+ complete</option>
+              </select>
+            </>
+          )}
           <button
             type="button"
             className="h-9 flex-1 whitespace-nowrap rounded-full border border-black/10 px-3 text-xs font-medium text-gray-600 hover:bg-[#fbf8f3] sm:flex-none"

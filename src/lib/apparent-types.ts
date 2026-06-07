@@ -44,8 +44,18 @@ export interface FounderProfileValues {
   linkedin: string;
   xProfile: string;
   pastProducts: string;
-  /** Optional headline revenue metric, e.g. "$24K MRR · +22% MoM". */
+  /** Legacy headline revenue metric, e.g. "$24K MRR · +22% MoM". Kept for back-compat — new code reads tractionType + tractionValue. */
   mrr: string;
+  /** Type of traction signal — picks the shape VCs sort by. One of: 'mrr' | 'users' | 'gmv' | 'prototype' | 'loi' | 'pmf'. Empty = founder hasn't picked yet. */
+  tractionType: string;
+  /** Value paired with tractionType, e.g. "$24K MRR · +22% MoM", "12K WAU", "3 signed LOIs". */
+  tractionValue: string;
+  /** Headcount including founders, e.g. "1", "2", "3-5", "6-10", "11+". */
+  teamSize: string;
+  /** Total raised before this round, e.g. "$500K pre-seed", "None". */
+  priorRaiseAmount: string;
+  /** ISO date string (YYYY-MM-DD) for the founder's target close date — urgency signal for VCs. */
+  targetCloseDate: string;
   // Fundraising intent (the opt-in layer scrapers can't have). Stored as strings
   // for form consistency: fundraisingStatus ∈ 'raising' | 'open' | 'not_raising';
   // openToContact ∈ 'true' | 'false'.
@@ -205,8 +215,16 @@ export interface PublicFounderProfile {
   raisingAsk?: string;
   openToContact?: boolean;
   shareable?: boolean;
-  /** Optional headline revenue metric, e.g. "$24K MRR · +22% MoM". */
+  /** Legacy headline revenue metric (kept for back-compat). */
   mrr?: string;
+  /** New typed traction signal — one of: 'mrr' | 'users' | 'gmv' | 'prototype' | 'loi' | 'pmf'. */
+  tractionType?: string;
+  tractionValue?: string;
+  teamSize?: string;
+  priorRaiseAmount?: string;
+  targetCloseDate?: string;
+  /** Weighted 0-100 score reflecting how much of the VC-grade profile is filled. */
+  profileCompleteness?: number;
   /** Trust layer: GitHub ownership proven via gist-code check. */
   githubVerified?: boolean;
   githubUsername?: string;
@@ -312,6 +330,17 @@ export interface BuilderNode {
   openToContact?: boolean;
   /** Optional headline revenue/growth metric, e.g. "$24K MRR · +22% MoM". */
   mrr?: string;
+  /** New typed traction signal — one of: 'mrr' | 'users' | 'gmv' | 'prototype' | 'loi' | 'pmf'. Empty if founder hasn't picked one. */
+  tractionType?: string;
+  tractionValue?: string;
+  /** Team headcount including founders, e.g. "1", "2", "3-5", "6-10", "11+". */
+  teamSize?: string;
+  /** Total raised before this round. */
+  priorRaiseAmount?: string;
+  /** Target close date for the current round (ISO YYYY-MM-DD) — urgency signal for VCs. */
+  targetCloseDate?: string;
+  /** Weighted 0-100 score of how complete the underlying founder profile is. Drives sort + hide-low logic in VC views. */
+  profileCompleteness?: number;
 }
 
 export interface BuilderMapCluster {
@@ -408,6 +437,10 @@ export interface NetworkMapFilters {
   raisingOnly: boolean;
   radiusMiles: number;
   pin: NetworkInterestPin | null;
+  /** Minimum founder profile completeness (0-100). Investors only; default 40. */
+  minCompleteness?: number;
+  /** Minimum raising amount band, freeform like "$500K" / "$1M" / "$5M". Empty = no floor. */
+  raisingAmountMin?: string;
 }
 
 export interface TermReview {

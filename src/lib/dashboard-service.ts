@@ -203,7 +203,110 @@ const mapFounderRow = (row: Record<string, unknown> | null): FounderProfileValue
   raisingAsk: String(row?.raising_ask ?? row?.raisingAsk ?? ''),
   openToContact: (row?.open_to_contact ?? row?.openToContact ?? true) === false ? 'false' : 'true',
   shareable: (row?.shareable ?? true) === false ? 'false' : 'true',
+  tractionType: String(row?.traction_type ?? row?.tractionType ?? ''),
+  tractionValue: String(row?.traction_value ?? row?.tractionValue ?? ''),
+  teamSize: String(row?.team_size ?? row?.teamSize ?? ''),
+  priorRaiseAmount: String(row?.prior_raise_amount ?? row?.priorRaiseAmount ?? ''),
+  targetCloseDate: String(row?.target_close_date ?? row?.targetCloseDate ?? ''),
 });
+
+// 6 fields a founder must fill before VCs see their profile. Picked to be the
+// minimum a VC needs to triage a deal: who, what, stage, raising, sector, and
+// one concrete traction signal.
+export const FOUNDER_REQUIRED_FIELDS = [
+  'profileName',
+  'headline',
+  'stage',
+  'fundraisingStatus',
+  'category',
+] as const;
+
+// Weighted set used to compute the 0-100 completeness score. Required fields
+// weigh more, so the score tracks "is this profile decision-grade for a VC."
+const FOUNDER_COMPLETENESS_WEIGHTS: Record<string, number> = {
+  profileName: 10,
+  headline: 10,
+  stage: 10,
+  category: 10,
+  fundraisingStatus: 8,
+  // One traction signal — either the new typed pair or the legacy mrr field counts.
+  tractionValue: 10,
+  bio: 6,
+  currentBuild: 6,
+  raisingAmount: 5,
+  raisingRound: 4,
+  teamSize: 4,
+  priorRaiseAmount: 3,
+  targetCloseDate: 3,
+  website: 3,
+  linkedin: 3,
+  location: 3,
+  github: 2,
+};
+
+const FOUNDER_COMPLETENESS_MAX = Object.values(FOUNDER_COMPLETENESS_WEIGHTS).reduce((sum, n) => sum + n, 0);
+
+const filled = (value: unknown) => typeof value === 'string' && value.trim().length > 0;
+
+/** 0-100 weighted completeness score. Used to gate VC visibility + power the sort. */
+export const computeFounderCompleteness = (values: Partial<FounderProfileValues>): number => {
+  let earned = 0;
+  for (const [key, weight] of Object.entries(FOUNDER_COMPLETENESS_WEIGHTS)) {
+    if (key === 'tractionValue') {
+      // Either the typed traction pair or the legacy mrr satisfies the signal.
+      if (filled(values.tractionValue) || filled(values.mrr)) earned += weight;
+    } else if (filled((values as Record<string, unknown>)[key])) {
+      earned += weight;
+    }
+  }
+  // fundraisingStatus is always populated (defaults to 'not_raising'); only count
+  // it as "filled" when the founder actually picked raising/open.
+  if (values.fundraisingStatus === 'not_raising' || !values.fundraisingStatus) {
+    earned -= FOUNDER_COMPLETENESS_WEIGHTS.fundraisingStatus;
+  }
+  return Math.max(0, Math.min(100, Math.round((earned / FOUNDER_COMPLETENESS_MAX) * 100)));
+};
+
+/** Same scoring as above, but reads the snake_case columns we get from Supabase. */
+const completenessFromRow = (row: Record<string, unknown>): number =>
+  computeFounderCompleteness({
+    profileName: String(row.profile_name ?? ''),
+    headline: String(row.headline ?? ''),
+    bio: String(row.bio ?? ''),
+    currentBuild: String(row.current_build ?? ''),
+    category: String(row.category ?? ''),
+    stage: String(row.stage ?? ''),
+    github: String(row.github ?? ''),
+    location: String(row.location ?? ''),
+    website: String(row.website ?? ''),
+    linkedin: String(row.linkedin ?? ''),
+    mrr: String(row.mrr ?? ''),
+    fundraisingStatus: String(row.fundraising_status ?? ''),
+    raisingRound: String(row.raising_round ?? ''),
+    raisingAmount: String(row.raising_amount ?? ''),
+    tractionType: String(row.traction_type ?? ''),
+    tractionValue: String(row.traction_value ?? ''),
+    teamSize: String(row.team_size ?? ''),
+    priorRaiseAmount: String(row.prior_raise_amount ?? ''),
+    targetCloseDate: String(row.target_close_date ?? ''),
+  });
+
+/** Returns the subset of FOUNDER_REQUIRED_FIELDS that are still empty. UI uses this to nudge. */
+export const missingRequiredFounderFields = (values: Partial<FounderProfileValues>): string[] => {
+  const missing: string[] = [];
+  for (const key of FOUNDER_REQUIRED_FIELDS) {
+    if (!filled((values as Record<string, unknown>)[key])) missing.push(key);
+  }
+  if (values.fundraisingStatus === 'not_raising' || !values.fundraisingStatus) {
+    missing.push('fundraisingStatus');
+  }
+  if (!filled(values.tractionValue) && !filled(values.mrr)) missing.push('tractionValue');
+  return Array.from(new Set(missing));
+};
+
+/** Profile is "VC-grade" once all required fields are filled AND completeness >= 40%. */
+export const isFounderProfileVcVisible = (values: Partial<FounderProfileValues>): boolean =>
+  missingRequiredFounderFields(values).length === 0 && computeFounderCompleteness(values) >= 40;
 
 const completedLabels = (values: Record<string, string>, labelByKey: Record<string, string>) =>
   Object.entries(values)
@@ -577,6 +680,15 @@ const mapBuilderProfileRows = (
         raisingAmount: String(profile.raising_amount ?? ''),
         openToContact: profile.open_to_contact !== false,
         mrr: String(profile.mrr ?? ''),
+        tractionType: String(profile.traction_type ?? ''),
+        tractionValue: String(profile.traction_value ?? ''),
+        teamSize: String(profile.team_size ?? ''),
+        priorRaiseAmount: String(profile.prior_raise_amount ?? ''),
+        targetCloseDate: String(profile.target_close_date ?? ''),
+        profileCompleteness:
+          typeof profile.profile_completeness === 'number'
+            ? profile.profile_completeness
+            : completenessFromRow(profile as Record<string, unknown>),
       };
     })
     .filter((builder) =>
@@ -646,6 +758,12 @@ const localFounderBuilderNode = (
     raisingAmount: founderProfile.raisingAmount,
     openToContact: founderProfile.openToContact !== 'false',
     mrr: founderProfile.mrr,
+    tractionType: founderProfile.tractionType,
+    tractionValue: founderProfile.tractionValue,
+    teamSize: founderProfile.teamSize,
+    priorRaiseAmount: founderProfile.priorRaiseAmount,
+    targetCloseDate: founderProfile.targetCloseDate,
+    profileCompleteness: computeFounderCompleteness(founderProfile),
   };
 };
 
@@ -2165,6 +2283,12 @@ export const saveIntakeValues = async (
     open_to_contact: values.openToContact !== 'false',
     shareable: values.shareable !== 'false',
     raising_updated_at: new Date().toISOString(),
+    traction_type: values.tractionType ?? '',
+    traction_value: values.tractionValue ?? '',
+    team_size: values.teamSize ?? '',
+    prior_raise_amount: values.priorRaiseAmount ?? '',
+    target_close_date: values.targetCloseDate ?? '',
+    profile_completeness: computeFounderCompleteness(values as Partial<FounderProfileValues>),
   };
 
   const { error } = await supabase.from('founder_profiles').upsert(founderProfilePayload);
