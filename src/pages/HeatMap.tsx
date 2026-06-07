@@ -798,7 +798,7 @@ export const HeatMap = ({
     setSelectedPoint(point);
   };
 
-  const goToNextProximityPoint = () => {
+  const goToProximityPointAtOffset = (offset: -1 | 1) => {
     if (!selectedPoint) return;
 
     const currentPoint = filteredPoints.find((point) => point.id === selectedPoint.id) ?? selectedPoint;
@@ -814,7 +814,7 @@ export const HeatMap = ({
     const currentIndex = proximityList.findIndex((point) => point.id === currentPoint.id);
     const next = proximityList[
       currentIndex >= 0
-        ? (currentIndex + 1) % proximityList.length
+        ? (currentIndex + offset + proximityList.length) % proximityList.length
         : 0
     ];
 
@@ -1065,16 +1065,28 @@ export const HeatMap = ({
                 onOpenCompose={() => setComposeOpen(true)}
               />
               {hasVisibleNeighbor && (
-                <button
-                  type="button"
-                  onClick={goToNextProximityPoint}
-                  className="absolute left-full top-0 ml-2 flex h-10 w-10 items-center justify-center rounded-full text-black shadow-[0_10px_28px_rgba(0,0,0,0.18)] transition-opacity hover:opacity-90"
-                  style={{ backgroundColor: '#dcefc7' }}
-                  aria-label="Go to next nearby pin"
-                  title="Jump to the next closest pin from the original selection"
-                >
-                  <ChevronRight className="h-4 w-4" />
-                </button>
+                <div className="absolute left-full top-0 ml-2 flex flex-col gap-2">
+                  <button
+                    type="button"
+                    onClick={() => goToProximityPointAtOffset(-1)}
+                    className="flex h-10 w-10 items-center justify-center rounded-full text-black shadow-[0_10px_28px_rgba(0,0,0,0.18)] transition-opacity hover:opacity-90"
+                    style={{ backgroundColor: '#dcefc7' }}
+                    aria-label="Go to previous nearby pin"
+                    title="Jump to the previous closest pin from the original selection"
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => goToProximityPointAtOffset(1)}
+                    className="flex h-10 w-10 items-center justify-center rounded-full text-black shadow-[0_10px_28px_rgba(0,0,0,0.18)] transition-opacity hover:opacity-90"
+                    style={{ backgroundColor: '#dcefc7' }}
+                    aria-label="Go to next nearby pin"
+                    title="Jump to the next closest pin from the original selection"
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </button>
+                </div>
               )}
             </div>
           )}
