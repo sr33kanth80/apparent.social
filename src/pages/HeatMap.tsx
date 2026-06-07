@@ -1,4 +1,4 @@
-import { useEffect, useId, useMemo, useState } from 'react';
+import { useEffect, useId, useMemo, useRef, useState } from 'react';
 import { ArrowUpRight, Building2, CheckCircle2, ChevronLeft, ChevronRight, Clock, Copy, Flame, Globe2, Layers3, LocateFixed, MailCheck, Send, SlidersHorizontal, Sparkles, Users, X } from 'lucide-react';
 import type { GeoJSONSource, MapLayerMouseEvent } from 'maplibre-gl';
 import { Link } from 'react-router-dom';
@@ -206,13 +206,14 @@ function ApparentHeatmapLayers({
   onPointSelect: (point: HeatMapPoint) => void;
 }) {
   const { map, isLoaded } = useMap();
-  const id = useId().replace(/:/g, '');
+  const id = useId();
   const sourceId = `apparent-heatmap-source-${id}`;
   const heatLayerId = `apparent-heatmap-layer-${id}`;
-  const globalPointLayerId = `apparent-heatmap-global-point-layer-${id}`;
   const pointLayerId = `apparent-heatmap-point-layer-${id}`;
   const geoJson = useMemo(() => buildFeatureCollection(points, selectedId), [points, selectedId]);
   const pointById = useMemo(() => new globalThis.Map(points.map((point) => [point.id, point])), [points]);
+  const latestRef = useRef({ pointById, onPointSelect });
+  latestRef.current = { pointById, onPointSelect };
 
   useEffect(() => {
     if (!map || !isLoaded) return;
@@ -247,35 +248,6 @@ function ApparentHeatmapLayers({
       });
     }
 
-    if (!map.getLayer(globalPointLayerId)) {
-      map.addLayer({
-        id: globalPointLayerId,
-        type: 'circle',
-        source: sourceId,
-        maxzoom: 5.25,
-        paint: {
-          'circle-radius': ['interpolate', ['linear'], ['zoom'], 1, 2.8, 3, 4.2, 5.25, 6.5],
-          'circle-color': [
-            'interpolate',
-            ['linear'],
-            ['get', 'mag'],
-            1,
-            HEATMAP_GRADIENT_COLORS[1],
-            2.5,
-            HEATMAP_GRADIENT_COLORS[2],
-            4,
-            HEATMAP_GRADIENT_COLORS[3],
-            6,
-            HEATMAP_GRADIENT_COLORS[4],
-          ],
-          'circle-opacity': ['interpolate', ['linear'], ['zoom'], 1, 0.62, 3.5, 0.48, 5.25, 0.12],
-          'circle-blur': ['interpolate', ['linear'], ['zoom'], 1, 0.45, 5.25, 0.2],
-          'circle-stroke-width': ['interpolate', ['linear'], ['zoom'], 1, 0, 4.5, 0.75],
-          'circle-stroke-color': 'rgba(255,255,255,0.72)',
-        },
-      });
-    }
-
     if (!map.getLayer(pointLayerId)) {
       map.addLayer({
         id: pointLayerId,
@@ -283,7 +255,7 @@ function ApparentHeatmapLayers({
         source: sourceId,
         minzoom: 4.5,
         paint: {
-          'circle-radius': ['interpolate', ['linear'], ['get', 'mag'], 1, 1.8, 6, 5.5],
+          'circle-radius': ['interpolate', ['linear'], ['get', 'mag'], 1, 3, 6, 10],
           'circle-color': [
             'case',
             ['boolean', ['get', 'selected'], false],
@@ -312,10 +284,10 @@ function ApparentHeatmapLayers({
     const handleClick = (event: MapLayerMouseEvent) => {
       const feature = event.features?.[0];
       const pointId = String(feature?.properties?.id ?? '');
-      const point = pointById.get(pointId);
+      const point = latestRef.current.pointById.get(pointId);
 
       if (point) {
-        onPointSelect(point);
+        latestRef.current.onPointSelect(point);
       }
     };
     const handleMouseEnter = () => {
@@ -325,31 +297,24 @@ function ApparentHeatmapLayers({
       map.getCanvas().style.cursor = '';
     };
 
-    map.on('click', globalPointLayerId, handleClick);
-    map.on('mouseenter', globalPointLayerId, handleMouseEnter);
-    map.on('mouseleave', globalPointLayerId, handleMouseLeave);
     map.on('click', pointLayerId, handleClick);
     map.on('mouseenter', pointLayerId, handleMouseEnter);
     map.on('mouseleave', pointLayerId, handleMouseLeave);
 
     return () => {
       try {
-        map.off('click', globalPointLayerId, handleClick);
-        map.off('mouseenter', globalPointLayerId, handleMouseEnter);
-        map.off('mouseleave', globalPointLayerId, handleMouseLeave);
         map.off('click', pointLayerId, handleClick);
         map.off('mouseenter', pointLayerId, handleMouseEnter);
         map.off('mouseleave', pointLayerId, handleMouseLeave);
         map.getCanvas().style.cursor = '';
         if (map.getLayer(pointLayerId)) map.removeLayer(pointLayerId);
-        if (map.getLayer(globalPointLayerId)) map.removeLayer(globalPointLayerId);
         if (map.getLayer(heatLayerId)) map.removeLayer(heatLayerId);
         if (map.getSource(sourceId)) map.removeSource(sourceId);
       } catch {
         // MapLibre may already be tearing down the style.
       }
     };
-  }, [map, isLoaded, geoJson, sourceId, heatLayerId, globalPointLayerId, pointLayerId, pointById, onPointSelect]);
+  }, [map, isLoaded, sourceId, heatLayerId, pointLayerId]);
 
   useEffect(() => {
     if (!map || !isLoaded) return;
@@ -822,10 +787,10 @@ export const HeatMap = ({
       <section className={fullBleed ? 'h-full w-full' : 'mx-auto max-w-[92rem] px-5 pb-5 pt-5 sm:px-8'}>
         <div className={`relative bg-[#e8e5dc] ${fullBleed ? 'h-full w-full overflow-hidden' : 'h-[calc(100vh-8.5rem)] min-h-[620px] overflow-hidden rounded-[32px] shadow-[0_18px_60px_rgba(0,0,0,0.06)]'}`}>
           <Map
-            center={[-74, 38]}
-            zoom={2.15}
+            center={[-98, 39]}
+            zoom={3.2}
             projection={{ type: 'globe' }}
-            pitch={18}
+            pitch={24}
             minZoom={1.2}
             maxZoom={12}
             theme="light"
