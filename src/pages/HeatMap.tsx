@@ -121,7 +121,7 @@ const launchToPoint = (launch: ProductLaunch, index: number): HeatMapPoint => {
 };
 
 const jitteredCoordinate = (value: number, index: number, phase: number) =>
-  value + Math.sin((index + 1) * phase) * 0.08;
+  value + Math.sin((index + 1) * phase) * 0.015;
 
 const toExternalUrl = (value: string) => {
   const trimmed = value.trim();
@@ -255,7 +255,7 @@ function ApparentHeatmapLayers({
         source: sourceId,
         minzoom: 4.5,
         paint: {
-          'circle-radius': ['interpolate', ['linear'], ['get', 'mag'], 1, 3, 6, 10],
+          'circle-radius': ['interpolate', ['linear'], ['get', 'mag'], 1, 2, 6, 6],
           'circle-color': [
             'case',
             ['boolean', ['get', 'selected'], false],
