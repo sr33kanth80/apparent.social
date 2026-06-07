@@ -433,14 +433,11 @@ function HeatMapDetailPanel({
           </div>
         )}
 
-        {point.email &&
-          (locked ? (
-            <p className="px-5 pt-3 text-sm font-medium text-black/40">Sign in to view email</p>
-          ) : (
-            <p className="break-all px-5 pt-3 text-sm font-medium" style={{ color: CLAUDE_CLAY }}>
-              {point.email}
-            </p>
-          ))}
+        {point.email && (
+          <p className="break-all px-5 pt-3 text-sm font-medium" style={{ color: CLAUDE_CLAY }}>
+            {point.email}
+          </p>
+        )}
 
         {/* Outreach status badges (founder only). Shows the kanban stage + a
             "last contacted N days ago" counter so the founder doesn't re-spam. */}
