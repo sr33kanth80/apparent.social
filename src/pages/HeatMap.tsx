@@ -209,6 +209,7 @@ function ApparentHeatmapLayers({
   const id = useId().replace(/:/g, '');
   const sourceId = `apparent-heatmap-source-${id}`;
   const heatLayerId = `apparent-heatmap-layer-${id}`;
+  const globalPointLayerId = `apparent-heatmap-global-point-layer-${id}`;
   const pointLayerId = `apparent-heatmap-point-layer-${id}`;
   const geoJson = useMemo(() => buildFeatureCollection(points, selectedId), [points, selectedId]);
   const pointById = useMemo(() => new globalThis.Map(points.map((point) => [point.id, point])), [points]);
@@ -242,6 +243,35 @@ function ApparentHeatmapLayers({
           ],
           'heatmap-radius': ['interpolate', ['linear'], ['zoom'], 0, 8, 6, 34],
           'heatmap-opacity': ['interpolate', ['linear'], ['zoom'], 4.5, 0.75, 6.5, 0.08],
+        },
+      });
+    }
+
+    if (!map.getLayer(globalPointLayerId)) {
+      map.addLayer({
+        id: globalPointLayerId,
+        type: 'circle',
+        source: sourceId,
+        maxzoom: 5.25,
+        paint: {
+          'circle-radius': ['interpolate', ['linear'], ['zoom'], 1, 2.8, 3, 4.2, 5.25, 6.5],
+          'circle-color': [
+            'interpolate',
+            ['linear'],
+            ['get', 'mag'],
+            1,
+            HEATMAP_GRADIENT_COLORS[1],
+            2.5,
+            HEATMAP_GRADIENT_COLORS[2],
+            4,
+            HEATMAP_GRADIENT_COLORS[3],
+            6,
+            HEATMAP_GRADIENT_COLORS[4],
+          ],
+          'circle-opacity': ['interpolate', ['linear'], ['zoom'], 1, 0.62, 3.5, 0.48, 5.25, 0.12],
+          'circle-blur': ['interpolate', ['linear'], ['zoom'], 1, 0.45, 5.25, 0.2],
+          'circle-stroke-width': ['interpolate', ['linear'], ['zoom'], 1, 0, 4.5, 0.75],
+          'circle-stroke-color': 'rgba(255,255,255,0.72)',
         },
       });
     }
@@ -295,24 +325,31 @@ function ApparentHeatmapLayers({
       map.getCanvas().style.cursor = '';
     };
 
+    map.on('click', globalPointLayerId, handleClick);
+    map.on('mouseenter', globalPointLayerId, handleMouseEnter);
+    map.on('mouseleave', globalPointLayerId, handleMouseLeave);
     map.on('click', pointLayerId, handleClick);
     map.on('mouseenter', pointLayerId, handleMouseEnter);
     map.on('mouseleave', pointLayerId, handleMouseLeave);
 
     return () => {
       try {
+        map.off('click', globalPointLayerId, handleClick);
+        map.off('mouseenter', globalPointLayerId, handleMouseEnter);
+        map.off('mouseleave', globalPointLayerId, handleMouseLeave);
         map.off('click', pointLayerId, handleClick);
         map.off('mouseenter', pointLayerId, handleMouseEnter);
         map.off('mouseleave', pointLayerId, handleMouseLeave);
         map.getCanvas().style.cursor = '';
         if (map.getLayer(pointLayerId)) map.removeLayer(pointLayerId);
+        if (map.getLayer(globalPointLayerId)) map.removeLayer(globalPointLayerId);
         if (map.getLayer(heatLayerId)) map.removeLayer(heatLayerId);
         if (map.getSource(sourceId)) map.removeSource(sourceId);
       } catch {
         // MapLibre may already be tearing down the style.
       }
     };
-  }, [map, isLoaded, geoJson, sourceId, heatLayerId, pointLayerId, pointById, onPointSelect]);
+  }, [map, isLoaded, geoJson, sourceId, heatLayerId, globalPointLayerId, pointLayerId, pointById, onPointSelect]);
 
   useEffect(() => {
     if (!map || !isLoaded) return;
