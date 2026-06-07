@@ -101,6 +101,15 @@ const offsetByKind = (point: HeatMapPoint): HeatMapPoint => {
   return { ...point, longitude: point.longitude + 0.18, latitude: point.latitude - 0.08 };
 };
 
+const distanceBetweenPoints = (first: HeatMapPoint, second: HeatMapPoint) => {
+  const averageLatitude = ((first.latitude + second.latitude) / 2) * (Math.PI / 180);
+  const longitudeScale = Math.cos(averageLatitude);
+  const latitudeDelta = first.latitude - second.latitude;
+  const longitudeDelta = (first.longitude - second.longitude) * longitudeScale;
+
+  return latitudeDelta * latitudeDelta + longitudeDelta * longitudeDelta;
+};
+
 const launchToPoint = (launch: ProductLaunch, index: number): HeatMapPoint => {
   const city = launch.location && cityGeoCoordinates[launch.location] ? launch.location : 'Remote';
   const coordinates = cityGeoCoordinates[city] ?? cityGeoCoordinates.Remote;
@@ -622,6 +631,7 @@ export const HeatMap = ({
   const [isLoadingContacts, setIsLoadingContacts] = useState(true);
   const [mode, setMode] = useState<HeatMapMode>('all');
   const [selectedPoint, setSelectedPoint] = useState<HeatMapPoint | null>(null);
+  const [previousDetailPointId, setPreviousDetailPointId] = useState<string | null>(null);
   const [infoDismissed, setInfoDismissed] = useState(false);
   const [vcFilters, setVcFilters] = useState<VcFilters>(emptyVcFilters);
   const [filtersOpen, setFiltersOpen] = useState(false);
@@ -751,6 +761,9 @@ export const HeatMap = ({
     [heatPoints, mode],
   );
   const selectedVisiblePoint = selectedPoint && filteredPoints.some((point) => point.id === selectedPoint.id) ? selectedPoint : null;
+  const hasVisibleNeighbor = selectedVisiblePoint
+    ? filteredPoints.some((point) => point.id !== selectedVisiblePoint.id && point.kind === selectedVisiblePoint.kind)
+    : false;
 
   // Queue of contactable VCs from the currently visible/filtered set. The
   // compose dialog uses this to let the founder cold-email VC-by-VC without
@@ -773,20 +786,38 @@ export const HeatMap = ({
     const nextIndex = (start + offset + composableVcQueue.length) % composableVcQueue.length;
     const next = composableVcQueue[nextIndex];
     if (next) {
+      setPreviousDetailPointId(null);
       setSelectedPoint(next);
       setComposeOpen(true);
     }
   };
 
-  // Lets the founder click through every visible pin on the map, in order,
-  // straight from the detail panel — no need to hunt for the next dot.
-  const goToNextPoint = () => {
-    if (!filteredPoints.length) return;
-    const currentIndex = selectedPoint
-      ? filteredPoints.findIndex((point) => point.id === selectedPoint.id)
-      : -1;
-    const nextIndex = (currentIndex + 1 + filteredPoints.length) % filteredPoints.length;
-    setSelectedPoint(filteredPoints[nextIndex]);
+  // Lets the founder walk through nearby visible pins without hunting for the
+  // next dot manually.
+  const handlePointSelect = (point: HeatMapPoint) => {
+    setPreviousDetailPointId(null);
+    setSelectedPoint(point);
+  };
+
+  const goToNearestNeighborPoint = () => {
+    if (!selectedPoint) return;
+
+    const currentPoint = filteredPoints.find((point) => point.id === selectedPoint.id) ?? selectedPoint;
+    const sameKindCandidates = filteredPoints.filter(
+      (point) => point.id !== currentPoint.id && point.kind === currentPoint.kind,
+    );
+    const candidates =
+      sameKindCandidates.length > 1
+        ? sameKindCandidates.filter((point) => point.id !== previousDetailPointId)
+        : sameKindCandidates;
+    const next = candidates
+      .slice()
+      .sort((first, second) => distanceBetweenPoints(currentPoint, first) - distanceBetweenPoints(currentPoint, second))[0];
+
+    if (next) {
+      setPreviousDetailPointId(currentPoint.id);
+      setSelectedPoint(next);
+    }
   };
   const apparentCount = heatPoints.filter((point) => point.source === 'apparent').length;
   const builderCount = heatPoints.filter((point) => point.kind === 'builder').length;
@@ -822,7 +853,7 @@ export const HeatMap = ({
             maxZoom={12}
             theme="light"
           >
-            <ApparentHeatmapLayers points={filteredPoints} selectedId={selectedVisiblePoint?.id} onPointSelect={setSelectedPoint} />
+            <ApparentHeatmapLayers points={filteredPoints} selectedId={selectedVisiblePoint?.id} onPointSelect={handlePointSelect} />
           </Map>
 
           {/* Loading indicator — shown while VC contacts are being fetched */}
@@ -1017,7 +1048,10 @@ export const HeatMap = ({
             <div className="relative w-full">
               <HeatMapDetailPanel
                 point={selectedVisiblePoint}
-                onClose={() => setSelectedPoint(null)}
+                onClose={() => {
+                  setPreviousDetailPointId(null);
+                  setSelectedPoint(null);
+                }}
                 locked={lockContacts}
                 outreachEntry={
                   selectedVisiblePoint.vcContact
@@ -1027,14 +1061,14 @@ export const HeatMap = ({
                 canCompose={isFounderLoggedIn && Boolean(selectedVisiblePoint.email && selectedVisiblePoint.vcContact)}
                 onOpenCompose={() => setComposeOpen(true)}
               />
-              {filteredPoints.length > 1 && (
+              {hasVisibleNeighbor && (
                 <button
                   type="button"
-                  onClick={goToNextPoint}
+                  onClick={goToNearestNeighborPoint}
                   className="absolute left-full top-0 ml-2 flex h-10 w-10 items-center justify-center rounded-full text-black shadow-[0_10px_28px_rgba(0,0,0,0.18)] transition-opacity hover:opacity-90"
                   style={{ backgroundColor: '#dcefc7' }}
-                  aria-label="Go to next pin"
-                  title="Jump to the next pin on the map"
+                  aria-label="Go to nearest neighboring pin"
+                  title="Jump to the nearest neighboring pin"
                 >
                   <ChevronRight className="h-4 w-4" />
                 </button>
