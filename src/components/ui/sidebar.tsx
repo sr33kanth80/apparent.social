@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useKindeAuth } from '@kinde-oss/kinde-auth-react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
@@ -41,16 +42,8 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Separator } from '@/components/ui/separator';
 import { deriveUsername, signOut } from '@/lib/auth-service';
-import { isClerkConfigured } from '@/lib/clerk-auth';
+import { isKindeConfigured } from '@/lib/kinde-auth';
 import type { AppUser } from '@/lib/apparent-types';
-
-declare global {
-  interface Window {
-    Clerk?: {
-      signOut: (options?: { redirectUrl?: string }) => Promise<void>;
-    };
-  }
-}
 
 type DashboardRole = 'founder' | 'investor';
 
@@ -227,7 +220,31 @@ const NavLinkItem = ({
   );
 };
 
-export function SessionNavBar({ role, user, activated = true }: SessionNavBarProps) {
+export function SessionNavBar(props: SessionNavBarProps) {
+  if (isKindeConfigured) {
+    return <KindeSessionNavBar {...props} />;
+  }
+
+  return <BaseSessionNavBar {...props} />;
+}
+
+const KindeSessionNavBar = (props: SessionNavBarProps) => {
+  const { logout } = useKindeAuth();
+
+  const handleKindeSignOut = async () => {
+    await signOut();
+    await logout({ redirectUrl: '/login' });
+  };
+
+  return <BaseSessionNavBar {...props} onSignOut={handleKindeSignOut} />;
+};
+
+function BaseSessionNavBar({
+  role,
+  user,
+  activated = true,
+  onSignOut,
+}: SessionNavBarProps & { onSignOut?: () => Promise<void> }) {
   const [isHovered, setIsHovered] = useState(false);
   const [navExpanded, setNavExpanded] = useState(false);
   const [isPinned, setIsPinned] = useState(() => {
@@ -253,12 +270,12 @@ export function SessionNavBar({ role, user, activated = true }: SessionNavBarPro
   const publicProfileUrl = `/@${username}`;
 
   const handleSignOut = async () => {
-    await signOut();
-    if (isClerkConfigured && window.Clerk) {
-      await window.Clerk.signOut({ redirectUrl: '/login' });
-      return;
+    if (onSignOut) {
+      await onSignOut();
+    } else {
+      await signOut();
+      navigate('/login');
     }
-    navigate('/login');
   };
 
   useEffect(() => {

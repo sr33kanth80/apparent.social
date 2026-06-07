@@ -1,12 +1,12 @@
 import { AnimatePresence, motion } from 'framer-motion';
-import { Show, SignInButton, SignUpButton, UserButton, useUser } from '@clerk/react';
+import { useKindeAuth } from '@kinde-oss/kinde-auth-react';
 import { ArrowUpRight, Fingerprint, Telescope, type LucideIcon } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { clearExternalAppUser } from '@/lib/auth-service';
 import type { DashboardRole } from '@/lib/apparent-types';
 import { useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { isClerkConfigured, saveRequestedClerkRole } from '@/lib/clerk-auth';
+import { isKindeConfigured, saveRequestedKindeRole } from '@/lib/kinde-auth';
 
 interface FeaturePillar {
   number: string;
@@ -112,7 +112,7 @@ export const Login = () => {
 
   const handleRoleChange = (nextRole: string) => {
     if (nextRole === 'founder' || nextRole === 'investor') {
-      saveRequestedClerkRole(nextRole);
+      saveRequestedKindeRole(nextRole);
     }
     setSearchParams({ role: nextRole });
   };
@@ -286,8 +286,8 @@ export const Login = () => {
                 exit="exit"
                 transition={ROLE_SWAP_TRANSITION}
               >
-                {isClerkConfigured ? (
-                  <ClerkAuthPanel
+                {isKindeConfigured ? (
+                  <KindeAuthPanel
                     role={activeRole}
                     title={authTitle}
                     description={authDescription}
@@ -297,9 +297,9 @@ export const Login = () => {
                   />
                 ) : (
                   <div className="rounded-[8px] border border-red-100 bg-white/80 p-6 shadow-[0_18px_60px_rgba(0,0,0,0.06)]">
-                    <p className="text-sm font-semibold text-red-700">Clerk is not configured</p>
+                    <p className="text-sm font-semibold text-red-700">Kinde is not configured</p>
                     <p className="mt-2 text-sm leading-6 text-black/60">
-                      Set VITE_CLERK_PUBLISHABLE_KEY in Vercel and redeploy to enable sign in.
+                      Set VITE_KINDE_CLIENT_ID and VITE_KINDE_DOMAIN in Vercel and redeploy to enable sign in.
                     </p>
                   </div>
                 )}
@@ -312,7 +312,7 @@ export const Login = () => {
   );
 };
 
-const ClerkAuthPanel = ({
+const KindeAuthPanel = ({
   role,
   title,
   description,
@@ -328,20 +328,30 @@ const ClerkAuthPanel = ({
   emailPlaceholder: string;
 }) => {
   const navigate = useNavigate();
-  const { isLoaded, isSignedIn } = useUser();
+  const { isLoading, isAuthenticated, login, register, logout } = useKindeAuth();
   const dashboardPath = `/dashboard/${role}`;
 
   useEffect(() => {
-    saveRequestedClerkRole(role);
-    if (isLoaded && isSignedIn) {
+    saveRequestedKindeRole(role);
+    if (!isLoading && isAuthenticated) {
       navigate(dashboardPath, { replace: true });
-    } else if (isLoaded) {
+    } else if (!isLoading) {
       clearExternalAppUser();
     }
-  }, [dashboardPath, isLoaded, isSignedIn, navigate, role]);
+  }, [dashboardPath, isAuthenticated, isLoading, navigate, role]);
 
   const handleAuthClick = () => {
-    saveRequestedClerkRole(role);
+    saveRequestedKindeRole(role);
+  };
+
+  const handleLogin = async () => {
+    handleAuthClick();
+    await login();
+  };
+
+  const handleRegister = async () => {
+    handleAuthClick();
+    await register();
   };
 
   return (
@@ -363,33 +373,37 @@ const ClerkAuthPanel = ({
         </div>
       </div>
 
-      <Show when="signed-out">
+      {!isAuthenticated && (
         <div className="mt-6 grid gap-3">
-          <SignInButton>
-            <button
-              type="button"
-              onClick={handleAuthClick}
-              className="inline-flex h-11 w-full items-center justify-center rounded-[8px] bg-black px-4 text-sm font-semibold text-white transition hover:bg-black/85"
-            >
-              Sign in with Clerk
-            </button>
-          </SignInButton>
-          <SignUpButton>
-            <button
-              type="button"
-              onClick={handleAuthClick}
-              className="inline-flex h-11 w-full items-center justify-center rounded-[8px] border border-black/10 bg-white px-4 text-sm font-semibold text-black transition hover:bg-black/5"
-            >
-              Create account
-            </button>
-          </SignUpButton>
+          <button
+            type="button"
+            onClick={handleLogin}
+            disabled={isLoading}
+            className="inline-flex h-11 w-full items-center justify-center rounded-[8px] bg-black px-4 text-sm font-semibold text-white transition hover:bg-black/85 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {isLoading ? 'Loading...' : 'Sign in with Kinde'}
+          </button>
+          <button
+            type="button"
+            onClick={handleRegister}
+            disabled={isLoading}
+            className="inline-flex h-11 w-full items-center justify-center rounded-[8px] border border-black/10 bg-white px-4 text-sm font-semibold text-black transition hover:bg-black/5 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            Create account
+          </button>
           <p className="text-center text-xs text-black/45">Suggested email: {emailPlaceholder}</p>
         </div>
-      </Show>
+      )}
 
-      <Show when="signed-in">
+      {isAuthenticated && (
         <div className="mt-6 flex items-center justify-between rounded-[8px] border border-black/10 bg-white px-4 py-3">
-          <UserButton />
+          <button
+            type="button"
+            onClick={() => logout({ redirectUrl: '/login' })}
+            className="inline-flex h-9 items-center justify-center rounded-[8px] border border-black/10 bg-white px-4 text-sm font-semibold text-black transition hover:bg-black/5"
+          >
+            Sign out
+          </button>
           <button
             type="button"
             onClick={() => navigate(dashboardPath)}
@@ -398,7 +412,7 @@ const ClerkAuthPanel = ({
             Open workspace
           </button>
         </div>
-      </Show>
+      )}
     </div>
   );
 };

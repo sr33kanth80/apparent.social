@@ -1,17 +1,25 @@
 import { StrictMode } from 'react'
-import type { ComponentType, PropsWithChildren } from 'react'
 import { createRoot } from 'react-dom/client'
-import { ClerkProvider } from '@clerk/react'
+import { KindeProvider } from '@kinde-oss/kinde-auth-react'
 import './index.css'
 import App from './App.tsx'
-import { isClerkConfigured } from './lib/clerk-auth.ts'
+import {
+  getKindeDomain,
+  getKindeLogoutUri,
+  getKindeRedirectUri,
+  isKindeConfigured,
+  kindeClientId,
+} from './lib/kinde-auth.ts'
 
-const ClerkProviderFromEnv = ClerkProvider as ComponentType<PropsWithChildren<{ afterSignOutUrl: string }>>
-
-const app = isClerkConfigured ? (
-  <ClerkProviderFromEnv afterSignOutUrl="/">
+const app = isKindeConfigured ? (
+  <KindeProvider
+    clientId={kindeClientId!}
+    domain={getKindeDomain()}
+    redirectUri={getKindeRedirectUri()}
+    logoutUri={getKindeLogoutUri()}
+  >
     <App />
-  </ClerkProviderFromEnv>
+  </KindeProvider>
 ) : (
   <App />
 )

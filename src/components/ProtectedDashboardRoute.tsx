@@ -1,9 +1,9 @@
 import { useEffect, useState, type ReactNode } from 'react';
-import { useUser } from '@clerk/react';
+import { useKindeAuth } from '@kinde-oss/kinde-auth-react';
 import { Navigate } from 'react-router-dom';
 import type { AppUser, DashboardRole } from '@/lib/apparent-types';
 import { clearExternalAppUser, ensureProfile, getCurrentAppUser } from '@/lib/auth-service';
-import { buildClerkAppUser, isClerkConfigured, resolveClerkRole } from '@/lib/clerk-auth';
+import { buildKindeAppUser, isKindeConfigured, resolveKindeRole } from '@/lib/kinde-auth';
 
 interface ProtectedDashboardRouteProps {
   role: DashboardRole;
@@ -11,17 +11,17 @@ interface ProtectedDashboardRouteProps {
 }
 
 export const ProtectedDashboardRoute = ({ role, children }: ProtectedDashboardRouteProps) => {
-  if (isClerkConfigured) {
-    return <ClerkProtectedDashboardRoute role={role}>{children}</ClerkProtectedDashboardRoute>;
+  if (isKindeConfigured) {
+    return <KindeProtectedDashboardRoute role={role}>{children}</KindeProtectedDashboardRoute>;
   }
 
   return <LegacyProtectedDashboardRoute role={role}>{children}</LegacyProtectedDashboardRoute>;
 };
 
-const ClerkProtectedDashboardRoute = ({ role, children }: ProtectedDashboardRouteProps) => {
-  const { isLoaded, isSignedIn, user: clerkUser } = useUser();
+const KindeProtectedDashboardRoute = ({ role, children }: ProtectedDashboardRouteProps) => {
+  const { isLoading, isAuthenticated, user: kindeUser } = useKindeAuth();
 
-  if (!isLoaded) {
+  if (isLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-[#fbf8f3] text-sm text-gray-500">
         Loading Apparent workspace...
@@ -29,17 +29,17 @@ const ClerkProtectedDashboardRoute = ({ role, children }: ProtectedDashboardRout
     );
   }
 
-  if (!isSignedIn || !clerkUser) {
+  if (!isAuthenticated || !kindeUser) {
     clearExternalAppUser();
     return <Navigate to={`/login?role=${role}`} replace />;
   }
 
-  const userRole = resolveClerkRole(clerkUser.id, role);
+  const userRole = resolveKindeRole(kindeUser.id, role);
   if (userRole !== role) {
     return <Navigate to={`/dashboard/${userRole}`} replace />;
   }
 
-  return <>{children(buildClerkAppUser(clerkUser, userRole))}</>;
+  return <>{children(buildKindeAppUser(kindeUser, userRole))}</>;
 };
 
 const LegacyProtectedDashboardRoute = ({ role, children }: ProtectedDashboardRouteProps) => {
