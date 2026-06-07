@@ -42,7 +42,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Separator } from '@/components/ui/separator';
 import { deriveUsername, signOut } from '@/lib/auth-service';
-import { isKindeConfigured } from '@/lib/kinde-auth';
+import { getKindeLogoutUri, isKindeConfigured } from '@/lib/kinde-auth';
 import type { AppUser } from '@/lib/apparent-types';
 
 type DashboardRole = 'founder' | 'investor';
@@ -233,7 +233,7 @@ const KindeSessionNavBar = (props: SessionNavBarProps) => {
 
   const handleKindeSignOut = async () => {
     await signOut();
-    await logout({ redirectUrl: '/login' });
+    await logout({ redirectUrl: getKindeLogoutUri() });
   };
 
   return <BaseSessionNavBar {...props} onSignOut={handleKindeSignOut} />;

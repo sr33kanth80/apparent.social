@@ -6,7 +6,7 @@ import { clearExternalAppUser } from '@/lib/auth-service';
 import type { DashboardRole } from '@/lib/apparent-types';
 import { useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { isKindeConfigured, saveRequestedKindeRole } from '@/lib/kinde-auth';
+import { getKindeLogoutUri, isKindeConfigured, saveRequestedKindeRole } from '@/lib/kinde-auth';
 
 interface FeaturePillar {
   number: string;
@@ -399,7 +399,7 @@ const KindeAuthPanel = ({
         <div className="mt-6 flex items-center justify-between rounded-[8px] border border-black/10 bg-white px-4 py-3">
           <button
             type="button"
-            onClick={() => logout({ redirectUrl: '/login' })}
+            onClick={() => logout({ redirectUrl: getKindeLogoutUri() })}
             className="inline-flex h-9 items-center justify-center rounded-[8px] border border-black/10 bg-white px-4 text-sm font-semibold text-black transition hover:bg-black/5"
           >
             Sign out
