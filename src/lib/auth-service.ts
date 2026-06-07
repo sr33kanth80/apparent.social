@@ -3,6 +3,7 @@ import { isSupabaseConfigured, supabase } from '@/lib/supabase';
 import type { AppUser, DashboardRole } from '@/lib/apparent-types';
 
 const DEV_SESSION_KEY = 'apparent-dev-session';
+const EXTERNAL_SESSION_KEY = 'apparent-external-auth-session';
 
 // One-shot evict at module load: if Supabase is configured (i.e., we're in
 // any deployed environment) and a stale dev-session key is lingering from a
@@ -65,7 +66,39 @@ const clearDevSession = () => {
   window.localStorage.removeItem(DEV_SESSION_KEY);
 };
 
+export const persistExternalAppUser = (user: AppUser) => {
+  try {
+    window.localStorage.setItem(EXTERNAL_SESSION_KEY, JSON.stringify(user));
+  } catch {
+    /* localStorage unavailable */
+  }
+};
+
+const getExternalAppUser = (): AppUser | null => {
+  if (typeof window === 'undefined') return null;
+  const raw = window.localStorage.getItem(EXTERNAL_SESSION_KEY);
+  if (!raw) return null;
+
+  try {
+    return JSON.parse(raw) as AppUser;
+  } catch {
+    window.localStorage.removeItem(EXTERNAL_SESSION_KEY);
+    return null;
+  }
+};
+
+export const clearExternalAppUser = () => {
+  if (typeof window !== 'undefined') {
+    window.localStorage.removeItem(EXTERNAL_SESSION_KEY);
+  }
+};
+
 export const getCurrentAppUser = async (): Promise<AppUser | null> => {
+  const externalUser = getExternalAppUser();
+  if (externalUser) {
+    return externalUser;
+  }
+
   // When Supabase is configured, real auth always takes priority over any dev session
   if (isSupabaseConfigured && supabase) {
     const { data, error } = await supabase.auth.getUser();
@@ -201,6 +234,7 @@ export const signInWithEmail = async (
 
 
 export const signOut = async () => {
+  clearExternalAppUser();
   clearDevSession();
   if (supabase) {
     await supabase.auth.signOut();

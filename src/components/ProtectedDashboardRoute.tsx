@@ -1,7 +1,9 @@
 import { useEffect, useState, type ReactNode } from 'react';
+import { useUser } from '@clerk/react';
 import { Navigate } from 'react-router-dom';
 import type { AppUser, DashboardRole } from '@/lib/apparent-types';
-import { ensureProfile, getCurrentAppUser } from '@/lib/auth-service';
+import { clearExternalAppUser, ensureProfile, getCurrentAppUser } from '@/lib/auth-service';
+import { buildClerkAppUser, isClerkConfigured, resolveClerkRole } from '@/lib/clerk-auth';
 
 interface ProtectedDashboardRouteProps {
   role: DashboardRole;
@@ -9,6 +11,38 @@ interface ProtectedDashboardRouteProps {
 }
 
 export const ProtectedDashboardRoute = ({ role, children }: ProtectedDashboardRouteProps) => {
+  if (isClerkConfigured) {
+    return <ClerkProtectedDashboardRoute role={role}>{children}</ClerkProtectedDashboardRoute>;
+  }
+
+  return <LegacyProtectedDashboardRoute role={role}>{children}</LegacyProtectedDashboardRoute>;
+};
+
+const ClerkProtectedDashboardRoute = ({ role, children }: ProtectedDashboardRouteProps) => {
+  const { isLoaded, isSignedIn, user: clerkUser } = useUser();
+
+  if (!isLoaded) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-[#fbf8f3] text-sm text-gray-500">
+        Loading Apparent workspace...
+      </div>
+    );
+  }
+
+  if (!isSignedIn || !clerkUser) {
+    clearExternalAppUser();
+    return <Navigate to={`/login?role=${role}`} replace />;
+  }
+
+  const userRole = resolveClerkRole(clerkUser.id, role);
+  if (userRole !== role) {
+    return <Navigate to={`/dashboard/${userRole}`} replace />;
+  }
+
+  return <>{children(buildClerkAppUser(clerkUser, userRole))}</>;
+};
+
+const LegacyProtectedDashboardRoute = ({ role, children }: ProtectedDashboardRouteProps) => {
   const [user, setUser] = useState<AppUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');

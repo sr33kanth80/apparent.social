@@ -41,7 +41,16 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Separator } from '@/components/ui/separator';
 import { deriveUsername, signOut } from '@/lib/auth-service';
+import { isClerkConfigured } from '@/lib/clerk-auth';
 import type { AppUser } from '@/lib/apparent-types';
+
+declare global {
+  interface Window {
+    Clerk?: {
+      signOut: (options?: { redirectUrl?: string }) => Promise<void>;
+    };
+  }
+}
 
 type DashboardRole = 'founder' | 'investor';
 
@@ -245,6 +254,10 @@ export function SessionNavBar({ role, user, activated = true }: SessionNavBarPro
 
   const handleSignOut = async () => {
     await signOut();
+    if (isClerkConfigured && window.Clerk) {
+      await window.Clerk.signOut({ redirectUrl: '/login' });
+      return;
+    }
     navigate('/login');
   };
 

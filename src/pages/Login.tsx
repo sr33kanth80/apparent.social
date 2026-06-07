@@ -1,11 +1,12 @@
 import { AnimatePresence, motion } from 'framer-motion';
+import { Show, SignInButton, SignUpButton, UserButton, useUser } from '@clerk/react';
 import { ArrowUpRight, Fingerprint, Telescope, type LucideIcon } from 'lucide-react';
-import { AuthForm } from '@/components/ui/sign-in';
 import { Switch } from '@/components/ui/switch';
-import { isRoleMismatchError, signInWithEmail } from '@/lib/auth-service';
+import { clearExternalAppUser } from '@/lib/auth-service';
 import type { DashboardRole } from '@/lib/apparent-types';
-import { useState } from 'react';
+import { useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import { isClerkConfigured, saveRequestedClerkRole } from '@/lib/clerk-auth';
 
 interface FeaturePillar {
   number: string;
@@ -67,45 +68,11 @@ const serifDisplay = {
 };
 
 export const Login = () => {
-  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const [authError, setAuthError] = useState('');
-  // When a role mismatch is detected we surface a one-click switcher to flip
-  // the toggle to the account's actual role instead of forcing the user to
-  // read the error and find the toggle themselves.
-  const [authErrorAction, setAuthErrorAction] = useState<{
-    label: string;
-    targetRole: DashboardRole;
-  } | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const role = searchParams.get('role');
   const activeRole: DashboardRole = role === 'investor' ? 'investor' : 'founder';
   const isInvestor = activeRole === 'investor';
   const isFounder = activeRole === 'founder';
-
-  const handleEmailSubmit = async (data: { email: string; password?: string }) => {
-    setAuthError('');
-    setAuthErrorAction(null);
-    setIsSubmitting(true);
-
-    try {
-      const result = await signInWithEmail(data.email, data.password ?? '', activeRole);
-      const path = isInvestor ? '/dashboard/investor' : '/dashboard/founder';
-      navigate(path, result.isNew ? { state: { onboarding: true } } : undefined);
-    } catch (error) {
-      if (isRoleMismatchError(error)) {
-        setAuthError(error.message);
-        setAuthErrorAction({
-          label: `Switch to ${error.actualRole === 'investor' ? 'Investor' : 'Founder'} sign-in`,
-          targetRole: error.actualRole,
-        });
-      } else {
-        setAuthError(error instanceof Error ? error.message : 'Unable to sign in.');
-      }
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
 
   const headline = isInvestor ? (
     <>
@@ -142,9 +109,11 @@ export const Login = () => {
     : isFounder
       ? 'founder@startup.com'
       : 'you@app.com';
-  const submitLabel = isInvestor ? 'Continue as Investor' : isFounder ? 'Continue as Founder' : 'Sign In';
 
   const handleRoleChange = (nextRole: string) => {
+    if (nextRole === 'founder' || nextRole === 'investor') {
+      saveRequestedClerkRole(nextRole);
+    }
     setSearchParams({ role: nextRole });
   };
 
@@ -317,39 +286,119 @@ export const Login = () => {
                 exit="exit"
                 transition={ROLE_SWAP_TRANSITION}
               >
-                <AuthForm
-                  title={authTitle}
-                  description={authDescription}
-                  contextLabel={contextLabel}
-                  contextItems={contextItems}
-                  emailPlaceholder={emailPlaceholder}
-                  submitLabel={isSubmitting ? 'Working...' : submitLabel}
-                  onEmailSubmit={handleEmailSubmit}
-                  className="border-0 bg-white/80 shadow-[0_18px_60px_rgba(0,0,0,0.06)]"
-                />
+                {isClerkConfigured ? (
+                  <ClerkAuthPanel
+                    role={activeRole}
+                    title={authTitle}
+                    description={authDescription}
+                    contextLabel={contextLabel}
+                    contextItems={contextItems}
+                    emailPlaceholder={emailPlaceholder}
+                  />
+                ) : (
+                  <div className="rounded-[8px] border border-red-100 bg-white/80 p-6 shadow-[0_18px_60px_rgba(0,0,0,0.06)]">
+                    <p className="text-sm font-semibold text-red-700">Clerk is not configured</p>
+                    <p className="mt-2 text-sm leading-6 text-black/60">
+                      Set VITE_CLERK_PUBLISHABLE_KEY in Vercel and redeploy to enable sign in.
+                    </p>
+                  </div>
+                )}
               </motion.div>
             </AnimatePresence>
-            {authError && (
-              <div className="mt-4 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700">
-                <p>{authError}</p>
-                {authErrorAction && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setAuthError('');
-                      setAuthErrorAction(null);
-                      handleRoleChange(authErrorAction.targetRole);
-                    }}
-                    className="mt-3 inline-flex items-center justify-center rounded-full bg-red-700 px-4 py-2 text-xs font-semibold text-white transition-opacity hover:opacity-90"
-                  >
-                    {authErrorAction.label}
-                  </button>
-                )}
-              </div>
-            )}
           </div>
         </div>
       </section>
     </main>
+  );
+};
+
+const ClerkAuthPanel = ({
+  role,
+  title,
+  description,
+  contextLabel,
+  contextItems,
+  emailPlaceholder,
+}: {
+  role: DashboardRole;
+  title: string;
+  description: string;
+  contextLabel: string;
+  contextItems: string[];
+  emailPlaceholder: string;
+}) => {
+  const navigate = useNavigate();
+  const { isLoaded, isSignedIn } = useUser();
+  const dashboardPath = `/dashboard/${role}`;
+
+  useEffect(() => {
+    saveRequestedClerkRole(role);
+    if (isLoaded && isSignedIn) {
+      navigate(dashboardPath, { replace: true });
+    } else if (isLoaded) {
+      clearExternalAppUser();
+    }
+  }, [dashboardPath, isLoaded, isSignedIn, navigate, role]);
+
+  const handleAuthClick = () => {
+    saveRequestedClerkRole(role);
+  };
+
+  return (
+    <div className="rounded-[8px] border border-black/5 bg-white/80 p-6 shadow-[0_18px_60px_rgba(0,0,0,0.06)]">
+      <div>
+        <p className="text-xl font-semibold tracking-[-0.01em] text-black">{title}</p>
+        <p className="mt-2 text-sm leading-6 text-black/60">{description}</p>
+      </div>
+
+      <div className="mt-6 rounded-[8px] border border-black/10 bg-[#fbfaf7] p-4">
+        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-black/45">{contextLabel}</p>
+        <div className="mt-3 grid gap-2">
+          {contextItems.map((item) => (
+            <div key={item} className="flex items-center gap-2 text-sm text-black/70">
+              <span className="h-1.5 w-1.5 rounded-full bg-[#42520d]" />
+              {item}
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <Show when="signed-out">
+        <div className="mt-6 grid gap-3">
+          <SignInButton>
+            <button
+              type="button"
+              onClick={handleAuthClick}
+              className="inline-flex h-11 w-full items-center justify-center rounded-[8px] bg-black px-4 text-sm font-semibold text-white transition hover:bg-black/85"
+            >
+              Sign in with Clerk
+            </button>
+          </SignInButton>
+          <SignUpButton>
+            <button
+              type="button"
+              onClick={handleAuthClick}
+              className="inline-flex h-11 w-full items-center justify-center rounded-[8px] border border-black/10 bg-white px-4 text-sm font-semibold text-black transition hover:bg-black/5"
+            >
+              Create account
+            </button>
+          </SignUpButton>
+          <p className="text-center text-xs text-black/45">Suggested email: {emailPlaceholder}</p>
+        </div>
+      </Show>
+
+      <Show when="signed-in">
+        <div className="mt-6 flex items-center justify-between rounded-[8px] border border-black/10 bg-white px-4 py-3">
+          <UserButton />
+          <button
+            type="button"
+            onClick={() => navigate(dashboardPath)}
+            className="inline-flex h-9 items-center justify-center rounded-[8px] bg-black px-4 text-sm font-semibold text-white transition hover:bg-black/85"
+          >
+            Open workspace
+          </button>
+        </div>
+      </Show>
+    </div>
   );
 };
