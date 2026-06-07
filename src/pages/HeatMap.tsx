@@ -1065,7 +1065,7 @@ export const HeatMap = ({
                 onOpenCompose={() => setComposeOpen(true)}
               />
               {hasVisibleNeighbor && (
-                <div className="absolute left-full top-0 ml-2 flex flex-col gap-2">
+                <div className="absolute left-full top-0 ml-2 flex items-center gap-2">
                   <button
                     type="button"
                     onClick={() => goToProximityPointAtOffset(-1)}
