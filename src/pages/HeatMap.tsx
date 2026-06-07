@@ -631,7 +631,7 @@ export const HeatMap = ({
   const [isLoadingContacts, setIsLoadingContacts] = useState(true);
   const [mode, setMode] = useState<HeatMapMode>('all');
   const [selectedPoint, setSelectedPoint] = useState<HeatMapPoint | null>(null);
-  const [previousDetailPointId, setPreviousDetailPointId] = useState<string | null>(null);
+  const [proximityAnchorPointId, setProximityAnchorPointId] = useState<string | null>(null);
   const [infoDismissed, setInfoDismissed] = useState(false);
   const [vcFilters, setVcFilters] = useState<VcFilters>(emptyVcFilters);
   const [filtersOpen, setFiltersOpen] = useState(false);
@@ -788,36 +788,40 @@ export const HeatMap = ({
     const nextIndex = (start + offset + composableVcQueue.length) % composableVcQueue.length;
     const next = composableVcQueue[nextIndex];
     if (next) {
-      setPreviousDetailPointId(null);
+      setProximityAnchorPointId(next.id);
       setSelectedPoint(next);
       setComposeOpen(true);
     }
   };
 
-  // Lets the founder walk through nearby visible pins without hunting for the
-  // next dot manually.
+  // Lets the founder walk through a proximity-ranked list anchored to the
+  // original clicked dot, instead of following array/alphabetical order.
   const handlePointSelect = (point: HeatMapPoint) => {
-    setPreviousDetailPointId(null);
+    setProximityAnchorPointId(point.id);
     setSelectedPoint(point);
   };
 
-  const goToNearestNeighborPoint = () => {
+  const goToNextProximityPoint = () => {
     if (!selectedPoint) return;
 
     const currentPoint = filteredPoints.find((point) => point.id === selectedPoint.id) ?? selectedPoint;
-    const sameKindCandidates = filteredPoints.filter(
-      (point) => point.id !== currentPoint.id && point.kind === currentPoint.kind,
-    );
-    const candidates =
-      sameKindCandidates.length > 1
-        ? sameKindCandidates.filter((point) => point.id !== previousDetailPointId)
-        : sameKindCandidates;
-    const next = candidates
+    const anchorPoint =
+      filteredPoints.find((point) => point.id === proximityAnchorPointId) ?? currentPoint;
+    const proximityList = filteredPoints
+      .filter((point) => point.kind === anchorPoint.kind)
       .slice()
-      .sort((first, second) => distanceBetweenPoints(currentPoint, first) - distanceBetweenPoints(currentPoint, second))[0];
+      .sort(
+        (first, second) =>
+          distanceBetweenPoints(anchorPoint, first) - distanceBetweenPoints(anchorPoint, second),
+      );
+    const currentIndex = proximityList.findIndex((point) => point.id === currentPoint.id);
+    const next = proximityList[
+      currentIndex >= 0
+        ? (currentIndex + 1) % proximityList.length
+        : 0
+    ];
 
     if (next) {
-      setPreviousDetailPointId(currentPoint.id);
       setSelectedPoint(next);
     }
   };
@@ -1051,7 +1055,7 @@ export const HeatMap = ({
               <HeatMapDetailPanel
                 point={selectedVisiblePoint}
                 onClose={() => {
-                  setPreviousDetailPointId(null);
+                  setProximityAnchorPointId(null);
                   setSelectedPoint(null);
                 }}
                 locked={lockContacts}
@@ -1066,11 +1070,11 @@ export const HeatMap = ({
               {hasVisibleNeighbor && (
                 <button
                   type="button"
-                  onClick={goToNearestNeighborPoint}
+                  onClick={goToNextProximityPoint}
                   className="absolute left-full top-0 ml-2 flex h-10 w-10 items-center justify-center rounded-full text-black shadow-[0_10px_28px_rgba(0,0,0,0.18)] transition-opacity hover:opacity-90"
                   style={{ backgroundColor: '#dcefc7' }}
-                  aria-label="Go to nearest neighboring pin"
-                  title="Jump to the nearest neighboring pin"
+                  aria-label="Go to next nearby pin"
+                  title="Jump to the next closest pin from the original selection"
                 >
                   <ChevronRight className="h-4 w-4" />
                 </button>
