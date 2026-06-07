@@ -1015,8 +1015,8 @@ export const HeatMap = ({
                 <button
                   type="button"
                   onClick={goToNextPoint}
-                  className="absolute left-full top-1/2 ml-2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full text-white shadow-[0_10px_28px_rgba(0,0,0,0.18)] transition-opacity hover:opacity-90"
-                  style={{ backgroundColor: '#42520d' }}
+                  className="absolute left-full top-0 ml-2 flex h-10 w-10 items-center justify-center rounded-full text-black shadow-[0_10px_28px_rgba(0,0,0,0.18)] transition-opacity hover:opacity-90"
+                  style={{ backgroundColor: '#dcefc7' }}
                   aria-label="Go to next pin"
                   title="Jump to the next pin on the map"
                 >
