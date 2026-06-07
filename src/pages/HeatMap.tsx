@@ -342,7 +342,7 @@ function ApparentHeatmapLayers({
   // Swap the active dot for a regular green location pin so the founder can
   // spot which VC they're previewing at a glance.
   return (
-    <MapMarker longitude={selectedPoint.longitude} latitude={selectedPoint.latitude} anchor="bottom">
+    <MapMarker key={selectedPoint.id} longitude={selectedPoint.longitude} latitude={selectedPoint.latitude} anchor="bottom">
       <MarkerContent className="pointer-events-none !cursor-default">
         <MapPin className="h-9 w-9 -translate-y-1 drop-shadow-[0_6px_10px_rgba(0,0,0,0.35)]" color="#15803d" fill="#22c55e" strokeWidth={1.5} />
       </MarkerContent>
@@ -760,7 +760,9 @@ export const HeatMap = ({
     () => heatPoints.filter((point) => mode === 'all' || point.kind === mode.slice(0, -1)),
     [heatPoints, mode],
   );
-  const selectedVisiblePoint = selectedPoint && filteredPoints.some((point) => point.id === selectedPoint.id) ? selectedPoint : null;
+  const selectedVisiblePoint = selectedPoint
+    ? filteredPoints.find((point) => point.id === selectedPoint.id) ?? null
+    : null;
   const hasVisibleNeighbor = selectedVisiblePoint
     ? filteredPoints.some((point) => point.id !== selectedVisiblePoint.id && point.kind === selectedVisiblePoint.kind)
     : false;
