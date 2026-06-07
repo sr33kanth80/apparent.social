@@ -1,8 +1,8 @@
 import { useEffect, useId, useMemo, useRef, useState } from 'react';
-import { ArrowUpRight, Building2, CheckCircle2, ChevronLeft, ChevronRight, Clock, Copy, Flame, Globe2, Layers3, LocateFixed, MailCheck, Send, SlidersHorizontal, Sparkles, Users, X } from 'lucide-react';
+import { ArrowUpRight, Building2, CheckCircle2, ChevronLeft, ChevronRight, Clock, Copy, Flame, Globe2, Layers3, LocateFixed, MailCheck, MapPin, Send, SlidersHorizontal, Sparkles, Users, X } from 'lucide-react';
 import type { GeoJSONSource, MapLayerMouseEvent } from 'maplibre-gl';
 import { Link } from 'react-router-dom';
-import { Map, useMap } from '@/components/ui/map';
+import { Map, useMap, MapMarker, MarkerContent } from '@/components/ui/map';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { cityGeoCoordinates } from '@/lib/app-defaults';
 import {
@@ -212,6 +212,7 @@ function ApparentHeatmapLayers({
   const pointLayerId = `apparent-heatmap-point-layer-${id}`;
   const geoJson = useMemo(() => buildFeatureCollection(points, selectedId), [points, selectedId]);
   const pointById = useMemo(() => new globalThis.Map(points.map((point) => [point.id, point])), [points]);
+  const selectedPoint = selectedId ? pointById.get(selectedId) : undefined;
   const latestRef = useRef({ pointById, onPointSelect });
   latestRef.current = { pointById, onPointSelect };
 
@@ -255,7 +256,12 @@ function ApparentHeatmapLayers({
         source: sourceId,
         minzoom: 4.5,
         paint: {
-          'circle-radius': ['interpolate', ['linear'], ['get', 'mag'], 1, 2, 6, 6],
+          'circle-radius': [
+            'case',
+            ['boolean', ['get', 'selected'], false],
+            0,
+            ['interpolate', ['linear'], ['get', 'mag'], 1, 2, 6, 6],
+          ],
           'circle-color': [
             'case',
             ['boolean', ['get', 'selected'], false],
@@ -322,7 +328,17 @@ function ApparentHeatmapLayers({
     source?.setData(geoJson);
   }, [map, isLoaded, sourceId, geoJson]);
 
-  return null;
+  if (!selectedPoint) return null;
+
+  // Swap the active dot for a regular green location pin so the founder can
+  // spot which VC they're previewing at a glance.
+  return (
+    <MapMarker longitude={selectedPoint.longitude} latitude={selectedPoint.latitude} anchor="bottom">
+      <MarkerContent className="pointer-events-none !cursor-default">
+        <MapPin className="h-9 w-9 -translate-y-1 drop-shadow-[0_6px_10px_rgba(0,0,0,0.35)]" color="#15803d" fill="#22c55e" strokeWidth={1.5} />
+      </MarkerContent>
+    </MapMarker>
+  );
 }
 
 // Anthropic / Claude-themed detail panel: warm cream ground, clay-coral accent,

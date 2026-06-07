@@ -118,6 +118,227 @@ body {
   font-family: 'Inter', sans-serif;
 }
 
+.solo-blog,
+.solo-blog *,
+.solo-blog *::before,
+.solo-blog *::after {
+  box-sizing: border-box;
+}
+
+.solo-hills,
+.solo-bottom-hills {
+  bottom: 0;
+  height: 42%;
+  left: 0;
+  position: absolute;
+  right: 0;
+}
+
+.solo-hills::before,
+.solo-bottom-hills::before {
+  background: #dcefc7;
+  border-top: 2px solid #173b2c;
+  border-radius: 52% 48% 0 0 / 34% 42% 0 0;
+  content: '';
+  inset: 18% -8% -18% -8%;
+  position: absolute;
+  transform: rotate(-4deg);
+}
+
+.solo-hills::after,
+.solo-bottom-hills::after {
+  background: #0d6b52;
+  border-top: 2px solid #173b2c;
+  border-radius: 58% 42% 0 0 / 38% 52% 0 0;
+  content: '';
+  inset: 45% -8% -34% 34%;
+  position: absolute;
+  transform: rotate(-8deg);
+}
+
+.solo-report {
+  aspect-ratio: 0.82;
+  background: #0d6b52;
+  border: 2px solid #173b2c;
+  border-radius: 6px;
+  box-shadow: 8px 8px 0 rgb(23 59 44 / 18%);
+  color: #f5eddb;
+  overflow: hidden;
+  padding: 2rem;
+  position: relative;
+}
+
+.solo-report__rings {
+  border: 1px solid rgb(245 237 219 / 22%);
+  border-radius: 999px;
+  height: 18rem;
+  position: absolute;
+  right: -8rem;
+  top: -6rem;
+  width: 18rem;
+}
+
+.solo-report p {
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: clamp(2rem, 4vw, 3.4rem);
+  font-style: italic;
+  line-height: 0.9;
+  position: relative;
+  z-index: 1;
+}
+
+.solo-report h2 {
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: clamp(2.8rem, 5vw, 4.8rem);
+  font-weight: 400;
+  letter-spacing: -0.05em;
+  line-height: 0.82;
+  margin-top: 0.25rem;
+  position: relative;
+  z-index: 1;
+}
+
+.solo-report__pages {
+  background: #dcefc7;
+  border: 2px solid #173b2c;
+  border-radius: 2px 22px 2px 2px;
+  bottom: -2.2rem;
+  color: #0d6b52;
+  display: grid;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 1.25rem;
+  font-style: italic;
+  inset-inline: 3rem;
+  min-height: 47%;
+  place-items: center;
+  position: absolute;
+  transform: rotate(2deg);
+}
+
+.solo-report__pages::before,
+.solo-report__pages::after,
+.solo-page::before,
+.solo-page::after {
+  border-left: 1px solid #9abf85;
+  content: '';
+  height: 100%;
+  position: absolute;
+  right: 1rem;
+  top: 0;
+}
+
+.solo-report__pages::after,
+.solo-page::after {
+  right: 1.55rem;
+}
+
+.solo-paper-stack {
+  align-items: center;
+  display: flex;
+  justify-content: center;
+  position: relative;
+}
+
+.solo-page {
+  aspect-ratio: 0.72;
+  background: #dcefc7;
+  border: 2px solid #173b2c;
+  border-radius: 4px 34px 4px 4px;
+  box-shadow: 5px 5px 0 rgb(23 59 44 / 14%);
+  display: grid;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 2rem;
+  font-style: italic;
+  font-weight: 700;
+  height: 19rem;
+  place-items: center;
+  position: absolute;
+}
+
+.solo-page--back {
+  transform: rotate(-7deg) translate(-1.4rem, 0.2rem);
+}
+
+.solo-page--mid {
+  background: #e7f4d6;
+  transform: rotate(2deg) translate(0.7rem, -0.15rem);
+}
+
+.solo-page--front {
+  color: #0d6b52;
+  transform: rotate(-1deg);
+}
+
+.solo-orbit {
+  border: 2px solid rgb(23 59 44 / 8%);
+  border-radius: 999px;
+  height: 58rem;
+  left: 50%;
+  position: absolute;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 58rem;
+}
+
+.solo-waveform {
+  background:
+    linear-gradient(90deg, transparent 0 4px, #dcefc7 4px 8px, transparent 8px 14px),
+    linear-gradient(#dcefc7, #dcefc7);
+  background-size: 14px 34px, 100% 2px;
+  background-position: center;
+  background-repeat: repeat-x, no-repeat;
+  height: 36px;
+  max-width: 17rem;
+  opacity: 0.86;
+}
+
+.solo-bottom-hills {
+  height: 55%;
+}
+
+.solo-building {
+  align-self: end;
+  border: 3px solid #173b2c;
+  border-bottom: 0;
+  display: grid;
+  gap: 0.7rem;
+  grid-template-columns: repeat(2, 1fr);
+  margin-left: auto;
+  max-width: 16rem;
+  padding: 1rem;
+  position: relative;
+  width: 70%;
+}
+
+.solo-building::before {
+  border: 3px solid #173b2c;
+  border-bottom: 0;
+  content: '';
+  inset: -2.2rem 16% auto;
+  height: 2.2rem;
+  position: absolute;
+}
+
+.solo-building span {
+  aspect-ratio: 0.82;
+  background: #dcefc7;
+  border: 2px solid #173b2c;
+}
+
+@media (max-width: 640px) {
+  .solo-report {
+    padding: 1.4rem;
+  }
+
+  .solo-page {
+    height: 15rem;
+  }
+
+  .solo-building {
+    width: 11rem;
+  }
+}
+
 .nav-active-link {
   border: 1px solid transparent;
   border-radius: 999px;
@@ -600,7 +821,9 @@ a.rounded-full:hover {
 .pz-card-nub-b {
   bottom: -11px;
 }
-   useReveal). No transform, so it can never affect layout or scroll size. */
+
+/* Reveal utility for the useReveal hook. No transform, so it cannot affect
+   layout or scroll size. */
 .reveal {
   opacity: 0;
   transition: opacity 0.6s ease;
