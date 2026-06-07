@@ -1,6 +1,7 @@
 "use client";
 
 import MapLibreGL, { type PopupOptions, type MarkerOptions } from "maplibre-gl";
+import maplibreWorkerUrl from "maplibre-gl/dist/maplibre-gl-csp-worker?url";
 import "maplibre-gl/dist/maplibre-gl.css";
 import {
   createContext,
@@ -19,6 +20,13 @@ import { createPortal } from "react-dom";
 import { X, Minus, Plus, Locate, Maximize, Loader2 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
+
+// Production builds minify maplibre-gl's bundled source, which corrupts the
+// `Function.prototype.toString()`-based blob it normally uses to spin up its
+// worker (manifests as a silent "<var> is not defined" inside the worker and
+// every GeoJSON source rendering zero features). Pointing at the prebuilt CSP
+// worker file sidesteps that blob entirely.
+MapLibreGL.setWorkerUrl(maplibreWorkerUrl);
 
 const defaultStyles = {
   dark: "https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json",
