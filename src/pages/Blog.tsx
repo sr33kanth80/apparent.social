@@ -1,6 +1,7 @@
 import { ArrowLeft, ArrowRight, ExternalLink } from 'lucide-react';
 import { useMemo } from 'react';
 import { Link, Navigate, useNavigate, useParams } from 'react-router-dom';
+import PixelSnow from '@/components/PixelSnow';
 
 type BlogSection = {
   heading: string;
@@ -886,8 +887,24 @@ const postMeta = (article: BlogArticle) => `${article.author} / ${article.date} 
 
 export const Blog = () => {
   return (
-    <main className="overflow-x-hidden bg-[#fbfaf7] text-black">
-      <section className="mx-auto max-w-[92rem] px-5 pb-14 pt-14 text-center sm:px-8 md:pt-20">
+    <main className="relative isolate overflow-x-hidden bg-[#f7f1e7] text-black">
+      <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden bg-[linear-gradient(180deg,#f7f1e7_0%,#fbfaf7_48%,#edf5e8_100%)]">
+        <PixelSnow
+          color="#34412b"
+          flakeSize={0.012}
+          minFlakeSize={1.15}
+          pixelResolution={190}
+          speed={0.55}
+          density={0.24}
+          direction={125}
+          brightness={0.78}
+          depthFade={9}
+          farPlane={22}
+          className="opacity-[0.16]"
+        />
+      </div>
+
+      <section className="relative mx-auto max-w-[92rem] px-5 pb-14 pt-14 text-center sm:px-8 md:pt-20">
         <div className="mx-auto max-w-[54rem]">
           <h1
             className="text-[3.2rem] font-normal leading-[0.9] tracking-[-0.055em] sm:text-[5.5rem] md:text-[6.6rem]"
@@ -898,14 +915,14 @@ export const Blog = () => {
         </div>
       </section>
 
-      <section className="mx-auto max-w-[92rem] border-t border-black/10 px-5 py-16 sm:px-8">
+      <section className="relative mx-auto max-w-[92rem] border-t border-black/10 px-5 py-16 sm:px-8">
         <div className="mx-auto max-w-[54rem]">
           <div className="grid gap-5">
             {articles.map((article) => (
               <Link
                 key={article.slug}
                 to={`/blog/${article.slug}`}
-                className="rounded-[32px] bg-white/72 p-6 text-center shadow-[0_18px_60px_rgba(0,0,0,0.045)] transition-colors hover:bg-white sm:p-8"
+                className="rounded-[32px] border border-white/70 bg-white/92 p-6 text-center shadow-[0_18px_60px_rgba(58,72,34,0.08)] backdrop-blur-sm transition-colors hover:bg-white sm:p-8"
               >
                 <p className="text-xs font-semibold text-black/45">{postMeta(article)}</p>
                 <h2 className="mx-auto mt-3 max-w-4xl text-4xl font-normal leading-[0.96] tracking-[-0.04em] md:text-5xl" style={serifDisplay}>
