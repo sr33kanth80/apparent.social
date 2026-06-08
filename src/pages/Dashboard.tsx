@@ -5986,7 +5986,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
       >
         {renderOnboardingChecklist()}
         <div id="overview" className="mx-auto max-w-[1292px] scroll-mt-24 space-y-6">
-          <div className="max-w-3xl">
+          <div className="max-w-4xl">
             <InvestorAIPrompt className="py-0" />
           </div>
 

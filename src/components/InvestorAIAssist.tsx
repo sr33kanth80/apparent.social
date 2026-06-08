@@ -1,5 +1,6 @@
 import { ArrowRight, Paperclip } from 'lucide-react';
-import { useState, type KeyboardEvent } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
+import { useEffect, useState, type KeyboardEvent } from 'react';
 
 import { LogoIcon } from '@/components/LogoIcon';
 import { Textarea } from '@/components/ui/textarea';
@@ -12,8 +13,55 @@ type AIPromptProps = {
   className?: string;
 };
 
+const promptPlaceholders = [
+  { text: 'What can I do you for?', language: 'English' },
+  { text: 'What can I handle for you?', language: 'English variation' },
+  { text: '¿Qué puedo hacer por ti?', language: 'Spanish' },
+  { text: 'Que puis-je faire pour vous ?', language: 'French' },
+  { text: 'あなたのために何ができますか？', language: 'Japanese' },
+  { text: '무엇을 도와드릴까요?', language: 'Korean' },
+  { text: 'Cosa posso fare per te?', language: 'Italian' },
+  { text: 'Was kann ich für dich tun?', language: 'German' },
+];
+
+const DynamicPromptPlaceholder = ({ active, fallbackText }: { active: boolean; fallbackText: string }) => {
+  const [currentIndex, setCurrentIndex] = useState(0);
+
+  useEffect(() => {
+    if (!active) return;
+
+    const interval = window.setInterval(() => {
+      setCurrentIndex((previousIndex) => (previousIndex + 1) % promptPlaceholders.length);
+    }, 900);
+
+    return () => window.clearInterval(interval);
+  }, [active]);
+
+  if (!active) return null;
+
+  const currentPlaceholder = promptPlaceholders[currentIndex]?.text ?? fallbackText;
+
+  return (
+    <div aria-hidden="true" className="pointer-events-none absolute left-4 right-4 top-3 z-10 h-6 overflow-hidden">
+      <AnimatePresence mode="popLayout">
+        <motion.div
+          animate={{ y: 0, opacity: 1 }}
+          className="absolute inset-x-0 flex min-w-0 items-center gap-2 text-sm text-white/70"
+          exit={{ y: -20, opacity: 0 }}
+          initial={{ y: 20, opacity: 0 }}
+          key={`${currentIndex}-${currentPlaceholder}`}
+          transition={{ duration: 0.2, ease: 'easeOut' }}
+        >
+          <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-white/60" />
+          <span className="truncate">{currentPlaceholder}</span>
+        </motion.div>
+      </AnimatePresence>
+    </div>
+  );
+};
+
 export const InvestorAIPrompt = ({
-  placeholder = 'What can I do for you?',
+  placeholder = 'What can I do you for?',
   onSubmit,
   className,
 }: AIPromptProps) => {
@@ -45,8 +93,10 @@ export const InvestorAIPrompt = ({
         </div>
         <div className="relative">
           <div className="relative flex flex-col">
-            <div className="overflow-y-auto" style={{ maxHeight: '400px' }}>
+            <div className="relative overflow-y-auto" style={{ maxHeight: '400px' }}>
+              <DynamicPromptPlaceholder active={!value} fallbackText={placeholder} />
               <Textarea
+                aria-label={placeholder}
                 className={cn(
                   'min-h-[72px] w-full resize-none rounded-xl rounded-b-none border-none bg-white/5 px-4 py-3 text-white placeholder:text-white/70 focus-visible:ring-0 focus-visible:ring-offset-0',
                 )}
@@ -56,7 +106,6 @@ export const InvestorAIPrompt = ({
                   adjustHeight();
                 }}
                 onKeyDown={handleKeyDown}
-                placeholder={placeholder}
                 ref={textareaRef}
                 value={value}
               />
