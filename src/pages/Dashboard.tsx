@@ -6532,54 +6532,86 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
                 </button>
               </div>
             ) : (
-              <div className="overflow-hidden rounded-[20px] border border-black/10 bg-white shadow-[0_10px_34px_rgba(0,0,0,0.04)]">
-                <div className="divide-y divide-black/10">
-                  {filtered.map((launch, index) => {
-                    const domain = dashboardLaunchDomain(launch.launchUrl || launch.sourceUrl || '');
-                    const href = launch.sourceUrl || launch.launchUrl || '';
-                    return (
-                      <a
-                        key={launch.id}
-                        href={href || undefined}
-                        target={href ? '_blank' : undefined}
-                        rel="noreferrer"
-                        className="group grid items-center gap-4 px-5 py-4 transition-colors hover:bg-[#fbf8f3] md:grid-cols-[3.25rem_1fr_auto]"
-                      >
-                        <div className="flex items-center gap-3 md:block">
-                          <div className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-[16px] bg-[#fbfaf7]">
-                            <img
-                              src={launch.logoUrl || `https://www.google.com/s2/favicons?domain=${domain}&sz=128`}
-                              alt=""
-                              className="h-7 w-7 object-contain"
-                              onError={(e) => { e.currentTarget.style.visibility = 'hidden'; }}
-                            />
-                          </div>
-                          <span className="text-xs font-semibold text-black/30 md:mt-2 md:block">0{index + 1}</span>
+              // Card grid — investors scan at-a-glance instead of reading a
+              // dense list. Responsive: 1 col mobile, 2 col md, 3 col xl.
+              <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+                {filtered.map((launch, index) => {
+                  const domain = dashboardLaunchDomain(launch.launchUrl || launch.sourceUrl || '');
+                  const href = launch.sourceUrl || launch.launchUrl || '';
+                  return (
+                    <a
+                      key={launch.id}
+                      href={href || undefined}
+                      target={href ? '_blank' : undefined}
+                      rel="noreferrer"
+                      className="group relative flex h-full flex-col rounded-[18px] border border-black/10 bg-white p-5 shadow-[0_8px_24px_rgba(0,0,0,0.04)] transition-all hover:-translate-y-0.5 hover:border-black/15 hover:shadow-[0_14px_38px_rgba(0,0,0,0.08)]"
+                    >
+                      {/* Top: logo + source pill (right) + index (left of logo on hover) */}
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-[14px] bg-[#fbfaf7]">
+                          <img
+                            src={launch.logoUrl || `https://www.google.com/s2/favicons?domain=${domain}&sz=128`}
+                            alt=""
+                            className="h-7 w-7 object-contain"
+                            onError={(e) => { e.currentTarget.style.visibility = 'hidden'; }}
+                          />
                         </div>
-                        <div className="min-w-0">
-                          <div className="flex flex-wrap items-center gap-2">
-                            <h3 className="text-base font-semibold tracking-[-0.01em]">{launch.name}</h3>
-                            {launch.source && (
-                              <span className="inline-flex items-center gap-1 rounded-full border border-black/10 bg-[#fbf8f3] px-2 py-0.5 text-[11px] font-semibold text-black/55">
-                                <Globe className="h-3 w-3" /> via {launch.source}
-                              </span>
-                            )}
-                          </div>
-                          {launch.tagline && <p className="mt-1 line-clamp-1 text-sm text-black/60">{launch.tagline}</p>}
-                          <div className="mt-2 flex flex-wrap gap-x-2 gap-y-1 text-xs font-semibold text-black/45">
-                            {launch.category && <span>{launch.category}</span>}
-                            {launch.location && <><span>·</span><span className="inline-flex items-center gap-1"><MapPin className="h-3 w-3" />{launch.location}</span></>}
-                            {launch.stage && <><span>·</span><span>{launch.stage}</span></>}
-                            {launch.metrics && <><span>·</span><span className="text-[#42520d]">{launch.metrics}</span></>}
-                          </div>
+                        <div className="flex items-center gap-2">
+                          {launch.source && (
+                            <span className="inline-flex items-center gap-1 rounded-full border border-black/10 bg-[#fbf8f3] px-2 py-0.5 text-[10px] font-semibold text-black/55">
+                              <Globe className="h-3 w-3" /> {launch.source}
+                            </span>
+                          )}
+                          <span className="text-[10px] font-semibold tracking-[0.18em] text-black/30">0{index + 1}</span>
                         </div>
-                        <span className="hidden shrink-0 items-center gap-1 rounded-full bg-[#f4f1eb] px-3.5 py-2 text-xs font-semibold text-black/70 transition-colors group-hover:bg-[#42520d] group-hover:text-white md:inline-flex">
-                          View <ArrowUpRight className="h-3.5 w-3.5" />
+                      </div>
+
+                      {/* Title + tagline — fills the middle of the card */}
+                      <h3 className="mt-4 text-base font-semibold tracking-[-0.01em] line-clamp-1">{launch.name}</h3>
+                      {launch.tagline && (
+                        <p className="mt-1.5 line-clamp-2 text-sm leading-5 text-black/60">{launch.tagline}</p>
+                      )}
+
+                      {/* Spacer to push meta + CTA to the bottom for even card heights */}
+                      <div className="flex-1" />
+
+                      {/* Compact meta chips: category / stage / location / metric */}
+                      <div className="mt-4 flex flex-wrap gap-1.5">
+                        {launch.category && (
+                          <span className="rounded-full bg-[#fbf8f3] px-2 py-0.5 text-[10px] font-semibold text-black/60">
+                            {launch.category}
+                          </span>
+                        )}
+                        {launch.stage && (
+                          <span className="rounded-full bg-[#fbf8f3] px-2 py-0.5 text-[10px] font-semibold text-black/60">
+                            {launch.stage}
+                          </span>
+                        )}
+                        {launch.location && (
+                          <span className="inline-flex items-center gap-0.5 rounded-full bg-[#fbf8f3] px-2 py-0.5 text-[10px] font-semibold text-black/60">
+                            <MapPin className="h-2.5 w-2.5" />
+                            {launch.location}
+                          </span>
+                        )}
+                        {launch.metrics && (
+                          <span className="rounded-full bg-[#dcefc7] px-2 py-0.5 text-[10px] font-semibold text-[#42520d]">
+                            {launch.metrics}
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Footer CTA — fills olive on hover to mirror the rest of the app */}
+                      <div className="mt-4 flex items-center justify-between border-t border-black/[0.06] pt-3">
+                        <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-black/35">
+                          View launch
                         </span>
-                      </a>
-                    );
-                  })}
-                </div>
+                        <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-[#f4f1eb] text-black/60 transition-colors group-hover:bg-[#42520d] group-hover:text-white">
+                          <ArrowUpRight className="h-3.5 w-3.5" />
+                        </span>
+                      </div>
+                    </a>
+                  );
+                })}
               </div>
             )}
           </div>
