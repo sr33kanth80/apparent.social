@@ -975,6 +975,15 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
     setActiveView(viewFromLocation(location.pathname, location.hash));
   }, [location.hash, location.pathname]);
 
+  // For You is a founder-only feed. Investors landing on
+  // /dashboard/investor/for-you (stale bookmark, old email link) get redirected
+  // to overview so they don't see a feed that duplicates `daily`.
+  useEffect(() => {
+    if (!isInvestor) return;
+    if (activeView !== 'for-you') return;
+    navigate(`${dashboardBasePath}/overview`, { replace: true });
+  }, [activeView, dashboardBasePath, isInvestor, navigate]);
+
   // Backward-compat: redirect legacy `#section` URLs to the canonical
   // `/section` path so old bookmarks, emails, and shared screenshots keep
   // working. Runs once per location change; the redirect uses `replace` so
@@ -1914,15 +1923,11 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
   }, [networkFilters.city, radarClusters, selectedClusterCity, selectedNetworkCluster]);
 
   const dashboardSearchActions = useMemo<Action[]>(() => {
+    // For You is the founder-side social feed of "what's launching today on
+    // Apparent." For investors it duplicated `daily` (Today's deal flow), so
+    // it's removed from their action list and the founder-only entry is added
+    // back in their branch below.
     const sharedActions: Action[] = [
-      {
-        id: 'view-for-you',
-        label: 'Open For You feed',
-        icon: <Users className="h-4 w-4 text-gray-700" />,
-        description: 'Front page and personalized updates',
-        short: 'Feed',
-        end: 'View',
-      },
       {
         id: 'query-ai',
         label: 'Search AI infra',
@@ -2012,6 +2017,14 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
     }
 
     return [
+      {
+        id: 'view-for-you',
+        label: 'Open For You feed',
+        icon: <Users className="h-4 w-4 text-gray-700" />,
+        description: 'Front page and personalized updates',
+        short: 'Feed',
+        end: 'View',
+      },
       {
         id: 'open-profile',
         label: 'Open your profile',
@@ -7853,24 +7866,32 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
               whitespace). */}
           {!isVCHeatMapView && showWorkspaceHeader && (
             <header className="mb-6 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-              <Switch
-                name="dashboard-view"
-                value={activeView}
-                onValueChange={handleDashboardViewChange}
-                size="medium"
-                style={{ width: 'min(100%, 360px)' }}
-              >
-                <Switch.Control
-                  label={isInvestor ? 'Investor workspace' : 'Founder workspace'}
-                  value="overview"
-                  activeClassName={`${accentSurface} ${accentSwitchForeground}`}
-                />
-                <Switch.Control
-                  label="For You"
-                  value="for-you"
-                  activeClassName={`${accentSurface} ${accentSwitchForeground}`}
-                />
-              </Switch>
+              {isInvestor ? (
+                // Investor side: no For You toggle (the feed duplicated `daily`),
+                // so the workspace label is shown statically.
+                <div className={`inline-flex items-center rounded-full px-4 py-2 text-sm font-semibold ${accentSurface} ${accentSwitchForeground}`}>
+                  Investor workspace
+                </div>
+              ) : (
+                <Switch
+                  name="dashboard-view"
+                  value={activeView}
+                  onValueChange={handleDashboardViewChange}
+                  size="medium"
+                  style={{ width: 'min(100%, 360px)' }}
+                >
+                  <Switch.Control
+                    label="Founder workspace"
+                    value="overview"
+                    activeClassName={`${accentSurface} ${accentSwitchForeground}`}
+                  />
+                  <Switch.Control
+                    label="For You"
+                    value="for-you"
+                    activeClassName={`${accentSurface} ${accentSwitchForeground}`}
+                  />
+                </Switch>
+              )}
 
               <div className="flex w-full max-w-4xl items-center gap-3 md:justify-end">
                 <ActionSearchBar
