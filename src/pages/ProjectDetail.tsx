@@ -1,12 +1,12 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { ArrowUpRight, FileText, Globe2, Link as LinkIcon, MapPin, MessageCircle, Star, Users } from 'lucide-react';
-import { LogoIcon } from '@/components/LogoIcon';
 import { GitHubIcon } from '@/components/GitHubIcon';
 import type { AppUser, PublicProjectDetail } from '@/lib/apparent-types';
 import { loadPublicProjectDetail, saveMessage } from '@/lib/dashboard-service';
 import { getCurrentAppUser } from '@/lib/auth-service';
 import { VerifiedAvatar } from '@/components/VerifiedAvatar';
+import NotFound4042 from '@/components/4042';
 
 const serifDisplay = {
   fontFamily: 'Georgia, "Times New Roman", serif',
@@ -110,16 +110,12 @@ export const ProjectDetail = () => {
 
   if (!detail) {
     return (
-      <main className="min-h-screen bg-[#fbfaf7] px-5 py-20 text-black sm:px-8">
-        <section className="mx-auto max-w-[92rem]">
-          <LogoIcon className="mb-10 h-8 w-8 text-black" />
-          <h1 className="max-w-3xl text-5xl font-normal leading-none tracking-[-0.045em] md:text-7xl" style={serifDisplay}>
-            Project not found.
-          </h1>
-          <Link to="/" className="mt-10 inline-flex rounded-full bg-[#dcefc7] px-6 py-3 text-sm font-semibold text-black">
-            Back to launches
-          </Link>
-        </section>
+      <main className="min-h-screen bg-[#fbfaf7]">
+        <NotFound4042
+          title="Project not found"
+          message="That launch is unavailable or does not exist on Apparent yet."
+          primaryLabel="Back to launches"
+        />
       </main>
     );
   }

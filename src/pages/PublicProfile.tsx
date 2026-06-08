@@ -17,6 +17,7 @@ import {
   X,
 } from 'lucide-react';
 import { LogoIcon } from '@/components/LogoIcon';
+import NotFound4042 from '@/components/4042';
 import { GitHubIcon } from '@/components/GitHubIcon';
 import { loadPublicProfile, saveMessage } from '@/lib/dashboard-service';
 import { getCurrentAppUser } from '@/lib/auth-service';
@@ -1106,20 +1107,12 @@ export const PublicProfile = () => {
 
   if (!result || result.kind === 'not_found') {
     return (
-      <main className="min-h-screen overflow-x-hidden bg-[#fbfaf7] text-black">
-        <section className="mx-auto flex min-h-[70vh] max-w-[92rem] flex-col items-start justify-center px-5 sm:px-8">
-          <LogoIcon className="mb-10 h-8 w-8 text-black" />
-          <h1 className="max-w-3xl text-5xl font-normal leading-none tracking-[-0.045em] md:text-7xl" style={serif}>
-            Profile not found.
-          </h1>
-          <p className="mt-6 text-lg text-black/50">@{handle} doesn&apos;t exist on Apparent yet.</p>
-          <Link
-            to="/"
-            className="mt-10 inline-flex rounded-full bg-[#dcefc7] px-6 py-3 text-sm font-semibold text-black transition hover:bg-[#c9e6ac]"
-          >
-            Back to Apparent
-          </Link>
-        </section>
+      <main className="min-h-screen overflow-x-hidden bg-[#fbfaf7]">
+        <NotFound4042
+          title="Profile not found"
+          message={`@${handle || 'that profile'} does not exist on Apparent yet.`}
+          primaryLabel="Back to Apparent"
+        />
       </main>
     );
   }

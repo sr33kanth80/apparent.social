@@ -19,6 +19,7 @@ import { Login } from './pages/Login';
 import { Dashboard } from './pages/Dashboard';
 import { CookiePolicy, PrivacyPolicy, TermsOfService } from './pages/Legal';
 import { ProtectedDashboardRoute } from './components/ProtectedDashboardRoute';
+import NotFound4042 from './components/4042';
 
 const ScrollToHash = () => {
   const location = useLocation();
@@ -247,6 +248,16 @@ function App() {
               <>
                 <EditorialNavbar />
                 <CookiePolicy />
+                <Footer />
+              </>
+            }
+          />
+          <Route
+            path="*"
+            element={
+              <>
+                <EditorialNavbar />
+                <NotFound4042 />
                 <Footer />
               </>
             }
