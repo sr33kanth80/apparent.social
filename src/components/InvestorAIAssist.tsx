@@ -1,0 +1,344 @@
+import { ArrowRight, Bot, Check, ChevronDown, FileSearch, MessageSquareText, Paperclip, PenLine, Search, Sparkles, X } from 'lucide-react';
+import { AnimatePresence, motion } from 'framer-motion';
+import { useState, type ReactNode } from 'react';
+
+import { Button } from '@/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { Textarea } from '@/components/ui/textarea';
+import { useAutoResizeTextarea } from '@/hooks/use-auto-resize-textarea';
+import { cn } from '@/lib/utils';
+
+const OPENAI_SVG = (
+  <div>
+    <svg
+      aria-label="OpenAI icon"
+      className="block dark:hidden"
+      height="260"
+      preserveAspectRatio="xMidYMid"
+      viewBox="0 0 256 260"
+      width="256"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <title>OpenAI Icon Light</title>
+      <path d="M239.184 106.203a64.716 64.716 0 0 0-5.576-53.103C219.452 28.459 191 15.784 163.213 21.74A65.586 65.586 0 0 0 52.096 45.22a64.716 64.716 0 0 0-43.23 31.36c-14.31 24.602-11.061 55.634 8.033 76.74a64.665 64.665 0 0 0 5.525 53.102c14.174 24.65 42.644 37.324 70.446 31.36a64.72 64.72 0 0 0 48.754 21.744c28.481.025 53.714-18.361 62.414-45.481a64.767 64.767 0 0 0 43.229-31.36c14.137-24.558 10.875-55.423-8.083-76.483Zm-97.56 136.338a48.397 48.397 0 0 1-31.105-11.255l1.535-.87 51.67-29.825a8.595 8.595 0 0 0 4.247-7.367v-72.85l21.845 12.636c.218.111.37.32.409.563v60.367c-.056 26.818-21.783 48.545-48.601 48.601Zm-104.466-44.61a48.345 48.345 0 0 1-5.781-32.589l1.534.921 51.722 29.826a8.339 8.339 0 0 0 8.441 0l63.181-36.425v25.221a.87.87 0 0 1-.358.665l-52.335 30.184c-23.257 13.398-52.97 5.431-66.404-17.803ZM23.549 85.38a48.499 48.499 0 0 1 25.58-21.333v61.39a8.288 8.288 0 0 0 4.195 7.316l62.874 36.272-21.845 12.636a.819.819 0 0 1-.767 0L41.353 151.53c-23.211-13.454-31.171-43.144-17.804-66.405v.256Zm179.466 41.695-63.08-36.63L161.73 77.86a.819.819 0 0 1 .768 0l52.233 30.184a48.6 48.6 0 0 1-7.316 87.635v-61.391a8.544 8.544 0 0 0-4.4-7.213Zm21.742-32.69-1.535-.922-51.619-30.081a8.39 8.39 0 0 0-8.492 0L99.98 99.808V74.587a.716.716 0 0 1 .307-.665l52.233-30.133a48.652 48.652 0 0 1 72.236 50.391v.205ZM88.061 139.097l-21.845-12.585a.87.87 0 0 1-.41-.614V65.685a48.652 48.652 0 0 1 79.757-37.346l-1.535.87-51.67 29.825a8.595 8.595 0 0 0-4.246 7.367l-.051 72.697Zm11.868-25.58 28.138-16.217 28.188 16.218v32.434l-28.086 16.218-28.188-16.218-.052-32.434Z" />
+    </svg>
+    <svg
+      aria-label="OpenAI icon"
+      className="hidden dark:block"
+      height="260"
+      preserveAspectRatio="xMidYMid"
+      viewBox="0 0 256 260"
+      width="256"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <title>OpenAI Icon Dark</title>
+      <path
+        d="M239.184 106.203a64.716 64.716 0 0 0-5.576-53.103C219.452 28.459 191 15.784 163.213 21.74A65.586 65.586 0 0 0 52.096 45.22a64.716 64.716 0 0 0-43.23 31.36c-14.31 24.602-11.061 55.634 8.033 76.74a64.665 64.665 0 0 0 5.525 53.102c14.174 24.65 42.644 37.324 70.446 31.36a64.72 64.72 0 0 0 48.754 21.744c28.481.025 53.714-18.361 62.414-45.481a64.767 64.767 0 0 0 43.229-31.36c14.137-24.558 10.875-55.423-8.083-76.483Zm-97.56 136.338a48.397 48.397 0 0 1-31.105-11.255l1.535-.87 51.67-29.825a8.595 8.595 0 0 0 4.247-7.367v-72.85l21.845 12.636c.218.111.37.32.409.563v60.367c-.056 26.818-21.783 48.545-48.601 48.601Zm-104.466-44.61a48.345 48.345 0 0 1-5.781-32.589l1.534.921 51.722 29.826a8.339 8.339 0 0 0 8.441 0l63.181-36.425v25.221a.87.87 0 0 1-.358.665l-52.335 30.184c-23.257 13.398-52.97 5.431-66.404-17.803ZM23.549 85.38a48.499 48.499 0 0 1 25.58-21.333v61.39a8.288 8.288 0 0 0 4.195 7.316l62.874 36.272-21.845 12.636a.819.819 0 0 1-.767 0L41.353 151.53c-23.211-13.454-31.171-43.144-17.804-66.405v.256Zm179.466 41.695-63.08-36.63L161.73 77.86a.819.819 0 0 1 .768 0l52.233 30.184a48.6 48.6 0 0 1-7.316 87.635v-61.391a8.544 8.544 0 0 0-4.4-7.213Zm21.742-32.69-1.535-.922-51.619-30.081a8.39 8.39 0 0 0-8.492 0L99.98 99.808V74.587a.716.716 0 0 1 .307-.665l52.233-30.133a48.652 48.652 0 0 1 72.236 50.391v.205ZM88.061 139.097l-21.845-12.585a.87.87 0 0 1-.41-.614V65.685a48.652 48.652 0 0 1 79.757-37.346l-1.535.87-51.67 29.825a8.595 8.595 0 0 0-4.246 7.367l-.051 72.697Zm11.868-25.58 28.138-16.217 28.188 16.218v32.434l-28.086 16.218-28.188-16.218-.052-32.434Z"
+        fill="#fff"
+      />
+    </svg>
+  </div>
+);
+
+const ANTHROPIC_ICON = (
+  <svg
+    fill="currentColor"
+    fillRule="evenodd"
+    style={{ flex: 'none', lineHeight: '1' }}
+    viewBox="0 0 24 24"
+    width="1em"
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <title>Anthropic Icon</title>
+    <path d="M13.827 3.52h3.603L24 20h-3.603l-6.57-16.48zm-7.258 0h3.767L16.906 20h-3.674l-1.343-3.461H5.017l-1.344 3.46H0L6.57 3.522zm4.132 9.959L8.453 7.687 6.205 13.48H10.7z" />
+  </svg>
+);
+
+const MODEL_ICONS: Record<string, ReactNode> = {
+  'GPT-5-mini': OPENAI_SVG,
+  'Gemini 3': (
+    <svg
+      height="1em"
+      style={{ flex: 'none', lineHeight: '1' }}
+      viewBox="0 0 24 24"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <title>Gemini</title>
+      <defs>
+        <linearGradient id="lobe-icons-gemini-fill" x1="0%" x2="68.73%" y1="100%" y2="30.395%">
+          <stop offset="0%" stopColor="#1C7DFF" />
+          <stop offset="52.021%" stopColor="#1C69FF" />
+          <stop offset="100%" stopColor="#F0DCD6" />
+        </linearGradient>
+      </defs>
+      <path
+        d="M12 24A14.304 14.304 0 000 12 14.304 14.304 0 0012 0a14.305 14.305 0 0012 12 14.305 14.305 0 00-12 12"
+        fill="url(#lobe-icons-gemini-fill)"
+        fillRule="nonzero"
+      />
+    </svg>
+  ),
+  'Claude 4.5 Sonnet': ANTHROPIC_ICON,
+  'GPT-5-1 Mini': OPENAI_SVG,
+  'GPT-5-1': OPENAI_SVG,
+};
+
+const DEFAULT_MODELS = ['Gemini 3', 'GPT-5-mini', 'Claude 4.5 Sonnet', 'GPT-5-1 Mini', 'GPT-5-1'];
+
+type AIPromptProps = {
+  models?: string[];
+  defaultModel?: string;
+  placeholder?: string;
+  headerText?: string;
+  headerAction?: string;
+  onSubmit?: (value: string, model: string) => void;
+  className?: string;
+};
+
+const AI_Prompt = ({
+  models = DEFAULT_MODELS,
+  defaultModel = 'Claude 4.5 Sonnet',
+  placeholder = 'What can I do for you?',
+  headerText = 'Apparent Copilot',
+  headerAction = 'Investor agent',
+  onSubmit,
+  className,
+}: AIPromptProps) => {
+  const [value, setValue] = useState('');
+  const { textareaRef, adjustHeight } = useAutoResizeTextarea({
+    minHeight: 72,
+    maxHeight: 300,
+  });
+  const [selectedModel, setSelectedModel] = useState(defaultModel);
+
+  const submitPrompt = () => {
+    if (!value.trim()) return;
+    onSubmit?.(value, selectedModel);
+    setValue('');
+    adjustHeight(true);
+  };
+
+  const handleKeyDown = (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (event.key === 'Enter' && !event.shiftKey) {
+      event.preventDefault();
+      submitPrompt();
+    }
+  };
+
+  return (
+    <div className={cn('w-full py-4', className)}>
+      <div className="rounded-2xl bg-black/5 p-1.5 pt-4 dark:bg-white/5">
+        <div className="mx-2 mb-2.5 flex items-center gap-2">
+          <div className="flex flex-1 items-center gap-2">
+            <span className="h-3.5 w-3.5 text-black dark:text-white/90">{ANTHROPIC_ICON}</span>
+            <h3 className="text-xs tracking-tighter text-black dark:text-white/90">{headerText}</h3>
+          </div>
+          <p className="text-xs tracking-tighter text-black dark:text-white/90">{headerAction}</p>
+        </div>
+        <div className="relative">
+          <div className="relative flex flex-col">
+            <div className="overflow-y-auto" style={{ maxHeight: '400px' }}>
+              <Textarea
+                className={cn(
+                  'min-h-[72px] w-full resize-none rounded-xl rounded-b-none border-none bg-black/5 px-4 py-3 placeholder:text-black/70 focus-visible:ring-0 focus-visible:ring-offset-0 dark:bg-white/5 dark:text-white dark:placeholder:text-white/70',
+                )}
+                id="ai-input-15"
+                onChange={(event) => {
+                  setValue(event.target.value);
+                  adjustHeight();
+                }}
+                onKeyDown={handleKeyDown}
+                placeholder={placeholder}
+                ref={textareaRef}
+                value={value}
+              />
+            </div>
+
+            <div className="flex h-14 items-center rounded-b-xl bg-black/5 dark:bg-white/5">
+              <div className="absolute bottom-3 left-3 right-3 flex w-[calc(100%-24px)] items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        className="flex h-8 items-center gap-1 rounded-md pl-1 pr-2 text-xs hover:bg-black/10 focus-visible:ring-1 focus-visible:ring-blue-500 focus-visible:ring-offset-0 dark:text-white dark:hover:bg-white/10"
+                        variant="ghost"
+                      >
+                        <AnimatePresence mode="wait">
+                          <motion.div
+                            animate={{ opacity: 1, y: 0 }}
+                            className="flex items-center gap-1 [&_svg]:h-4 [&_svg]:w-4"
+                            exit={{ opacity: 0, y: 5 }}
+                            initial={{ opacity: 0, y: -5 }}
+                            key={selectedModel}
+                            transition={{ duration: 0.15 }}
+                          >
+                            {MODEL_ICONS[selectedModel]}
+                            {selectedModel}
+                            <ChevronDown className="h-3 w-3 opacity-50" />
+                          </motion.div>
+                        </AnimatePresence>
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent
+                      className={cn(
+                        'z-[90] min-w-[10rem]',
+                        'border-black/10 dark:border-white/10',
+                        'bg-gradient-to-b from-white via-white to-neutral-100 dark:from-neutral-950 dark:via-neutral-900 dark:to-neutral-800',
+                      )}
+                    >
+                      {models.map((model) => (
+                        <DropdownMenuItem
+                          className="flex items-center justify-between gap-2"
+                          key={model}
+                          onSelect={() => setSelectedModel(model)}
+                        >
+                          <div className="flex items-center gap-2 [&_svg]:h-4 [&_svg]:w-4">
+                            {MODEL_ICONS[model] || <Bot className="h-4 w-4 opacity-50" />}
+                            <span>{model}</span>
+                          </div>
+                          {selectedModel === model && <Check className="h-4 w-4 text-blue-500" />}
+                        </DropdownMenuItem>
+                      ))}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                  <div className="mx-0.5 h-4 w-px bg-black/10 dark:bg-white/10" />
+                  <label
+                    aria-label="Attach file"
+                    className={cn(
+                      'cursor-pointer rounded-lg bg-black/5 p-2 dark:bg-white/5',
+                      'hover:bg-black/10 focus-visible:ring-1 focus-visible:ring-blue-500 focus-visible:ring-offset-0 dark:hover:bg-white/10',
+                      'text-black/40 hover:text-black dark:text-white/40 dark:hover:text-white',
+                    )}
+                  >
+                    <input className="hidden" type="file" />
+                    <Paperclip className="h-4 w-4 transition-colors" />
+                  </label>
+                </div>
+                <button
+                  aria-label="Send message"
+                  className={cn(
+                    'rounded-lg bg-black/5 p-2 dark:bg-white/5',
+                    'hover:bg-black/10 focus-visible:ring-1 focus-visible:ring-blue-500 focus-visible:ring-offset-0 dark:hover:bg-white/10',
+                  )}
+                  disabled={!value.trim()}
+                  onClick={submitPrompt}
+                  type="button"
+                >
+                  <ArrowRight
+                    className={cn(
+                      'h-4 w-4 transition-opacity duration-200 dark:text-white',
+                      value.trim() ? 'opacity-100' : 'opacity-30',
+                    )}
+                  />
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+type AssistMode = 'idle' | 'menu' | 'chat';
+
+const quickActions = [
+  { label: 'Ask Apparent', icon: MessageSquareText, prompt: 'Ask Apparent to find, summarize, draft, or track anything in your investor workspace.' },
+  { label: 'Find builders', icon: Search, prompt: 'Find founders by thesis, stage, traction, geography, and proof signals.' },
+  { label: 'Draft outreach', icon: PenLine, prompt: 'Draft a founder note from your thesis and the selected deal-flow signal.' },
+  { label: 'Review pipeline', icon: FileSearch, prompt: 'Summarize what needs review, follow-up, or movement in your deal pipeline.' },
+];
+
+export const InvestorAIAssist = () => {
+  const [mode, setMode] = useState<AssistMode>('idle');
+  const [placeholder, setPlaceholder] = useState('What can I do for you?');
+
+  const openPrompt = (nextPlaceholder: string) => {
+    setPlaceholder(nextPlaceholder);
+    setMode('chat');
+  };
+
+  return (
+    <div className="fixed bottom-6 right-6 z-[80] flex flex-col items-end gap-3">
+      <AnimatePresence>
+        {mode === 'menu' && (
+          <motion.div
+            className="flex flex-col items-end gap-2"
+            initial={{ opacity: 0, y: 10, scale: 0.96 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 10, scale: 0.96 }}
+            transition={{ duration: 0.16, ease: 'easeOut' }}
+          >
+            {quickActions.map((action, index) => {
+              const Icon = action.icon;
+
+              return (
+                <motion.button
+                  type="button"
+                  key={action.label}
+                  onClick={() => openPrompt(action.prompt)}
+                  className="flex items-center gap-2 rounded-full border border-black/10 bg-white/92 px-3 py-2 text-xs font-semibold text-black shadow-[0_14px_40px_rgba(0,0,0,0.12)] backdrop-blur-xl transition hover:bg-white"
+                  initial={{ opacity: 0, x: 12 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: index * 0.025, duration: 0.14 }}
+                >
+                  <Icon className="h-3.5 w-3.5 text-[#42520d]" />
+                  {action.label}
+                </motion.button>
+              );
+            })}
+          </motion.div>
+        )}
+
+        {mode === 'chat' && (
+          <motion.aside
+            className="w-[min(calc(100vw-2rem),46rem)] rounded-[28px] border border-black/10 bg-white/88 p-3 shadow-[0_30px_90px_rgba(0,0,0,0.22)] backdrop-blur-2xl"
+            initial={{ opacity: 0, y: 18, scale: 0.98 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 16, scale: 0.98 }}
+            transition={{ duration: 0.18, ease: 'easeOut' }}
+          >
+            <div className="flex items-center justify-between px-2 pt-1">
+              <div className="flex items-center gap-2">
+                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-black text-white">
+                  <Sparkles className="h-4 w-4" />
+                </div>
+                <div>
+                  <p className="text-sm font-semibold">Apparent Copilot</p>
+                  <p className="text-xs text-black/45">UI preview. Actions will require confirmation.</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                aria-label="Close Apparent Copilot"
+                onClick={() => setMode('idle')}
+                className="rounded-full p-2 text-black/45 transition hover:bg-black/5 hover:text-black"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+            <AI_Prompt className="px-0" placeholder={placeholder} />
+          </motion.aside>
+        )}
+      </AnimatePresence>
+
+      <button
+        type="button"
+        aria-label={mode === 'idle' ? 'Open Apparent Copilot' : 'Toggle Apparent Copilot menu'}
+        onClick={() => setMode((current) => (current === 'menu' ? 'idle' : 'menu'))}
+        className="group flex h-16 w-16 items-center justify-center rounded-full border border-white/40 bg-black/82 text-white shadow-[0_18px_60px_rgba(0,0,0,0.28)] backdrop-blur-xl transition hover:scale-105 hover:bg-black"
+      >
+        <span className="grid grid-cols-2 gap-1.5">
+          {[0, 1, 2, 3].map((dot) => (
+            <span key={dot} className="h-2 w-2 rounded-full bg-white/90 transition group-hover:bg-[#dcefc7]" />
+          ))}
+        </span>
+      </button>
+    </div>
+  );
+};

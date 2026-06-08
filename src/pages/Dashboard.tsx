@@ -55,6 +55,7 @@ import { DiscoverDeck } from '@/pages/DiscoverDeck';
 import { GitHubIcon } from '@/components/GitHubIcon';
 import { LogoIcon } from '@/components/LogoIcon';
 import { GithubVerifyCard } from '@/components/GithubVerifyCard';
+import { InvestorAIAssist } from '@/components/InvestorAIAssist';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import type {
   AppUser,
@@ -8609,6 +8610,8 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
           )} {/* end isDashboardLoading ternary */}
         </div>
       </main>
+
+      {!isDashboardLoading && isInvestor && activeView === 'overview' && <InvestorAIAssist />}
 
       {pointerDrag && (
         <div
