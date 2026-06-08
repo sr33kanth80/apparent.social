@@ -4,7 +4,7 @@ import { ArrowUpRight, AtSign, Fingerprint, Telescope, UserRound, type LucideIco
 import { Switch } from '@/components/ui/switch';
 import { clearExternalAppUser } from '@/lib/auth-service';
 import type { DashboardRole } from '@/lib/apparent-types';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
   getKindeLogoutUri,
@@ -346,26 +346,29 @@ const KindeAuthPanel = ({
     }
   }, [dashboardPath, isAuthenticated, isLoading, navigate, role]);
 
+  // Sign in vs Sign up — Kinde uses two different endpoints (login() and
+  // register()), so we have to commit to one before redirecting. Default to
+  // "Sign up" since the previous flow had no signup path at all and growth is
+  // the priority. For Google specifically, either path works since OAuth
+  // auto-detects new vs returning users.
+  const [authMode, setAuthMode] = useState<'signin' | 'signup'>('signup');
+  const isSignup = authMode === 'signup';
+
   const handleAuthClick = () => {
     saveRequestedKindeRole(role);
   };
 
-  // Each button passes a `connection_id` so Kinde's hosted picker is bypassed.
+  // Each button passes Kinde's `connectionId` so its hosted picker is bypassed.
   // For Google the user lands directly on Google's consent screen; for email /
-  // username they land on the matching Kinde form. New vs returning is sorted
-  // out by Kinde automatically, so we use a single `login()` call per provider
-  // (no separate "Create account" button needed).
+  // username they land on the matching Kinde form (login or registration form
+  // depending on `authMode`).
   const continueWith = async (connectionId: string) => {
     handleAuthClick();
-    if (connectionId) {
-      // `connectionId` is a top-level option on @kinde-oss/kinde-auth-react ≥5
-      // (LoginMethodParams). Passing it makes Kinde bypass its hosted picker
-      // and route the user straight into that provider's flow.
-      await login({ connectionId });
+    const opts = connectionId ? { connectionId } : undefined;
+    if (isSignup) {
+      await (opts ? register(opts) : register());
     } else {
-      // No connection id configured yet — fall back to Kinde's picker so the
-      // page still works during initial setup.
-      await login();
+      await (opts ? login(opts) : login());
     }
   };
 
@@ -400,6 +403,29 @@ const KindeAuthPanel = ({
         <div className="mt-6 grid gap-3">
           {hasAnyKindeConnection ? (
             <>
+              {/* Sign in / Sign up segmented control. Default = Sign up so new
+                  visitors have an obvious path; returning users flip with one
+                  click. Each provider button below routes through register()
+                  or login() based on this selection. */}
+              <div className="flex items-center gap-1 rounded-full border border-black/10 bg-[#fbfaf7] p-1">
+                {(['signup', 'signin'] as const).map((mode) => {
+                  const active = authMode === mode;
+                  const label = mode === 'signup' ? 'Sign up' : 'Sign in';
+                  return (
+                    <button
+                      key={mode}
+                      type="button"
+                      onClick={() => setAuthMode(mode)}
+                      className={`h-8 flex-1 rounded-full text-xs font-semibold transition-colors ${
+                        active ? 'bg-black text-white' : 'text-black/60 hover:bg-black/5'
+                      }`}
+                    >
+                      {label}
+                    </button>
+                  );
+                })}
+              </div>
+
               {kindeConnectionIds.google && (
                 <button
                   type="button"
@@ -408,7 +434,7 @@ const KindeAuthPanel = ({
                   className="inline-flex h-11 w-full items-center justify-center gap-3 rounded-[8px] border border-black/10 bg-white px-4 text-sm font-semibold text-black transition hover:bg-black/5 disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   <GoogleMark className="h-4 w-4" />
-                  {isLoading ? 'Loading…' : 'Continue with Google'}
+                  {isLoading ? 'Loading…' : isSignup ? 'Sign up with Google' : 'Sign in with Google'}
                 </button>
               )}
 
@@ -428,7 +454,7 @@ const KindeAuthPanel = ({
                   className="inline-flex h-11 w-full items-center justify-center gap-3 rounded-[8px] bg-black px-4 text-sm font-semibold text-white transition hover:bg-black/85 disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   <AtSign className="h-4 w-4" />
-                  {isLoading ? 'Loading…' : 'Continue with email'}
+                  {isLoading ? 'Loading…' : isSignup ? 'Sign up with email' : 'Sign in with email'}
                 </button>
               )}
 
@@ -440,7 +466,7 @@ const KindeAuthPanel = ({
                   className="inline-flex h-11 w-full items-center justify-center gap-3 rounded-[8px] border border-black/15 bg-white px-4 text-sm font-semibold text-black transition hover:bg-black/5 disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   <UserRound className="h-4 w-4" />
-                  {isLoading ? 'Loading…' : 'Continue with username'}
+                  {isLoading ? 'Loading…' : isSignup ? 'Sign up with username' : 'Sign in with username'}
                 </button>
               )}
 
