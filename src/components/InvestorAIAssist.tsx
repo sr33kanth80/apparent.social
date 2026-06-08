@@ -1,4 +1,4 @@
-import { ArrowRight, Bot, Check, ChevronDown, FileSearch, MessageSquareText, Paperclip, PenLine, Search, Sparkles, X } from 'lucide-react';
+import { ArrowRight, Bot, Check, ChevronDown, Paperclip } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useState, type ReactNode } from 'react';
 
@@ -104,8 +104,8 @@ const AI_Prompt = ({
   models = DEFAULT_MODELS,
   defaultModel = 'Claude 4.5 Sonnet',
   placeholder = 'What can I do for you?',
-  headerText = 'Apparent Copilot',
-  headerAction = 'Investor agent',
+  headerText = 'is free this weekend!',
+  headerAction = 'Ship Now!',
   onSubmit,
   className,
 }: AIPromptProps) => {
@@ -245,92 +245,29 @@ const AI_Prompt = ({
   );
 };
 
-type AssistMode = 'idle' | 'menu' | 'chat';
-
-const quickActions = [
-  { label: 'Ask Apparent', icon: MessageSquareText, prompt: 'Ask Apparent to find, summarize, draft, or track anything in your investor workspace.' },
-  { label: 'Find builders', icon: Search, prompt: 'Find founders by thesis, stage, traction, geography, and proof signals.' },
-  { label: 'Draft outreach', icon: PenLine, prompt: 'Draft a founder note from your thesis and the selected deal-flow signal.' },
-  { label: 'Review pipeline', icon: FileSearch, prompt: 'Summarize what needs review, follow-up, or movement in your deal pipeline.' },
-];
-
 export const InvestorAIAssist = () => {
-  const [mode, setMode] = useState<AssistMode>('idle');
-  const [placeholder, setPlaceholder] = useState('What can I do for you?');
-
-  const openPrompt = (nextPlaceholder: string) => {
-    setPlaceholder(nextPlaceholder);
-    setMode('chat');
-  };
+  const [isOpen, setIsOpen] = useState(false);
 
   return (
     <div className="fixed bottom-6 right-6 z-[80] flex flex-col items-end gap-3">
       <AnimatePresence>
-        {mode === 'menu' && (
-          <motion.div
-            className="flex flex-col items-end gap-2"
-            initial={{ opacity: 0, y: 10, scale: 0.96 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 10, scale: 0.96 }}
-            transition={{ duration: 0.16, ease: 'easeOut' }}
-          >
-            {quickActions.map((action, index) => {
-              const Icon = action.icon;
-
-              return (
-                <motion.button
-                  type="button"
-                  key={action.label}
-                  onClick={() => openPrompt(action.prompt)}
-                  className="flex items-center gap-2 rounded-full border border-black/10 bg-white/92 px-3 py-2 text-xs font-semibold text-black shadow-[0_14px_40px_rgba(0,0,0,0.12)] backdrop-blur-xl transition hover:bg-white"
-                  initial={{ opacity: 0, x: 12 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: index * 0.025, duration: 0.14 }}
-                >
-                  <Icon className="h-3.5 w-3.5 text-[#42520d]" />
-                  {action.label}
-                </motion.button>
-              );
-            })}
-          </motion.div>
-        )}
-
-        {mode === 'chat' && (
+        {isOpen && (
           <motion.aside
-            className="w-[min(calc(100vw-2rem),46rem)] rounded-[28px] border border-black/10 bg-white/88 p-3 shadow-[0_30px_90px_rgba(0,0,0,0.22)] backdrop-blur-2xl"
+            className="w-[min(calc(100vw-2rem),46rem)]"
             initial={{ opacity: 0, y: 18, scale: 0.98 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 16, scale: 0.98 }}
             transition={{ duration: 0.18, ease: 'easeOut' }}
           >
-            <div className="flex items-center justify-between px-2 pt-1">
-              <div className="flex items-center gap-2">
-                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-black text-white">
-                  <Sparkles className="h-4 w-4" />
-                </div>
-                <div>
-                  <p className="text-sm font-semibold">Apparent Copilot</p>
-                  <p className="text-xs text-black/45">UI preview. Actions will require confirmation.</p>
-                </div>
-              </div>
-              <button
-                type="button"
-                aria-label="Close Apparent Copilot"
-                onClick={() => setMode('idle')}
-                className="rounded-full p-2 text-black/45 transition hover:bg-black/5 hover:text-black"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            </div>
-            <AI_Prompt className="px-0" placeholder={placeholder} />
+            <AI_Prompt className="w-full" />
           </motion.aside>
         )}
       </AnimatePresence>
 
       <button
         type="button"
-        aria-label={mode === 'idle' ? 'Open Apparent Copilot' : 'Toggle Apparent Copilot menu'}
-        onClick={() => setMode((current) => (current === 'menu' ? 'idle' : 'menu'))}
+        aria-label={isOpen ? 'Close Apparent Copilot' : 'Open Apparent Copilot'}
+        onClick={() => setIsOpen((current) => !current)}
         className="group flex h-16 w-16 items-center justify-center rounded-full border border-white/40 bg-black/82 text-white shadow-[0_18px_60px_rgba(0,0,0,0.28)] backdrop-blur-xl transition hover:scale-105 hover:bg-black"
       >
         <span className="grid grid-cols-2 gap-1.5">
