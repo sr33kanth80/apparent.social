@@ -11,6 +11,7 @@ import {
   hasAnyKindeConnection,
   isKindeConfigured,
   kindeConnectionIds,
+  resolveKindeRole,
   saveRequestedKindeRole,
 } from '@/lib/kinde-auth';
 
@@ -334,17 +335,30 @@ const KindeAuthPanel = ({
   emailPlaceholder: string;
 }) => {
   const navigate = useNavigate();
-  const { isLoading, isAuthenticated, login, register, logout } = useKindeAuth();
-  const dashboardPath = `/dashboard/${role}`;
+  const { isLoading, isAuthenticated, login, register, logout, user: kindeUser } = useKindeAuth();
 
   useEffect(() => {
-    saveRequestedKindeRole(role);
-    if (!isLoading && isAuthenticated) {
-      navigate(dashboardPath, { replace: true });
-    } else if (!isLoading) {
+    if (!isLoading && isAuthenticated && kindeUser) {
+      // POST-AUTH: Kinde redirects to /login (no `?role=…`), so the URL has
+      // already defaulted `role` back to 'founder'. Trust the role we saved to
+      // localStorage BEFORE the redirect instead — that's what the user asked
+      // for when they clicked the toggle + button. Falling back to `role`
+      // (URL default 'founder') would silently steer every VC sign-up into a
+      // founder account.
+      const targetRole = resolveKindeRole(kindeUser.id, role);
+      navigate(`/dashboard/${targetRole}`, { replace: true });
+      return;
+    }
+
+    if (!isLoading) {
+      // PRE-AUTH: re-save the toggle's current role so the post-redirect side
+      // can read it back. Only do this while logged out — running this branch
+      // post-auth would let the URL-default 'founder' overwrite a freshly
+      // saved 'investor'.
+      saveRequestedKindeRole(role);
       clearExternalAppUser();
     }
-  }, [dashboardPath, isAuthenticated, isLoading, navigate, role]);
+  }, [isAuthenticated, isLoading, kindeUser, navigate, role]);
 
   // Sign in vs Sign up — Kinde uses two different endpoints (login() and
   // register()), so we have to commit to one before redirecting. Default to
@@ -511,7 +525,12 @@ const KindeAuthPanel = ({
           </button>
           <button
             type="button"
-            onClick={() => navigate(dashboardPath)}
+            onClick={() => {
+              // Same role resolution as the post-auth navigation in the
+              // useEffect — trust the saved-pre-redirect role over the URL.
+              const targetRole = kindeUser ? resolveKindeRole(kindeUser.id, role) : role;
+              navigate(`/dashboard/${targetRole}`);
+            }}
             className="inline-flex h-9 items-center justify-center rounded-[8px] bg-black px-4 text-sm font-semibold text-white transition hover:bg-black/85"
           >
             Open workspace
