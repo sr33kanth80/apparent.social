@@ -8013,18 +8013,13 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
                 transition={{ duration: 0.22, ease: 'easeOut' }}
               >
               {renderOnboardingChecklist()}
-              <div
-                id="overview"
-                className={`grid scroll-mt-24 items-start gap-8 xl:justify-center ${
-                  isInvestor ? 'xl:grid-cols-[minmax(0,960px)_300px]' : 'xl:grid-cols-[minmax(0,960px)]'
-                }`}
-              >
-                <div className="space-y-8">
-                {isInvestor && renderNetworkMapSection()}
-                </div>
-
+              {/* Builder Radar lives on the dedicated Builder Discovery sidebar
+                  page for investors — showing it here too was redundant. The
+                  overview now leads with the Daily digest. Founders still get
+                  the radar full-width below since it's their primary surface. */}
+              <div id="overview" className="scroll-mt-24">
                 {isInvestor && (
-                  <aside className="space-y-6">
+                  <aside className="mx-auto max-w-[640px] space-y-6">
                     <section id="digest" className="scroll-mt-24 rounded-[20px] border border-black/10 bg-white shadow-[0_10px_34px_rgba(0,0,0,0.04)] py-4">
                       <div className="flex items-center gap-2 px-4">
                         <Calendar className="h-4 w-4 text-gray-500" />
