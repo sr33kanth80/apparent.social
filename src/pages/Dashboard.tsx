@@ -1236,14 +1236,6 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
       return productLaunchToDashboardRow(launch, index, ownerLabel, ownerUsername, ownerPhotoUrl, ownerGithubVerified);
     });
   }, [productLaunches, publicLaunches, externalLaunches, launchAuthors, user.id, user.username]);
-  const investorDigestRows = useMemo(
-    () =>
-      dailyDigest.slice(0, 4).map((launch) => ({
-        id: launch.id,
-        label: `${launch.name}${launch.tagline ? ` - ${launch.tagline}` : ''}`,
-      })),
-    [dailyDigest],
-  );
   const availableDashboardLaunchFilters = isInvestor
     ? [...dashboardLaunchFilters, ...investorFounderSignalFilters]
     : dashboardLaunchFilters;
@@ -5177,13 +5169,10 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
           },
           {
             label: 'Find founders who are raising now',
-            hint: 'Open Builder Radar and hit “Raising now” to see contactable, thesis-fit founders.',
+            hint: 'Open Builder Discovery and hit “Raising now” to see contactable, thesis-fit founders.',
             done: builderDiscoveryStates.some((state) => state.saved),
-            cta: 'Open Builder Radar',
-            onClick: () => {
-              setActiveView('overview');
-              window.setTimeout(() => scrollToSection('map'), 80);
-            },
+            cta: 'Open Builder Discovery',
+            onClick: () => handleDashboardViewChange('matches'),
           },
           {
             label: 'Move one into your deal flow',
@@ -5867,11 +5856,10 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
         <EmptyState
           icon={<FileText className="h-5 w-5" />}
           title="Your deal flow is empty"
-          body="Save founders from Builder Radar — try the “Raising now” filter to find contactable, thesis-fit founders — then drag them across these stages from discovery to meeting."
-          ctaLabel="Open Builder Radar"
+          body="Save founders from Builder Discovery — try the “Raising now” filter to find contactable, thesis-fit founders — then drag them across these stages from discovery to meeting."
+          ctaLabel="Open Builder Discovery"
           onCta={() => {
-            setActiveView('overview');
-            window.setTimeout(() => scrollToSection('map'), 80);
+            handleDashboardViewChange('matches');
           }}
         />
       ) : (
@@ -5940,6 +5928,356 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
       )}
     </section>
   );
+
+  const renderInvestorOverviewPage = () => {
+    const visibleBuilders = filteredBuilderNodes.filter((builder) => !getBuilderState(builder).hidden);
+    const topBuilders = visibleBuilders.slice(0, 5);
+    const raisingBuilders = visibleBuilders
+      .filter((builder) => builder.fundraisingStatus === 'raising' || builder.fundraisingStatus === 'open' || builder.openToContact)
+      .slice(0, 4);
+    const freshBuilders = visibleBuilders
+      .filter((builder) => /min ago|h ago|today/i.test(builder.latestActivityLabel))
+      .slice(0, 4);
+    const urgentBuilders = [...raisingBuilders, ...freshBuilders]
+      .filter((builder, index, list) => list.findIndex((item) => item.id === builder.id) === index)
+      .slice(0, 4);
+    const dailyLaunches = dailyDigest.slice(0, 3);
+    const savedBuilderCount = builderDiscoveryStates.filter((state) => state.saved && !state.hidden).length;
+    const activePipelineCount = investorPipeline.reduce((sum, column) => sum + column.items.length, 0);
+    const reviewingCount = investorPipeline.find((column) => column.stage === 'Reviewing')?.items.length ?? 0;
+    const meetingCount = investorPipeline.find((column) => column.stage === 'Meeting')?.items.length ?? 0;
+    const thesisFields = [
+      { label: 'Thesis', done: Boolean((intakeValues.thesis ?? '').trim()) },
+      { label: 'Sectors', done: Boolean((intakeValues.sectors ?? '').trim()) },
+      { label: 'Stage', done: Boolean((intakeValues.stage ?? '').trim()) },
+      { label: 'Geography', done: Boolean((intakeValues.geography ?? '').trim()) },
+      { label: 'Founder taste', done: Boolean((intakeValues.founderSignals ?? '').trim()) },
+    ];
+    const thesisCompleteness = Math.round((thesisFields.filter((field) => field.done).length / thesisFields.length) * 100);
+    const actionRows = [
+      {
+        label: 'Review top matches',
+        detail: `${topBuilders.length} builders ranked by fit and freshness`,
+        cta: 'Open Builder Discovery',
+        onClick: () => handleDashboardViewChange('matches'),
+      },
+      {
+        label: 'Work the review queue',
+        detail: `${reviewingCount} companies waiting for a decision`,
+        cta: 'Open Deal Flow',
+        onClick: () => handleDashboardViewChange('deals'),
+      },
+      {
+        label: thesisCompleteness < 100 ? 'Tighten ranking inputs' : 'Tune thesis weights',
+        detail: `${thesisCompleteness}% thesis profile complete`,
+        cta: 'Open Thesis',
+        onClick: () => handleDashboardViewChange('profile'),
+      },
+    ];
+
+    return (
+      <motion.div
+        key="investor-overview-main"
+        initial={{ opacity: 0, y: 10, filter: 'blur(2px)' }}
+        animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+        exit={{ opacity: 0, y: -8, filter: 'blur(2px)' }}
+        transition={{ duration: 0.22, ease: 'easeOut' }}
+      >
+        {renderOnboardingChecklist()}
+        <div id="overview" className="mx-auto max-w-[1292px] scroll-mt-24 space-y-6">
+          <section className="overflow-hidden rounded-[20px] border border-black/10 bg-white shadow-[0_10px_34px_rgba(0,0,0,0.04)]">
+            <div className="grid gap-0 xl:grid-cols-[minmax(0,1fr)_360px]">
+              <div className="px-5 py-5 sm:px-6">
+                <div className="flex flex-wrap items-start justify-between gap-4">
+                  <div>
+                    <div className="inline-flex items-center gap-2 rounded-full bg-[#dcefc7] px-3 py-1.5 text-xs font-semibold text-[#42520d]">
+                      <Target className="h-3.5 w-3.5" />
+                      Morning sourcing desk
+                    </div>
+                    <h2 className="mt-4 max-w-3xl text-3xl font-normal leading-tight tracking-[-0.035em] font-serif md:text-5xl">
+                      The builders most worth your attention today.
+                    </h2>
+                    <p className="mt-3 max-w-2xl text-sm leading-6 text-black/55">
+                      Ranked against your thesis, proof signals, freshness, stage, and founder intent so the first decision is what to review next.
+                    </p>
+                  </div>
+                  <div className="grid min-w-[220px] grid-cols-2 gap-2 text-sm">
+                    {[
+                      ['Top matches', visibleBuilders.length],
+                      ['Avg fit', `${averageSignalScore || Math.round(topBuilders.reduce((sum, builder) => sum + builder.fitScore, 0) / Math.max(1, topBuilders.length))}%`],
+                      ['Saved', savedBuilderCount],
+                      ['In pipeline', activePipelineCount],
+                    ].map(([label, value]) => (
+                      <div key={label} className="rounded-[14px] border border-black/10 bg-[#fbfaf7] px-3 py-3">
+                        <p className="text-xl font-semibold tracking-[-0.02em]">{value}</p>
+                        <p className="mt-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-black/40">{label}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="mt-6 divide-y divide-black/10 border-y border-black/10">
+                  {topBuilders.map((builder, index) => {
+                    const state = getBuilderState(builder);
+                    const reasons = builder.matchReasons.length
+                      ? builder.matchReasons.slice(0, 3)
+                      : [builder.category, builder.stage, builder.latestActivityLabel].filter(Boolean);
+
+                    return (
+                      <article key={builder.id} className="grid gap-4 py-4 lg:grid-cols-[minmax(0,1fr)_220px]">
+                        <button
+                          type="button"
+                          className="min-w-0 text-left"
+                          onClick={() => {
+                            setSelectedBuilderId(builder.id);
+                            setSelectedClusterCity(builder.location);
+                            handleDashboardViewChange('matches');
+                          }}
+                        >
+                          <div className="flex items-start gap-3">
+                            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[14px] bg-[#f4f1eb] text-xs font-semibold text-[#42520d]">
+                              {String(index + 1).padStart(2, '0')}
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <div className="flex flex-wrap items-center gap-2">
+                                <p className="text-sm font-semibold">{builder.company}</p>
+                                <span className="text-xs text-black/40">by {builder.founderName}</span>
+                                <span className="rounded-full bg-[#dcefc7] px-2 py-0.5 text-xs font-semibold text-[#42520d]">
+                                  {builder.fitScore}% fit
+                                </span>
+                                {(builder.fundraisingStatus === 'raising' || builder.fundraisingStatus === 'open') && (
+                                  <span className="rounded-full border border-[#42520d]/20 px-2 py-0.5 text-xs font-medium text-[#42520d]">
+                                    {builder.fundraisingStatus === 'raising' ? 'Raising now' : 'Open to intros'}
+                                  </span>
+                                )}
+                              </div>
+                              <p className="mt-2 line-clamp-2 text-sm leading-6 text-black/60">{builder.buildSummary || builder.traction}</p>
+                              <div className="mt-3 flex flex-wrap gap-1.5">
+                                {reasons.map((reason) => (
+                                  <span key={reason} className="rounded-full bg-[#fbfaf7] px-2.5 py-1 text-[11px] font-medium text-black/55">
+                                    {reason}
+                                  </span>
+                                ))}
+                              </div>
+                              <div className="mt-3 flex flex-wrap gap-2 text-xs text-black/40">
+                                <span>{builder.stage}</span>
+                                <span>{builder.location}</span>
+                                <span>{builder.latestActivityLabel}</span>
+                                {builder.tractionValue && <span>{builder.tractionValue}</span>}
+                              </div>
+                            </div>
+                          </div>
+                        </button>
+                        <div className="flex flex-wrap items-start gap-2 lg:justify-end">
+                          <button
+                            type="button"
+                            className="rounded-full border border-black/10 px-3 py-1.5 text-xs font-medium hover:bg-[#fbf8f3]"
+                            onClick={() => void handleSaveBuilder(builder)}
+                          >
+                            {state.saved ? 'Saved' : 'Save'}
+                          </button>
+                          <button
+                            type="button"
+                            className="rounded-full border border-black/10 px-3 py-1.5 text-xs font-medium hover:bg-[#fbf8f3]"
+                            onClick={() => void handleAddBuilderToDealFlow(builder)}
+                          >
+                            Add to flow
+                          </button>
+                          <button
+                            type="button"
+                            className="rounded-full bg-[#42520d] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#34420a]"
+                            onClick={() => void handleMessageBuilder(builder)}
+                          >
+                            Draft outreach
+                          </button>
+                        </div>
+                      </article>
+                    );
+                  })}
+                  {topBuilders.length === 0 && (
+                    <EmptyState
+                      icon={<Search className="h-5 w-5" />}
+                      title="No ranked builders yet"
+                      body="Set your thesis, stage, and sectors so Apparent can rank real founders and public proof against your mandate."
+                      ctaLabel="Set your thesis"
+                      onCta={() => handleDashboardViewChange('profile')}
+                    />
+                  )}
+                </div>
+              </div>
+
+              <aside className="border-t border-black/10 bg-[#fbfaf7] px-5 py-5 xl:border-l xl:border-t-0">
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-[0.14em] text-black/40">Thesis health</p>
+                    <p className="mt-2 text-3xl font-semibold tracking-[-0.03em]">{thesisCompleteness}%</p>
+                  </div>
+                  <button
+                    type="button"
+                    className="rounded-full border border-black/10 bg-white px-3 py-2 text-xs font-semibold hover:bg-[#fbf8f3]"
+                    onClick={() => handleDashboardViewChange('profile')}
+                  >
+                    Tune
+                  </button>
+                </div>
+                <div className="mt-4 space-y-2">
+                  {thesisFields.map((field) => (
+                    <div key={field.label} className="flex items-center justify-between rounded-[12px] bg-white px-3 py-2 text-sm">
+                      <span className="text-black/65">{field.label}</span>
+                      <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${field.done ? 'bg-[#dcefc7] text-[#42520d]' : 'bg-[#f4f1eb] text-black/40'}`}>
+                        {field.done ? 'Set' : 'Missing'}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+                <div className="mt-5 rounded-[16px] border border-black/10 bg-white p-4">
+                  <p className="text-sm font-semibold">What changed</p>
+                  <div className="mt-3 space-y-3">
+                    {(urgentBuilders.length ? urgentBuilders : topBuilders.slice(0, 3)).map((builder) => (
+                      <button
+                        key={builder.id}
+                        type="button"
+                        className="block w-full text-left"
+                        onClick={() => {
+                          setSelectedBuilderId(builder.id);
+                          handleDashboardViewChange('matches');
+                        }}
+                      >
+                        <p className="text-xs font-semibold text-black/75">{builder.company}</p>
+                        <p className="mt-1 line-clamp-2 text-xs leading-5 text-black/45">
+                          {builder.fundraisingStatus === 'raising'
+                            ? `Raising ${builder.raisingAmount || builder.raisingRound || 'now'}`
+                            : builder.latestActivityLabel}
+                          {' - '}
+                          {builder.matchReasons[0] || builder.category}
+                        </p>
+                      </button>
+                    ))}
+                    {topBuilders.length === 0 && <p className="text-xs leading-5 text-black/45">Fresh founder activity will appear here after ranking has enough thesis context.</p>}
+                  </div>
+                </div>
+              </aside>
+            </div>
+          </section>
+
+          <section className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
+            <div className="grid gap-6 lg:grid-cols-2">
+              <section className="rounded-[20px] border border-black/10 bg-white p-5 shadow-[0_10px_34px_rgba(0,0,0,0.04)]">
+                <div className="flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-2">
+                    <Sunrise className="h-4 w-4 text-gray-500" />
+                    <h3 className="text-sm font-semibold">Daily launch radar</h3>
+                  </div>
+                  <button type="button" className="text-xs font-semibold text-[#42520d]" onClick={() => handleDashboardViewChange('daily')}>
+                    View daily
+                  </button>
+                </div>
+                <div className="mt-4 divide-y divide-black/10 border-y border-black/10">
+                  {dailyLaunches.map((launch) => (
+                    <a key={launch.id} href={launch.sourceUrl || launch.launchUrl || undefined} target="_blank" rel="noreferrer" className="block py-3 hover:bg-[#fbf8f3]">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0">
+                          <p className="truncate text-sm font-semibold">{launch.name}</p>
+                          <p className="mt-1 line-clamp-2 text-xs leading-5 text-black/50">{launch.tagline || launch.intro || launch.metrics}</p>
+                        </div>
+                        <span className="shrink-0 rounded-full bg-[#f4f1eb] px-2 py-1 text-[11px] text-black/50">{launch.stage}</span>
+                      </div>
+                    </a>
+                  ))}
+                  {dailyLaunches.length === 0 && (
+                    <p className="py-6 text-sm leading-6 text-black/50">No daily launch feed yet. Builder Discovery still ranks Apparent-native founders from available proof.</p>
+                  )}
+                </div>
+              </section>
+
+              <section className="rounded-[20px] border border-black/10 bg-white p-5 shadow-[0_10px_34px_rgba(0,0,0,0.04)]">
+                <div className="flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-2">
+                    <FileText className="h-4 w-4 text-gray-500" />
+                    <h3 className="text-sm font-semibold">Pipeline snapshot</h3>
+                  </div>
+                  <button type="button" className="text-xs font-semibold text-[#42520d]" onClick={() => handleDashboardViewChange('deals')}>
+                    Open board
+                  </button>
+                </div>
+                <div className="mt-4 grid gap-2">
+                  {investorPipeline.map((column) => (
+                    <button
+                      key={column.stage}
+                      type="button"
+                      className="flex items-center justify-between rounded-[12px] border border-black/10 px-3 py-2 text-left hover:bg-[#fbf8f3]"
+                      onClick={() => handleDashboardViewChange('deals')}
+                    >
+                      <span className="text-sm text-black/65">{column.stage}</span>
+                      <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${column.items.length ? 'bg-[#dcefc7] text-[#42520d]' : 'bg-[#f4f1eb] text-black/40'}`}>
+                        {column.items.length}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+                <div className="mt-4 grid grid-cols-2 gap-2">
+                  <div className="rounded-[14px] bg-[#fbfaf7] px-3 py-3">
+                    <p className="text-xl font-semibold">{reviewingCount}</p>
+                    <p className="mt-1 text-[11px] uppercase tracking-[0.12em] text-black/40">Reviewing</p>
+                  </div>
+                  <div className="rounded-[14px] bg-[#fbfaf7] px-3 py-3">
+                    <p className="text-xl font-semibold">{meetingCount}</p>
+                    <p className="mt-1 text-[11px] uppercase tracking-[0.12em] text-black/40">Meetings</p>
+                  </div>
+                </div>
+              </section>
+            </div>
+
+            <aside className="space-y-6">
+              <section className="rounded-[20px] border border-black/10 bg-white p-5 shadow-[0_10px_34px_rgba(0,0,0,0.04)]">
+                <h3 className="text-sm font-semibold">Recommended next moves</h3>
+                <div className="mt-4 space-y-3">
+                  {actionRows.map((action) => (
+                    <button
+                      key={action.label}
+                      type="button"
+                      className="block w-full rounded-[14px] border border-black/10 px-3 py-3 text-left transition hover:bg-[#fbf8f3]"
+                      onClick={action.onClick}
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <p className="text-sm font-semibold">{action.label}</p>
+                          <p className="mt-1 text-xs leading-5 text-black/50">{action.detail}</p>
+                        </div>
+                        <ArrowUpRight className="mt-0.5 h-4 w-4 shrink-0 text-black/35" />
+                      </div>
+                      <p className="mt-3 text-xs font-semibold text-[#42520d]">{action.cta}</p>
+                    </button>
+                  ))}
+                </div>
+              </section>
+
+              <section className="rounded-[20px] border border-black/10 bg-white p-5 shadow-[0_10px_34px_rgba(0,0,0,0.04)]">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-sm font-semibold">Context to keep warm</h3>
+                  <span className="text-xs text-black/40">{termReviews.length + meetups.length} items</span>
+                </div>
+                <div className="mt-4 grid gap-2">
+                  <button type="button" className="rounded-[14px] border border-black/10 px-3 py-3 text-left hover:bg-[#fbf8f3]" onClick={() => handleDashboardViewChange('terms')}>
+                    <p className="text-sm font-semibold">{termReviews.length} term notes</p>
+                    <p className="mt-1 text-xs text-black/50">Keep valuation, rights, and diligence notes attached to company context.</p>
+                  </button>
+                  <button type="button" className="rounded-[14px] border border-black/10 px-3 py-3 text-left hover:bg-[#fbf8f3]" onClick={() => scrollToSection('meetups')}>
+                    <p className="text-sm font-semibold">{meetups.length} rooms and meetups</p>
+                    <p className="mt-1 text-xs text-black/50">Founder rooms can become warm sourcing moments around your thesis.</p>
+                  </button>
+                </div>
+              </section>
+            </aside>
+          </section>
+
+          <div>
+            {renderMeetupsSection()}
+          </div>
+        </div>
+      </motion.div>
+    );
+  };
 
   const renderTermsReviewSection = () => (
     <section id="terms" className="scroll-mt-24 rounded-[20px] border border-black/10 bg-white shadow-[0_10px_34px_rgba(0,0,0,0.04)] py-4">
@@ -8058,57 +8396,24 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
                 />
               </motion.div>
             ) : activeView === 'overview' ? (
-              <motion.div
-                key="workspace-main"
-                initial={{ opacity: 0, y: 10, filter: 'blur(2px)' }}
-                animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
-                exit={{ opacity: 0, y: -8, filter: 'blur(2px)' }}
-                transition={{ duration: 0.22, ease: 'easeOut' }}
-              >
-              {renderOnboardingChecklist()}
-              {/* Builder Radar lives on the dedicated Builder Discovery sidebar
-                  page for investors — showing it here too was redundant. The
-                  overview now leads with the Daily digest. Founders still get
-                  the radar full-width below since it's their primary surface. */}
-              <div id="overview" className="scroll-mt-24">
-                {isInvestor && (
-                  <aside className="mx-auto max-w-[640px] space-y-6">
-                    <section id="digest" className="scroll-mt-24 rounded-[20px] border border-black/10 bg-white shadow-[0_10px_34px_rgba(0,0,0,0.04)] py-4">
-                      <div className="flex items-center gap-2 px-4">
-                        <Calendar className="h-4 w-4 text-gray-500" />
-                        <h3 className="text-sm font-semibold">Daily digest</h3>
-                      </div>
-                      <div className="mt-3 divide-y divide-black/10">
-                        {investorDigestRows.length > 0 ? investorDigestRows.map((item) => (
-                          <button
-                            key={item.id}
-                            className="w-full px-4 py-3 text-left text-xs leading-relaxed text-gray-600 transition-colors hover:bg-[#fbf8f3]"
-                            onClick={() => addActivity(`Opened digest item: ${item.label}`)}
-                          >
-                            {item.label}
-                          </button>
-                        )) : (
-                          <p className="px-4 py-3 text-xs leading-relaxed text-gray-500">
-                            No digest items yet. Live deal-flow items appear here after the daily feed syncs.
-                          </p>
-                        )}
-                      </div>
-                      <button
-                        className="mx-4 mt-3 w-[calc(100%-2rem)] rounded-full border border-black/10 px-4 py-2 text-sm font-medium hover:bg-[#fbf8f3]"
-                        onClick={toggleDailyDigest}
-                      >
-                        {dailyDigestEnabled ? 'Pause digest' : 'Enable digest'}
-                      </button>
-                    </section>
-                  </aside>
-                )}
-              </div>
-              {!isInvestor && (
-                <div className="mx-auto mt-8 max-w-[1292px]">
-                  {renderNetworkMapSection()}
-                </div>
-              )}
-              </motion.div>
+              isInvestor ? (
+                renderInvestorOverviewPage()
+              ) : (
+                <motion.div
+                  key="workspace-main"
+                  initial={{ opacity: 0, y: 10, filter: 'blur(2px)' }}
+                  animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+                  exit={{ opacity: 0, y: -8, filter: 'blur(2px)' }}
+                  transition={{ duration: 0.22, ease: 'easeOut' }}
+                >
+                  {renderOnboardingChecklist()}
+                  <div id="overview" className="scroll-mt-24">
+                    <div className="mx-auto mt-8 max-w-[1292px]">
+                      {renderNetworkMapSection()}
+                    </div>
+                  </div>
+                </motion.div>
+              )
             ) : activeView === 'daily' && isInvestor ? (
               renderDailyDigestPage()
             ) : activeView === 'for-you' ? (
@@ -8281,16 +8586,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
                 transition={{ duration: 0.18, ease: 'easeOut' }}
               >
                 {isInvestor ? (
-                  <>
-                    <div className="mx-auto mt-8 max-w-[1292px]">
-                      {renderInvestorDealFlowSection()}
-                    </div>
-
-                    <div className="mx-auto mt-8 grid max-w-[1292px] gap-8 xl:grid-cols-2">
-                      {renderMeetupsSection()}
-                      {renderTermsReviewSection()}
-                    </div>
-                  </>
+                  null
                 ) : (
                   <>
                     <div className="mx-auto mt-8 grid max-w-[1292px] gap-8 xl:grid-cols-[minmax(0,1fr)_300px]">
