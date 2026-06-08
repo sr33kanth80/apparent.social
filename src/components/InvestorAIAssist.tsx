@@ -18,7 +18,6 @@ const OPENAI_SVG = (
     <svg
       aria-label="OpenAI icon"
       className="block dark:hidden"
-      fill="currentColor"
       height="260"
       preserveAspectRatio="xMidYMid"
       viewBox="0 0 256 260"
@@ -132,21 +131,21 @@ export const InvestorAIPrompt = ({
   };
 
   return (
-    <div className={cn('w-full py-4 text-white', className)}>
-      <div className="rounded-2xl bg-neutral-950 p-1.5 pt-4 shadow-[0_18px_60px_rgba(0,0,0,0.24)]">
+    <div className={cn('w-full py-4', className)}>
+      <div className="rounded-2xl bg-black/5 p-1.5 pt-4 dark:bg-white/5">
         <div className="mx-2 mb-2.5 flex items-center gap-2">
           <div className="flex flex-1 items-center gap-2">
-            <span className="h-3.5 w-3.5 text-white/90">{ANTHROPIC_ICON}</span>
-            <h3 className="text-xs tracking-tighter text-white/90">{headerText}</h3>
+            <span className="h-3.5 w-3.5 text-black dark:text-white/90">{ANTHROPIC_ICON}</span>
+            <h3 className="text-xs tracking-tighter text-black dark:text-white/90">{headerText}</h3>
           </div>
-          <p className="text-xs tracking-tighter text-white/90">{headerAction}</p>
+          <p className="text-xs tracking-tighter text-black dark:text-white/90">{headerAction}</p>
         </div>
         <div className="relative">
           <div className="relative flex flex-col">
             <div className="overflow-y-auto" style={{ maxHeight: '400px' }}>
               <Textarea
                 className={cn(
-                  'min-h-[72px] w-full resize-none rounded-xl rounded-b-none border-none bg-white/5 px-4 py-3 text-white placeholder:text-white/70 focus-visible:ring-0 focus-visible:ring-offset-0',
+                  'min-h-[72px] w-full resize-none rounded-xl rounded-b-none border-none bg-black/5 px-4 py-3 placeholder:text-black/70 focus-visible:ring-0 focus-visible:ring-offset-0 dark:bg-white/5 dark:text-white dark:placeholder:text-white/70',
                 )}
                 id="ai-input-15"
                 onChange={(event) => {
@@ -160,13 +159,13 @@ export const InvestorAIPrompt = ({
               />
             </div>
 
-            <div className="flex h-14 items-center rounded-b-xl bg-white/5">
+            <div className="flex h-14 items-center rounded-b-xl bg-black/5 dark:bg-white/5">
               <div className="absolute bottom-3 left-3 right-3 flex w-[calc(100%-24px)] items-center justify-between">
                 <div className="flex items-center gap-2">
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <Button
-                        className="flex h-8 items-center gap-1 rounded-md pl-1 pr-2 text-xs text-white hover:bg-white/10 focus-visible:ring-1 focus-visible:ring-blue-500 focus-visible:ring-offset-0"
+                        className="flex h-8 items-center gap-1 rounded-md pl-1 pr-2 text-xs hover:bg-black/10 focus-visible:ring-1 focus-visible:ring-blue-500 focus-visible:ring-offset-0 dark:text-white dark:hover:bg-white/10"
                         variant="ghost"
                       >
                         <AnimatePresence mode="wait">
@@ -188,13 +187,13 @@ export const InvestorAIPrompt = ({
                     <DropdownMenuContent
                       className={cn(
                         'z-[90] min-w-[10rem]',
-                        'border-white/10 text-white',
-                        'bg-gradient-to-b from-neutral-950 via-neutral-900 to-neutral-800',
+                        'border-black/10 dark:border-white/10',
+                        'bg-gradient-to-b from-white via-white to-neutral-100 dark:from-neutral-950 dark:via-neutral-900 dark:to-neutral-800',
                       )}
                     >
                       {models.map((model) => (
                         <DropdownMenuItem
-                          className="flex items-center justify-between gap-2 text-white focus:bg-white/10 focus:text-white"
+                          className="flex items-center justify-between gap-2"
                           key={model}
                           onSelect={() => setSelectedModel(model)}
                         >
@@ -207,13 +206,13 @@ export const InvestorAIPrompt = ({
                       ))}
                     </DropdownMenuContent>
                   </DropdownMenu>
-                  <div className="mx-0.5 h-4 w-px bg-white/10" />
+                  <div className="mx-0.5 h-4 w-px bg-black/10 dark:bg-white/10" />
                   <label
                     aria-label="Attach file"
                     className={cn(
-                      'cursor-pointer rounded-lg bg-white/5 p-2',
-                      'hover:bg-white/10 focus-visible:ring-1 focus-visible:ring-blue-500 focus-visible:ring-offset-0',
-                      'text-white/40 hover:text-white',
+                      'cursor-pointer rounded-lg bg-black/5 p-2 dark:bg-white/5',
+                      'hover:bg-black/10 focus-visible:ring-1 focus-visible:ring-blue-500 focus-visible:ring-offset-0 dark:hover:bg-white/10',
+                      'text-black/40 hover:text-black dark:text-white/40 dark:hover:text-white',
                     )}
                   >
                     <input className="hidden" type="file" />
@@ -223,8 +222,8 @@ export const InvestorAIPrompt = ({
                 <button
                   aria-label="Send message"
                   className={cn(
-                    'rounded-lg bg-white/5 p-2',
-                    'hover:bg-white/10 focus-visible:ring-1 focus-visible:ring-blue-500 focus-visible:ring-offset-0',
+                    'rounded-lg bg-black/5 p-2 dark:bg-white/5',
+                    'hover:bg-black/10 focus-visible:ring-1 focus-visible:ring-blue-500 focus-visible:ring-offset-0 dark:hover:bg-white/10',
                   )}
                   disabled={!value.trim()}
                   onClick={submitPrompt}
@@ -232,7 +231,7 @@ export const InvestorAIPrompt = ({
                 >
                   <ArrowRight
                     className={cn(
-                      'h-4 w-4 text-white transition-opacity duration-200',
+                      'h-4 w-4 transition-opacity duration-200 dark:text-white',
                       value.trim() ? 'opacity-100' : 'opacity-30',
                     )}
                   />
