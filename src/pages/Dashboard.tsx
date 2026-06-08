@@ -5986,6 +5986,10 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
       >
         {renderOnboardingChecklist()}
         <div id="overview" className="mx-auto max-w-[1292px] scroll-mt-24 space-y-6">
+          <div className="max-w-3xl">
+            <InvestorAIPrompt className="py-0" />
+          </div>
+
           <section className="overflow-hidden rounded-[20px] border border-black/10 bg-white shadow-[0_10px_34px_rgba(0,0,0,0.04)]">
             <div className="grid gap-0 xl:grid-cols-[minmax(0,1fr)_360px]">
               <div className="px-5 py-5 sm:px-6">
@@ -6015,10 +6019,6 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
                       </div>
                     ))}
                   </div>
-                </div>
-
-                <div className="mt-6 max-w-3xl">
-                  <InvestorAIPrompt className="py-0" />
                 </div>
 
                 <div className="mt-6 divide-y divide-black/10 border-y border-black/10">
