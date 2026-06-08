@@ -100,7 +100,7 @@ type AIPromptProps = {
   className?: string;
 };
 
-const AI_Prompt = ({
+export const InvestorAIPrompt = ({
   models = DEFAULT_MODELS,
   defaultModel = 'Claude 4.5 Sonnet',
   placeholder = 'What can I do for you?',
@@ -241,41 +241,6 @@ const AI_Prompt = ({
           </div>
         </div>
       </div>
-    </div>
-  );
-};
-
-export const InvestorAIAssist = () => {
-  const [isOpen, setIsOpen] = useState(false);
-
-  return (
-    <div className="fixed bottom-6 right-6 z-[80] flex flex-col items-end gap-3">
-      <AnimatePresence>
-        {isOpen && (
-          <motion.aside
-            className="w-[min(calc(100vw-2rem),46rem)]"
-            initial={{ opacity: 0, y: 18, scale: 0.98 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 16, scale: 0.98 }}
-            transition={{ duration: 0.18, ease: 'easeOut' }}
-          >
-            <AI_Prompt className="w-full" />
-          </motion.aside>
-        )}
-      </AnimatePresence>
-
-      <button
-        type="button"
-        aria-label={isOpen ? 'Close Apparent Copilot' : 'Open Apparent Copilot'}
-        onClick={() => setIsOpen((current) => !current)}
-        className="group flex h-16 w-16 items-center justify-center rounded-full border border-white/40 bg-black/82 text-white shadow-[0_18px_60px_rgba(0,0,0,0.28)] backdrop-blur-xl transition hover:scale-105 hover:bg-black"
-      >
-        <span className="grid grid-cols-2 gap-1.5">
-          {[0, 1, 2, 3].map((dot) => (
-            <span key={dot} className="h-2 w-2 rounded-full bg-white/90 transition group-hover:bg-[#dcefc7]" />
-          ))}
-        </span>
-      </button>
     </div>
   );
 };

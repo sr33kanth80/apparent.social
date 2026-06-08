@@ -55,7 +55,7 @@ import { DiscoverDeck } from '@/pages/DiscoverDeck';
 import { GitHubIcon } from '@/components/GitHubIcon';
 import { LogoIcon } from '@/components/LogoIcon';
 import { GithubVerifyCard } from '@/components/GithubVerifyCard';
-import { InvestorAIAssist } from '@/components/InvestorAIAssist';
+import { InvestorAIPrompt } from '@/components/InvestorAIAssist';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import type {
   AppUser,
@@ -6017,6 +6017,10 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
                   </div>
                 </div>
 
+                <div className="mt-6 max-w-3xl">
+                  <InvestorAIPrompt className="py-0" />
+                </div>
+
                 <div className="mt-6 divide-y divide-black/10 border-y border-black/10">
                   {topBuilders.map((builder, index) => {
                     const state = getBuilderState(builder);
@@ -8610,8 +8614,6 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
           )} {/* end isDashboardLoading ternary */}
         </div>
       </main>
-
-      {!isDashboardLoading && isInvestor && activeView === 'overview' && <InvestorAIAssist />}
 
       {pointerDrag && (
         <div
