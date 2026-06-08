@@ -469,6 +469,25 @@ export interface UserMessage {
   status: 'draft' | 'sent' | 'replied';
   context: string;
   updatedAt: string;
+  /** When the recipient read this message. Null/undefined = unread (recipient side). */
+  readAt?: string;
+}
+
+/** A persistent in-app notification (e.g. a thesis-matched founder just launched). */
+export interface Notification {
+  id: string;
+  userId: string;
+  /** e.g. 'launch_match' | 'message' | 'info'. */
+  type: string;
+  title: string;
+  body: string;
+  /** In-app route to open when clicked. */
+  link: string;
+  /** Structured payload (launch_id, founder_id, …). */
+  data: Record<string, unknown>;
+  /** Null/undefined = unread. */
+  readAt?: string;
+  createdAt: string;
 }
 
 /** A VC's interest in a builder, expressed via the Discover swipe deck. */
@@ -517,6 +536,7 @@ export interface DashboardData {
   builderDiscoveryStates: BuilderDiscoveryState[];
   termReviews: TermReview[];
   messages: UserMessage[];
+  notifications: Notification[];
   feedItems: FeedItem[];
   /** Names of investor matches the current founder has bookmarked. */
   savedInvestorMatchNames: string[];

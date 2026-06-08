@@ -24,6 +24,7 @@ import type {
   LaunchTeamMember,
   Meetup,
   NetworkCluster,
+  Notification,
   PublicFounderProfile,
   PublicProfileResult,
   PublicProjectDetail,
@@ -119,16 +120,125 @@ const publishLocalLaunch = (launch: ProductLaunch) => {
   ]);
 };
 
-const toTextTokens = (value: string) =>
-  value
+// ---------- Thesis/sector matching engine ----------
+// The old matcher did naive case-insensitive substring checks on >2-char
+// tokens, so "AI infra" never matched "machine learning tooling", and short
+// tokens produced false hits. This version is concept-aware (synonyms map to a
+// shared canonical concept), word-boundary safe, and proportional (a partial
+// thesis overlap scores less than a full one).
+
+// Canonical concept → every surface form that should resolve to it. Multi-word
+// forms are matched as whole phrases; single tokens as whole words.
+const CONCEPT_SYNONYMS: Record<string, string[]> = {
+  ai: ['ai', 'a i', 'artificial intelligence', 'machine learning', 'ml', 'deep learning', 'llm', 'llms', 'genai', 'generative ai', 'foundation model', 'foundation models', 'neural', 'nlp', 'computer vision'],
+  agents: ['agent', 'agents', 'agentic', 'autonomous agents', 'ai agents', 'copilot', 'copilots'],
+  devtools: ['devtools', 'developer tools', 'dev tools', 'developer experience', 'developer platform', 'tooling', 'sdk', 'cli', 'api platform', 'apis'],
+  infra: ['infra', 'infrastructure', 'cloud', 'devops', 'observability', 'kubernetes', 'serverless', 'data infrastructure', 'compute', 'networking'],
+  data: ['data', 'analytics', 'database', 'data engineering', 'etl', 'warehouse', 'data warehouse', 'business intelligence', 'data platform'],
+  fintech: ['fintech', 'finance', 'financial', 'payments', 'banking', 'lending', 'insurance', 'insurtech', 'wealth', 'trading', 'accounting', 'treasury'],
+  security: ['security', 'cybersecurity', 'infosec', 'cyber', 'appsec', 'privacy', 'compliance', 'soc2', 'identity', 'authentication', 'encryption'],
+  health: ['health', 'healthcare', 'healthtech', 'medtech', 'biotech', 'bio', 'medical', 'clinical', 'digital health', 'life sciences', 'pharma', 'diagnostics'],
+  saas: ['saas', 'b2b', 'enterprise', 'enterprise software', 'business software', 'vertical saas'],
+  consumer: ['consumer', 'b2c', 'social', 'marketplace', 'marketplaces', 'mobile app', 'd2c', 'dtc', 'creator', 'creators'],
+  commerce: ['commerce', 'ecommerce', 'e commerce', 'retail', 'shopping', 'payments commerce'],
+  crypto: ['crypto', 'web3', 'blockchain', 'defi', 'onchain', 'on chain', 'nft', 'wallet', 'stablecoin'],
+  climate: ['climate', 'climatetech', 'cleantech', 'clean energy', 'energy', 'sustainability', 'carbon', 'solar', 'battery'],
+  productivity: ['productivity', 'workflow', 'workflows', 'collaboration', 'no code', 'nocode', 'low code', 'automation'],
+  hardware: ['hardware', 'robotics', 'iot', 'devices', 'semiconductor', 'chips', 'drones', 'sensors'],
+  education: ['education', 'edtech', 'learning', 'e learning', 'upskilling'],
+  legal: ['legal', 'legaltech', 'legal ops', 'contracts', 'governance'],
+  hr: ['hr', 'hrtech', 'recruiting', 'talent', 'people ops', 'hiring', 'workforce'],
+  sales: ['sales', 'crm', 'gtm', 'go to market', 'revenue', 'salestech', 'pipeline'],
+  marketing: ['marketing', 'martech', 'growth', 'advertising', 'adtech', 'seo', 'social media'],
+  logistics: ['logistics', 'supply chain', 'freight', 'shipping', 'fleet', 'delivery'],
+  gaming: ['gaming', 'games', 'game', 'esports', 'gamedev'],
+};
+
+// Words too generic to carry sector signal on their own — excluded from the
+// literal-keyword overlap so they don't inflate fit.
+const MATCH_STOPWORDS = new Set([
+  'the', 'and', 'for', 'with', 'that', 'this', 'our', 'your', 'are', 'from', 'into', 'out',
+  'who', 'what', 'how', 'using', 'use', 'used', 'build', 'building', 'builds', 'builder',
+  'builders', 'founder', 'founders', 'startup', 'startups', 'company', 'companies', 'team',
+  'teams', 'early', 'stage', 'tech', 'technology', 'platform', 'tool', 'tools', 'app', 'apps',
+  'product', 'products', 'software', 'solution', 'solutions', 'focused', 'focus', 'first', 'new',
+  'based', 'making', 'make', 'help', 'helps', 'helping', 'better', 'best', 'next', 'generation',
+]);
+
+// Map a free-text blob to the set of canonical concepts it mentions.
+const conceptsIn = (text: string): Set<string> => {
+  const normalized = ` ${text.toLowerCase().replace(/[^a-z0-9]+/g, ' ').replace(/\s+/g, ' ')} `;
+  const found = new Set<string>();
+  for (const [concept, forms] of Object.entries(CONCEPT_SYNONYMS)) {
+    for (const form of forms) {
+      if (normalized.includes(` ${form} `)) {
+        found.add(concept);
+        break;
+      }
+    }
+  }
+  return found;
+};
+
+// Significant literal tokens (length > 2, not a stopword). Captures niche
+// keywords the synonym map doesn't know about (e.g. a specific protocol name).
+const keywordsIn = (text: string): Set<string> => {
+  const tokens = text
     .toLowerCase()
     .split(/[^a-z0-9]+/)
-    .filter((token) => token.length > 2);
-
-const textIncludesAny = (source: string, tokens: string[]) => {
-  const normalizedSource = source.toLowerCase();
-  return tokens.some((token) => normalizedSource.includes(token));
+    .filter((token) => token.length > 2 && !MATCH_STOPWORDS.has(token));
+  return new Set(tokens);
 };
+
+const intersectionSize = (a: Set<string>, b: Set<string>): number => {
+  let count = 0;
+  a.forEach((value) => {
+    if (b.has(value)) count += 1;
+  });
+  return count;
+};
+
+/**
+ * Proportional 0..1 relevance of `criteria` text against a `haystack`, plus a
+ * boolean "did anything match at all". Canonical concepts weigh ~1.5x literal
+ * keywords. The score saturates so a thesis with many matched concepts can't
+ * dominate — it's normalized against what the criteria asked for.
+ */
+const relevanceScore = (criteria: string, haystack: string): { score: number; matched: boolean } => {
+  if (!criteria.trim()) return { score: 0, matched: false };
+
+  const criteriaConcepts = conceptsIn(criteria);
+  const haystackConcepts = conceptsIn(haystack);
+  const conceptHits = intersectionSize(criteriaConcepts, haystackConcepts);
+
+  const criteriaWords = keywordsIn(criteria);
+  const haystackWords = keywordsIn(haystack);
+  const wordHits = intersectionSize(criteriaWords, haystackWords);
+
+  // What a "full" match would look like for this criteria string. Cap the
+  // keyword contribution so a long thesis paragraph doesn't make every match
+  // look weak.
+  const expected = Math.max(1, criteriaConcepts.size * 1.5 + Math.min(criteriaWords.size, 5));
+  const hits = conceptHits * 1.5 + wordHits;
+  const score = Math.min(1, hits / expected);
+
+  return { score, matched: conceptHits > 0 || wordHits > 0 };
+};
+
+// Normalize funding stage so "Pre-seed" / "pre seed" / "preseed" all compare
+// equal, and "Series A" matches "series-a".
+const normalizeStage = (value: string) => value.toLowerCase().replace(/[^a-z0-9]/g, '');
+
+const stageMatches = (criteriaStage: string, builderStage: string): boolean => {
+  const a = normalizeStage(criteriaStage);
+  const b = normalizeStage(builderStage);
+  if (!a || !b) return false;
+  return a.includes(b) || b.includes(a);
+};
+
+// Award a base point value scaled by relevance: a match earns at least half the
+// base (so a real hit always feels meaningful) and the full base at score 1.
+const scaledPoints = (base: number, score: number) => Math.round(base * (0.5 + 0.5 * score));
 
 
 const freshnessWeight = (freshnessAt: string) => {
@@ -546,6 +656,22 @@ const mapMessageRow = (row: Record<string, unknown>): UserMessage => ({
   status: row.status === 'sent' || row.status === 'replied' ? row.status : 'draft',
   context: String(row.context ?? ''),
   updatedAt: String(row.updated_at ?? row.updatedAt ?? nowIso()),
+  readAt: row.read_at || row.readAt ? String(row.read_at ?? row.readAt) : undefined,
+});
+
+const mapNotificationRow = (row: Record<string, unknown>): Notification => ({
+  id: String(row.id),
+  userId: String(row.user_id ?? row.userId ?? ''),
+  type: String(row.type ?? 'info'),
+  title: String(row.title ?? ''),
+  body: String(row.body ?? ''),
+  link: String(row.link ?? ''),
+  data:
+    row.data && typeof row.data === 'object' && !Array.isArray(row.data)
+      ? (row.data as Record<string, unknown>)
+      : {},
+  readAt: row.read_at || row.readAt ? String(row.read_at ?? row.readAt) : undefined,
+  createdAt: String(row.created_at ?? row.createdAt ?? nowIso()),
 });
 
 const normalizeCity = (value: string) => {
@@ -788,46 +914,58 @@ const calculateBuilderFit = (
 
   if (role === 'investor') {
     const criteria = values as InvestorCriteriaValues;
-    if (textIncludesAny(haystack, toTextTokens(criteria.thesis))) {
-      score += 14;
+    // Thesis + sectors are the heart of the match — concept-aware and
+    // proportional. A thesis is usually prose, so include sectors in its
+    // haystack-side comparison too.
+    const thesis = relevanceScore(criteria.thesis, haystack);
+    if (thesis.matched) {
+      score += scaledPoints(16, thesis.score);
       reasons.push('Thesis match');
     }
-    if (textIncludesAny(haystack, toTextTokens(criteria.sectors))) {
-      score += 12;
+    const sectors = relevanceScore(criteria.sectors, haystack);
+    if (sectors.matched) {
+      score += scaledPoints(12, sectors.score);
       reasons.push('Sector fit');
     }
-    if (criteria.stage && builder.stage.toLowerCase().includes(criteria.stage.toLowerCase())) {
+    if (criteria.stage && stageMatches(criteria.stage, builder.stage)) {
       score += 9;
       reasons.push('Stage fit');
     }
-    if (textIncludesAny(builder.location, toTextTokens(criteria.geography))) {
-      score += 7;
+    const geography = relevanceScore(criteria.geography, builder.location);
+    if (geography.matched) {
+      score += scaledPoints(7, geography.score);
       reasons.push('Geography fit');
     }
-    if (textIncludesAny(haystack, toTextTokens(criteria.founderSignals))) {
-      score += 10;
+    const founderSignals = relevanceScore(criteria.founderSignals, haystack);
+    if (founderSignals.matched) {
+      score += scaledPoints(10, founderSignals.score);
       reasons.push('Founder signal');
     }
-    if (criteria.passSignals && textIncludesAny(haystack, toTextTokens(criteria.passSignals))) {
-      score -= 18;
+    const passSignals = relevanceScore(criteria.passSignals, haystack);
+    if (passSignals.matched) {
+      // Penalty scales with how strongly the pass-signal shows up.
+      score -= scaledPoints(18, passSignals.score);
       reasons.push('Pass-signal risk');
     }
   } else {
     const profile = values as FounderProfileValues;
-    if (textIncludesAny(haystack, toTextTokens(profile.category))) {
-      score += 14;
+    const category = relevanceScore(profile.category, haystack);
+    if (category.matched) {
+      score += scaledPoints(14, category.score);
       reasons.push('Similar category');
     }
-    if (profile.stage && builder.stage.toLowerCase().includes(profile.stage.toLowerCase())) {
+    if (profile.stage && stageMatches(profile.stage, builder.stage)) {
       score += 9;
       reasons.push('Similar stage');
     }
-    if (textIncludesAny(builder.location, toTextTokens(profile.location))) {
-      score += 12;
+    const nearby = relevanceScore(profile.location, builder.location);
+    if (nearby.matched) {
+      score += scaledPoints(12, nearby.score);
       reasons.push('Nearby builder');
     }
-    if (textIncludesAny(haystack, toTextTokens(profile.currentBuild))) {
-      score += 8;
+    const buildOverlap = relevanceScore(profile.currentBuild, haystack);
+    if (buildOverlap.matched) {
+      score += scaledPoints(8, buildOverlap.score);
       reasons.push('Build overlap');
     }
   }
@@ -1326,6 +1464,18 @@ export const subscribeBuilderNetwork = (
     .on(
       'postgres_changes',
       { event: '*', schema: 'public', table: 'builder_discovery_states', filter: `user_id=eq.${user.id}` },
+      onChange,
+    )
+    // Incoming DMs: refresh so a new message + unread badge appears live.
+    .on(
+      'postgres_changes',
+      { event: '*', schema: 'public', table: 'user_messages', filter: `recipient_id=eq.${user.id}` },
+      onChange,
+    )
+    // Personal notifications (e.g. "a matched founder just launched").
+    .on(
+      'postgres_changes',
+      { event: '*', schema: 'public', table: 'notifications', filter: `user_id=eq.${user.id}` },
       onChange,
     )
     .subscribe();
@@ -1834,6 +1984,7 @@ const loadLocalDashboard = async (user: AppUser, role: DashboardRole, labelByKey
   );
   const termReviews = readLocal<TermReview[]>(storageKey(user, 'term-reviews'), []);
   const messages = readLocal<UserMessage[]>(storageKey(user, 'messages'), []);
+  const notifications = readLocal<Notification[]>(storageKey(user, 'notifications'), []);
   const feedActions = readLocal<Record<string, Partial<FeedItem>>>(storageKey(user, 'feed-actions'), {});
 
   if (role === 'investor') {
@@ -1866,6 +2017,7 @@ const loadLocalDashboard = async (user: AppUser, role: DashboardRole, labelByKey
       builderDiscoveryStates: builderNetwork.builderDiscoveryStates,
       termReviews,
       messages,
+      notifications,
       feedItems: buildFeedItems(role, profileSaved, signalRowsWithBuilders, meetups, productLaunches, feedActions),
       savedInvestorMatchNames: [],
       launchEngagement: {},
@@ -1891,6 +2043,7 @@ const loadLocalDashboard = async (user: AppUser, role: DashboardRole, labelByKey
     builderDiscoveryStates: builderNetwork.builderDiscoveryStates,
     termReviews,
     messages,
+    notifications,
     feedItems: buildFeedItems(role, profileSaved, [], meetups, productLaunches, feedActions),
     savedInvestorMatchNames: [],
     launchEngagement: {},
@@ -1945,6 +2098,16 @@ export const loadDashboardData = async (
             () => ({ data: null }),
           )
         : Promise.resolve({ data: null }),
+      supabase!
+        .from('notifications')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(50)
+        .then(
+          (r) => r,
+          () => ({ data: [] }),
+        ),
     ]);
   })();
 
@@ -2019,10 +2182,12 @@ export const loadDashboardData = async (
     commentRows: Record<string, unknown>[] | null;
     investorStateRows: Record<string, unknown>[] | null;
     interestRpcResult: { data: unknown } | null;
+    notificationRows: Record<string, unknown>[] | null;
   };
 
   const deriveDeferred = (d: DeferredData) => {
     const messages = (d.messageRows ?? []).map((row) => mapMessageRow(row));
+    const notifications = (d.notificationRows ?? []).map((row) => mapNotificationRow(row));
     const userUpvotedIds = new Set((d.userUpvoteRows ?? []).map((row) => String(row.launch_id)));
     const commentsByLaunch = (d.commentRows ?? []).reduce<Record<string, string[]>>((acc, row) => {
       const lid = String(row.launch_id);
@@ -2064,7 +2229,7 @@ export const loadDashboardData = async (
           : [],
       };
     }
-    return { messages, launchEngagement, savedInvestorMatchNames, feedActions, founderInterest };
+    return { messages, notifications, launchEngagement, savedInvestorMatchNames, feedActions, founderInterest };
   };
 
   // Empty defaults so we can build the Overview-ready snapshot before the
@@ -2076,6 +2241,7 @@ export const loadDashboardData = async (
     commentRows: null,
     investorStateRows: null,
     interestRpcResult: null,
+    notificationRows: null,
   });
 
   if (role === 'investor') {
@@ -2118,6 +2284,7 @@ export const loadDashboardData = async (
       builderDiscoveryStates: builderNetwork.builderDiscoveryStates,
       termReviews,
       messages: d.messages,
+      notifications: d.notifications,
       feedItems: buildFeedItems(role, profileSaved, signalRowsWithBuilders, effectiveMeetups, productLaunches, d.feedActions),
       savedInvestorMatchNames: d.savedInvestorMatchNames,
       launchEngagement: d.launchEngagement,
@@ -2136,6 +2303,7 @@ export const loadDashboardData = async (
       // investorStateRows kept for future signal sources — not used today.
       _investorStateRowsRes,
       _interestRpcRes,
+      { data: notificationRows },
     ] = await deferredPromise;
 
     const realDeferred = deriveDeferred({
@@ -2145,6 +2313,7 @@ export const loadDashboardData = async (
       commentRows: (commentRows ?? []) as Record<string, unknown>[],
       investorStateRows: null,
       interestRpcResult: null,
+      notificationRows: (notificationRows ?? []) as Record<string, unknown>[],
     });
     void _investorStateRowsRes;
     void _interestRpcRes;
@@ -2181,6 +2350,7 @@ export const loadDashboardData = async (
     builderDiscoveryStates: builderNetwork.builderDiscoveryStates,
     termReviews,
     messages: d.messages,
+    notifications: d.notifications,
     feedItems: buildFeedItems(role, profileSaved, [], effectiveMeetups, productLaunches, d.feedActions),
     savedInvestorMatchNames: d.savedInvestorMatchNames,
     launchEngagement: d.launchEngagement,
@@ -2198,6 +2368,7 @@ export const loadDashboardData = async (
     { data: commentRows },
     _investorStateRowsRes,
     interestRpcResult,
+    { data: notificationRows },
   ] = await deferredPromise;
 
   const realDeferred = deriveDeferred({
@@ -2207,6 +2378,7 @@ export const loadDashboardData = async (
     commentRows: (commentRows ?? []) as Record<string, unknown>[],
     investorStateRows: null,
     interestRpcResult: interestRpcResult as { data: unknown } | null,
+    notificationRows: (notificationRows ?? []) as Record<string, unknown>[],
   });
   void _investorStateRowsRes;
 
@@ -2702,6 +2874,112 @@ export const saveMessage = async (
 
   if (error) throw error;
   return mapMessageRow(data);
+};
+
+/**
+ * Mark every unread incoming message from `counterpartyId` as read. Called when
+ * the recipient opens a conversation. Returns the number of messages flipped.
+ * No-ops gracefully when offline / pre-migration so the inbox never breaks.
+ */
+export const markThreadRead = async (user: AppUser, counterpartyId: string): Promise<number> => {
+  if (!counterpartyId) return 0;
+
+  if (!isSupabaseConfigured || !supabase || user.isDev) {
+    const current = readLocal<UserMessage[]>(storageKey(user, 'messages'), []);
+    let flipped = 0;
+    const next = current.map((message) => {
+      const incoming = message.recipientId === user.id && message.ownerId === counterpartyId;
+      if (incoming && !message.readAt) {
+        flipped += 1;
+        return { ...message, readAt: nowIso() };
+      }
+      return message;
+    });
+    if (flipped > 0) writeLocal(storageKey(user, 'messages'), next);
+    return flipped;
+  }
+
+  if (!isUuid(counterpartyId)) return 0;
+
+  try {
+    const { data, error } = await supabase.rpc('mark_thread_read', { p_counterparty: counterpartyId });
+    if (error) return 0;
+    return Number(data ?? 0);
+  } catch {
+    return 0;
+  }
+};
+
+// ---------- Notifications ----------
+
+export const loadNotifications = async (user: AppUser): Promise<Notification[]> => {
+  if (!isSupabaseConfigured || !supabase || user.isDev) {
+    return readLocal<Notification[]>(storageKey(user, 'notifications'), []);
+  }
+  try {
+    const { data, error } = await supabase
+      .from('notifications')
+      .select('*')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false })
+      .limit(50);
+    if (error || !data) return [];
+    return data.map((row) => mapNotificationRow(row as Record<string, unknown>));
+  } catch {
+    return [];
+  }
+};
+
+export const markNotificationRead = async (user: AppUser, notificationId: string): Promise<void> => {
+  if (!isSupabaseConfigured || !supabase || user.isDev) {
+    const current = readLocal<Notification[]>(storageKey(user, 'notifications'), []);
+    writeLocal(
+      storageKey(user, 'notifications'),
+      current.map((n) => (n.id === notificationId ? { ...n, readAt: n.readAt ?? nowIso() } : n)),
+    );
+    return;
+  }
+  try {
+    await supabase.from('notifications').update({ read_at: nowIso() }).eq('id', notificationId).eq('user_id', user.id);
+  } catch {
+    /* non-fatal */
+  }
+};
+
+export const markAllNotificationsRead = async (user: AppUser): Promise<void> => {
+  if (!isSupabaseConfigured || !supabase || user.isDev) {
+    const current = readLocal<Notification[]>(storageKey(user, 'notifications'), []);
+    writeLocal(
+      storageKey(user, 'notifications'),
+      current.map((n) => ({ ...n, readAt: n.readAt ?? nowIso() })),
+    );
+    return;
+  }
+  try {
+    await supabase
+      .from('notifications')
+      .update({ read_at: nowIso() })
+      .eq('user_id', user.id)
+      .is('read_at', null);
+  } catch {
+    /* non-fatal */
+  }
+};
+
+/**
+ * Push "first dibs" notifications to thesis-matched investors for a just-published
+ * launch. Returns the number of investors notified so the founder gets immediate
+ * "N matched investors notified" feedback. No-ops gracefully offline.
+ */
+export const notifyInvestorsOfLaunch = async (user: AppUser, launchId: string): Promise<number> => {
+  if (!isSupabaseConfigured || !supabase || user.isDev || !isUuid(launchId)) return 0;
+  try {
+    const { data, error } = await supabase.rpc('notify_investors_of_launch', { p_launch_id: launchId });
+    if (error) return 0;
+    return Number(data ?? 0);
+  } catch {
+    return 0;
+  }
 };
 
 export const saveFeedAction = async (

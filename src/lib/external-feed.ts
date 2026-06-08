@@ -4,8 +4,8 @@
  * "For You" feed already renders.
  *
  * Pipeline (write side, NOT in this repo):
- *   A scraper (e.g. Perplexity Computer, cron at 07:00 PST) writes two files
- *   to the R2 bucket via the S3 API (see scripts/upload-feed.mjs):
+ *   A Claude Code Routine (scheduled cron job) sources external launches and
+ *   writes two files to the R2 bucket via the S3 API (see scripts/upload-feed.mjs):
  *     - feeds/external-launches.json  → broad discovery feed (Idea 1)
  *     - feeds/daily-digest.json       → curated daily VC deal flow (Idea 2)
  *   Feed files must be JSON objects with a `launches` array.
@@ -130,8 +130,8 @@ export const loadExternalLaunches = async (
 };
 
 /**
- * Curated daily VC deal flow (Idea 2). Refreshed by the scraper at 07:00 PST;
- * surfaced on the investor "Daily" tab.
+ * Curated daily VC deal flow (Idea 2). Refreshed by the Claude Code Routine
+ * (scheduled cron job); surfaced on the investor "Daily" tab.
  */
 export const loadDailyDigest = async (
   onCached?: (launches: ProductLaunch[]) => void,

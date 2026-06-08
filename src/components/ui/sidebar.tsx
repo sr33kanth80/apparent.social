@@ -53,6 +53,8 @@ interface SessionNavBarProps {
   /** When false, advanced nav groups are tucked behind a "More" expander
       until the user has set up their workspace (progressive disclosure). */
   activated?: boolean;
+  /** Unread DM count — badged on the Messages nav item. */
+  unreadMessages?: number;
 }
 
 const deriveDisplayName = (email: string): string =>
@@ -183,11 +185,14 @@ const NavLinkItem = ({
   isCollapsed,
   isActive,
   activeClass,
+  unreadCount = 0,
 }: {
   item: NavItem;
   isCollapsed: boolean;
   isActive: boolean;
   activeClass: string;
+  /** Numeric unread badge (e.g. unread DMs). 0 = hidden. */
+  unreadCount?: number;
 }) => {
   const Icon = item.icon;
   const to = item.path;
@@ -200,7 +205,13 @@ const NavLinkItem = ({
         isActive && activeClass,
       )}
     >
-      <Icon className="h-4 w-4 shrink-0" />
+      <span className="relative shrink-0">
+        <Icon className="h-4 w-4" />
+        {/* Collapsed sidebar: a dot stands in for the numeric badge. */}
+        {isCollapsed && unreadCount > 0 && (
+          <span className="absolute -right-1 -top-1 h-2 w-2 rounded-full bg-red-500" />
+        )}
+      </span>
       <motion.li variants={variants}>
         {!isCollapsed && (
           <div className="ml-2 flex items-center gap-2">
@@ -212,6 +223,11 @@ const NavLinkItem = ({
               >
                 {item.badge}
               </Badge>
+            )}
+            {unreadCount > 0 && (
+              <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-semibold leading-none text-white">
+                {unreadCount > 9 ? '9+' : unreadCount}
+              </span>
             )}
           </div>
         )}
@@ -243,6 +259,7 @@ function BaseSessionNavBar({
   role,
   user,
   activated = true,
+  unreadMessages = 0,
   onSignOut,
 }: SessionNavBarProps & { onSignOut?: () => Promise<void> }) {
   const [isHovered, setIsHovered] = useState(false);
@@ -354,6 +371,7 @@ function BaseSessionNavBar({
                               isCollapsed={isCollapsed}
                               isActive={activePath === item.path}
                               activeClass={config.active}
+                              unreadCount={item.path.endsWith('/messages') ? unreadMessages : 0}
                             />
                           ))}
                         </div>

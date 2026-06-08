@@ -3,8 +3,8 @@
  * upload-feed.mjs — push a local JSON file to the Apparent Cloudflare R2 bucket.
  *
  * Zero dependencies: native node:crypto SigV4 signing + global fetch (Node 18+).
- * Built for the scraper pipeline (e.g. Perplexity Computer, cron @ 07:00 PST)
- * to publish the daily feeds the dashboard reads.
+ * Built for the Claude Code Routine (scheduled cron job) that sources external
+ * launches and publishes the daily feeds the dashboard reads.
  *
  * ── Usage ───────────────────────────────────────────────────────────────────
  *   node scripts/upload-feed.mjs <localFile> <feed>

@@ -68,6 +68,7 @@ import type {
   Meetup,
   NetworkInterestPin,
   NetworkMapFilters,
+  Notification,
   ProductLaunch,
   TermReview,
   UserMessage,
@@ -98,6 +99,9 @@ import {
   saveLaunchComment,
   saveMeetup,
   saveMessage,
+  markThreadRead,
+  markAllNotificationsRead,
+  notifyInvestorsOfLaunch,
   deleteProductLaunch,
   saveProductLaunch,
   saveSettings,
@@ -222,6 +226,8 @@ interface MessageThread {
   counterpartyId?: string;
   latest: UserMessage;
   messages: UserMessage[];
+  /** Unread incoming messages in this thread (recipient hasn't opened them). */
+  unreadCount: number;
 }
 
 const investorStageOptions = ['Pre-seed', 'Seed', 'Series A', 'Series B', 'Series C+', 'Growth'];
@@ -731,6 +737,21 @@ const matchKnownPlace = (query: string): NetworkInterestPin | null => {
 
 const formatCount = (count: number, singular: string, plural: string) => (count === 1 ? `1 ${singular}` : `${count} ${plural}`);
 
+// Compact relative time ("just now", "5m ago", "3h ago", "2d ago") for the
+// notifications feed. Falls back to empty string on an unparseable timestamp.
+const formatRelativeTime = (iso: string): string => {
+  const then = new Date(iso).getTime();
+  if (Number.isNaN(then)) return '';
+  const diffMs = Date.now() - then;
+  const minutes = Math.floor(diffMs / 60000);
+  if (minutes < 1) return 'just now';
+  if (minutes < 60) return `${minutes}m ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  return days === 1 ? 'yesterday' : `${days}d ago`;
+};
+
 const getInitials = (value: string) => {
   const initials = value
     .trim()
@@ -898,6 +919,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
   const [isLocatingUser, setIsLocatingUser] = useState(false);
   const [termReviews, setTermReviews] = useState<TermReview[]>([]);
   const [messages, setMessages] = useState<UserMessage[]>([]);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
   const [feedRows, setFeedRows] = useState<FeedItem[]>([]);
   const [selectedClusterCity, setSelectedClusterCity] = useState('');
   const [selectedBuilderId, setSelectedBuilderId] = useState('');
@@ -1286,6 +1308,8 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
       ).trim();
       const counterpartyId = isIncoming ? message.ownerId : message.recipientId || '';
       const id = counterpartyId || counterpartyName.toLowerCase();
+      // Unread = an incoming message the recipient (me) hasn't opened yet.
+      const isUnread = isIncoming && !message.readAt;
       const currentThread = threads.get(id);
 
       if (!currentThread) {
@@ -1295,11 +1319,13 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
           counterpartyId: counterpartyId || undefined,
           latest: message,
           messages: [message],
+          unreadCount: isUnread ? 1 : 0,
         });
         return;
       }
 
       currentThread.messages.push(message);
+      if (isUnread) currentThread.unreadCount += 1;
       if (!currentThread.counterpartyId && counterpartyId) currentThread.counterpartyId = counterpartyId;
       if (new Date(message.updatedAt).getTime() > new Date(currentThread.latest.updatedAt).getTime()) {
         currentThread.latest = message;
@@ -1340,6 +1366,46 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
     ? null
     : messageThreads.find((thread) => thread.id === selectedMessageThreadId) ?? messageThreads[0] ?? null;
   const activeThreadMessages = activeMessageThread?.messages ?? [];
+  const totalUnreadMessages = useMemo(
+    () => messageThreads.reduce((sum, thread) => sum + thread.unreadCount, 0),
+    [messageThreads],
+  );
+  const unreadNotificationCount = useMemo(
+    () => notifications.filter((notification) => !notification.readAt).length,
+    [notifications],
+  );
+
+  // Opening the bell marks everything read (optimistic + persisted).
+  const handleToggleNotifications = () => {
+    setShowNotifications((current) => {
+      const next = !current;
+      if (next && notifications.some((notification) => !notification.readAt)) {
+        const stampedAt = new Date().toISOString();
+        setNotifications((items) => items.map((item) => (item.readAt ? item : { ...item, readAt: stampedAt })));
+        void markAllNotificationsRead(user);
+      }
+      return next;
+    });
+  };
+
+  // When a thread with unread incoming messages becomes active, mark it read:
+  // optimistically stamp readAt locally, then persist via RPC.
+  useEffect(() => {
+    const thread = activeMessageThread;
+    if (!thread || thread.unreadCount === 0) return;
+    const counterpartyId = thread.counterpartyId;
+    if (!counterpartyId) return;
+
+    const stampedAt = new Date().toISOString();
+    setMessages((current) =>
+      current.map((message) =>
+        message.recipientId === user.id && message.ownerId === counterpartyId && !message.readAt
+          ? { ...message, readAt: stampedAt }
+          : message,
+      ),
+    );
+    void markThreadRead(user, counterpartyId);
+  }, [activeMessageThread, user]);
 
   useEffect(() => {
     let isCancelled = false;
@@ -1362,6 +1428,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
       setBuilderDiscoveryStates(data.builderDiscoveryStates);
       setTermReviews(data.termReviews);
       setMessages(data.messages);
+      setNotifications(data.notifications);
       setFeedRows(data.feedItems);
       setSavedInvestorMatchNames(data.savedInvestorMatchNames);
       setLaunchEngagement(data.launchEngagement);
@@ -2784,6 +2851,18 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
       setLaunchDraft(emptyLaunchDraft());
       setIsLaunchFormOpen(false);
       addActivity(`Launched ${savedLaunch.name} into Apparent`);
+
+      // First dibs: push the launch to thesis-matched on-platform investors so
+      // they see it before the founder falls back to cold heat-map outreach.
+      if (savedLaunch.publicProfileEnabled) {
+        void notifyInvestorsOfLaunch(user, savedLaunch.id).then((count) => {
+          if (count > 0) {
+            addActivity(
+              `${formatCount(count, 'matched investor', 'matched investors')} notified — they have first dibs on ${savedLaunch.name}`,
+            );
+          }
+        });
+      }
     } catch (error) {
       setDashboardError(error instanceof Error ? error.message : 'Unable to save product launch.');
     } finally {
@@ -7483,10 +7562,19 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
                     </Avatar>
                     <div className="min-w-0 flex-1">
                       <div className="flex items-start justify-between gap-2">
-                        <p className="truncate text-sm font-semibold">{thread.recipient}</p>
-                        <span className="shrink-0 text-[11px] text-gray-400">{formatMessageTime(thread.latest.updatedAt)}</span>
+                        <p className={`truncate text-sm ${thread.unreadCount > 0 ? 'font-bold text-black' : 'font-semibold'}`}>
+                          {thread.recipient}
+                        </p>
+                        <span className="flex shrink-0 items-center gap-1.5">
+                          {thread.unreadCount > 0 && (
+                            <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-semibold leading-none text-white">
+                              {thread.unreadCount > 9 ? '9+' : thread.unreadCount}
+                            </span>
+                          )}
+                          <span className="text-[11px] text-gray-400">{formatMessageTime(thread.latest.updatedAt)}</span>
+                        </span>
                       </div>
-                      <p className="mt-1 truncate text-xs font-medium text-gray-500">{thread.latest.subject || 'Apparent message'}</p>
+                      <p className={`mt-1 truncate text-xs ${thread.unreadCount > 0 ? 'font-semibold text-gray-700' : 'font-medium text-gray-500'}`}>{thread.latest.subject || 'Apparent message'}</p>
                       <p className="mt-1 line-clamp-2 text-xs leading-relaxed text-gray-500">{thread.latest.body}</p>
                       <div className="mt-2 flex items-center gap-2">
                         <span className={`rounded-full px-2 py-0.5 text-[11px] ${dmSoftSurface} text-gray-600`}>{thread.latest.status}</span>
@@ -8170,26 +8258,53 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
   const notificationBell = (
     <div className="relative">
       <button
-        className="rounded-full border border-black/10 bg-white p-2.5 text-gray-700 transition-colors hover:text-black"
-        onClick={() => setShowNotifications((current) => !current)}
+        className="relative rounded-full border border-black/10 bg-white p-2.5 text-gray-700 transition-colors hover:text-black"
+        onClick={handleToggleNotifications}
         aria-label="Toggle notifications"
       >
         <Bell className="h-4 w-4" />
+        {unreadNotificationCount > 0 && (
+          <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-semibold leading-none text-white">
+            {unreadNotificationCount > 9 ? '9+' : unreadNotificationCount}
+          </span>
+        )}
       </button>
       {showNotifications && (
         <div className="absolute right-0 top-12 z-30 w-80 rounded-2xl border border-black/10 bg-white p-4 shadow-xl">
           <div className="mb-3 flex items-center justify-between">
-            <p className="font-semibold">Activity</p>
+            <p className="font-semibold">Notifications</p>
             <button onClick={() => setShowNotifications(false)} aria-label="Close notifications">
               <X className="h-4 w-4" />
             </button>
           </div>
-          <div className="space-y-2">
-            {activity.map((item) => (
-              <div key={item} className="rounded-xl bg-gray-50 p-3 text-sm text-gray-700">
-                {item}
+          <div className="max-h-96 space-y-2 overflow-y-auto">
+            {notifications.length === 0 && activity.length === 0 && (
+              <p className="rounded-xl bg-gray-50 p-3 text-sm text-gray-500">
+                You're all caught up. Matches and replies will show up here.
+              </p>
+            )}
+            {notifications.map((notification) => (
+              <div
+                key={notification.id}
+                className={`rounded-xl border p-3 text-sm ${
+                  notification.readAt ? 'border-transparent bg-gray-50 text-gray-700' : 'border-[#dcefc7] bg-[#f3f9ea] text-gray-800'
+                }`}
+              >
+                <p className="font-semibold leading-snug">{notification.title}</p>
+                {notification.body && <p className="mt-0.5 text-[13px] text-gray-600">{notification.body}</p>}
+                <p className="mt-1 text-[11px] text-gray-400">{formatRelativeTime(notification.createdAt)}</p>
               </div>
             ))}
+            {activity.length > 0 && (
+              <>
+                <p className="px-1 pt-2 text-[11px] font-semibold uppercase tracking-wide text-gray-400">This session</p>
+                {activity.map((item) => (
+                  <div key={item} className="rounded-xl bg-gray-50 p-3 text-sm text-gray-700">
+                    {item}
+                  </div>
+                ))}
+              </>
+            )}
           </div>
         </div>
       )}
@@ -8198,7 +8313,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
 
   return (
     <div className="min-h-screen bg-[#fbf8f3] text-black">
-      <SessionNavBar role={role} user={user} activated={profileSaved} />
+      <SessionNavBar role={role} user={user} activated={profileSaved} unreadMessages={totalUnreadMessages} />
 
       <main className="min-h-screen pl-[15rem]">
         <div className={isVCHeatMapView ? 'min-h-screen' : isMessagesView ? 'relative mx-auto flex h-screen w-full max-w-[1440px] flex-col overflow-hidden px-6 pt-6' : showWorkspaceHeader ? 'mx-auto max-w-[1440px] px-6 py-6' : 'relative mx-auto max-w-[1440px] px-6 pb-6 pt-6'}>
