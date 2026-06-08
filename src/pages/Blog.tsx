@@ -969,58 +969,55 @@ export const BlogPost = () => {
 
   return (
     <main className="overflow-x-hidden bg-[#fbfaf7] text-black">
-      <section className="mx-auto max-w-[92rem] px-5 pb-14 pt-14 text-center sm:px-8 md:pt-20">
-        <div className="mx-auto max-w-[54rem]">
-          <button
-            type="button"
-            onClick={() => navigate('/blog')}
-            className="mb-10 inline-flex items-center gap-2 rounded-full bg-[#dcefc7] px-5 py-2.5 text-sm font-semibold text-black transition-colors hover:bg-[#cce8ae]"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            Back to blog
-          </button>
+      <article className="mx-auto max-w-[44rem] px-5 py-20 sm:px-8 md:py-24">
+        <button
+          type="button"
+          onClick={() => navigate('/blog')}
+          className="mb-10 inline-flex items-center gap-2 rounded-full bg-[#dcefc7] px-5 py-2.5 text-sm font-semibold text-black transition-colors hover:bg-[#cce8ae]"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Back to blog
+        </button>
 
-          <p className="text-sm font-semibold text-black/45">{postMeta(article)}</p>
-          <h1
-            className="mx-auto mt-6 max-w-[54rem] text-[3.2rem] font-normal leading-[0.9] tracking-[-0.055em] sm:text-[5rem] md:text-[6.2rem]"
-            style={serifDisplay}
-          >
-            {article.title}
-          </h1>
-          <p className="mx-auto mt-8 max-w-3xl text-lg leading-8 text-black/65 md:text-xl">{article.dek}</p>
-        </div>
-      </section>
+        <h1 className="text-balance text-5xl font-normal leading-[0.92] tracking-[-0.05em] md:text-6xl" style={serifDisplay}>
+          {article.title}
+        </h1>
 
-      <section className="mx-auto max-w-[92rem] border-t border-black/10 px-5 py-16 sm:px-8">
-        <div className="mx-auto max-w-[74rem]">
-          <article className="mx-auto max-w-[42rem] text-left xl:max-w-[44rem]">
-            <div className="space-y-10">
-              {articleSections.map((section) => (
-                <section key={section.id} id={section.id} className="scroll-mt-32">
-                  <h2 className="text-3xl font-normal leading-tight tracking-[-0.035em] md:text-4xl" style={serifDisplay}>
-                    {section.heading}
-                  </h2>
-                  <div className="mt-4 space-y-5 text-base leading-8 text-black/65">
-                    {section.paragraphs.map((paragraph) => (
-                      <p key={paragraph}>{paragraph}</p>
-                    ))}
-                  </div>
-                  {section.bullets && section.heading === 'How to qualify the list' ? renderInsightCard(section.bullets) : null}
-                  {section.bullets && section.heading !== 'How to qualify the list' ? (
-                    <ul className="mt-6 divide-y divide-black/10 border-y border-black/10">
-                      {section.bullets.map((bullet) => (
-                        <li key={bullet} className="list-none py-5">
-                          {renderBullet(bullet)}
-                        </li>
-                      ))}
-                    </ul>
-                  ) : null}
-                </section>
-              ))}
-            </div>
-          </article>
+        <div className="mt-6 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm font-semibold text-black/45">
+          <span>By {article.author}</span>
+          <span className="h-4 w-px bg-black/15" />
+          <span>{article.date}</span>
+          <span className="h-4 w-px bg-black/15" />
+          <span>{article.readTime}</span>
         </div>
-      </section>
+
+        <p className="mt-8 text-xl leading-9 text-black/68">{article.dek}</p>
+
+        <div className="mt-12 space-y-12">
+          {articleSections.map((section) => (
+            <section key={section.id} id={section.id} className="scroll-mt-32">
+              <h2 className="text-3xl font-normal leading-tight tracking-[-0.035em] md:text-4xl" style={serifDisplay}>
+                {section.heading}
+              </h2>
+              <div className="mt-4 space-y-5 text-base leading-8 text-black/65">
+                {section.paragraphs.map((paragraph) => (
+                  <p key={paragraph}>{paragraph}</p>
+                ))}
+              </div>
+              {section.bullets && section.heading === 'How to qualify the list' ? renderInsightCard(section.bullets) : null}
+              {section.bullets && section.heading !== 'How to qualify the list' ? (
+                <ul className="mt-6 divide-y divide-black/10 border-y border-black/10">
+                  {section.bullets.map((bullet) => (
+                    <li key={bullet} className="list-none py-5">
+                      {renderBullet(bullet)}
+                    </li>
+                  ))}
+                </ul>
+              ) : null}
+            </section>
+          ))}
+        </div>
+      </article>
 
       <section className="mx-auto max-w-[92rem] border-t border-black/10 px-5 py-20 text-center sm:px-8">
         <h2 className="mx-auto max-w-3xl text-5xl font-normal leading-none tracking-[-0.045em] md:text-7xl" style={serifDisplay}>
