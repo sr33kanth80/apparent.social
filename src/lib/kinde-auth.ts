@@ -18,6 +18,35 @@ export const kindeClientId = import.meta.env.VITE_KINDE_CLIENT_ID as string | un
 export const kindeDomain = import.meta.env.VITE_KINDE_DOMAIN as string | undefined;
 export const isKindeConfigured = Boolean(kindeClientId && kindeDomain);
 
+// Connection IDs from the Kinde dashboard (Settings → Authentication → Identity
+// Providers — each provider exposes a `conn_…` id). When we pass one of these
+// as `connection_id` in authUrlParams, Kinde skips its hosted picker page and
+// routes the user straight into that provider's flow:
+//   - For OAuth (Google): one click → Google → back to Apparent. No Kinde UI.
+//   - For email/password: skip the picker → land directly on Kinde's email form.
+//
+// IDs are read from Vite env vars so we can wire / re-wire connections without
+// a code change. If an id is missing, the matching button hides itself; if ALL
+// three are missing the panel falls back to the picker so the page never
+// breaks during initial setup.
+export const kindeGoogleConnectionId =
+  (import.meta.env.VITE_KINDE_GOOGLE_CONN_ID as string | undefined)?.trim() || '';
+export const kindeEmailPasswordConnectionId =
+  (import.meta.env.VITE_KINDE_EMAIL_PASSWORD_CONN_ID as string | undefined)?.trim() || '';
+export const kindeUsernamePasswordConnectionId =
+  (import.meta.env.VITE_KINDE_USERNAME_PASSWORD_CONN_ID as string | undefined)?.trim() || '';
+
+export type KindeConnectionKey = 'google' | 'email' | 'username';
+
+export const kindeConnectionIds: Record<KindeConnectionKey, string> = {
+  google: kindeGoogleConnectionId,
+  email: kindeEmailPasswordConnectionId,
+  username: kindeUsernamePasswordConnectionId,
+};
+
+/** True when at least one provider's connection id is configured. */
+export const hasAnyKindeConnection = Object.values(kindeConnectionIds).some(Boolean);
+
 export const getKindeRedirectUri = () =>
   (import.meta.env.VITE_KINDE_REDIRECT_URI as string | undefined) ||
   (typeof window !== 'undefined' ? `${window.location.origin}/login` : '');

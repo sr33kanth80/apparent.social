@@ -1,12 +1,18 @@
 import { AnimatePresence, motion } from 'framer-motion';
 import { useKindeAuth } from '@kinde-oss/kinde-auth-react';
-import { ArrowUpRight, Fingerprint, Telescope, type LucideIcon } from 'lucide-react';
+import { ArrowUpRight, AtSign, Fingerprint, Telescope, UserRound, type LucideIcon } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { clearExternalAppUser } from '@/lib/auth-service';
 import type { DashboardRole } from '@/lib/apparent-types';
 import { useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { getKindeLogoutUri, isKindeConfigured, saveRequestedKindeRole } from '@/lib/kinde-auth';
+import {
+  getKindeLogoutUri,
+  hasAnyKindeConnection,
+  isKindeConfigured,
+  kindeConnectionIds,
+  saveRequestedKindeRole,
+} from '@/lib/kinde-auth';
 
 interface FeaturePillar {
   number: string;
@@ -344,12 +350,29 @@ const KindeAuthPanel = ({
     saveRequestedKindeRole(role);
   };
 
-  const handleLogin = async () => {
+  // Each button passes a `connection_id` so Kinde's hosted picker is bypassed.
+  // For Google the user lands directly on Google's consent screen; for email /
+  // username they land on the matching Kinde form. New vs returning is sorted
+  // out by Kinde automatically, so we use a single `login()` call per provider
+  // (no separate "Create account" button needed).
+  const continueWith = async (connectionId: string) => {
     handleAuthClick();
-    await login();
+    if (connectionId) {
+      // `connectionId` is a top-level option on @kinde-oss/kinde-auth-react ≥5
+      // (LoginMethodParams). Passing it makes Kinde bypass its hosted picker
+      // and route the user straight into that provider's flow.
+      await login({ connectionId });
+    } else {
+      // No connection id configured yet — fall back to Kinde's picker so the
+      // page still works during initial setup.
+      await login();
+    }
   };
 
-  const handleRegister = async () => {
+  // Fallback path: until at least one VITE_KINDE_*_CONN_ID env var is set, we
+  // can't deeplink anywhere, so we keep the legacy "Sign in / Create" pair so
+  // the page still works.
+  const legacyRegister = async () => {
     handleAuthClick();
     await register();
   };
@@ -375,23 +398,79 @@ const KindeAuthPanel = ({
 
       {!isAuthenticated && (
         <div className="mt-6 grid gap-3">
-          <button
-            type="button"
-            onClick={handleLogin}
-            disabled={isLoading}
-            className="inline-flex h-11 w-full items-center justify-center rounded-[8px] bg-black px-4 text-sm font-semibold text-white transition hover:bg-black/85 disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            {isLoading ? 'Loading...' : 'Sign in with Kinde'}
-          </button>
-          <button
-            type="button"
-            onClick={handleRegister}
-            disabled={isLoading}
-            className="inline-flex h-11 w-full items-center justify-center rounded-[8px] border border-black/10 bg-white px-4 text-sm font-semibold text-black transition hover:bg-black/5 disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            Create account
-          </button>
-          <p className="text-center text-xs text-black/45">Suggested email: {emailPlaceholder}</p>
+          {hasAnyKindeConnection ? (
+            <>
+              {kindeConnectionIds.google && (
+                <button
+                  type="button"
+                  onClick={() => continueWith(kindeConnectionIds.google)}
+                  disabled={isLoading}
+                  className="inline-flex h-11 w-full items-center justify-center gap-3 rounded-[8px] border border-black/10 bg-white px-4 text-sm font-semibold text-black transition hover:bg-black/5 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  <GoogleMark className="h-4 w-4" />
+                  {isLoading ? 'Loading…' : 'Continue with Google'}
+                </button>
+              )}
+
+              {(kindeConnectionIds.email || kindeConnectionIds.username) && kindeConnectionIds.google && (
+                <div className="flex items-center gap-3 text-[11px] font-semibold uppercase tracking-[0.16em] text-black/35">
+                  <span className="h-px flex-1 bg-black/10" />
+                  or
+                  <span className="h-px flex-1 bg-black/10" />
+                </div>
+              )}
+
+              {kindeConnectionIds.email && (
+                <button
+                  type="button"
+                  onClick={() => continueWith(kindeConnectionIds.email)}
+                  disabled={isLoading}
+                  className="inline-flex h-11 w-full items-center justify-center gap-3 rounded-[8px] bg-black px-4 text-sm font-semibold text-white transition hover:bg-black/85 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  <AtSign className="h-4 w-4" />
+                  {isLoading ? 'Loading…' : 'Continue with email'}
+                </button>
+              )}
+
+              {kindeConnectionIds.username && (
+                <button
+                  type="button"
+                  onClick={() => continueWith(kindeConnectionIds.username)}
+                  disabled={isLoading}
+                  className="inline-flex h-11 w-full items-center justify-center gap-3 rounded-[8px] border border-black/15 bg-white px-4 text-sm font-semibold text-black transition hover:bg-black/5 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  <UserRound className="h-4 w-4" />
+                  {isLoading ? 'Loading…' : 'Continue with username'}
+                </button>
+              )}
+
+              <p className="text-center text-xs text-black/45">
+                {role === 'investor' ? 'Investor profiles are bound to the email used here.' : 'Founder profiles are bound to the email used here.'} Suggested: {emailPlaceholder}
+              </p>
+            </>
+          ) : (
+            // Initial-setup fallback: env vars aren't wired yet, so we still
+            // route through Kinde's picker page rather than 404 the user.
+            <>
+              <button
+                type="button"
+                onClick={() => continueWith('')}
+                disabled={isLoading}
+                className="inline-flex h-11 w-full items-center justify-center rounded-[8px] bg-black px-4 text-sm font-semibold text-white transition hover:bg-black/85 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {isLoading ? 'Loading…' : 'Sign in'}
+              </button>
+              <button
+                type="button"
+                onClick={legacyRegister}
+                disabled={isLoading}
+                className="inline-flex h-11 w-full items-center justify-center rounded-[8px] border border-black/10 bg-white px-4 text-sm font-semibold text-black transition hover:bg-black/5 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                Create account
+              </button>
+              <p className="text-center text-xs text-black/45">Suggested email: {emailPlaceholder}</p>
+            </>
+          )}
         </div>
       )}
 
@@ -416,3 +495,26 @@ const KindeAuthPanel = ({
     </div>
   );
 };
+
+// Google's brand "G" mark. Inlined as SVG because lucide-react doesn't ship
+// brand logos (trademark policy). Colors are Google's official palette.
+const GoogleMark = ({ className }: { className?: string }) => (
+  <svg viewBox="0 0 24 24" aria-hidden="true" className={className}>
+    <path
+      fill="#4285F4"
+      d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.76h3.56c2.08-1.92 3.28-4.74 3.28-8.09Z"
+    />
+    <path
+      fill="#34A853"
+      d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.56-2.76c-.98.66-2.23 1.06-3.72 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84A11 11 0 0 0 12 23Z"
+    />
+    <path
+      fill="#FBBC05"
+      d="M5.84 14.11A6.62 6.62 0 0 1 5.5 12c0-.73.13-1.45.34-2.11V7.05H2.18A11 11 0 0 0 1 12c0 1.77.43 3.45 1.18 4.95l3.66-2.84Z"
+    />
+    <path
+      fill="#EA4335"
+      d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.05l3.66 2.84C6.71 7.3 9.14 5.38 12 5.38Z"
+    />
+  </svg>
+);
