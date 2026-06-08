@@ -395,18 +395,34 @@ const KindeAuthPanel = ({
   };
 
   return (
-    <div className="rounded-[8px] border border-black/5 bg-white/80 p-6 shadow-[0_18px_60px_rgba(0,0,0,0.06)]">
-      <div>
-        <p className="text-xl font-semibold tracking-[-0.01em] text-black">{title}</p>
-        <p className="mt-2 text-sm leading-6 text-black/60">{description}</p>
+    // Dark olive-charcoal panel on the light editorial page — same contrast
+    // trick Vercel/Linear use to make auth feel like the focal CTA. Subtle
+    // sage hairline (#42520d at low alpha) ties it to the rest of the brand.
+    <div className="relative overflow-hidden rounded-[18px] border border-[#42520d]/40 bg-[#181a13] p-7 text-white shadow-[0_30px_80px_rgba(20,24,8,0.32)]">
+      {/* Soft top-corner halo so the dark box doesn't read flat. */}
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute -right-20 -top-24 h-56 w-56 rounded-full bg-[#dcefc7]/[0.07] blur-3xl"
+      />
+
+      <div className="relative">
+        <p
+          className="text-2xl font-normal leading-tight tracking-[-0.02em] text-white"
+          style={serifDisplay}
+        >
+          {title}
+        </p>
+        <p className="mt-2.5 text-sm leading-6 text-white/65">{description}</p>
       </div>
 
-      <div className="mt-6 rounded-[8px] border border-black/10 bg-[#fbfaf7] p-4">
-        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-black/45">{contextLabel}</p>
+      <div className="relative mt-6 rounded-[14px] border border-white/10 bg-white/[0.04] p-4 backdrop-blur">
+        <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#dcefc7]/75">
+          {contextLabel}
+        </p>
         <div className="mt-3 grid gap-2">
           {contextItems.map((item) => (
-            <div key={item} className="flex items-center gap-2 text-sm text-black/70">
-              <span className="h-1.5 w-1.5 rounded-full bg-[#42520d]" />
+            <div key={item} className="flex items-start gap-2.5 text-sm leading-5 text-white/80">
+              <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-[#dcefc7]" />
               {item}
             </div>
           ))}
@@ -414,14 +430,13 @@ const KindeAuthPanel = ({
       </div>
 
       {!isAuthenticated && (
-        <div className="mt-6 grid gap-3">
+        <div className="relative mt-6 grid gap-3">
           {hasAnyKindeConnection ? (
             <>
-              {/* Sign in / Sign up segmented control. Default = Sign up so new
-                  visitors have an obvious path; returning users flip with one
-                  click. Each provider button below routes through register()
-                  or login() based on this selection. */}
-              <div className="flex items-center gap-1 rounded-full border border-black/10 bg-[#fbfaf7] p-1">
+              {/* Sign in / Sign up segmented control. Active pill is the sage
+                  accent on near-black — the same color language used for the
+                  feature pillars in the editorial column. */}
+              <div className="flex items-center gap-1 rounded-full border border-white/10 bg-black/40 p-1">
                 {(['signup', 'signin'] as const).map((mode) => {
                   const active = authMode === mode;
                   const label = mode === 'signup' ? 'Sign up' : 'Sign in';
@@ -431,7 +446,9 @@ const KindeAuthPanel = ({
                       type="button"
                       onClick={() => setAuthMode(mode)}
                       className={`h-8 flex-1 rounded-full text-xs font-semibold transition-colors ${
-                        active ? 'bg-black text-white' : 'text-black/60 hover:bg-black/5'
+                        active
+                          ? 'bg-[#dcefc7] text-[#181a13] shadow-[0_4px_14px_rgba(220,239,199,0.18)]'
+                          : 'text-white/55 hover:text-white/85'
                       }`}
                     >
                       {label}
@@ -441,11 +458,13 @@ const KindeAuthPanel = ({
               </div>
 
               {kindeConnectionIds.google && (
+                // Google's brand requires white (or correctly-styled dark) —
+                // white keeps the mark crisp and gives the page a focal CTA.
                 <button
                   type="button"
                   onClick={() => continueWith(kindeConnectionIds.google)}
                   disabled={isLoading}
-                  className="inline-flex h-11 w-full items-center justify-center gap-3 rounded-[8px] border border-black/10 bg-white px-4 text-sm font-semibold text-black transition hover:bg-black/5 disabled:cursor-not-allowed disabled:opacity-60"
+                  className="group inline-flex h-11 w-full items-center justify-center gap-3 rounded-[10px] bg-white px-4 text-sm font-semibold text-[#181a13] shadow-[0_8px_22px_rgba(0,0,0,0.25)] transition-all hover:-translate-y-px hover:shadow-[0_12px_28px_rgba(0,0,0,0.32)] disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0"
                 >
                   <GoogleMark className="h-4 w-4" />
                   {isLoading ? 'Loading…' : isSignup ? 'Sign up with Google' : 'Sign in with Google'}
@@ -453,19 +472,22 @@ const KindeAuthPanel = ({
               )}
 
               {(kindeConnectionIds.email || kindeConnectionIds.username) && kindeConnectionIds.google && (
-                <div className="flex items-center gap-3 text-[11px] font-semibold uppercase tracking-[0.16em] text-black/35">
-                  <span className="h-px flex-1 bg-black/10" />
+                <div className="flex items-center gap-3 text-[10px] font-semibold uppercase tracking-[0.18em] text-white/35">
+                  <span className="h-px flex-1 bg-white/12" />
                   or
-                  <span className="h-px flex-1 bg-black/10" />
+                  <span className="h-px flex-1 bg-white/12" />
                 </div>
               )}
 
               {kindeConnectionIds.email && (
+                // Primary brand action — sage on dark. Carries the same
+                // pop as the olive CTAs throughout the rest of the app, but
+                // inverted for this dark surface.
                 <button
                   type="button"
                   onClick={() => continueWith(kindeConnectionIds.email)}
                   disabled={isLoading}
-                  className="inline-flex h-11 w-full items-center justify-center gap-3 rounded-[8px] bg-black px-4 text-sm font-semibold text-white transition hover:bg-black/85 disabled:cursor-not-allowed disabled:opacity-60"
+                  className="group inline-flex h-11 w-full items-center justify-center gap-3 rounded-[10px] bg-[#dcefc7] px-4 text-sm font-semibold text-[#181a13] shadow-[0_8px_22px_rgba(220,239,199,0.18)] transition-all hover:-translate-y-px hover:bg-[#e7f5d4] hover:shadow-[0_12px_28px_rgba(220,239,199,0.26)] disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0"
                 >
                   <AtSign className="h-4 w-4" />
                   {isLoading ? 'Loading…' : isSignup ? 'Sign up with email' : 'Sign in with email'}
@@ -473,19 +495,24 @@ const KindeAuthPanel = ({
               )}
 
               {kindeConnectionIds.username && (
+                // Secondary action — ghost button styled to read as a
+                // companion to the email button, not a competitor.
                 <button
                   type="button"
                   onClick={() => continueWith(kindeConnectionIds.username)}
                   disabled={isLoading}
-                  className="inline-flex h-11 w-full items-center justify-center gap-3 rounded-[8px] border border-black/15 bg-white px-4 text-sm font-semibold text-black transition hover:bg-black/5 disabled:cursor-not-allowed disabled:opacity-60"
+                  className="inline-flex h-11 w-full items-center justify-center gap-3 rounded-[10px] border border-white/15 bg-white/[0.04] px-4 text-sm font-semibold text-white/90 transition-colors hover:bg-white/[0.08] hover:text-white disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   <UserRound className="h-4 w-4" />
                   {isLoading ? 'Loading…' : isSignup ? 'Sign up with username' : 'Sign in with username'}
                 </button>
               )}
 
-              <p className="text-center text-xs text-black/45">
-                {role === 'investor' ? 'Investor profiles are bound to the email used here.' : 'Founder profiles are bound to the email used here.'} Suggested: {emailPlaceholder}
+              <p className="mt-1 text-center text-[11px] leading-5 text-white/45">
+                {role === 'investor'
+                  ? 'Investor profiles are bound to the email used here.'
+                  : 'Founder profiles are bound to the email used here.'}{' '}
+                <span className="text-white/55">Suggested:</span> {emailPlaceholder}
               </p>
             </>
           ) : (
@@ -496,7 +523,7 @@ const KindeAuthPanel = ({
                 type="button"
                 onClick={() => continueWith('')}
                 disabled={isLoading}
-                className="inline-flex h-11 w-full items-center justify-center rounded-[8px] bg-black px-4 text-sm font-semibold text-white transition hover:bg-black/85 disabled:cursor-not-allowed disabled:opacity-60"
+                className="inline-flex h-11 w-full items-center justify-center rounded-[10px] bg-[#dcefc7] px-4 text-sm font-semibold text-[#181a13] shadow-[0_8px_22px_rgba(220,239,199,0.18)] transition-all hover:-translate-y-px hover:bg-[#e7f5d4] disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0"
               >
                 {isLoading ? 'Loading…' : 'Sign in'}
               </button>
@@ -504,22 +531,22 @@ const KindeAuthPanel = ({
                 type="button"
                 onClick={legacyRegister}
                 disabled={isLoading}
-                className="inline-flex h-11 w-full items-center justify-center rounded-[8px] border border-black/10 bg-white px-4 text-sm font-semibold text-black transition hover:bg-black/5 disabled:cursor-not-allowed disabled:opacity-60"
+                className="inline-flex h-11 w-full items-center justify-center rounded-[10px] border border-white/15 bg-white/[0.04] px-4 text-sm font-semibold text-white/90 transition-colors hover:bg-white/[0.08] hover:text-white disabled:cursor-not-allowed disabled:opacity-60"
               >
                 Create account
               </button>
-              <p className="text-center text-xs text-black/45">Suggested email: {emailPlaceholder}</p>
+              <p className="text-center text-[11px] text-white/45">Suggested email: {emailPlaceholder}</p>
             </>
           )}
         </div>
       )}
 
       {isAuthenticated && (
-        <div className="mt-6 flex items-center justify-between rounded-[8px] border border-black/10 bg-white px-4 py-3">
+        <div className="relative mt-6 flex items-center justify-between rounded-[14px] border border-white/10 bg-white/[0.04] px-4 py-3">
           <button
             type="button"
             onClick={() => logout({ redirectUrl: getKindeLogoutUri() })}
-            className="inline-flex h-9 items-center justify-center rounded-[8px] border border-black/10 bg-white px-4 text-sm font-semibold text-black transition hover:bg-black/5"
+            className="inline-flex h-9 items-center justify-center rounded-[8px] border border-white/15 bg-transparent px-4 text-sm font-semibold text-white/85 transition-colors hover:bg-white/[0.08] hover:text-white"
           >
             Sign out
           </button>
@@ -531,7 +558,7 @@ const KindeAuthPanel = ({
               const targetRole = kindeUser ? resolveKindeRole(kindeUser.id, role) : role;
               navigate(`/dashboard/${targetRole}`);
             }}
-            className="inline-flex h-9 items-center justify-center rounded-[8px] bg-black px-4 text-sm font-semibold text-white transition hover:bg-black/85"
+            className="inline-flex h-9 items-center justify-center rounded-[8px] bg-[#dcefc7] px-4 text-sm font-semibold text-[#181a13] transition-colors hover:bg-[#e7f5d4]"
           >
             Open workspace
           </button>
