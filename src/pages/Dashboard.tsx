@@ -57,6 +57,7 @@ import { GitHubIcon } from '@/components/GitHubIcon';
 import { LogoIcon } from '@/components/LogoIcon';
 import { GithubVerifyCard } from '@/components/GithubVerifyCard';
 import { InvestorAgentChat } from '@/components/InvestorAgentChat';
+import { FounderAgentChat } from '@/components/FounderAgentChat';
 import { FounderDossierCard } from '@/components/FounderDossierCard';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import type {
@@ -105,6 +106,7 @@ import {
   markThreadRead,
   markAllNotificationsRead,
   notifyInvestorsOfLaunch,
+  notifyInvestorsOfFounder,
   deleteProductLaunch,
   saveProductLaunch,
   saveSettings,
@@ -2921,6 +2923,69 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
     } catch (error) {
       return { ok: false, reason: error instanceof Error ? error.message : 'Send failed' };
     }
+  };
+
+  // ---------- Founder agent (F1): intros to on-platform investors + amplify ----------
+
+  const founderAgentContext = useMemo(
+    () => ({
+      name: intakeValues.profileName ?? '',
+      headline: intakeValues.headline ?? '',
+      bio: intakeValues.bio ?? '',
+      currentBuild: intakeValues.currentBuild ?? '',
+      category: intakeValues.category ?? '',
+      stage: intakeValues.stage ?? '',
+      location: intakeValues.location ?? '',
+      traction: intakeValues.traction || intakeValues.tractionValue || intakeValues.mrr || '',
+      fundraisingStatus: intakeValues.fundraisingStatus ?? '',
+      raisingRound: intakeValues.raisingRound ?? '',
+      raisingAmount: intakeValues.raisingAmount ?? '',
+    }),
+    [intakeValues],
+  );
+
+  // Founder → on-platform investor intro DM (RLS-safe; reuses the messaging rails).
+  const handleFounderIntro = async (proposal: {
+    investorId: string;
+    investorName: string;
+    subject: string;
+    body: string;
+  }): Promise<{ ok: boolean; reason?: string }> => {
+    if (!proposal.investorId || !proposal.body.trim()) return { ok: false, reason: 'Incomplete draft' };
+    if (contactedFounderIds.includes(proposal.investorId)) return { ok: false, reason: 'Already messaged' };
+
+    const startOfDay = new Date();
+    startOfDay.setHours(0, 0, 0, 0);
+    const sentToday = messages.filter(
+      (message) =>
+        message.context === 'founder-intro' &&
+        message.ownerId === user.id &&
+        new Date(message.updatedAt).getTime() >= startOfDay.getTime(),
+    ).length;
+    if (sentToday >= AGENT_DAILY_DM_CAP) return { ok: false, reason: 'Daily limit reached' };
+
+    try {
+      const savedMessage = await saveMessage(user, {
+        recipient: proposal.investorName || 'Investor',
+        recipientId: proposal.investorId,
+        senderName: founderAgentContext.name || user.username || user.email.split('@')[0],
+        subject: proposal.subject,
+        body: proposal.body,
+        status: 'sent',
+        context: 'founder-intro',
+      });
+      setMessages((current) => [savedMessage, ...current.filter((message) => message.id !== savedMessage.id)]);
+      addActivity(`Sent an intro to ${proposal.investorName || 'an investor'}`);
+      return { ok: true };
+    } catch (error) {
+      return { ok: false, reason: error instanceof Error ? error.message : 'Send failed' };
+    }
+  };
+
+  const handleFounderAmplify = async (): Promise<number> => {
+    const count = await notifyInvestorsOfFounder(user);
+    if (count > 0) addActivity(`Amplified to ${formatCount(count, 'matched investor', 'matched investors')}`);
+    return count;
   };
 
   // ---------- Phase 3: autonomous follow-ups + reply-aware deal flow ----------
@@ -8798,7 +8863,16 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
                 >
                   {renderOnboardingChecklist()}
                   {!isInvestor && (
-                    <div className="mx-auto mt-6 max-w-[1292px]">
+                    <div className="mx-auto mt-6 max-w-[1292px] space-y-4">
+                      <div className="max-w-4xl">
+                        <FounderAgentChat
+                          user={user}
+                          founder={founderAgentContext}
+                          contactedInvestorIds={contactedFounderIds}
+                          onSendIntro={handleFounderIntro}
+                          onAmplify={handleFounderAmplify}
+                        />
+                      </div>
                       <FounderDossierCard user={user} />
                     </div>
                   )}

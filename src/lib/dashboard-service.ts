@@ -2988,6 +2988,21 @@ export const notifyInvestorsOfLaunch = async (user: AppUser, launchId: string): 
   }
 };
 
+/**
+ * Founder amplification: push the current founder to every on-platform investor
+ * whose thesis they match (deduped per investor). Returns how many were notified.
+ */
+export const notifyInvestorsOfFounder = async (user: AppUser): Promise<number> => {
+  if (!isSupabaseConfigured || !supabase || user.isDev) return 0;
+  try {
+    const { data, error } = await supabase.rpc('notify_investors_of_founder');
+    if (error) return 0;
+    return Number(data ?? 0);
+  } catch {
+    return 0;
+  }
+};
+
 export const saveFeedAction = async (
   user: AppUser,
   itemId: string,
