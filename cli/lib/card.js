@@ -6,6 +6,7 @@
 // When stdout isn't a TTY, the colour helpers no-op and it renders as plain text.
 
 const { c, visLen } = require('./ui');
+const logo = require('./logo');
 
 const INNER = 60; // visible chars between the side borders
 
@@ -73,20 +74,25 @@ const render = ({ payload, name, kind }) => {
   const range = totals.firstCommit && totals.lastCommit ? `${totals.firstCommit} → ${totals.lastCommit}` : '';
   const headline = kind === 'project' && projects[0] ? projects[0].name : name || 'A builder';
 
-  const lines = [
-    top,
-    center(`${c.magenta('░▒▓')}  ${c.brightGreen('A P P A R E N T')}  ${c.magenta('▓▒░')}`),
-    center(c.dim('· · ·   ') + c.boldWhite('B U I L D   C A R D') + c.dim('   · · ·')),
-    mid,
-    row(c.boldWhite(clip(headline, INNER))),
+  // Brand header: the rasterized Apparent mark (block-centered, uniform left pad
+  // so the art stays a rectangle), then the title.
+  const logoPad = ' '.repeat(Math.max(0, Math.floor((INNER - logo.WIDTH) / 2)));
+  const lines = [top, blank];
+  for (const l of logo.LINES) lines.push(row(logoPad + c.green(l.padEnd(logo.WIDTH))));
+  lines.push(blank);
+  lines.push(center(c.dim('· · ·   ') + c.boldWhite('A P P A R E N T') + c.dim('   · · ·')));
+  lines.push(center(c.dim('b u i l d   c a r d')));
+  lines.push(mid);
+  lines.push(row(c.boldWhite(clip(headline, INNER))));
+  lines.push(
     row(
       `${c.dim(range)}${range ? c.dim('   ·   ') : ''}${c.yellow(rank(cadence.shippedDaysLast60))}` +
         `${c.dim('  ·  shipped ')}${c.yellow(`${cadence.shippedDaysLast60}/60`)}`,
     ),
-    blank,
-    statRow(totals),
-    blank,
-  ];
+  );
+  lines.push(blank);
+  lines.push(statRow(totals));
+  lines.push(blank);
 
   for (const l of languages.slice(0, 4)) {
     lines.push(row(`${c.white(clip(l.name, 11).padEnd(11))} ${bar(l.percent)} ${c.green(`${String(l.percent).padStart(3)}%`)}`));
