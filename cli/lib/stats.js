@@ -76,6 +76,15 @@ const aggregate = (perRepo, emails, scope) => {
   const since60 = daysAgo(60).getTime();
   const shippedDaysLast60Union = new Set(allDates.filter((d) => new Date(d).getTime() >= since60)).size;
 
+  // Daily commit counts for the last 30 days (oldest → newest) → sparkline art.
+  const dayCount = new Map();
+  for (const d of allDates) dayCount.set(d, (dayCount.get(d) || 0) + 1);
+  const activity = [];
+  for (let i = 29; i >= 0; i -= 1) {
+    const day = daysAgo(i).toISOString().slice(0, 10);
+    activity.push(dayCount.get(day) || 0);
+  }
+
   const langTotal = Object.values(langCounts).reduce((s, n) => s + n, 0) || 1;
   const languages = Object.entries(langCounts)
     .map(([name, n]) => ({ name, percent: Math.round((n / langTotal) * 100) }))
@@ -106,6 +115,7 @@ const aggregate = (perRepo, emails, scope) => {
       activeDays: activeDaySet.size,
     },
     cadence: { commitsLast30d, commitsLast90d, shippedDaysLast60: shippedDaysLast60Union },
+    activity,
     languages,
     projects,
     generatedAt: new Date().toISOString(),

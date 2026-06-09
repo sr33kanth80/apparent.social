@@ -1,7 +1,9 @@
 'use strict';
 
 // Renders the ASCII build card. Returns plain text (no ANSI) so width math is
-// exact; the caller paints the whole card one color for a clean screenshot.
+// exact; the caller paints the whole card one colour for a clean screenshot.
+// All glyphs are single-width block/box characters (no emoji) so columns align
+// in any terminal.
 
 const INNER = 60; // visible chars between the side borders
 
@@ -15,6 +17,7 @@ const truncate = (s, n) => {
 const top = `╔${'═'.repeat(INNER + 2)}╗`;
 const mid = `╠${'═'.repeat(INNER + 2)}╣`;
 const bottom = `╚${'═'.repeat(INNER + 2)}╝`;
+const blank = `║ ${' '.repeat(INNER)} ║`;
 
 const row = (text = '') => `║ ${truncate(text, INNER).padEnd(INNER)} ║`;
 
@@ -24,6 +27,39 @@ const center = (text) => {
   return `║ ${' '.repeat(pad)}${t}${' '.repeat(INNER - pad - t.length)} ║`;
 };
 
+// A filled/empty bar: ▕████████░░░░▏
+const bar = (percent, width = 22) => {
+  const filled = Math.max(0, Math.min(width, Math.round((width * percent) / 100)));
+  return `▕${'█'.repeat(filled)}${'░'.repeat(width - filled)}▏`;
+};
+
+// Sparkline from daily counts using 8 block heights.
+const SPARK = ' ▁▂▃▄▅▆▇█';
+const sparkline = (counts) => {
+  const max = Math.max(1, ...counts);
+  return counts.map((n) => SPARK[Math.min(8, Math.round((n / max) * 8))]).join('');
+};
+
+// A playful, honest rank from how many of the last 60 days shipped code.
+const rank = (shipped) => {
+  if (shipped >= 45) return 'unrelenting';
+  if (shipped >= 30) return 'shipping daily';
+  if (shipped >= 15) return 'in the arena';
+  if (shipped >= 5) return 'warming up';
+  return 'just getting started';
+};
+
+// "commits 280     lines +88,011     projects 1" spread across the inner width.
+const statRow = (totals) => {
+  const segs = [
+    `commits ${num(totals.commits)}`,
+    `lines +${num(totals.linesAdded)}`,
+    `projects ${num(totals.repos)}`,
+  ];
+  const text = segs.join('     ');
+  return row(text);
+};
+
 /**
  * @param {object} opts
  * @param {object} opts.payload  aggregate payload from stats.aggregate
@@ -31,32 +67,41 @@ const center = (text) => {
  * @param {'founder'|'project'} opts.kind
  */
 const render = ({ payload, name, kind }) => {
-  const { totals, cadence, languages, projects } = payload;
-  const langLine = languages.slice(0, 3).map((l) => `${l.name} ${l.percent}%`).join(' · ');
+  const { totals, cadence, languages, projects, activity } = payload;
   const range = totals.firstCommit && totals.lastCommit ? `${totals.firstCommit} → ${totals.lastCommit}` : '';
+  const headline = kind === 'project' && projects[0] ? projects[0].name : name || 'A builder';
 
-  const lines = [top, center('APPARENT · BUILD CARD'), mid];
+  const lines = [
+    top,
+    center('░▒▓  A P P A R E N T  ▓▒░'),
+    center('· · ·   B U I L D   C A R D   · · ·'),
+    mid,
+    row(headline),
+    row(`${range}${range ? '   ·   ' : ''}${rank(cadence.shippedDaysLast60)}  ·  shipped ${cadence.shippedDaysLast60}/60`),
+    blank,
+    statRow(totals),
+    blank,
+  ];
 
-  if (kind === 'project') {
-    const project = projects[0] || {};
-    lines.push(row(project.name || name || 'project'));
-    if (project.description) lines.push(row(project.description));
-    lines.push(row(''));
-    lines.push(row(`✦ ${num(totals.commits)} commits · ${num(totals.activeDays)} active days`));
-    lines.push(row(`✦ shipped ${cadence.shippedDaysLast60} of the last 60 days`));
-    lines.push(row(`✦ ${num(totals.linesAdded)} lines added`));
-    if (langLine) lines.push(row(`✦ ${langLine}`));
-  } else {
-    lines.push(row(name || 'A builder'));
-    if (range) lines.push(row(range));
-    lines.push(row(''));
-    lines.push(row(`✦ ${num(totals.commits)} commits across ${num(totals.repos)} projects`));
-    lines.push(row(`✦ shipped ${cadence.shippedDaysLast60} of the last 60 days`));
-    lines.push(row(`✦ ${num(totals.linesAdded)} lines added`));
-    if (langLine) lines.push(row(`✦ ${langLine}`));
-    const lead = projects[0];
-    if (lead) {
-      lines.push(row(''));
+  // Language bars (the data-art centrepiece).
+  const langs = languages.slice(0, 4);
+  for (const l of langs) {
+    lines.push(row(`${truncate(l.name, 11).padEnd(11)} ${bar(l.percent)} ${String(l.percent).padStart(3)}%`));
+  }
+
+  // Activity sparkline (last 30 days).
+  if (Array.isArray(activity) && activity.length) {
+    lines.push(blank);
+    lines.push(row(`last 30 days  ${sparkline(activity)}`));
+  }
+
+  // Top project (founder card) or its description (project card).
+  const lead = projects[0];
+  if (lead) {
+    lines.push(blank);
+    if (kind === 'project') {
+      if (lead.description) lines.push(row(lead.description));
+    } else {
       lines.push(row(`top: ${lead.name}${lead.description ? ` — ${lead.description}` : ''}`));
     }
   }
