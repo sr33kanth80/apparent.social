@@ -90,9 +90,19 @@ export interface InvestorSignal {
   rawTags: string[];
 }
 
+/**
+ * How autonomously the investor's agent acts when reaching out to founders.
+ * - 'manual'          → agent drafts; investor approves every send
+ * - 'auto_onplatform' → agent auto-sends in-app DMs to on-platform founders
+ * - 'autonomous'      → auto-sends + (later) auto-follows-up
+ * Off-platform outreach is always draft-to-inbox regardless of this setting.
+ */
+export type AgentAutonomy = 'manual' | 'auto_onplatform' | 'autonomous';
+
 export interface UserSettings {
   dailyDigestEnabled: boolean;
   slackAlertsEnabled: boolean;
+  agentAutonomy: AgentAutonomy;
 }
 
 export interface ProductLaunch {

@@ -58,6 +58,7 @@ import { GithubVerifyCard } from '@/components/GithubVerifyCard';
 import { InvestorAgentChat } from '@/components/InvestorAgentChat';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import type {
+  AgentAutonomy,
   AppUser,
   BuilderDiscoveryState,
   BuilderMapCluster,
@@ -879,6 +880,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
   const [signalRows, setSignalRows] = useState<InvestorSignal[]>([]);
   const [slackAlertsEnabled, setSlackAlertsEnabled] = useState(true);
   const [dailyDigestEnabled, setDailyDigestEnabled] = useState(true);
+  const [agentAutonomy, setAgentAutonomy] = useState<AgentAutonomy>('manual');
   const [draggedSignalCompany, setDraggedSignalCompany] = useState<string | null>(null);
   const [dragOverStage, setDragOverStage] = useState<InvestorDealStage | null>(null);
   const [pointerDrag, setPointerDrag] = useState<{ company: string; label: string; x: number; y: number } | null>(null);
@@ -1420,6 +1422,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
       setSignalRows(data.signalRows);
       setDailyDigestEnabled(data.settings.dailyDigestEnabled);
       setSlackAlertsEnabled(data.settings.slackAlertsEnabled);
+      setAgentAutonomy(data.settings.agentAutonomy);
       setProductLaunches(data.productLaunches);
       setSelectedLaunchId((current) => current || data.productLaunches[0]?.id || '');
       setMeetups(data.meetups);
@@ -2777,6 +2780,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
   const persistSettings = async (settings: UserSettings, activityItem: string) => {
     setDailyDigestEnabled(settings.dailyDigestEnabled);
     setSlackAlertsEnabled(settings.slackAlertsEnabled);
+    setAgentAutonomy(settings.agentAutonomy);
     setDashboardError('');
     addActivity(activityItem);
 
@@ -2791,7 +2795,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
   const toggleDailyDigest = () => {
     const nextValue = !dailyDigestEnabled;
     void persistSettings(
-      { dailyDigestEnabled: nextValue, slackAlertsEnabled },
+      { dailyDigestEnabled: nextValue, slackAlertsEnabled, agentAutonomy },
       `Daily digest ${nextValue ? 'enabled' : 'paused'}`,
     );
   };
@@ -2799,9 +2803,92 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
   const toggleSlackAlerts = () => {
     const nextValue = !slackAlertsEnabled;
     void persistSettings(
-      { dailyDigestEnabled, slackAlertsEnabled: nextValue },
+      { dailyDigestEnabled, slackAlertsEnabled: nextValue, agentAutonomy },
       `Slack alerts ${nextValue ? 'enabled' : 'paused'}`,
     );
+  };
+
+  const autonomyLabel: Record<AgentAutonomy, string> = {
+    manual: 'Draft & approve',
+    auto_onplatform: 'Auto-DM matches',
+    autonomous: 'Fully autonomous',
+  };
+
+  const handleAgentAutonomyChange = (next: AgentAutonomy) => {
+    if (next === agentAutonomy) return;
+    void persistSettings(
+      { dailyDigestEnabled, slackAlertsEnabled, agentAutonomy: next },
+      `Agent mode set to “${autonomyLabel[next]}”`,
+    );
+  };
+
+  // Founder ids this investor has already messaged — the agent avoids re-proposing
+  // them, and the send guardrail blocks a second contact.
+  const contactedFounderIds = useMemo(
+    () =>
+      Array.from(
+        new Set(
+          messages
+            .filter((message) => message.ownerId === user.id && message.recipientId)
+            .map((message) => message.recipientId as string),
+        ),
+      ),
+    [messages, user.id],
+  );
+
+  // Guardrail-enforced send used by the agent's outreach proposals. Runs as the
+  // authenticated investor (RLS-safe) via the existing messaging rails.
+  const AGENT_DAILY_DM_CAP = 25;
+  const handleAgentOutreach = async (proposal: {
+    founderId: string;
+    founderName: string;
+    subject: string;
+    body: string;
+  }): Promise<{ ok: boolean; reason?: string }> => {
+    if (!proposal.founderId || !proposal.body.trim()) {
+      return { ok: false, reason: 'Incomplete draft' };
+    }
+
+    // Guardrail: respect the founder's contact preference.
+    const builder = builderNodes.find((node) => node.id === proposal.founderId);
+    if (builder && builder.openToContact === false) {
+      return { ok: false, reason: 'Not open to contact' };
+    }
+
+    // Guardrail: never contact the same founder twice.
+    if (contactedFounderIds.includes(proposal.founderId)) {
+      return { ok: false, reason: 'Already contacted' };
+    }
+
+    // Guardrail: per-day auto-send cap.
+    const startOfDay = new Date();
+    startOfDay.setHours(0, 0, 0, 0);
+    const sentToday = messages.filter(
+      (message) =>
+        message.context === 'agent-outreach' &&
+        message.ownerId === user.id &&
+        new Date(message.updatedAt).getTime() >= startOfDay.getTime(),
+    ).length;
+    if (sentToday >= AGENT_DAILY_DM_CAP) {
+      return { ok: false, reason: 'Daily limit reached' };
+    }
+
+    try {
+      const savedMessage = await saveMessage(user, {
+        recipient: proposal.founderName || 'Founder',
+        recipientId: proposal.founderId,
+        senderName: user.username || user.email.split('@')[0],
+        subject: proposal.subject,
+        body: proposal.body,
+        status: 'sent',
+        context: 'agent-outreach',
+      });
+      setMessages((current) => [savedMessage, ...current.filter((message) => message.id !== savedMessage.id)]);
+      addActivity(`Agent reached out to ${proposal.founderName || 'a founder'}`);
+      return { ok: true };
+    } catch (error) {
+      return { ok: false, reason: error instanceof Error ? error.message : 'Send failed' };
+    }
   };
 
   const handleSignOut = async () => {
@@ -6066,7 +6153,14 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
         {renderOnboardingChecklist()}
         <div id="overview" className="mx-auto max-w-[1292px] scroll-mt-24 space-y-6">
           <div className="max-w-4xl">
-            <InvestorAgentChat user={user} criteria={intakeValues} />
+            <InvestorAgentChat
+              user={user}
+              criteria={intakeValues}
+              autonomy={agentAutonomy}
+              onAutonomyChange={handleAgentAutonomyChange}
+              contactedFounderIds={contactedFounderIds}
+              onSendOutreach={handleAgentOutreach}
+            />
           </div>
 
           <section className="overflow-hidden rounded-[20px] border border-black/10 bg-white shadow-[0_10px_34px_rgba(0,0,0,0.04)]">

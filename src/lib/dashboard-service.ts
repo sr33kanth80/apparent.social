@@ -43,7 +43,11 @@ import { isSupabaseConfigured, supabase } from '@/lib/supabase';
 const settingsDefault: UserSettings = {
   dailyDigestEnabled: true,
   slackAlertsEnabled: true,
+  agentAutonomy: 'manual',
 };
+
+const coerceAutonomy = (value: unknown): UserSettings['agentAutonomy'] =>
+  value === 'auto_onplatform' || value === 'autonomous' ? value : 'manual';
 
 const PUBLIC_LAUNCHES_STORAGE_KEY = 'apparent:public-product-launches';
 
@@ -2142,6 +2146,7 @@ export const loadDashboardData = async (
   const settings: UserSettings = {
     dailyDigestEnabled: settingsRow?.daily_digest_enabled ?? true,
     slackAlertsEnabled: settingsRow?.slack_alerts_enabled ?? true,
+    agentAutonomy: coerceAutonomy(settingsRow?.agent_autonomy),
   };
   const rsvpCounts = new Map<string, number>();
   const joinedMeetups = new Set<string>();
@@ -2497,6 +2502,7 @@ export const saveSettings = async (user: AppUser, settings: UserSettings) => {
     user_id: user.id,
     daily_digest_enabled: settings.dailyDigestEnabled,
     slack_alerts_enabled: settings.slackAlertsEnabled,
+    agent_autonomy: settings.agentAutonomy,
   });
 
   if (error) throw error;

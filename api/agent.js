@@ -133,6 +133,21 @@ const TOOLS = [
       required: [],
     },
   },
+  {
+    name: 'propose_outreach',
+    description:
+      "Draft a personalized first-touch outreach message to ONE on-platform founder and queue it for the investor. Call this once per founder when the investor asks to reach out to / contact / message / DM founders. Only propose outreach to founders returned by search_apparent_founders who are open to contact and have NOT already been contacted by this investor. Write the message in the investor's voice, grounded in the founder's real proof and the investor's thesis. Depending on the investor's autonomy setting, the message is either sent automatically as an in-app DM or shown to the investor to approve first.",
+    input_schema: {
+      type: 'object',
+      properties: {
+        founder_id: { type: 'string', description: 'The exact id of the founder from search_apparent_founders results.' },
+        founder_name: { type: 'string', description: 'The founder\'s display name.' },
+        subject: { type: 'string', description: 'A short, specific subject line.' },
+        body: { type: 'string', description: 'The outreach message body — concise, personalized, referencing the founder\'s actual work and why it fits the thesis. No placeholders like [name].' },
+      },
+      required: ['founder_id', 'founder_name', 'body'],
+    },
+  },
 ];
 
 const runTool = async (name, input) => {
@@ -142,13 +157,21 @@ const runTool = async (name, input) => {
 
 // ---------- System prompt ----------
 
-const buildSystemPrompt = (criteria) => {
+const autonomyGuidance = (autonomy) => {
+  if (autonomy === 'auto_onplatform' || autonomy === 'autonomous') {
+    return 'Auto-send is ON: any outreach you propose will be sent automatically as an in-app DM. Be selective and only propose outreach to genuinely strong thesis fits. Tell the investor you have sent the messages.';
+  }
+  return 'Auto-send is OFF (draft & approve): outreach you propose is shown to the investor to review and send. Tell the investor you have drafted messages for their approval.';
+};
+
+const buildSystemPrompt = (criteria, autonomy, contactedIds) => {
   const c = criteria || {};
+  const contacted = Array.isArray(contactedIds) ? contactedIds.filter(Boolean) : [];
   const lines = [
     'You are Apparent\'s sourcing copilot for a venture investor (a VC or GP).',
     'Apparent is a platform where founders publish profiles and product launches, and investors discover thesis-fit deal flow.',
     '',
-    'Your job right now: help this investor explore and reason about the founders who are live on Apparent. Answer questions about their deal flow, surface and rank thesis-fit founders, and explain WHY each one fits.',
+    'Your job: help this investor explore the founders who are live on Apparent, surface and rank thesis-fit founders, explain WHY each fits, and — when asked — draft and queue personalized outreach to them.',
     '',
     'The investor\'s saved thesis/criteria:',
     `- Thesis: ${str(c.thesis) || '(not set)'}`,
@@ -157,12 +180,19 @@ const buildSystemPrompt = (criteria) => {
     `- Geography: ${str(c.geography) || '(not set)'}`,
     `- Founder signals they value: ${str(c.founderSignals) || '(not set)'}`,
     '',
+    'Outreach mode:',
+    `- ${autonomyGuidance(autonomy)}`,
+    contacted.length
+      ? `- The investor has ALREADY contacted these founder ids — never propose outreach to them again: ${contacted.join(', ')}.`
+      : '- The investor has not contacted anyone yet.',
+    '',
     'Rules:',
-    '- To find or discuss founders, ALWAYS call the search_apparent_founders tool. Ground every claim about a founder strictly in the tool results — never invent founders, metrics, or contact details.',
+    '- To find or discuss founders, ALWAYS call search_apparent_founders. Ground every claim about a founder strictly in tool results — never invent founders, metrics, or contact details.',
     '- When ranking, explain fit against the investor\'s thesis/sectors/stage/geography and the founder\'s proof (traction, launches, GitHub, raising intent).',
+    '- Only call propose_outreach when the investor clearly wants to reach out / contact / message founders. Propose it once per founder, only for founders that are open_to_contact in the search results and not in the already-contacted list. Write a concise, specific, personalized message in the investor\'s voice — no placeholders.',
     '- Be concise and scannable. Prefer short founder call-outs (name — company — one-line why-it-fits) over long prose.',
-    '- If the search returns nothing, say so plainly and suggest loosening a filter. Do not fabricate.',
-    '- Scope note: you can currently search and reason over on-platform founders only. Sending messages, drafting outreach, and finding founders who are NOT yet on Apparent are coming soon — if asked, say those are on the way and not yet available.',
+    '- If a search returns nothing, say so plainly and suggest loosening a filter. Do not fabricate.',
+    '- Scope note: you can search, reason over, and message founders who are already on Apparent. Finding founders NOT yet on Apparent (off-platform web sourcing) and emailing them is coming soon — if asked for that, say it is on the way and not yet available.',
   ];
   return lines.join('\n');
 };
@@ -196,6 +226,8 @@ export default async function handler(req, res) {
   const body = await readJsonBody(req);
   const incoming = Array.isArray(body.messages) ? body.messages : [];
   const criteria = body.criteria || {};
+  const autonomy = body.autonomy === 'auto_onplatform' || body.autonomy === 'autonomous' ? body.autonomy : 'manual';
+  const contactedIds = Array.isArray(body.contacted) ? body.contacted.map(String).slice(0, 200) : [];
 
   // Normalize to Anthropic message shape; keep only role + string content.
   const messages = incoming
@@ -208,7 +240,9 @@ export default async function handler(req, res) {
   }
 
   const client = new Anthropic();
-  const system = buildSystemPrompt(criteria);
+  const system = buildSystemPrompt(criteria, autonomy, contactedIds);
+  const proposals = [];
+  const seenProposalFounders = new Set();
 
   try {
     let response = await client.messages.create({
@@ -231,19 +265,36 @@ export default async function handler(req, res) {
 
       const toolResults = [];
       for (const block of response.content) {
-        if (block.type === 'tool_use') {
-          let result;
+        if (block.type !== 'tool_use') continue;
+
+        let result;
+        if (block.name === 'propose_outreach') {
+          // Side-effect-free: record the proposal; the client performs the actual
+          // (RLS-authenticated) send or shows it for approval.
+          const founderId = str(block.input?.founder_id);
+          const founderName = str(block.input?.founder_name);
+          const subject = str(block.input?.subject);
+          const messageBody = str(block.input?.body);
+          if (founderId && messageBody && !seenProposalFounders.has(founderId) && !contactedIds.includes(founderId)) {
+            seenProposalFounders.add(founderId);
+            proposals.push({ founderId, founderName, subject, body: messageBody });
+            result = { status: 'queued', founder_id: founderId };
+          } else {
+            result = { status: 'skipped', reason: 'duplicate, already-contacted, or missing fields' };
+          }
+        } else {
           try {
             result = await runTool(block.name, block.input);
           } catch (err) {
             result = { error: `Tool failed: ${err?.message ?? 'unknown error'}` };
           }
-          toolResults.push({
-            type: 'tool_result',
-            tool_use_id: block.id,
-            content: JSON.stringify(result),
-          });
         }
+
+        toolResults.push({
+          type: 'tool_result',
+          tool_use_id: block.id,
+          content: JSON.stringify(result),
+        });
       }
 
       messages.push({ role: 'user', content: toolResults });
@@ -265,7 +316,10 @@ export default async function handler(req, res) {
       .join('\n')
       .trim();
 
-    return res.status(200).json({ reply: reply || "I couldn't find anything to say about that — try rephrasing your question." });
+    return res.status(200).json({
+      reply: reply || "I couldn't find anything to say about that — try rephrasing your question.",
+      proposals,
+    });
   } catch (err) {
     if (err instanceof Anthropic.APIError) {
       return res.status(200).json({ reply: `The agent hit an API error (${err.status}). Please try again in a moment.` });
