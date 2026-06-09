@@ -57,6 +57,7 @@ import { GitHubIcon } from '@/components/GitHubIcon';
 import { LogoIcon } from '@/components/LogoIcon';
 import { GithubVerifyCard } from '@/components/GithubVerifyCard';
 import { InvestorAgentChat } from '@/components/InvestorAgentChat';
+import { FounderDossierCard } from '@/components/FounderDossierCard';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import type {
   AgentAutonomy,
@@ -8796,6 +8797,11 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
                   transition={{ duration: 0.22, ease: 'easeOut' }}
                 >
                   {renderOnboardingChecklist()}
+                  {!isInvestor && (
+                    <div className="mx-auto mt-6 max-w-[1292px]">
+                      <FounderDossierCard user={user} />
+                    </div>
+                  )}
                   <div id="overview" className="scroll-mt-24">
                     <div className="mx-auto mt-8 max-w-[1292px]">
                       {renderNetworkMapSection()}

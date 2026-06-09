@@ -43,7 +43,7 @@ const searchApparentFounders = async (input) => {
   const [profiles, launches] = await Promise.all([
     sbSelect(
       'founder_profiles',
-      'public_profile_enabled=eq.true&select=user_id,profile_name,headline,bio,current_build,category,stage,github,traction,mrr,looking_for,location,fundraising_status,raising_round,raising_amount,open_to_contact,updated_at&order=updated_at.desc&limit=300',
+      'public_profile_enabled=eq.true&select=user_id,profile_name,headline,bio,current_build,category,stage,github,traction,mrr,looking_for,location,fundraising_status,raising_round,raising_amount,open_to_contact,github_verified,agent_dossier,github_summary,updated_at&order=updated_at.desc&limit=300',
     ),
     sbSelect(
       'product_launches',
@@ -106,6 +106,11 @@ const searchApparentFounders = async (input) => {
       github: str(p.github),
       launch_url: str(latest.launch_url),
       summary: str(p.bio) || str(p.headline) || str(p.current_build) || str(latest.tagline),
+      // Founder-agent enrichment: a GitHub-grounded dossier the founder agent
+      // wrote. High-signal — prefer it when explaining fit.
+      dossier: str(p.agent_dossier),
+      github_summary: str(p.github_summary),
+      github_verified: p.github_verified === true,
       launch_count: ownLaunches.length,
       profile_url: `/profile/${owner}`,
     });
@@ -279,6 +284,7 @@ const buildSystemPrompt = (criteria, autonomy, contactedIds) => {
     '- To reach out, call prepare_mailto. OFF-PLATFORM outreach is ALWAYS a draft the investor sends from their own inbox — it is NEVER auto-sent, regardless of the autonomy setting. If you only found a social handle, leave to_email empty and put the handle in the body.',
     '',
     'General rules:',
+    "- Some on-platform founders have a `dossier` field — a GitHub-grounded profile written by the founder's own agent. When present, treat it as high-signal and lean on it (and `github_summary` / `github_verified`) when explaining fit and writing outreach.",
     '- Default to on-platform founders first; reach to the web when the investor asks to go broader or for founders not yet on Apparent.',
     '- When ranking, explain fit against thesis/sectors/stage/geography and real proof (traction, launches, GitHub, raising intent).',
     '- Be concise and scannable. Prefer short call-outs (name — company — one-line why-it-fits) over long prose.',
