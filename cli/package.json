@@ -1,0 +1,27 @@
+{
+  "name": "apparent",
+  "version": "0.0.1",
+  "description": "Build your founder profile from your real work. Run it in a repo, get a brag-worthy build card.",
+  "bin": {
+    "apparent": "bin/apparent.js"
+  },
+  "type": "commonjs",
+  "files": [
+    "bin",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "keywords": [
+    "founder",
+    "startup",
+    "git",
+    "developer",
+    "profile",
+    "apparent",
+    "fundraising"
+  ],
+  "homepage": "https://apparent.social",
+  "license": "MIT"
+}
