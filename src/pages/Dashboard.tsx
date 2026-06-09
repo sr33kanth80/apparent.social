@@ -10,6 +10,7 @@ import {
   FileText,
   Flame,
   Globe,
+  History,
   Image,
   LocateFixed,
   ListFilter,
@@ -2836,6 +2837,35 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
     [messages, user.id],
   );
 
+  // Auto-advance a founder's deal-flow stage from agent activity. Only moves
+  // forward through '' → New → Reached Out → Reviewing; never overrides a manual
+  // 'Meeting' or 'Watchlist'.
+  const STAGE_AUTO_RANK: Record<string, number> = { '': 0, New: 1, 'Reached Out': 2, Reviewing: 3 };
+  const applyDealStage = async (founderId: string, desired: 'Reached Out' | 'Reviewing') => {
+    const existing = builderDiscoveryById.get(founderId);
+    const current = existing?.stage ?? '';
+    if (current === 'Meeting' || current === 'Watchlist') return;
+    if ((STAGE_AUTO_RANK[desired] ?? 0) <= (STAGE_AUTO_RANK[current] ?? 0)) return;
+    const base: BuilderDiscoveryState =
+      existing ?? {
+        userId: user.id,
+        builderId: founderId,
+        saved: false,
+        hidden: false,
+        stage: '',
+        note: '',
+        outreachBody: '',
+        updatedAt: new Date().toISOString(),
+      };
+    mergeBuilderState({ ...base, saved: true, stage: desired, updatedAt: new Date().toISOString() });
+    try {
+      const saved = await saveBuilderDiscoveryState(user, founderId, { saved: true, stage: desired });
+      mergeBuilderState(saved);
+    } catch {
+      /* non-fatal — reconciliation retries on next load */
+    }
+  };
+
   // Guardrail-enforced send used by the agent's outreach proposals. Runs as the
   // authenticated investor (RLS-safe) via the existing messaging rails.
   const AGENT_DAILY_DM_CAP = 25;
@@ -2885,11 +2915,137 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
       });
       setMessages((current) => [savedMessage, ...current.filter((message) => message.id !== savedMessage.id)]);
       addActivity(`Agent reached out to ${proposal.founderName || 'a founder'}`);
+      void applyDealStage(proposal.founderId, 'Reached Out');
       return { ok: true };
     } catch (error) {
       return { ok: false, reason: error instanceof Error ? error.message : 'Send failed' };
     }
   };
+
+  // ---------- Phase 3: autonomous follow-ups + reply-aware deal flow ----------
+
+  const FOLLOWUP_DELAY_MS = 3 * 24 * 60 * 60 * 1000; // nudge once after 3 quiet days
+  const followupSweptRef = useRef(false);
+
+  // In fully-autonomous mode, nudge un-replied agent outreach once after a delay.
+  const runAutonomousFollowups = async () => {
+    const startOfDay = new Date();
+    startOfDay.setHours(0, 0, 0, 0);
+    const now = Date.now();
+
+    type Track = { lastOut: number; lastIn: number; followups: number; name: string };
+    const byFounder = new Map<string, Track>();
+
+    for (const message of messages) {
+      if (
+        message.ownerId === user.id &&
+        message.recipientId &&
+        (message.context === 'agent-outreach' || message.context === 'agent-followup')
+      ) {
+        const track = byFounder.get(message.recipientId) ?? { lastOut: 0, lastIn: 0, followups: 0, name: '' };
+        track.lastOut = Math.max(track.lastOut, new Date(message.updatedAt).getTime());
+        if (message.context === 'agent-followup') track.followups += 1;
+        if (!track.name) track.name = message.recipient;
+        byFounder.set(message.recipientId, track);
+      }
+    }
+    for (const message of messages) {
+      if (message.recipientId === user.id && message.ownerId && byFounder.has(message.ownerId)) {
+        const track = byFounder.get(message.ownerId)!;
+        track.lastIn = Math.max(track.lastIn, new Date(message.updatedAt).getTime());
+      }
+    }
+
+    let sentToday = messages.filter(
+      (message) =>
+        (message.context === 'agent-outreach' || message.context === 'agent-followup') &&
+        message.ownerId === user.id &&
+        new Date(message.updatedAt).getTime() >= startOfDay.getTime(),
+    ).length;
+
+    for (const [founderId, track] of byFounder) {
+      if (track.lastIn > track.lastOut) continue; // they replied — leave it
+      if (track.followups >= 1) continue; // already nudged once
+      if (now - track.lastOut < FOLLOWUP_DELAY_MS) continue; // not stale yet
+      if (sentToday >= AGENT_DAILY_DM_CAP) break;
+
+      const builder = builderNodes.find((node) => node.id === founderId);
+      if (builder && builder.openToContact === false) continue;
+
+      const displayName = builder?.founderName || track.name || 'there';
+      const company = builder?.company || '';
+      const body = `Following up on my earlier note${company ? ` about ${company}` : ''} — still keen to learn more about what you're building. Open to a quick chat this week?`;
+
+      try {
+        // eslint-disable-next-line no-await-in-loop
+        const saved = await saveMessage(user, {
+          recipient: track.name || displayName,
+          recipientId: founderId,
+          senderName: user.username || user.email.split('@')[0],
+          subject: 'Following up',
+          body,
+          status: 'sent',
+          context: 'agent-followup',
+        });
+        setMessages((current) => [saved, ...current.filter((message) => message.id !== saved.id)]);
+        addActivity(`Agent followed up with ${displayName}`);
+        sentToday += 1;
+      } catch {
+        /* non-fatal */
+      }
+    }
+  };
+
+  // Reply-aware deal flow: reflect outreach + replies on the kanban automatically.
+  useEffect(() => {
+    if (!isInvestor) return;
+    const lastOut = new Map<string, number>();
+    const lastIn = new Map<string, number>();
+    for (const message of messages) {
+      const t = new Date(message.updatedAt).getTime();
+      if (message.ownerId === user.id && message.recipientId) {
+        if (t > (lastOut.get(message.recipientId) ?? 0)) lastOut.set(message.recipientId, t);
+      } else if (message.recipientId === user.id && message.ownerId && message.ownerId !== user.id) {
+        if (t > (lastIn.get(message.ownerId) ?? 0)) lastIn.set(message.ownerId, t);
+      }
+    }
+    void (async () => {
+      for (const [founderId, outT] of lastOut) {
+        const inT = lastIn.get(founderId);
+        // eslint-disable-next-line no-await-in-loop
+        await applyDealStage(founderId, inT && inT > outT ? 'Reviewing' : 'Reached Out');
+      }
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [messages, isInvestor, user.id]);
+
+  // Fully-autonomous follow-up sweep — runs once per session after data loads.
+  useEffect(() => {
+    if (!isInvestor || agentAutonomy !== 'autonomous' || !hasLoadedRef.current || followupSweptRef.current) return;
+    followupSweptRef.current = true;
+    void runAutonomousFollowups();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isInvestor, agentAutonomy, messages]);
+
+  // Recent agent actions for the audit view.
+  const agentActions = useMemo(
+    () =>
+      messages
+        .filter(
+          (message) =>
+            message.ownerId === user.id &&
+            (message.context === 'agent-outreach' || message.context === 'agent-followup'),
+        )
+        .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
+        .slice(0, 8)
+        .map((message) => ({
+          id: message.id,
+          type: message.context === 'agent-followup' ? 'Followed up' : 'Reached out',
+          name: message.recipient,
+          at: message.updatedAt,
+        })),
+    [messages, user.id],
+  );
 
   const handleSignOut = async () => {
     try {
@@ -6161,6 +6317,25 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
               contactedFounderIds={contactedFounderIds}
               onSendOutreach={handleAgentOutreach}
             />
+
+            {agentActions.length > 0 && (
+              <div className="mt-3 rounded-2xl border border-black/10 bg-white p-4 shadow-[0_10px_34px_rgba(0,0,0,0.04)]">
+                <div className="mb-2 flex items-center gap-2 text-sm font-semibold text-black">
+                  <History className="h-4 w-4 text-[#42520d]" />
+                  Agent activity
+                </div>
+                <ul className="space-y-1.5">
+                  {agentActions.map((action) => (
+                    <li key={action.id} className="flex items-center justify-between gap-3 text-sm text-gray-700">
+                      <span className="truncate">
+                        {action.type} to <span className="font-medium text-black">{action.name || 'a founder'}</span>
+                      </span>
+                      <span className="shrink-0 text-xs text-gray-400">{formatRelativeTime(action.at)}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
           </div>
 
           <section className="overflow-hidden rounded-[20px] border border-black/10 bg-white shadow-[0_10px_34px_rgba(0,0,0,0.04)]">
