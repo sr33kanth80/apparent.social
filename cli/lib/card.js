@@ -1,46 +1,50 @@
 'use strict';
 
-// Renders the ASCII build card. Returns plain text (no ANSI) so width math is
-// exact; the caller paints the whole card one colour for a clean screenshot.
-// All glyphs are single-width block/box characters (no emoji) so columns align
-// in any terminal.
+// Renders the ASCII build card with colour. Content may contain ANSI codes;
+// padding is computed on VISIBLE width (ANSI stripped) so the box stays aligned
+// in any terminal. All glyphs are single-width block/box chars (no emoji).
+// When stdout isn't a TTY, the colour helpers no-op and it renders as plain text.
+
+const { c, visLen } = require('./ui');
 
 const INNER = 60; // visible chars between the side borders
 
 const num = (n) => Number(n || 0).toLocaleString('en-US');
 
-const truncate = (s, n) => {
+const clip = (s, n) => {
   const str = String(s || '');
   return str.length <= n ? str : `${str.slice(0, n - 1)}…`;
 };
 
-const top = `╔${'═'.repeat(INNER + 2)}╗`;
-const mid = `╠${'═'.repeat(INNER + 2)}╣`;
-const bottom = `╚${'═'.repeat(INNER + 2)}╝`;
-const blank = `║ ${' '.repeat(INNER)} ║`;
+const padVis = (s, n) => `${s}${' '.repeat(Math.max(0, n - visLen(s)))}`;
 
-const row = (text = '') => `║ ${truncate(text, INNER).padEnd(INNER)} ║`;
+const V = c.frame('║');
+const top = c.frame(`╔${'═'.repeat(INNER + 2)}╗`);
+const mid = c.frame(`╠${'═'.repeat(INNER + 2)}╣`);
+const bottom = c.frame(`╚${'═'.repeat(INNER + 2)}╝`);
+const blank = `${V} ${' '.repeat(INNER)} ${V}`;
 
-const center = (text) => {
-  const t = truncate(text, INNER);
-  const pad = Math.max(0, Math.floor((INNER - t.length) / 2));
-  return `║ ${' '.repeat(pad)}${t}${' '.repeat(INNER - pad - t.length)} ║`;
+// content may contain ANSI; pad by visible width.
+const row = (content = '') => `${V} ${padVis(content, INNER)} ${V}`;
+
+const center = (content) => {
+  const len = visLen(content);
+  const pad = Math.max(0, Math.floor((INNER - len) / 2));
+  return `${V} ${' '.repeat(pad)}${content}${' '.repeat(Math.max(0, INNER - pad - len))} ${V}`;
 };
 
-// A filled/empty bar: ▕████████░░░░▏
+// ▕████████░░░░▏ — filled bright-green, empty dim.
 const bar = (percent, width = 22) => {
   const filled = Math.max(0, Math.min(width, Math.round((width * percent) / 100)));
-  return `▕${'█'.repeat(filled)}${'░'.repeat(width - filled)}▏`;
+  return `${c.dim('▕')}${c.brightGreen('█'.repeat(filled))}${c.dim('░'.repeat(width - filled))}${c.dim('▏')}`;
 };
 
-// Sparkline from daily counts using 8 block heights.
 const SPARK = ' ▁▂▃▄▅▆▇█';
 const sparkline = (counts) => {
   const max = Math.max(1, ...counts);
   return counts.map((n) => SPARK[Math.min(8, Math.round((n / max) * 8))]).join('');
 };
 
-// A playful, honest rank from how many of the last 60 days shipped code.
 const rank = (shipped) => {
   if (shipped >= 45) return 'unrelenting';
   if (shipped >= 30) return 'shipping daily';
@@ -49,16 +53,14 @@ const rank = (shipped) => {
   return 'just getting started';
 };
 
-// "commits 280     lines +88,011     projects 1" spread across the inner width.
-const statRow = (totals) => {
-  const segs = [
-    `commits ${num(totals.commits)}`,
-    `lines +${num(totals.linesAdded)}`,
-    `projects ${num(totals.repos)}`,
-  ];
-  const text = segs.join('     ');
-  return row(text);
-};
+const statRow = (totals) =>
+  row(
+    [
+      `${c.dim('commits')} ${c.boldWhite(num(totals.commits))}`,
+      `${c.dim('lines')} ${c.green(`+${num(totals.linesAdded)}`)}`,
+      `${c.dim('projects')} ${c.boldWhite(num(totals.repos))}`,
+    ].join('     '),
+  );
 
 /**
  * @param {object} opts
@@ -73,41 +75,40 @@ const render = ({ payload, name, kind }) => {
 
   const lines = [
     top,
-    center('░▒▓  A P P A R E N T  ▓▒░'),
-    center('· · ·   B U I L D   C A R D   · · ·'),
+    center(`${c.magenta('░▒▓')}  ${c.brightGreen('A P P A R E N T')}  ${c.magenta('▓▒░')}`),
+    center(c.dim('· · ·   ') + c.boldWhite('B U I L D   C A R D') + c.dim('   · · ·')),
     mid,
-    row(headline),
-    row(`${range}${range ? '   ·   ' : ''}${rank(cadence.shippedDaysLast60)}  ·  shipped ${cadence.shippedDaysLast60}/60`),
+    row(c.boldWhite(clip(headline, INNER))),
+    row(
+      `${c.dim(range)}${range ? c.dim('   ·   ') : ''}${c.yellow(rank(cadence.shippedDaysLast60))}` +
+        `${c.dim('  ·  shipped ')}${c.yellow(`${cadence.shippedDaysLast60}/60`)}`,
+    ),
     blank,
     statRow(totals),
     blank,
   ];
 
-  // Language bars (the data-art centrepiece).
-  const langs = languages.slice(0, 4);
-  for (const l of langs) {
-    lines.push(row(`${truncate(l.name, 11).padEnd(11)} ${bar(l.percent)} ${String(l.percent).padStart(3)}%`));
+  for (const l of languages.slice(0, 4)) {
+    lines.push(row(`${c.white(clip(l.name, 11).padEnd(11))} ${bar(l.percent)} ${c.green(`${String(l.percent).padStart(3)}%`)}`));
   }
 
-  // Activity sparkline (last 30 days).
   if (Array.isArray(activity) && activity.length) {
     lines.push(blank);
-    lines.push(row(`last 30 days  ${sparkline(activity)}`));
+    lines.push(row(`${c.dim('last 30 days')}  ${c.cyan(sparkline(activity))}`));
   }
 
-  // Top project (founder card) or its description (project card).
   const lead = projects[0];
   if (lead) {
     lines.push(blank);
     if (kind === 'project') {
-      if (lead.description) lines.push(row(lead.description));
+      if (lead.description) lines.push(row(c.dim(clip(lead.description, INNER))));
     } else {
-      lines.push(row(`top: ${lead.name}${lead.description ? ` — ${lead.description}` : ''}`));
+      lines.push(row(c.dim('top: ') + c.white(clip(`${lead.name}${lead.description ? ` — ${lead.description}` : ''}`, INNER - 5))));
     }
   }
 
   lines.push(mid);
-  lines.push(center('built with  npx apparent  ·  apparent.social'));
+  lines.push(center(c.dim('built with  ') + c.brightGreen('npx apparent') + c.dim('  ·  apparent.social')));
   lines.push(bottom);
   return lines.join('\n');
 };

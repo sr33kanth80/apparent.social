@@ -125,9 +125,9 @@ const main = async () => {
   const name = git.configName(cwd) || 'A builder';
   const kind = perRepo.length === 1 && scope === 'repo' ? 'project' : 'founder';
 
-  // The card.
+  // The card (self-coloured).
   log('');
-  log(card.render({ payload, name, kind }).split('\n').map((line) => c.green(line)).join('\n'));
+  log(card.render({ payload, name, kind }));
   log('');
   log(c.dim('  ↑ screenshot this and post it. The footer is how other founders find apparent.'));
 
