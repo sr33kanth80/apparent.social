@@ -46,12 +46,38 @@ const sparkline = (counts) => {
   return counts.map((n) => SPARK[Math.min(8, Math.round((n / max) * 8))]).join('');
 };
 
-const rank = (shipped) => {
-  if (shipped >= 45) return 'unrelenting';
-  if (shipped >= 30) return 'shipping daily';
-  if (shipped >= 15) return 'in the arena';
-  if (shipped >= 5) return 'warming up';
-  return 'just getting started';
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+const monthYear = (iso) => {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return '';
+  return `${MONTHS[d.getMonth()]} ${d.getFullYear()}`;
+};
+
+const daysSince = (iso) => {
+  const t = new Date(iso).getTime();
+  if (Number.isNaN(t)) return Infinity;
+  return Math.floor((Date.now() - t) / 86400000);
+};
+
+const relAgo = (iso) => {
+  const d = daysSince(iso);
+  if (d <= 0) return 'today';
+  if (d === 1) return 'yesterday';
+  if (d < 7) return `${d}d ago`;
+  if (d < 30) return `${Math.round(d / 7)}w ago`;
+  return `${Math.round(d / 30)}mo ago`;
+};
+
+// Always-positive momentum facts (never a put-down label).
+const momentumParts = (totals, cadence) => {
+  const parts = [];
+  const since = monthYear(totals.firstCommit);
+  if (since) parts.push(`building since ${since}`);
+  const perWeek = Math.round((cadence.shippedDaysLast60 / 60) * 7);
+  if (perWeek >= 1) parts.push(`~${perWeek} days/week`);
+  if (totals.lastCommit && daysSince(totals.lastCommit) <= 7) parts.push('active this week');
+  else if (totals.lastCommit) parts.push(`last shipped ${relAgo(totals.lastCommit)}`);
+  return parts;
 };
 
 const statRow = (totals) =>
@@ -71,8 +97,8 @@ const statRow = (totals) =>
  */
 const render = ({ payload, name, kind }) => {
   const { totals, cadence, languages, projects, activity } = payload;
-  const range = totals.firstCommit && totals.lastCommit ? `${totals.firstCommit} → ${totals.lastCommit}` : '';
   const headline = kind === 'project' && projects[0] ? projects[0].name : name || 'A builder';
+  const momentum = momentumParts(totals, cadence);
 
   // Brand header: the rasterized Apparent mark (block-centered, uniform left pad
   // so the art stays a rectangle), then the title.
@@ -84,12 +110,11 @@ const render = ({ payload, name, kind }) => {
   lines.push(center(c.dim('b u i l d   c a r d')));
   lines.push(mid);
   lines.push(row(c.boldWhite(clip(headline, INNER))));
-  lines.push(
-    row(
-      `${c.dim(range)}${range ? c.dim('   ·   ') : ''}${c.yellow(rank(cadence.shippedDaysLast60))}` +
-        `${c.dim('  ·  shipped ')}${c.yellow(`${cadence.shippedDaysLast60}/60`)}`,
-    ),
-  );
+  if (momentum.length) {
+    const [first, ...rest] = momentum;
+    const metaText = c.yellow(first) + rest.map((p) => c.dim('  ·  ') + c.white(p)).join('');
+    lines.push(row(metaText));
+  }
   lines.push(blank);
   lines.push(statRow(totals));
   lines.push(blank);
