@@ -59,6 +59,7 @@ import { GithubVerifyCard } from '@/components/GithubVerifyCard';
 import { InvestorAgentChat } from '@/components/InvestorAgentChat';
 import { FounderAgentChat } from '@/components/FounderAgentChat';
 import { FounderDossierCard } from '@/components/FounderDossierCard';
+import { PENDING_CLAIM_KEY } from '@/pages/ClaimBuild';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import type {
   AgentAutonomy,
@@ -107,6 +108,7 @@ import {
   markAllNotificationsRead,
   notifyInvestorsOfLaunch,
   notifyInvestorsOfFounder,
+  claimCliBuild,
   deleteProductLaunch,
   saveProductLaunch,
   saveSettings,
@@ -2987,6 +2989,31 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
     if (count > 0) addActivity(`Amplified to ${formatCount(count, 'matched investor', 'matched investors')}`);
     return count;
   };
+
+  // Finish a pending `npx apparent` claim that was started before sign-in, so it
+  // completes wherever the user lands after auth.
+  const claimSweptRef = useRef(false);
+  useEffect(() => {
+    if (claimSweptRef.current || user.isDev) return;
+    let code = '';
+    try {
+      code = window.localStorage.getItem(PENDING_CLAIM_KEY) || '';
+    } catch {
+      code = '';
+    }
+    if (!code) return;
+    claimSweptRef.current = true;
+    void (async () => {
+      const result = await claimCliBuild(user, code);
+      try {
+        window.localStorage.removeItem(PENDING_CLAIM_KEY);
+      } catch {
+        /* ignore */
+      }
+      if (result.ok) addActivity('Imported your npx apparent build into your profile');
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // ---------- Phase 3: autonomous follow-ups + reply-aware deal flow ----------
 

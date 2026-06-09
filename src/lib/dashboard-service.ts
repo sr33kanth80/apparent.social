@@ -2989,6 +2989,28 @@ export const notifyInvestorsOfLaunch = async (user: AppUser, launchId: string): 
 };
 
 /**
+ * Claim a pending `npx apparent` build (by code) into the current founder's
+ * profile/dossier. Returns true when the build was merged in. RLS-safe (runs as
+ * the authenticated founder via the claim_cli_build SECURITY DEFINER RPC).
+ */
+export const claimCliBuild = async (
+  user: AppUser,
+  code: string,
+): Promise<{ ok: boolean; commits?: number; languages?: string; project?: string; error?: string }> => {
+  if (!isSupabaseConfigured || !supabase || user.isDev || !code) {
+    return { ok: false, error: 'unavailable' };
+  }
+  try {
+    const { data, error } = await supabase.rpc('claim_cli_build', { p_code: code });
+    if (error) return { ok: false, error: error.message };
+    const result = (data ?? {}) as { ok?: boolean; commits?: number; languages?: string; project?: string; error?: string };
+    return { ok: Boolean(result.ok), commits: result.commits, languages: result.languages, project: result.project, error: result.error };
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : 'claim_failed' };
+  }
+};
+
+/**
  * Founder amplification: push the current founder to every on-platform investor
  * whose thesis they match (deduped per investor). Returns how many were notified.
  */

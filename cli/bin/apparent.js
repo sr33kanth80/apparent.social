@@ -12,10 +12,37 @@
 'use strict';
 
 const path = require('path');
-const { c, log, ask, isTTY, parseIndices } = require('../lib/ui');
+const { spawn } = require('child_process');
+const { c, log, ask, isTTY, parseIndices, stripAnsi } = require('../lib/ui');
 const git = require('../lib/git');
 const { repoStats, aggregate } = require('../lib/stats');
 const card = require('../lib/card');
+const config = require('../lib/config');
+
+const openUrl = (url) => {
+  try {
+    if (process.platform === 'win32') {
+      spawn('cmd', ['/c', 'start', '', url], { detached: true, stdio: 'ignore' }).unref();
+    } else if (process.platform === 'darwin') {
+      spawn('open', [url], { detached: true, stdio: 'ignore' }).unref();
+    } else {
+      spawn('xdg-open', [url], { detached: true, stdio: 'ignore' }).unref();
+    }
+  } catch {
+    /* best-effort; the URL is printed regardless */
+  }
+};
+
+const upload = async (payload) => {
+  const res = await fetch(`${config.BASE_URL}/api/cli-ingest`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok || !data.ok) throw new Error(data.error || `HTTP ${res.status}`);
+  return data;
+};
 
 const HEADER = [
   '',
@@ -126,24 +153,60 @@ const main = async () => {
   const kind = perRepo.length === 1 && scope === 'repo' ? 'project' : 'founder';
 
   // The card (self-coloured).
+  const rendered = card.render({ payload, name, kind });
   log('');
-  log(card.render({ payload, name, kind }));
+  log(rendered);
   log('');
   log(c.dim('  ↑ screenshot this and post it. The footer is how other founders find apparent.'));
 
-  // What would go on the profile (privacy-transparent; nothing is uploaded in v1).
+  // Exactly what would be shared if they choose to add it to their profile.
   log('');
-  log(c.bold('  What apparent would add to your profile:'));
+  log(c.bold('  What gets added to your Apparent profile:'));
   previewLine('Commits', String(payload.totals.commits));
   previewLine('Projects', String(payload.totals.repos));
   previewLine('Lines added', payload.totals.linesAdded.toLocaleString('en-US'));
   previewLine('Languages', payload.languages.map((l) => `${l.name} ${l.percent}%`).join(', ') || '—');
   previewLine('Top project', payload.projects[0] ? payload.projects[0].name : '—');
   log('');
-  log(c.dim('  Not uploaded — source code never read, file paths never sent.'));
-  log(c.dim('  Profile upload + claim lands in the next release.'));
+  log(c.dim('  Aggregate stats only — source code never read, file paths never sent.'));
+
+  if (!isTTY) {
+    log('');
+    log('  ' + c.bold('Build your founder profile → ') + c.green(config.BASE_URL));
+    log('');
+    return;
+  }
+
   log('');
-  log('  ' + c.bold('Build your founder profile → ') + c.green('https://apparent.social'));
+  const consent = (await ask('  Add this to your Apparent profile? (uploads the stats above) [y/N]: ')).toLowerCase();
+  if (consent === 'y' || consent === 'yes') {
+    log('');
+    log(c.dim('  Uploading…'));
+    try {
+      const { claimUrl } = await upload({
+        ...payload,
+        displayName: name,
+        kind,
+        cardText: stripAnsi(rendered),
+      });
+      log('');
+      log('  ' + c.bold('One step left — claim it on Apparent:'));
+      log('  ' + c.green(claimUrl));
+      openUrl(claimUrl);
+      log('');
+      log(c.dim('  Opened your browser — sign in or create your founder account to attach this.'));
+      log(c.dim('  Link expires in 30 minutes.'));
+    } catch (err) {
+      log('');
+      log(c.dim(`  Upload failed (${err && err.message ? err.message : 'unknown'}). Your card is still yours — screenshot it above.`));
+    }
+  } else {
+    log('');
+    log(c.dim('  Nothing uploaded. Screenshot the card above to share it.'));
+  }
+
+  log('');
+  log('  ' + c.bold('Your founder profile → ') + c.green(config.BASE_URL));
   log('');
 };
 
