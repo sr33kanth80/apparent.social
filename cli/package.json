@@ -24,5 +24,14 @@
     "fundraising"
   ],
   "homepage": "https://apparent.social",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sr33kanth80/apparent.social.git",
+    "directory": "cli"
+  },
+  "bugs": {
+    "url": "https://github.com/sr33kanth80/apparent.social/issues"
+  },
+  "author": "Apparent",
   "license": "MIT"
 }

@@ -19,6 +19,7 @@ const { repoStats, aggregate } = require('../lib/stats');
 const card = require('../lib/card');
 const config = require('../lib/config');
 const findinvestors = require('../lib/findinvestors');
+const pkg = require('../package.json');
 
 const openUrl = (url) => {
   try {
@@ -221,9 +222,43 @@ const presentCard = async ({ payload, name, kind }) => {
   log('');
 };
 
+const printHelp = () => {
+  log('');
+  log('  ' + c.green('◆ apparent') + c.dim(`  v${pkg.version}`));
+  log(c.dim('  Make your real work apparent to the investors who fund builders.'));
+  log('');
+  log('  ' + c.bold('Usage'));
+  log(`    ${c.green('npx apparent')}                 Build your card + add it to your profile`);
+  log(`    ${c.green('npx apparent findinvestors')}   Find investors you can email right now`);
+  log(`    ${c.green('npx apparent --help')}          Show this help`);
+  log(`    ${c.green('npx apparent --version')}       Show the version`);
+  log('');
+  log(c.dim('  Your code never leaves your machine — only aggregate git stats you approve.'));
+  log('  ' + c.green('https://apparent.social'));
+  log('');
+};
+
 const main = async () => {
-  HEADER.forEach((l) => log(l));
   const sub = (process.argv[2] || '').toLowerCase();
+
+  if (sub === '--help' || sub === '-h' || sub === 'help') {
+    printHelp();
+    return;
+  }
+  if (sub === '--version' || sub === '-v' || sub === 'version') {
+    log(pkg.version);
+    return;
+  }
+
+  const known = sub === '' || sub === 'findinvestors' || sub === 'investors';
+  if (!known) {
+    log('');
+    log('  ' + c.bold(`Unknown command: ${sub}`));
+    printHelp();
+    return;
+  }
+
+  HEADER.forEach((l) => log(l));
   const profile = await computeProfile();
 
   if (sub === 'findinvestors' || sub === 'investors') {
