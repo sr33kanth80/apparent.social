@@ -55,7 +55,7 @@ import { DiscoverDeck } from '@/pages/DiscoverDeck';
 import { GitHubIcon } from '@/components/GitHubIcon';
 import { LogoIcon } from '@/components/LogoIcon';
 import { GithubVerifyCard } from '@/components/GithubVerifyCard';
-import { InvestorAIPrompt } from '@/components/InvestorAIAssist';
+import { InvestorAgentChat } from '@/components/InvestorAgentChat';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import type {
   AppUser,
@@ -6066,7 +6066,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
         {renderOnboardingChecklist()}
         <div id="overview" className="mx-auto max-w-[1292px] scroll-mt-24 space-y-6">
           <div className="max-w-4xl">
-            <InvestorAIPrompt className="py-0" />
+            <InvestorAgentChat user={user} criteria={intakeValues} />
           </div>
 
           <section className="overflow-hidden rounded-[20px] border border-black/10 bg-white shadow-[0_10px_34px_rgba(0,0,0,0.04)]">
