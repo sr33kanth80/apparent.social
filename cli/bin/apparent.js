@@ -18,6 +18,7 @@ const git = require('../lib/git');
 const { repoStats, aggregate } = require('../lib/stats');
 const card = require('../lib/card');
 const config = require('../lib/config');
+const findinvestors = require('../lib/findinvestors');
 
 const openUrl = (url) => {
   try {
@@ -128,9 +129,8 @@ const chooseEmails = async (cwd, repos) => {
 
 const previewLine = (label, value) => log(`    ${c.dim(label.padEnd(16))} ${value}`);
 
-const main = async () => {
-  HEADER.forEach((l) => log(l));
-
+// Scan local git → the founder's build profile (shared by the card + findinvestors).
+const computeProfile = async () => {
   if (!git.hasGit()) fail('git is not installed or not on your PATH. Install git and re-run.');
 
   const cwd = process.cwd();
@@ -151,7 +151,10 @@ const main = async () => {
   const payload = aggregate(perRepo, emails, scope);
   const name = git.configName(cwd) || 'A builder';
   const kind = perRepo.length === 1 && scope === 'repo' ? 'project' : 'founder';
+  return { payload, name, kind };
+};
 
+const presentCard = async ({ payload, name, kind }) => {
   // The card (self-coloured).
   const rendered = card.render({ payload, name, kind });
   log('');
@@ -205,9 +208,30 @@ const main = async () => {
     log(c.dim('  Nothing uploaded. Screenshot the card above to share it.'));
   }
 
+  // Offer the highest-value next step: investors they can email right now.
+  log('');
+  const find = (await ask("  Find investors who fit what you're building? [Y/n]: ")).toLowerCase();
+  if (find !== 'n' && find !== 'no') {
+    await findinvestors.run({ payload, name });
+    return;
+  }
+
   log('');
   log('  ' + c.bold('Your founder profile → ') + c.green(config.BASE_URL));
   log('');
+};
+
+const main = async () => {
+  HEADER.forEach((l) => log(l));
+  const sub = (process.argv[2] || '').toLowerCase();
+  const profile = await computeProfile();
+
+  if (sub === 'findinvestors' || sub === 'investors') {
+    await findinvestors.run({ payload: profile.payload, name: profile.name });
+    return;
+  }
+
+  await presentCard(profile);
 };
 
 main().catch((err) => fail(`Something broke: ${err && err.message ? err.message : err}`));
