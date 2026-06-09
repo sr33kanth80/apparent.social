@@ -1,6 +1,6 @@
 {
   "name": "apparent",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "Build your founder profile from your real work. Run it in a repo, get a brag-worthy build card.",
   "bin": {
     "apparent": "bin/apparent.js"
@@ -8,6 +8,7 @@
   "type": "commonjs",
   "files": [
     "bin",
+    "lib",
     "README.md"
   ],
   "engines": {

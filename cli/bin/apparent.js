@@ -1,36 +1,150 @@
 #!/usr/bin/env node
 /*
- * apparent — placeholder v0.0.1 (name-claim release).
+ * apparent — v1 (local build card).
  *
- * This exists only to reserve the `apparent` npm name and give early runners a
- * friendly message. The real v1 (local-git build card → founder profile) is
- * specified in cli/BLUEPRINT.md. Keep this dependency-free.
+ * Scans LOCAL git (never your source) for your build activity, renders a
+ * brag-worthy card you can screenshot, and shows exactly what would go on your
+ * Apparent profile. Nothing leaves your machine in this release.
+ *
+ * See cli/BLUEPRINT.md for the full spec and the upcoming upload/claim phase.
  */
 
 'use strict';
 
-const G = '\x1b[38;5;106m'; // apparent green-ish
-const D = '\x1b[2m';
-const B = '\x1b[1m';
-const R = '\x1b[0m';
+const path = require('path');
+const { c, log, ask, isTTY, parseIndices } = require('../lib/ui');
+const git = require('../lib/git');
+const { repoStats, aggregate } = require('../lib/stats');
+const card = require('../lib/card');
 
-const lines = [
+const HEADER = [
   '',
-  `${G}   █████╗ ██████╗ ██████╗  █████╗ ██████╗ ███████╗███╗   ██╗████████╗${R}`,
-  `${G}  ██╔══██╗██╔══██╗██╔══██╗██╔══██╗██╔══██╗██╔════╝████╗  ██║╚══██╔══╝${R}`,
-  `${G}  ███████║██████╔╝██████╔╝███████║██████╔╝█████╗  ██╔██╗ ██║   ██║   ${R}`,
-  `${G}  ██╔══██║██╔═══╝ ██╔═══╝ ██╔══██║██╔══██╗██╔══╝  ██║╚██╗██║   ██║   ${R}`,
-  `${G}  ██║  ██║██║     ██║     ██║  ██║██║  ██║███████╗██║ ╚████║   ██║   ${R}`,
-  `${G}  ╚═╝  ╚═╝╚═╝     ╚═╝     ╚═╝  ╚═╝╚═╝  ╚═╝╚══════╝╚═╝  ╚═══╝   ╚═╝   ${R}`,
-  '',
-  `  ${B}Make your real work apparent to the investors who fund builders.${R}`,
-  '',
-  `  ${D}Coming soon:${R} run this in a repo (or your workspace) and apparent`,
-  `  ${D}turns your build activity into a brag-worthy card + a founder profile.${R}`,
-  `  ${D}Your code never leaves your machine — only the stats you approve.${R}`,
-  '',
-  `  ${B}→ https://apparent.social${R}`,
+  c.green('  ◆ apparent') + c.dim('  ·  make your real work apparent'),
   '',
 ];
 
-process.stdout.write(lines.join('\n') + '\n');
+const fail = (msg) => {
+  log('');
+  log(c.bold('  ' + msg));
+  log('');
+  process.exit(1);
+};
+
+const mergeAuthors = (repos) => {
+  const byEmail = new Map();
+  for (const dir of repos) {
+    for (const a of git.listAuthors(dir)) {
+      const prev = byEmail.get(a.email) || { email: a.email, name: a.name, commits: 0 };
+      prev.commits += a.commits;
+      if (!prev.name && a.name) prev.name = a.name;
+      byEmail.set(a.email, prev);
+    }
+  }
+  return [...byEmail.values()].sort((a, b) => b.commits - a.commits);
+};
+
+const chooseScope = async (cwd) => {
+  const here = git.isRepo(cwd);
+  log(c.bold('  What should I look at?'));
+  log(`    ${c.green('1)')} this repo${here ? '' : c.dim(' (not a git repo here)')}`);
+  log(`    ${c.green('2)')} pick repos in this folder`);
+  log(`    ${c.green('3)')} whole workspace (everything under here)`);
+  log('');
+  const answer = (await ask('  Choose 1 / 2 / 3 [1]: ')) || '1';
+
+  if (answer === '1') {
+    if (!here) fail("This folder isn't a git repo. Re-run inside a project, or pick option 2/3.");
+    return { scope: 'repo', repos: [git.repoRoot(cwd)] };
+  }
+
+  const found = git.findRepos(cwd);
+  if (!found.length) fail('No git repos found under this folder.');
+
+  if (answer === '3') return { scope: 'workspace', repos: found };
+
+  // option 2: checklist (deselect)
+  log('');
+  log(c.bold(`  Found ${found.length} repos:`));
+  found.forEach((dir, i) => log(`    ${c.green(`${i + 1})`)} ${path.basename(dir)} ${c.dim(dir)}`));
+  log('');
+  const excludeRaw = await ask('  Numbers to EXCLUDE (comma-separated), or Enter to keep all: ');
+  const exclude = new Set(parseIndices(excludeRaw).map((n) => n - 1));
+  const repos = found.filter((_, i) => !exclude.has(i));
+  if (!repos.length) fail('No repos selected.');
+  return { scope: 'workspace', repos };
+};
+
+const chooseEmails = async (cwd, repos) => {
+  const authors = mergeAuthors(repos);
+  if (!authors.length) fail('No commits found in the selected repos.');
+
+  const configured = git.configEmail(cwd).toLowerCase();
+  const preselected = authors.findIndex((a) => a.email === configured);
+
+  if (!isTTY) {
+    return preselected >= 0 ? [authors[preselected].email] : [authors[0].email];
+  }
+
+  log('');
+  log(c.bold('  Which git identities are you?'));
+  authors.slice(0, 12).forEach((a, i) => {
+    const mark = i === preselected ? c.green(' ← your git config') : '';
+    log(`    ${c.green(`${i + 1})`)} ${a.email} ${c.dim(`(${a.commits} commits)`)}${mark}`);
+  });
+  log('');
+  const def = preselected >= 0 ? String(preselected + 1) : '1';
+  const raw = (await ask(`  Enter numbers (comma-separated) [${def}]: `)) || def;
+  const picked = parseIndices(raw).map((n) => authors[n - 1]).filter(Boolean);
+  const emails = (picked.length ? picked : [authors[Math.max(0, preselected)] || authors[0]]).map((a) => a.email);
+  return emails;
+};
+
+const previewLine = (label, value) => log(`    ${c.dim(label.padEnd(16))} ${value}`);
+
+const main = async () => {
+  HEADER.forEach((l) => log(l));
+
+  if (!git.hasGit()) fail('git is not installed or not on your PATH. Install git and re-run.');
+
+  const cwd = process.cwd();
+  const { scope, repos } = isTTY
+    ? await chooseScope(cwd)
+    : { scope: 'repo', repos: git.isRepo(cwd) ? [git.repoRoot(cwd)] : [] };
+
+  if (!repos.length) fail("This folder isn't a git repo. Re-run inside a project.");
+
+  const emails = await chooseEmails(cwd, repos);
+
+  log('');
+  log(c.dim('  Reading local git (your code never leaves this machine)…'));
+
+  const perRepo = repos.map((dir) => repoStats(dir, emails)).filter((r) => r.commits > 0);
+  if (!perRepo.length) fail('No commits found for your selected identity in these repos.');
+
+  const payload = aggregate(perRepo, emails, scope);
+  const name = git.configName(cwd) || 'A builder';
+  const kind = perRepo.length === 1 && scope === 'repo' ? 'project' : 'founder';
+
+  // The card.
+  log('');
+  log(card.render({ payload, name, kind }).split('\n').map((line) => c.green(line)).join('\n'));
+  log('');
+  log(c.dim('  ↑ screenshot this and post it. The footer is how other founders find apparent.'));
+
+  // What would go on the profile (privacy-transparent; nothing is uploaded in v1).
+  log('');
+  log(c.bold('  What apparent would add to your profile:'));
+  previewLine('Commits', String(payload.totals.commits));
+  previewLine('Projects', String(payload.totals.repos));
+  previewLine('Lines added', payload.totals.linesAdded.toLocaleString('en-US'));
+  previewLine('Languages', payload.languages.map((l) => `${l.name} ${l.percent}%`).join(', ') || '—');
+  previewLine('Top project', payload.projects[0] ? payload.projects[0].name : '—');
+  log('');
+  log(c.dim('  Not uploaded — source code never read, file paths never sent.'));
+  log(c.dim('  Profile upload + claim lands in the next release.'));
+  log('');
+  log('  ' + c.bold('Build your founder profile → ') + c.green('https://apparent.social'));
+  log('');
+};
+
+main().catch((err) => fail(`Something broke: ${err && err.message ? err.message : err}`));
