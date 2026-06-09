@@ -15,7 +15,8 @@ import Anthropic from '@anthropic-ai/sdk';
 
 const MODEL = 'claude-opus-4-8';
 const MAX_TOKENS = 8192;
-const MAX_TOOL_ITERATIONS = 5;
+// Covers both client tool rounds and server web-search continuations (pause_turn).
+const MAX_AGENT_STEPS = 12;
 
 const SUPABASE_URL = (process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL || '').replace(/\/$/, '');
 const SUPABASE_ANON_KEY = process.env.VITE_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY || '';
@@ -115,7 +116,57 @@ const searchApparentFounders = async (input) => {
   return { count: cards.length, founders: cards };
 };
 
+// ---------- Tool: enrich_contact (off-platform, hybrid) ----------
+// Vendor adapter when a key is configured (Hunter.io email-finder); otherwise
+// returns guidance so the model falls back to web_search/web_fetch.
+
+const enrichContact = async (input) => {
+  const name = str(input?.name).trim();
+  const company = str(input?.company).trim();
+  const domain = str(input?.domain).trim().replace(/^https?:\/\//, '').replace(/\/.*$/, '');
+  const hunterKey = process.env.HUNTER_API_KEY || '';
+
+  if (hunterKey && domain) {
+    try {
+      const [first, ...rest] = name.split(/\s+/);
+      const last = rest.join(' ');
+      const params = new URLSearchParams({ domain, api_key: hunterKey });
+      if (first) params.set('first_name', first);
+      if (last) params.set('last_name', last);
+      const res = await fetch(`https://api.hunter.io/v2/email-finder?${params.toString()}`);
+      if (res.ok) {
+        const json = await res.json();
+        const email = str(json?.data?.email);
+        const score = json?.data?.score ?? null;
+        if (email) return { provider: 'hunter', email, confidence: score, name, company };
+      }
+    } catch {
+      /* fall through to guidance */
+    }
+    return {
+      provider: 'hunter',
+      status: 'not_found',
+      guidance: 'The vendor returned no email. Use web_search/web_fetch to find a public contact (company contact page, or the founder\'s X/LinkedIn), then call prepare_mailto.',
+      name,
+      company,
+    };
+  }
+
+  return {
+    provider: 'none',
+    status: 'no_vendor',
+    guidance:
+      "No enrichment vendor is configured. Use web_search and web_fetch to find a public contact email or the founder's X/LinkedIn handle, then call prepare_mailto with whatever public contact you found (leave to_email empty if only a social handle is available, and mention the handle in the body).",
+    name,
+    company,
+    domain,
+  };
+};
+
 const TOOLS = [
+  // Anthropic server-side tools — used to source founders who are NOT on Apparent.
+  { type: 'web_search_20260209', name: 'web_search' },
+  { type: 'web_fetch_20260209', name: 'web_fetch' },
   {
     name: 'search_apparent_founders',
     description:
@@ -148,10 +199,42 @@ const TOOLS = [
       required: ['founder_id', 'founder_name', 'body'],
     },
   },
+  {
+    name: 'enrich_contact',
+    description:
+      "Find a public contact for an OFF-PLATFORM founder (one NOT on Apparent). If an enrichment vendor is configured it is queried; otherwise you'll get guidance to use web_search/web_fetch. Use this after you've identified a promising off-platform founder via web_search and want their email before drafting an intro.",
+    input_schema: {
+      type: 'object',
+      properties: {
+        name: { type: 'string', description: "The founder's full name." },
+        company: { type: 'string', description: "The founder's company/startup name." },
+        domain: { type: 'string', description: "The company's website domain if known (e.g. acme.com), which greatly improves email lookup." },
+      },
+      required: ['name'],
+    },
+  },
+  {
+    name: 'prepare_mailto',
+    description:
+      "Queue a ready-to-send intro EMAIL draft for an OFF-PLATFORM founder (not on Apparent). The investor sends it from their own email client — off-platform outreach is ALWAYS draft-to-inbox and is never sent automatically, regardless of the autonomy setting. Provide a public to_email if you found one; leave it empty if you only have a social handle (mention the handle in the body).",
+    input_schema: {
+      type: 'object',
+      properties: {
+        founder_name: { type: 'string', description: "The founder's name." },
+        company: { type: 'string', description: 'The startup/company name.' },
+        to_email: { type: 'string', description: 'A public contact email if found; otherwise omit.' },
+        subject: { type: 'string', description: 'A short, specific subject line.' },
+        body: { type: 'string', description: "The email body — concise, personalized, in the investor's voice, grounded in what you actually found about the founder. No placeholders." },
+        source_url: { type: 'string', description: 'A public URL where you found this founder/contact (for the investor to verify).' },
+      },
+      required: ['founder_name', 'body'],
+    },
+  },
 ];
 
 const runTool = async (name, input) => {
   if (name === 'search_apparent_founders') return searchApparentFounders(input);
+  if (name === 'enrich_contact') return enrichContact(input);
   return { error: `Unknown tool: ${name}` };
 };
 
@@ -171,7 +254,7 @@ const buildSystemPrompt = (criteria, autonomy, contactedIds) => {
     'You are Apparent\'s sourcing copilot for a venture investor (a VC or GP).',
     'Apparent is a platform where founders publish profiles and product launches, and investors discover thesis-fit deal flow.',
     '',
-    'Your job: help this investor explore the founders who are live on Apparent, surface and rank thesis-fit founders, explain WHY each fits, and — when asked — draft and queue personalized outreach to them.',
+    'Your job: help this investor explore thesis-fit founders, explain WHY each fits, and — when asked — draft and queue personalized outreach. You work two sources: founders already on Apparent, and founders out on the open web who are NOT yet on Apparent.',
     '',
     'The investor\'s saved thesis/criteria:',
     `- Thesis: ${str(c.thesis) || '(not set)'}`,
@@ -186,13 +269,20 @@ const buildSystemPrompt = (criteria, autonomy, contactedIds) => {
       ? `- The investor has ALREADY contacted these founder ids — never propose outreach to them again: ${contacted.join(', ')}.`
       : '- The investor has not contacted anyone yet.',
     '',
-    'Rules:',
-    '- To find or discuss founders, ALWAYS call search_apparent_founders. Ground every claim about a founder strictly in tool results — never invent founders, metrics, or contact details.',
-    '- When ranking, explain fit against the investor\'s thesis/sectors/stage/geography and the founder\'s proof (traction, launches, GitHub, raising intent).',
-    '- Only call propose_outreach when the investor clearly wants to reach out / contact / message founders. Propose it once per founder, only for founders that are open_to_contact in the search results and not in the already-contacted list. Write a concise, specific, personalized message in the investor\'s voice — no placeholders.',
-    '- Be concise and scannable. Prefer short founder call-outs (name — company — one-line why-it-fits) over long prose.',
-    '- If a search returns nothing, say so plainly and suggest loosening a filter. Do not fabricate.',
-    '- Scope note: you can search, reason over, and message founders who are already on Apparent. Finding founders NOT yet on Apparent (off-platform web sourcing) and emailing them is coming soon — if asked for that, say it is on the way and not yet available.',
+    'ON-PLATFORM founders (already on Apparent):',
+    '- Find/discuss them with search_apparent_founders. Ground every claim strictly in tool results — never invent founders, metrics, or contact details.',
+    '- To reach out, call propose_outreach (one per founder), only for founders that are open_to_contact and not already-contacted. These become in-app DMs, sent per the outreach mode above.',
+    '',
+    'OFF-PLATFORM founders (out on the web, not on Apparent):',
+    '- When the investor wants founders beyond Apparent ("not on Apparent", "from the web", "find more like this", broad sourcing), use web_search to find real startups/founders matching the thesis, and web_fetch to read their site/profile for detail. Only surface real, verifiable results — cite the source URL.',
+    '- To get a contact, call enrich_contact (it uses a vendor if configured, otherwise tells you to keep using web_search/web_fetch). Never invent an email — only use one you actually found.',
+    '- To reach out, call prepare_mailto. OFF-PLATFORM outreach is ALWAYS a draft the investor sends from their own inbox — it is NEVER auto-sent, regardless of the autonomy setting. If you only found a social handle, leave to_email empty and put the handle in the body.',
+    '',
+    'General rules:',
+    '- Default to on-platform founders first; reach to the web when the investor asks to go broader or for founders not yet on Apparent.',
+    '- When ranking, explain fit against thesis/sectors/stage/geography and real proof (traction, launches, GitHub, raising intent).',
+    '- Be concise and scannable. Prefer short call-outs (name — company — one-line why-it-fits) over long prose.',
+    '- If a search returns nothing, say so plainly and suggest loosening a filter. Never fabricate founders, metrics, emails, or links.',
   ];
   return lines.join('\n');
 };
@@ -241,11 +331,13 @@ export default async function handler(req, res) {
 
   const client = new Anthropic();
   const system = buildSystemPrompt(criteria, autonomy, contactedIds);
-  const proposals = [];
+  const proposals = []; // on-platform DM proposals
+  const emailDrafts = []; // off-platform mailto drafts
   const seenProposalFounders = new Set();
+  const seenEmailKeys = new Set();
 
-  try {
-    let response = await client.messages.create({
+  const callModel = () =>
+    client.messages.create({
       model: MODEL,
       max_tokens: MAX_TOKENS,
       thinking: { type: 'adaptive' },
@@ -255,22 +347,31 @@ export default async function handler(req, res) {
       messages,
     });
 
-    let iterations = 0;
-    while (response.stop_reason === 'tool_use' && iterations < MAX_TOOL_ITERATIONS) {
-      iterations += 1;
+  try {
+    let response = await callModel();
 
-      // Preserve the assistant turn verbatim (thinking + tool_use blocks) so the
-      // loop stays coherent across tool calls.
+    let steps = 0;
+    while (steps < MAX_AGENT_STEPS && (response.stop_reason === 'tool_use' || response.stop_reason === 'pause_turn')) {
+      steps += 1;
+
+      // Preserve the assistant turn verbatim (thinking, server web-search blocks,
+      // and tool_use blocks) so the loop stays coherent across steps.
       messages.push({ role: 'assistant', content: response.content });
+
+      // pause_turn = Anthropic's server-side web search hit its step limit; just
+      // re-send to let it resume. No client tool results to add.
+      if (response.stop_reason === 'pause_turn') {
+        response = await callModel();
+        continue;
+      }
 
       const toolResults = [];
       for (const block of response.content) {
-        if (block.type !== 'tool_use') continue;
+        if (block.type !== 'tool_use') continue; // skip server_tool_use (web_search/web_fetch)
 
         let result;
         if (block.name === 'propose_outreach') {
-          // Side-effect-free: record the proposal; the client performs the actual
-          // (RLS-authenticated) send or shows it for approval.
+          // On-platform DM — side-effect-free; the client performs the RLS-safe send.
           const founderId = str(block.input?.founder_id);
           const founderName = str(block.input?.founder_name);
           const subject = str(block.input?.subject);
@@ -281,6 +382,28 @@ export default async function handler(req, res) {
             result = { status: 'queued', founder_id: founderId };
           } else {
             result = { status: 'skipped', reason: 'duplicate, already-contacted, or missing fields' };
+          }
+        } else if (block.name === 'prepare_mailto') {
+          // Off-platform email — always a draft for the investor's own inbox.
+          const founderName = str(block.input?.founder_name);
+          const company = str(block.input?.company);
+          const toEmail = str(block.input?.to_email);
+          const subject = str(block.input?.subject);
+          const draftBody = str(block.input?.body);
+          const key = (toEmail || `${founderName}|${company}`).toLowerCase();
+          if (draftBody && !seenEmailKeys.has(key)) {
+            seenEmailKeys.add(key);
+            emailDrafts.push({
+              founderName,
+              company,
+              toEmail,
+              subject,
+              body: draftBody,
+              sourceUrl: str(block.input?.source_url),
+            });
+            result = { status: 'drafted', note: 'Shown to the investor to send from their own inbox.' };
+          } else {
+            result = { status: 'skipped', reason: 'duplicate or missing body' };
           }
         } else {
           try {
@@ -297,17 +420,9 @@ export default async function handler(req, res) {
         });
       }
 
+      if (toolResults.length === 0) break; // nothing to fulfill — avoid a stuck loop
       messages.push({ role: 'user', content: toolResults });
-
-      response = await client.messages.create({
-        model: MODEL,
-        max_tokens: MAX_TOKENS,
-        thinking: { type: 'adaptive' },
-        output_config: { effort: 'medium' },
-        system,
-        tools: TOOLS,
-        messages,
-      });
+      response = await callModel();
     }
 
     const reply = response.content
@@ -319,6 +434,7 @@ export default async function handler(req, res) {
     return res.status(200).json({
       reply: reply || "I couldn't find anything to say about that — try rephrasing your question.",
       proposals,
+      emailDrafts,
     });
   } catch (err) {
     if (err instanceof Anthropic.APIError) {

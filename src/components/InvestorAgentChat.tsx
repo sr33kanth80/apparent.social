@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Check, Loader2, Send, Sparkles, Trash2, X } from 'lucide-react';
+import { Check, Copy, ExternalLink, Loader2, Mail, Send, Sparkles, Trash2, X } from 'lucide-react';
 
 import { InvestorAIPrompt } from '@/components/InvestorAIAssist';
 import { LogoIcon } from '@/components/LogoIcon';
@@ -14,6 +14,16 @@ export type OutreachProposal = {
 
 export type OutreachResult = { ok: boolean; reason?: string };
 
+/** Off-platform intro the investor sends from their own inbox (never auto-sent). */
+export type EmailDraft = {
+  founderName: string;
+  company: string;
+  toEmail: string;
+  subject: string;
+  body: string;
+  sourceUrl: string;
+};
+
 type ProposalStatus = 'pending' | 'sending' | 'sent' | 'skipped' | 'error';
 type ProposalState = OutreachProposal & { status: ProposalStatus; reason?: string };
 
@@ -21,6 +31,66 @@ type ChatMessage = {
   role: 'user' | 'assistant';
   content: string;
   proposals?: ProposalState[];
+  emailDrafts?: EmailDraft[];
+};
+
+const EmailDraftCard = ({ draft }: { draft: EmailDraft }) => {
+  const [copied, setCopied] = useState(false);
+  const mailtoHref = `mailto:${draft.toEmail}?subject=${encodeURIComponent(draft.subject || '')}&body=${encodeURIComponent(draft.body || '')}`;
+
+  const copy = async () => {
+    try {
+      await navigator.clipboard.writeText(`${draft.subject ? `Subject: ${draft.subject}\n\n` : ''}${draft.body}`);
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 1500);
+    } catch {
+      /* ignore */
+    }
+  };
+
+  return (
+    <div className="rounded-xl border border-black/10 bg-white p-3">
+      <div className="mb-1 flex items-center justify-between gap-2">
+        <p className="text-xs font-semibold text-black">
+          {draft.founderName || 'Founder'}
+          {draft.company ? ` · ${draft.company}` : ''}
+        </p>
+        <span className="inline-flex items-center gap-1 rounded-full bg-[#fbf8f3] px-2 py-0.5 text-[10px] font-medium text-gray-500">
+          <Mail className="h-3 w-3" /> Off-platform
+        </span>
+      </div>
+      <p className="text-[11px] text-gray-500">{draft.toEmail || 'No email found — send via the source below or your own channel'}</p>
+      {draft.subject && <p className="mt-1 text-xs font-medium text-gray-600">{draft.subject}</p>}
+      <p className="mt-1 whitespace-pre-wrap text-xs leading-relaxed text-gray-600">{draft.body}</p>
+      <div className="mt-2 flex flex-wrap items-center gap-2">
+        {draft.toEmail && (
+          <a
+            href={mailtoHref}
+            className="inline-flex items-center gap-1 rounded-lg bg-neutral-900 px-2.5 py-1 text-[11px] font-semibold text-white transition-colors hover:bg-black"
+          >
+            <Mail className="h-3 w-3" /> Open email
+          </a>
+        )}
+        <button
+          type="button"
+          onClick={copy}
+          className="inline-flex items-center gap-1 rounded-lg border border-black/10 px-2.5 py-1 text-[11px] text-gray-600 transition-colors hover:text-black"
+        >
+          {copied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />} {copied ? 'Copied' : 'Copy'}
+        </button>
+        {draft.sourceUrl && (
+          <a
+            href={draft.sourceUrl}
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex items-center gap-1 rounded-lg px-2.5 py-1 text-[11px] text-gray-500 transition-colors hover:text-black"
+          >
+            <ExternalLink className="h-3 w-3" /> Source
+          </a>
+        )}
+      </div>
+    </div>
+  );
 };
 
 interface InvestorAgentChatProps {
@@ -40,8 +110,8 @@ const STORAGE_PREFIX = 'apparent:agent-chat:';
 
 const SUGGESTIONS = [
   'Show me founders raising now that fit my thesis',
-  'Who are the strongest builders on Apparent right now?',
-  'Find developer-tools founders and draft intros to the top 3',
+  'Find developer-tools founders on Apparent and draft intros to the top 3',
+  'Find founders NOT on Apparent that fit my thesis and prep intros',
 ];
 
 const AUTONOMY_OPTIONS: { value: AgentAutonomy; label: string; hint: string }[] = [
@@ -146,6 +216,7 @@ export const InvestorAgentChat = ({
       }
 
       const rawProposals: OutreachProposal[] = Array.isArray(data.proposals) ? data.proposals : [];
+      const emailDrafts: EmailDraft[] = Array.isArray(data.emailDrafts) ? data.emailDrafts : [];
       const auto = isAutoMode(autonomy);
       const proposalStates: ProposalState[] = rawProposals.map((proposal) => ({
         ...proposal,
@@ -155,7 +226,15 @@ export const InvestorAgentChat = ({
       let assistantIndex = -1;
       setMessages((current) => {
         assistantIndex = current.length;
-        return [...current, { role: 'assistant', content: String(data.reply ?? ''), proposals: proposalStates.length ? proposalStates : undefined }];
+        return [
+          ...current,
+          {
+            role: 'assistant',
+            content: String(data.reply ?? ''),
+            proposals: proposalStates.length ? proposalStates : undefined,
+            emailDrafts: emailDrafts.length ? emailDrafts : undefined,
+          },
+        ];
       });
 
       // Auto modes send immediately; manual mode waits for the investor to approve.
@@ -294,6 +373,14 @@ export const InvestorAgentChat = ({
                 {message.role === 'assistant' && message.proposals && message.proposals.length > 0 && (
                   <div className="ml-8 mt-2 w-[85%] space-y-2">
                     {message.proposals.map((proposal, pi) => renderProposal(index, proposal, pi))}
+                  </div>
+                )}
+
+                {message.role === 'assistant' && message.emailDrafts && message.emailDrafts.length > 0 && (
+                  <div className="ml-8 mt-2 w-[85%] space-y-2">
+                    {message.emailDrafts.map((draft, di) => (
+                      <EmailDraftCard key={`${draft.toEmail || draft.founderName}-${di}`} draft={draft} />
+                    ))}
                   </div>
                 )}
               </div>
