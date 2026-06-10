@@ -6,20 +6,14 @@
 <meta name="viewport" content="width=1920" />
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
-  /* ──────────────────────────────────────────────────────────────────
-     APPARENT — Pitch Deck
-     Uses the real apparent.social design language.
-     1920 × 1080 slides.
-     ────────────────────────────────────────────────────────────────── */
-
   :root {
     --bg: #fbf8f3;
     --fg: #111111;
     --card: #ffffff;
     --olive: #42520d;
-    --olive-hover: #34420a;
+    --olive-light: #4a5c10;
     --green: #dcefc7;
     --green-hover: #cce8ae;
     --emerald: #0d6b52;
@@ -27,820 +21,632 @@
     --muted: #f4f1eb;
     --muted-fg: #6b665f;
     --secondary: #f1eee8;
+    --blue: #1D9BF0;
     --r: 8px;
     --r-lg: 14px;
     --r-xl: 22px;
     --r-pill: 999px;
   }
-
   * { box-sizing: border-box; margin: 0; padding: 0; }
-
   html, body {
     background: #d7d4cf;
     font-family: 'Inter', -apple-system, sans-serif;
-    font-weight: 400;
-    color: var(--fg);
+    font-weight: 400; color: var(--fg);
     -webkit-font-smoothing: antialiased;
   }
-
-  body {
-    padding: 40px 0;
-    display: flex; flex-direction: column; align-items: center; gap: 28px;
-  }
+  body { padding: 40px 0; display: flex; flex-direction: column; align-items: center; gap: 28px; }
 
   .slide {
     width: 1920px; height: 1080px;
     position: relative; overflow: hidden;
-    background: var(--bg);
-    flex: none;
+    background: var(--bg); flex: none;
   }
-
   @media print {
     html, body { background: #fff; padding: 0; gap: 0; }
     .slide { page-break-after: always; break-after: page; }
   }
+  .si { position: absolute; inset: 72px; display: flex; flex-direction: column; }
 
-  .slide-inner {
-    position: absolute; inset: 96px;
-    display: flex; flex-direction: column;
-  }
-
-  /* ── Notch ──────────────────────────────────────────────────────── */
-
+  /* ── Notch ─────────────────────────────────────────────────────── */
   .notch {
     position: absolute; top: 0; left: 50%; transform: translateX(-50%);
     background: var(--olive); color: var(--green);
-    padding: 14px 36px;
-    border-radius: 0 0 var(--r-lg) var(--r-lg);
-    font-size: 12px; font-weight: 600;
-    text-transform: uppercase; letter-spacing: 0.2em;
-    z-index: 10;
+    padding: 12px 32px; border-radius: 0 0 var(--r-lg) var(--r-lg);
+    font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.22em; z-index: 10;
   }
-  .slide--dark .notch {
-    background: var(--green); color: var(--olive);
-  }
+  .slide--dark .notch { background: var(--green); color: var(--olive); }
 
   /* ── Typography ─────────────────────────────────────────────────── */
-
-  h1, h2, h3 { font-weight: 700; color: var(--fg); letter-spacing: -0.03em; line-height: 1.05; }
-  .h-xl { font-size: 88px; }
-  .h-lg { font-size: 64px; }
-  .h-md { font-size: 48px; }
-  .h-sm { font-size: 32px; }
-  .body-lg { font-size: 22px; line-height: 1.55; color: var(--muted-fg); }
-  .body    { font-size: 17px; line-height: 1.6; color: var(--muted-fg); }
-  .body-sm { font-size: 14px; line-height: 1.55; color: var(--muted-fg); }
-  .meta    { font-size: 12px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.16em; color: var(--muted-fg); }
-
-  .text-olive { color: var(--olive); }
+  h1, h2, h3 { font-weight: 800; color: var(--fg); letter-spacing: -0.035em; line-height: 1.05; }
+  .h-hero { font-size: 96px; }
+  .h-xl { font-size: 72px; }
+  .h-lg { font-size: 56px; }
+  .h-md { font-size: 40px; }
+  .h-sm { font-size: 28px; }
+  .body-xl { font-size: 24px; line-height: 1.5; color: var(--muted-fg); }
+  .body-lg { font-size: 20px; line-height: 1.55; color: var(--muted-fg); }
+  .body    { font-size: 16px; line-height: 1.6; color: var(--muted-fg); }
+  .body-sm { font-size: 13px; line-height: 1.5; color: var(--muted-fg); }
+  .meta    { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.18em; color: var(--muted-fg); }
   .text-fg { color: var(--fg); }
+  strong, b { font-weight: 700; color: var(--fg); }
 
-  /* ── Surfaces ───────────────────────────────────────────────────── */
-
+  /* ── Dark slide ─────────────────────────────────────────────────── */
   .slide--dark { background: var(--olive); }
-  .slide--dark .slide-inner { color: var(--green); }
-  .slide--dark h1, .slide--dark h2, .slide--dark h3 { color: #ffffff; }
-  .slide--dark .body-lg, .slide--dark .body, .slide--dark .body-sm { color: rgba(255,255,255,0.65); }
-  .slide--dark .meta { color: rgba(255,255,255,0.45); }
+  .slide--dark h1, .slide--dark h2, .slide--dark h3 { color: #fff; }
+  .slide--dark .body-xl, .slide--dark .body-lg, .slide--dark .body, .slide--dark .body-sm { color: rgba(255,255,255,0.6); }
+  .slide--dark .meta { color: rgba(255,255,255,0.4); }
 
   /* ── Components ─────────────────────────────────────────────────── */
-
   .pill {
-    display: inline-flex; align-items: center; gap: 8px;
-    padding: 10px 22px; border-radius: var(--r-pill);
-    font-size: 13px; font-weight: 600;
-    border: 1px solid transparent;
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 8px 18px; border-radius: var(--r-pill);
+    font-size: 13px; font-weight: 600; border: 1px solid transparent;
   }
   .pill--green { background: var(--green); color: var(--olive); }
-  .pill--olive { background: var(--olive); color: #ffffff; }
+  .pill--olive { background: var(--olive); color: #fff; }
   .pill--outline { background: transparent; border-color: var(--border); color: var(--fg); }
-  .slide--dark .pill--outline { border-color: rgba(255,255,255,0.25); color: #ffffff; }
+  .slide--dark .pill--outline { border-color: rgba(255,255,255,0.25); color: #fff; }
 
   .check {
-    width: 28px; height: 28px; border-radius: var(--r-pill);
-    background: var(--olive); color: #ffffff;
+    width: 26px; height: 26px; border-radius: var(--r-pill);
+    background: var(--olive); color: #fff;
     display: flex; align-items: center; justify-content: center;
-    font-size: 14px; font-weight: 600; flex: 0 0 auto;
+    font-size: 13px; font-weight: 700; flex: 0 0 auto;
   }
+  .check--empty { background: transparent; border: 1.5px solid var(--border); color: var(--muted-fg); }
 
   .card {
     background: var(--card); border: 1px solid var(--border);
-    border-radius: var(--r-xl); padding: 32px;
+    border-radius: var(--r-xl); padding: 28px;
   }
   .card--green { background: var(--green); border-color: transparent; }
   .card--muted { background: var(--muted); border-color: transparent; }
-  .card--olive { background: var(--olive); border-color: transparent; color: #ffffff; }
-  .card--olive h3, .card--olive .h-sm { color: #ffffff; }
-  .card--olive .body, .card--olive .body-sm { color: rgba(255,255,255,0.65); }
+  .card--olive { background: var(--olive); border-color: transparent; }
+  .card--olive h3, .card--olive .h-sm, .card--olive .h-md { color: #fff; }
+  .card--olive .body, .card--olive .body-sm { color: rgba(255,255,255,0.6); }
 
-  .feat { display: flex; gap: 12px; align-items: flex-start; }
+  .feat { display: flex; gap: 10px; align-items: flex-start; }
 
-  /* ── Slide chrome ───────────────────────────────────────────────── */
+  /* Verified badge */
+  .vb { display: inline-block; width: 20px; height: 20px; vertical-align: middle; flex: 0 0 auto; }
+  .vb--lg { width: 32px; height: 32px; }
+  .vb--xl { width: 44px; height: 44px; }
 
-  .wordmark {
-    display: flex; align-items: center; gap: 10px;
-    font-size: 18px; font-weight: 600; color: var(--fg);
-  }
-  .wordmark .logo-icon { width: 24px; height: 24px; flex: 0 0 auto; fill: var(--fg); }
-  .slide--dark .wordmark { color: #ffffff; }
-  .slide--dark .wordmark .logo-icon { fill: #ffffff; }
+  /* ── Chrome ─────────────────────────────────────────────────────── */
+  .wordmark { display: flex; align-items: center; gap: 8px; font-size: 16px; font-weight: 700; color: var(--fg); }
+  .wordmark .li { width: 20px; height: 20px; flex: 0 0 auto; fill: var(--fg); }
+  .slide--dark .wordmark { color: #fff; }
+  .slide--dark .wordmark .li { fill: #fff; }
 
   .footer {
     margin-top: auto; display: flex; align-items: center; justify-content: space-between;
-    padding-top: 24px; border-top: 1px solid var(--border);
+    padding-top: 20px; border-top: 1px solid var(--border);
   }
-  .slide--dark .footer { border-top-color: rgba(255,255,255,0.15); }
-  .page-num { font-size: 12px; font-weight: 500; color: var(--muted-fg); letter-spacing: 0.12em; }
-  .slide--dark .page-num { color: rgba(255,255,255,0.4); }
-
-  /* ── Layout ─────────────────────────────────────────────────────── */
-
-  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 28px; }
-  .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 28px; }
+  .slide--dark .footer { border-top-color: rgba(255,255,255,0.12); }
+  .pn { font-size: 11px; font-weight: 600; color: var(--muted-fg); letter-spacing: 0.12em; }
+  .slide--dark .pn { color: rgba(255,255,255,0.35); }
 
   /* ══════════════════════════════════════════════════════════════════
-     SLIDE-SPECIFIC STYLES
+     SLIDE-SPECIFIC
      ══════════════════════════════════════════════════════════════════ */
 
-  /* S1 — Cover */
-  .s1 .hero-grid { position: absolute; inset: 0; display: grid; grid-template-columns: 56% 44%; }
-  .s1 .hero-left { position: relative; background: var(--bg); }
-  .s1 .hero-left .slide-inner { position: absolute; inset: 96px; display: flex; flex-direction: column; }
-  .s1 .hero-right { position: relative; background: var(--olive); overflow: hidden; }
-  .s1 .lede { margin-top: auto; }
-  .s1 .lede h1 { margin-top: 24px; }
-  .s1 .lede .body-lg { margin-top: 28px; max-width: 560px; }
-  .s1 .lede .pills { margin-top: 40px; display: flex; gap: 10px; }
-  .s1 .hero-logo {
-    position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-    width: 320px; height: 320px; opacity: 0.08; fill: #ffffff;
+  /* S1 Cover */
+  .s1 .cover-content { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: 32px; }
+  .s1 .logo-row { display: flex; align-items: center; gap: 20px; }
+  .s1 .logo-icon-big { width: 88px; height: 88px; fill: var(--fg); }
+  .s1 .logo-name { font-size: 72px; font-weight: 800; letter-spacing: -0.04em; color: var(--fg); }
+  .s1 .oneliner { font-size: 26px; color: var(--muted-fg); max-width: 900px; line-height: 1.45; font-weight: 400; }
+  .s1 .dot-bg {
+    position: absolute; inset: 0; pointer-events: none;
+    background-image: radial-gradient(var(--olive) 1.2px, transparent 1.2px);
+    background-size: 40px 40px; opacity: 0.035;
   }
-  .showcase-card {
-    position: absolute; background: var(--card);
-    border: 1px solid var(--border); border-radius: var(--r-xl);
-    padding: 22px; box-shadow: 0 12px 40px rgba(0,0,0,0.12);
-  }
-  .showcase-card .sc-meta { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.14em; color: var(--muted-fg); margin-bottom: 6px; }
-  .showcase-card .sc-name { font-size: 20px; font-weight: 700; color: var(--fg); }
-  .showcase-card .sc-detail { font-size: 13px; color: var(--olive); margin-top: 4px; font-weight: 500; }
-  .showcase-card--match { border-color: var(--olive); border-width: 2px; }
 
-  /* S2 — Problem */
-  .s2 .stat-row { margin-top: 56px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 40px; }
-  .s2 .stat .num { font-size: 80px; font-weight: 700; color: var(--fg); line-height: 1; letter-spacing: -0.04em; }
-  .s2 .stat .label { margin-top: 12px; }
+  /* S2 Problem */
+  .s2 .content { margin-top: 36px; flex: 1; display: grid; grid-template-columns: 1.2fr 1fr; gap: 56px; align-items: center; }
+  .s2 .stats { display: flex; flex-direction: column; gap: 28px; }
+  .s2 .stat .num { font-size: 64px; font-weight: 800; color: var(--fg); line-height: 1; letter-spacing: -0.04em; }
+  .s2 .stat .label { margin-top: 6px; }
   .s2 .compare {
-    margin-top: 56px; display: flex; align-items: center; gap: 24px;
-    padding: 28px 36px; background: var(--green); border-radius: var(--r-xl);
+    margin-top: 32px; display: flex; align-items: center; gap: 20px;
+    padding: 22px 28px; background: var(--green); border-radius: var(--r-xl);
   }
-  .s2 .compare .strike { text-decoration: line-through; text-decoration-thickness: 2px; opacity: 0.45; color: var(--fg); font-size: 20px; font-weight: 500; }
-  .s2 .compare .arrow { color: var(--olive); font-size: 20px; font-weight: 700; }
-  .s2 .compare .win { color: var(--olive); font-size: 20px; font-weight: 600; }
+  .s2 .compare .strike { text-decoration: line-through; text-decoration-thickness: 2px; opacity: 0.4; font-size: 17px; font-weight: 500; color: var(--fg); }
+  .s2 .compare .arrow { color: var(--olive); font-size: 18px; font-weight: 800; }
+  .s2 .compare .win { color: var(--olive); font-size: 17px; font-weight: 700; }
 
-  /* S3 — Solution */
-  .s3 .feature-grid { margin-top: 48px; display: grid; grid-template-columns: 1fr 1fr; gap: 28px; flex: 1; }
-  .s3 .feature-grid .card { display: flex; flex-direction: column; gap: 16px; }
-  .s3 .feature-grid .head { display: flex; align-items: center; gap: 12px; }
+  /* S3 Solution */
+  .s3 .content { margin-top: 32px; flex: 1; display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+  .s3 .card { display: flex; flex-direction: column; gap: 14px; flex: 1; }
+  .s3 .head { display: flex; align-items: center; gap: 10px; }
 
-  /* S4 — Why Now */
-  .s4 .why-grid { margin-top: 56px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 28px; }
-  .s4 .why-grid .card { min-height: 260px; display: flex; flex-direction: column; gap: 16px; }
-  .s4 .why-grid .num { font-size: 36px; font-weight: 700; color: rgba(255,255,255,0.3); }
-
-  /* S5 — Product */
-  .s5 .steps { margin-top: 48px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 28px; }
-  .s5 .steps .card { display: flex; flex-direction: column; gap: 12px; }
-  .s5 .step-num { font-size: 36px; font-weight: 700; color: var(--olive); opacity: 0.35; }
-  .s5 .map-preview {
-    margin-top: 40px; flex: 1; position: relative; min-height: 200px;
-    border-radius: var(--r-xl); overflow: hidden; background: var(--muted); border: 1px solid var(--border);
-  }
-  .s5 .map-field {
-    position: absolute; inset: 0;
-    background-image: radial-gradient(var(--olive) 1px, transparent 1.5px);
-    background-size: 32px 32px; opacity: 0.06;
-  }
-  .s5 .map-pin {
-    position: absolute; width: 14px; height: 14px; border-radius: var(--r-pill);
-    background: var(--olive); border: 3px solid var(--card);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  /* S4 Product + Map */
+  .s4 .content { margin-top: 28px; flex: 1; display: grid; grid-template-columns: 380px 1fr; gap: 36px; }
+  .s4 .steps-col { display: flex; flex-direction: column; gap: 16px; }
+  .s4 .step { display: flex; gap: 14px; align-items: flex-start; }
+  .s4 .step .n { width: 36px; height: 36px; border-radius: var(--r-pill); background: var(--olive); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 800; flex: 0 0 auto; }
+  .s4 .network-map {
+    border-radius: var(--r-xl); background: var(--fg); overflow: hidden; position: relative;
+    display: flex; align-items: center; justify-content: center;
   }
 
-  /* S6 — Agents */
-  .s6 .agent-grid { margin-top: 40px; display: grid; grid-template-columns: 1fr 1fr; gap: 28px; flex: 1; }
-  .s6 .agent-card { display: flex; flex-direction: column; gap: 16px; }
-  .s6 .tools { display: flex; flex-direction: column; gap: 14px; margin-top: 8px; }
-  .s6 .tool-row { display: flex; align-items: flex-start; gap: 12px; }
+  /* S5 Market */
+  .s5 .content { margin-top: 28px; flex: 1; display: grid; grid-template-columns: 1fr 480px; gap: 48px; align-items: center; }
+  .s5 .market-cards { display: flex; flex-direction: column; gap: 16px; }
+  .s5 .circles { position: relative; width: 460px; height: 460px; margin: 0 auto; }
+  .s5 .circle { position: absolute; border-radius: var(--r-pill); display: flex; align-items: flex-start; justify-content: center; padding-top: 28px; }
+  .s5 .circle-tam { width: 460px; height: 460px; background: var(--muted); top: 0; left: 0; }
+  .s5 .circle-sam { width: 310px; height: 310px; background: var(--green); top: 75px; left: 75px; }
+  .s5 .circle-som { width: 160px; height: 160px; background: var(--olive); top: 150px; left: 150px; align-items: center; padding-top: 0; }
+  .s5 .circle .amt { font-size: 24px; font-weight: 800; color: var(--fg); margin-top: 4px; letter-spacing: -0.02em; }
+  .s5 .circle-som .amt { color: #fff; }
+  .s5 .circle-som .meta { color: rgba(255,255,255,0.55); }
 
-  /* S7 — Market */
-  .s7 .market-wrap { margin-top: 40px; flex: 1; display: grid; grid-template-columns: 1fr 520px; gap: 56px; align-items: center; }
-  .s7 .market-list { display: flex; flex-direction: column; gap: 20px; }
-  .s7 .circles { position: relative; width: 480px; height: 480px; margin: 0 auto; }
-  .s7 .circle { position: absolute; border-radius: var(--r-pill); display: flex; align-items: flex-start; justify-content: center; padding-top: 32px; }
-  .s7 .circle-tam { width: 480px; height: 480px; background: var(--muted); top: 0; left: 0; }
-  .s7 .circle-sam { width: 320px; height: 320px; background: var(--green); top: 80px; left: 80px; }
-  .s7 .circle-som { width: 170px; height: 170px; background: var(--olive); top: 155px; left: 155px; align-items: center; padding-top: 0; }
-  .s7 .circle .lbl { text-align: center; }
-  .s7 .circle .amt { font-size: 28px; font-weight: 700; color: var(--fg); margin-top: 4px; letter-spacing: -0.02em; }
-  .s7 .circle-som .amt { color: #ffffff; }
-  .s7 .circle-som .meta { color: rgba(255,255,255,0.6); }
-  .s7 .footnote { margin-top: 20px; }
-
-  /* S8 — Business model */
-  .s8 .tiers { margin-top: 40px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 28px; flex: 1; }
-  .s8 .tier { display: flex; flex-direction: column; gap: 16px; }
-  .s8 .free-banner {
-    margin-top: 28px; padding: 28px 36px; border-radius: var(--r-xl);
-    background: var(--olive); display: flex; align-items: center; justify-content: space-between; gap: 32px;
+  /* S6 Business Model + GTM */
+  .s6 .content { margin-top: 28px; flex: 1; display: grid; grid-template-columns: 1fr 1fr; gap: 28px; }
+  .s6 .tiers { display: flex; flex-direction: column; gap: 16px; }
+  .s6 .tier { display: flex; flex-direction: column; gap: 10px; }
+  .s6 .terminal {
+    background: var(--fg); border-radius: var(--r-xl); padding: 28px;
+    font-family: 'SF Mono', Consolas, 'Courier New', monospace; font-size: 14px; line-height: 1.8;
+    color: #fff; height: 100%; display: flex; flex-direction: column; justify-content: center;
   }
+  .s6 .terminal .prompt { color: var(--green); }
+  .s6 .terminal .dim { color: rgba(255,255,255,0.35); }
 
-  /* S9 — GTM */
-  .s9 .gtm-grid { margin-top: 40px; flex: 1; display: grid; grid-template-columns: 1fr 1fr; gap: 56px; align-items: center; }
-  .s9 .terminal {
-    background: var(--fg); border-radius: var(--r-xl); padding: 32px;
-    font-family: 'SFMono-Regular', Consolas, 'Courier New', monospace; font-size: 15px; line-height: 1.85;
-    color: #ffffff;
-  }
-  .s9 .terminal .prompt { color: var(--green); }
-  .s9 .terminal .dim { color: rgba(255,255,255,0.4); }
-  .s9 .loop-steps { display: flex; flex-direction: column; gap: 24px; }
-  .s9 .loop-step { display: flex; gap: 20px; align-items: flex-start; }
-  .s9 .loop-step .n { font-size: 24px; font-weight: 700; color: var(--olive); opacity: 0.35; flex: 0 0 auto; width: 48px; }
+  /* S7 Traction + Competition */
+  .s7 .content { margin-top: 28px; flex: 1; display: grid; grid-template-columns: 1fr 1fr; gap: 28px; }
+  .s7 .traction-col { display: flex; flex-direction: column; gap: 16px; }
+  .s7 .matrix-col { display: flex; flex-direction: column; gap: 16px; }
+  .s7 .matrix { position: relative; width: 100%; aspect-ratio: 1; border-left: 1.5px solid var(--border); border-bottom: 1.5px solid var(--border); }
+  .s7 .matrix .al { position: absolute; font-size: 10px; font-weight: 700; color: var(--muted-fg); letter-spacing: 0.14em; text-transform: uppercase; white-space: nowrap; }
+  .s7 .matrix .pt { position: absolute; display: flex; flex-direction: column; align-items: center; gap: 6px; transform: translate(-50%, 50%); }
+  .s7 .matrix .pt .d { width: 14px; height: 14px; border-radius: var(--r-pill); background: var(--border); }
+  .s7 .matrix .pt.us .d { width: 22px; height: 22px; background: var(--olive); }
+  .s7 .matrix .pt .l { font-size: 11px; white-space: nowrap; color: var(--muted-fg); font-weight: 600; }
+  .s7 .matrix .pt.us .l { color: var(--olive); font-weight: 800; }
 
-  /* S10 — Status */
-  .s10 .status-grid { margin-top: 40px; flex: 1; display: grid; grid-template-columns: 1fr 1fr; gap: 28px; }
-  .s10 .status-grid .card { display: flex; flex-direction: column; gap: 16px; }
-  .s10 .feat--next .check { background: transparent; border: 1.5px solid var(--border); color: var(--muted-fg); font-weight: 400; }
+  /* S8 Team + Ask */
+  .s8 .content { margin-top: 28px; flex: 1; display: grid; grid-template-columns: 1fr 1.2fr; gap: 48px; align-items: center; }
+  .s8 .team-col { display: flex; flex-direction: column; gap: 28px; }
+  .s8 .person { display: flex; gap: 16px; align-items: center; }
+  .s8 .avatar { width: 72px; height: 72px; border-radius: var(--r-pill); background: var(--green); display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 24px; color: var(--olive); flex: 0 0 auto; }
+  .s8 .raise-card { background: var(--olive); border-radius: var(--r-xl); padding: 40px; display: flex; flex-direction: column; gap: 20px; }
+  .s8 .raise-amt { font-size: 80px; font-weight: 800; color: #fff; line-height: 1; letter-spacing: -0.04em; }
+  .s8 .fund-row { display: flex; align-items: center; gap: 16px; margin-top: 8px; }
+  .s8 .fund-label { width: 200px; font-size: 14px; font-weight: 500; color: rgba(255,255,255,0.7); }
+  .s8 .fund-bar { height: 6px; border-radius: var(--r-pill); background: rgba(255,255,255,0.15); flex: 1; position: relative; overflow: hidden; }
+  .s8 .fund-bar .fill { position: absolute; left: 0; top: 0; bottom: 0; background: var(--green); border-radius: var(--r-pill); }
+  .s8 .fund-pct { font-size: 16px; font-weight: 800; color: var(--green); width: 48px; text-align: right; }
 
-  /* S11 — Competition */
-  .s11 .comp-wrap { margin-top: 40px; flex: 1; display: grid; grid-template-columns: 500px 1fr; gap: 56px; align-items: center; }
-  .s11 .matrix { position: relative; width: 460px; height: 460px; border-left: 1.5px solid var(--border); border-bottom: 1.5px solid var(--border); margin: 0 auto; }
-  .s11 .matrix .axis-label { position: absolute; font-size: 11px; font-weight: 600; color: var(--muted-fg); letter-spacing: 0.14em; text-transform: uppercase; white-space: nowrap; }
-  .s11 .matrix .pt { position: absolute; display: flex; flex-direction: column; align-items: center; gap: 8px; transform: translate(-50%, 50%); }
-  .s11 .matrix .pt .dotbig { width: 16px; height: 16px; border-radius: var(--r-pill); background: var(--border); }
-  .s11 .matrix .pt.us .dotbig { width: 24px; height: 24px; background: var(--olive); }
-  .s11 .matrix .pt .lbl { font-size: 13px; white-space: nowrap; color: var(--muted-fg); font-weight: 500; }
-  .s11 .matrix .pt.us .lbl { color: var(--olive); font-weight: 700; }
-
-  /* S12 — Team */
-  .s12 .team-grid { margin-top: 56px; flex: 1; display: grid; grid-template-columns: repeat(2, 1fr); gap: 56px; align-content: center; }
-  .s12 .person { display: flex; flex-direction: column; gap: 12px; }
-  .s12 .avatar { width: 100px; height: 100px; border-radius: var(--r-pill); background: var(--green); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 32px; color: var(--olive); }
-  .s12 .person .name { font-size: 28px; font-weight: 700; color: var(--fg); letter-spacing: -0.02em; }
-  .s12 .person .role { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.16em; color: var(--muted-fg); margin-top: 2px; }
-
-  /* S13 — Ask */
-  .s13 .ask-grid { margin-top: 40px; flex: 1; display: grid; grid-template-columns: 1fr 1.1fr; gap: 72px; align-items: center; }
-  .s13 .raise-card { background: var(--olive); border-radius: var(--r-xl); padding: 48px; display: flex; flex-direction: column; gap: 20px; height: 100%; justify-content: center; }
-  .s13 .raise-card .meta { color: var(--green); }
-  .s13 .raise-card .body { color: rgba(255,255,255,0.6); }
-  .s13 .raise-amt { font-size: 100px; font-weight: 700; color: #ffffff; line-height: 1; letter-spacing: -0.04em; }
-  .s13 .use-of-funds { display: flex; flex-direction: column; gap: 20px; }
-  .s13 .fund-row { display: flex; align-items: center; gap: 20px; }
-  .s13 .fund-row .fund-label { width: 300px; font-size: 16px; font-weight: 500; color: var(--fg); }
-  .s13 .fund-bar { height: 8px; border-radius: var(--r-pill); background: var(--muted); flex: 1; position: relative; overflow: hidden; }
-  .s13 .fund-bar .fill { position: absolute; left: 0; top: 0; bottom: 0; background: var(--olive); border-radius: var(--r-pill); }
-  .s13 .fund-pct { font-size: 24px; font-weight: 700; color: var(--olive); width: 64px; text-align: right; }
-  .s13 .milestones { margin-top: 40px; }
-
-  /* S14 — Closing */
-  .s14 .close-wrap { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: 28px; }
-  .s14 .close-wrap h1 { max-width: 1400px; }
-  .s14 .contact-row { display: flex; gap: 16px; margin-top: 16px; }
-  .s14 .close-logo { width: 100px; height: 100px; fill: #ffffff; opacity: 0.2; margin-bottom: 20px; }
+  /* S9 Closing */
+  .s9 .close-wrap { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: 24px; }
+  .s9 .close-wrap h1 { max-width: 1400px; }
+  .s9 .close-logo { width: 80px; height: 80px; fill: #fff; opacity: 0.18; margin-bottom: 12px; }
+  .s9 .contact-row { display: flex; gap: 12px; margin-top: 12px; }
 </style>
 </head>
 <body>
 
-<!-- ════════════════════════════════════════════════════════════════
-     SLIDE 1 — COVER
-     ════════════════════════════════════════════════════════════════ -->
+<!-- ═══ SLIDE 1 — COVER ═══ -->
 <section class="slide s1" data-slide="01-cover">
-  <div class="hero-grid">
-    <div class="hero-left">
-      <div class="slide-inner">
-        <div class="wordmark"><svg class="logo-icon" viewBox="0 0 256 256" xmlns="http://www.w3.org/2000/svg"><path d="M128.005 191.173C128.448 156.208 156.93 128 192 128V64H128C128 99.346 99.346 128 64 128V192H128ZM192 256H64C28.654 256 0 227.346 0 192V64H64V0H192C227.346 0 256 28.654 256 64V192H192Z"/></svg> Apparent</div>
-        <div class="lede">
-          <div class="meta text-olive">Pre-Seed · apparent.social</div>
-          <h1 class="h-xl">Where capital<br/>meets proof.</h1>
-          <p class="body-lg">The global platform where investors discover, verify, and invest in startups — matched by fit, powered by AI.</p>
-          <div class="pills">
-            <span class="pill pill--green">For Investors</span>
-            <span class="pill pill--green">For Founders</span>
-            <span class="pill pill--outline">AI-powered</span>
-          </div>
-        </div>
-        <div class="footer">
-          <span class="page-num">Every startup, verified. Every investor, matched.</span>
-          <span class="page-num">01 / 14</span>
-        </div>
-      </div>
+  <div class="dot-bg"></div>
+  <div class="si">
+    <div style="display:flex; justify-content:space-between; align-items:center;">
+      <div class="wordmark"><svg class="li" viewBox="0 0 256 256"><path d="M128.005 191.173C128.448 156.208 156.93 128 192 128V64H128C128 99.346 99.346 128 64 128V192H128ZM192 256H64C28.654 256 0 227.346 0 192V64H64V0H192C227.346 0 256 28.654 256 64V192H192Z"/></svg> Apparent</div>
+      <span class="meta" style="color: var(--olive);">Pre-Seed · 2026</span>
     </div>
-    <div class="hero-right">
-      <svg class="hero-logo" viewBox="0 0 256 256" xmlns="http://www.w3.org/2000/svg"><path d="M128.005 191.173C128.448 156.208 156.93 128 192 128V64H128C128 99.346 99.346 128 64 128V192H128ZM192 256H64C28.654 256 0 227.346 0 192V64H64V0H192C227.346 0 256 28.654 256 64V192H192Z"/></svg>
-      <div class="showcase-card" style="top:110px; left:70px; width:330px;">
-        <div class="sc-meta">Startup · Verified</div>
-        <div class="sc-name">GridSync Energy</div>
-        <div class="body-sm" style="margin-top:6px; color: var(--muted-fg);">Series A ready. 312 commits / 90d. Revenue verified.</div>
+    <div class="cover-content">
+      <div class="logo-row">
+        <svg class="logo-icon-big" viewBox="0 0 256 256"><path d="M128.005 191.173C128.448 156.208 156.93 128 192 128V64H128C128 99.346 99.346 128 64 128V192H128ZM192 256H64C28.654 256 0 227.346 0 192V64H64V0H192C227.346 0 256 28.654 256 64V192H192Z"/></svg>
+        <span class="logo-name">Apparent</span>
+        <svg class="vb vb--xl" viewBox="0 0 22 22"><path fill="#1D9BF0" d="M20.396 11c-.018-.646-.215-1.275-.57-1.816-.354-.54-.852-.972-1.438-1.246.223-.607.27-1.264.14-1.897-.131-.634-.437-1.218-.882-1.687-.47-.445-1.053-.75-1.687-.882-.633-.13-1.29-.083-1.897.14-.273-.587-.704-1.086-1.245-1.44S11.647 1.62 11 1.604c-.646.017-1.273.213-1.813.568s-.969.854-1.24 1.44c-.608-.223-1.267-.272-1.902-.14-.635.13-1.22.436-1.69.882-.445.47-.749 1.055-.878 1.69-.13.635-.08 1.293.144 1.896-.587.274-1.087.705-1.443 1.245-.356.54-.555 1.17-.574 1.817.02.647.218 1.276.574 1.817.356.54.856.972 1.443 1.245-.224.604-.274 1.26-.144 1.896.13.636.433 1.221.878 1.69.47.446 1.055.752 1.69.883.635.13 1.294.083 1.902-.141.27.587.7 1.086 1.24 1.44s1.167.551 1.813.568c.647-.016 1.276-.213 1.817-.567s.972-.854 1.245-1.44c.604.224 1.26.272 1.895.141.636-.13 1.22-.436 1.69-.883.445-.468.749-1.053.882-1.688.13-.634.085-1.29-.138-1.896.587-.274 1.084-.705 1.438-1.246.354-.54.551-1.17.569-1.816zM9.662 14.85l-3.429-3.428 1.293-1.302 2.072 2.072 4.4-4.794 1.347 1.246z"/></svg>
       </div>
-      <div class="showcase-card showcase-card--match" style="top:330px; right:80px; width:360px;">
-        <div class="sc-meta">Match · 94% fit</div>
-        <div class="sc-name">Sage Ridge Capital</div>
-        <div class="sc-detail">Climate infra · Series A · $2M–$8M checks</div>
-      </div>
-      <div class="showcase-card" style="bottom:130px; left:130px; width:300px;">
-        <div class="sc-meta">AI Agent</div>
-        <div class="body-sm" style="color: var(--muted-fg);">"3 startups this week match your thesis — ready to connect?"</div>
-      </div>
+      <p class="oneliner">Investors discover, verify, and invest in startups globally — matched by AI, proven by real work.</p>
+      <span class="meta" style="color: var(--olive);">apparent.social</span>
+    </div>
+    <div class="footer">
+      <span class="pn">Every startup, verified. Every investor, matched.</span>
+      <span class="pn">01 / 10</span>
     </div>
   </div>
 </section>
 
-<!-- ════════════════════════════════════════════════════════════════
-     SLIDE 2 — PROBLEM
-     ════════════════════════════════════════════════════════════════ -->
+<!-- ═══ SLIDE 2 — PROBLEM ═══ -->
 <section class="slide s2" data-slide="02-problem">
   <div class="notch">The Problem</div>
-  <div class="slide-inner">
-    <div class="wordmark"><svg class="logo-icon" viewBox="0 0 256 256" xmlns="http://www.w3.org/2000/svg"><path d="M128.005 191.173C128.448 156.208 156.93 128 192 128V64H128C128 99.346 99.346 128 64 128V192H128ZM192 256H64C28.654 256 0 227.346 0 192V64H64V0H192C227.346 0 256 28.654 256 64V192H192Z"/></svg> Apparent</div>
-    <div style="margin-top: 56px;">
-      <h2 class="h-lg" style="max-width: 1300px;">$350B in venture deployed last year.<br/>Most of it still starts with a warm intro.</h2>
-      <p class="body-lg" style="margin-top: 24px; max-width: 900px;">Investors can't find the best startups fast enough. Founders can't reach the right investors. Both sides waste months on mismatches.</p>
-    </div>
-    <div class="stat-row">
-      <div class="stat">
-        <div class="num">85%</div>
-        <div class="label body">of VC deals come through warm intros — locking out the best founders globally.</div>
+  <div class="si">
+    <div class="wordmark"><svg class="li" viewBox="0 0 256 256"><path d="M128.005 191.173C128.448 156.208 156.93 128 192 128V64H128C128 99.346 99.346 128 64 128V192H128ZM192 256H64C28.654 256 0 227.346 0 192V64H64V0H192C227.346 0 256 28.654 256 64V192H192Z"/></svg> Apparent</div>
+    <h2 class="h-lg" style="margin-top: 28px; max-width: 1100px;">$350B deployed last year. Most of it still starts with a warm intro.</h2>
+    <div class="content">
+      <div>
+        <div class="stats">
+          <div class="stat">
+            <div class="num">85%</div>
+            <p class="label body-lg">of VC deals come through warm intros — locking out the best founders globally.</p>
+          </div>
+          <div class="stat">
+            <div class="num">&lt;3%</div>
+            <p class="label body-lg">of startups that pitch get funded. The rest never reached the right investor.</p>
+          </div>
+          <div class="stat">
+            <div class="num">6 mo</div>
+            <p class="label body-lg">average time to close a round. Most of that is finding the match.</p>
+          </div>
+        </div>
+        <div class="compare">
+          <span class="strike">Warm intros &amp; guesswork</span>
+          <span class="arrow">→</span>
+          <span class="win">Verified startups, matched globally</span>
+        </div>
       </div>
-      <div class="stat">
-        <div class="num">&lt;3%</div>
-        <div class="label body">of startups that pitch get funded. The rest never reached the right investor.</div>
-      </div>
-      <div class="stat">
-        <div class="num">6 mo</div>
-        <div class="label body">average time to close a round. Most of that is finding the match, not doing the deal.</div>
-      </div>
-    </div>
-    <div class="compare">
-      <span class="strike">Warm intros, cold emails, guesswork</span>
-      <span class="arrow">→</span>
-      <span class="win">Verified startups, matched investors, globally</span>
+      <!-- Illustration: broken connections -->
+      <svg viewBox="0 0 480 520" fill="none" xmlns="http://www.w3.org/2000/svg" style="width:100%; max-width:480px; justify-self:center;">
+        <!-- Investors side -->
+        <text x="120" y="30" font-family="Inter" font-size="13" font-weight="700" fill="#6b665f" text-anchor="middle" letter-spacing="0.12em">INVESTORS</text>
+        <circle cx="60" cy="100" r="28" fill="#f4f1eb" stroke="#e4ded4" stroke-width="2"/>
+        <text x="60" y="106" font-family="Inter" font-size="22" text-anchor="middle" fill="#6b665f">💼</text>
+        <circle cx="180" cy="80" r="28" fill="#f4f1eb" stroke="#e4ded4" stroke-width="2"/>
+        <text x="180" y="86" font-family="Inter" font-size="22" text-anchor="middle" fill="#6b665f">💼</text>
+        <circle cx="120" cy="160" r="28" fill="#f4f1eb" stroke="#e4ded4" stroke-width="2"/>
+        <text x="120" y="166" font-family="Inter" font-size="22" text-anchor="middle" fill="#6b665f">💼</text>
+        <!-- Founders side -->
+        <text x="360" y="30" font-family="Inter" font-size="13" font-weight="700" fill="#6b665f" text-anchor="middle" letter-spacing="0.12em">FOUNDERS</text>
+        <circle cx="300" cy="100" r="28" fill="#f4f1eb" stroke="#e4ded4" stroke-width="2"/>
+        <text x="300" y="106" font-family="Inter" font-size="22" text-anchor="middle" fill="#6b665f">🧑‍💻</text>
+        <circle cx="420" cy="80" r="28" fill="#f4f1eb" stroke="#e4ded4" stroke-width="2"/>
+        <text x="420" y="86" font-family="Inter" font-size="22" text-anchor="middle" fill="#6b665f">🧑‍💻</text>
+        <circle cx="360" cy="160" r="28" fill="#f4f1eb" stroke="#e4ded4" stroke-width="2"/>
+        <text x="360" y="166" font-family="Inter" font-size="22" text-anchor="middle" fill="#6b665f">🧑‍💻</text>
+        <!-- Broken connection lines -->
+        <line x1="88" y1="100" x2="272" y2="100" stroke="#e4ded4" stroke-width="2" stroke-dasharray="8 6"/>
+        <line x1="148" y1="160" x2="332" y2="160" stroke="#e4ded4" stroke-width="2" stroke-dasharray="8 6"/>
+        <line x1="88" y1="110" x2="332" y2="150" stroke="#e4ded4" stroke-width="2" stroke-dasharray="8 6"/>
+        <!-- X marks on broken connections -->
+        <g transform="translate(180, 90)"><line x1="-8" y1="-8" x2="8" y2="8" stroke="#dc2626" stroke-width="3" stroke-linecap="round"/><line x1="8" y1="-8" x2="-8" y2="8" stroke="#dc2626" stroke-width="3" stroke-linecap="round"/></g>
+        <g transform="translate(240, 150)"><line x1="-8" y1="-8" x2="8" y2="8" stroke="#dc2626" stroke-width="3" stroke-linecap="round"/><line x1="8" y1="-8" x2="-8" y2="8" stroke="#dc2626" stroke-width="3" stroke-linecap="round"/></g>
+        <!-- Bottom label -->
+        <rect x="100" y="220" width="280" height="48" rx="24" fill="#fff0f0" stroke="#dc2626" stroke-width="1.5"/>
+        <text x="240" y="250" font-family="Inter" font-size="15" font-weight="700" fill="#dc2626" text-anchor="middle">No way to verify fit before connecting</text>
+        <!-- Bottom half: what it could be -->
+        <line x1="0" y1="310" x2="480" y2="310" stroke="#e4ded4" stroke-width="1" stroke-dasharray="4 4"/>
+        <text x="240" y="340" font-family="Inter" font-size="13" font-weight="700" fill="#42520d" text-anchor="middle" letter-spacing="0.12em">WITH APPARENT</text>
+        <circle cx="120" cy="420" r="28" fill="#dcefc7" stroke="#42520d" stroke-width="2"/>
+        <text x="120" y="426" font-family="Inter" font-size="22" text-anchor="middle">💼</text>
+        <circle cx="360" cy="420" r="28" fill="#dcefc7" stroke="#42520d" stroke-width="2"/>
+        <text x="360" y="426" font-family="Inter" font-size="22" text-anchor="middle">🧑‍💻</text>
+        <!-- Solid verified connection -->
+        <line x1="148" y1="420" x2="332" y2="420" stroke="#42520d" stroke-width="2.5"/>
+        <!-- Apparent logo in middle -->
+        <circle cx="240" cy="420" r="22" fill="#42520d"/>
+        <g transform="translate(226, 406) scale(0.11)"><path d="M128.005 191.173C128.448 156.208 156.93 128 192 128V64H128C128 99.346 99.346 128 64 128V192H128ZM192 256H64C28.654 256 0 227.346 0 192V64H64V0H192C227.346 0 256 28.654 256 64V192H192Z" fill="#ffffff"/></g>
+        <!-- Verified badges -->
+        <g transform="translate(148, 392)"><svg viewBox="0 0 22 22" width="18" height="18"><path fill="#1D9BF0" d="M20.396 11c-.018-.646-.215-1.275-.57-1.816-.354-.54-.852-.972-1.438-1.246.223-.607.27-1.264.14-1.897-.131-.634-.437-1.218-.882-1.687-.47-.445-1.053-.75-1.687-.882-.633-.13-1.29-.083-1.897.14-.273-.587-.704-1.086-1.245-1.44S11.647 1.62 11 1.604c-.646.017-1.273.213-1.813.568s-.969.854-1.24 1.44c-.608-.223-1.267-.272-1.902-.14-.635.13-1.22.436-1.69.882-.445.47-.749 1.055-.878 1.69-.13.635-.08 1.293.144 1.896-.587.274-1.087.705-1.443 1.245-.356.54-.555 1.17-.574 1.817.02.647.218 1.276.574 1.817.356.54.856.972 1.443 1.245-.224.604-.274 1.26-.144 1.896.13.636.433 1.221.878 1.69.47.446 1.055.752 1.69.883.635.13 1.294.083 1.902-.141.27.587.7 1.086 1.24 1.44s1.167.551 1.813.568c.647-.016 1.276-.213 1.817-.567s.972-.854 1.245-1.44c.604.224 1.26.272 1.895.141.636-.13 1.22-.436 1.69-.883.445-.468.749-1.053.882-1.688.13-.634.085-1.29-.138-1.896.587-.274 1.084-.705 1.438-1.246.354-.54.551-1.17.569-1.816zM9.662 14.85l-3.429-3.428 1.293-1.302 2.072 2.072 4.4-4.794 1.347 1.246z"/></svg></g>
+        <rect x="130" y="470" width="220" height="42" rx="21" fill="#dcefc7"/>
+        <text x="240" y="496" font-family="Inter" font-size="14" font-weight="700" fill="#42520d" text-anchor="middle">94% thesis fit · Verified match</text>
+      </svg>
     </div>
     <div class="footer">
-      <span class="page-num">Apparent</span>
-      <span class="page-num">02 / 14</span>
+      <span class="pn">Apparent</span>
+      <span class="pn">02 / 10</span>
     </div>
   </div>
 </section>
 
-<!-- ════════════════════════════════════════════════════════════════
-     SLIDE 3 — SOLUTION
-     ════════════════════════════════════════════════════════════════ -->
+<!-- ═══ SLIDE 3 — SOLUTION + AGENTS ═══ -->
 <section class="slide s3" data-slide="03-solution">
   <div class="notch">The Solution</div>
-  <div class="slide-inner">
-    <div class="wordmark"><svg class="logo-icon" viewBox="0 0 256 256" xmlns="http://www.w3.org/2000/svg"><path d="M128.005 191.173C128.448 156.208 156.93 128 192 128V64H128C128 99.346 99.346 128 64 128V192H128ZM192 256H64C28.654 256 0 227.346 0 192V64H64V0H192C227.346 0 256 28.654 256 64V192H192Z"/></svg> Apparent</div>
-    <div style="margin-top: 56px;">
-      <h2 class="h-lg" style="max-width: 1200px;">One platform. Every startup verified.<br/>Every investor matched.</h2>
-    </div>
-    <div class="feature-grid">
-      <div class="card card--green">
-        <div class="head"><span class="check">✓</span><h3 class="h-sm">For investors</h3></div>
-        <p class="body">Unlimited access to verified startups worldwide. Browse by sector, stage, geography, or check size.</p>
-        <p class="body">Verify founders through real work — code, traction, product history. No guesswork.</p>
-        <p class="body">AI agents source and rank deals that fit your thesis, and handle outreach.</p>
+  <div class="si">
+    <div class="wordmark"><svg class="li" viewBox="0 0 256 256"><path d="M128.005 191.173C128.448 156.208 156.93 128 192 128V64H128C128 99.346 99.346 128 64 128V192H128ZM192 256H64C28.654 256 0 227.346 0 192V64H64V0H192C227.346 0 256 28.654 256 64V192H192Z"/></svg> Apparent</div>
+    <h2 class="h-lg" style="margin-top: 28px; max-width: 1100px;">One platform. Every startup verified. Every investor matched.</h2>
+    <div class="content">
+      <div class="card card--green" style="display:flex; flex-direction:column; gap:14px;">
+        <div class="head"><span class="check">✓</span><h3 class="h-sm">For investors</h3><svg class="vb" viewBox="0 0 22 22"><path fill="#1D9BF0" d="M20.396 11c-.018-.646-.215-1.275-.57-1.816-.354-.54-.852-.972-1.438-1.246.223-.607.27-1.264.14-1.897-.131-.634-.437-1.218-.882-1.687-.47-.445-1.053-.75-1.687-.882-.633-.13-1.29-.083-1.897.14-.273-.587-.704-1.086-1.245-1.44S11.647 1.62 11 1.604c-.646.017-1.273.213-1.813.568s-.969.854-1.24 1.44c-.608-.223-1.267-.272-1.902-.14-.635.13-1.22.436-1.69.882-.445.47-.749 1.055-.878 1.69-.13.635-.08 1.293.144 1.896-.587.274-1.087.705-1.443 1.245-.356.54-.555 1.17-.574 1.817.02.647.218 1.276.574 1.817.356.54.856.972 1.443 1.245-.224.604-.274 1.26-.144 1.896.13.636.433 1.221.878 1.69.47.446 1.055.752 1.69.883.635.13 1.294.083 1.902-.141.27.587.7 1.086 1.24 1.44s1.167.551 1.813.568c.647-.016 1.276-.213 1.817-.567s.972-.854 1.245-1.44c.604.224 1.26.272 1.895.141.636-.13 1.22-.436 1.69-.883.445-.468.749-1.053.882-1.688.13-.634.085-1.29-.138-1.896.587-.274 1.084-.705 1.438-1.246.354-.54.551-1.17.569-1.816zM9.662 14.85l-3.429-3.428 1.293-1.302 2.072 2.072 4.4-4.794 1.347 1.246z"/></svg></div>
+        <p class="body text-fg">Unlimited access to verified startups worldwide. Browse by sector, stage, geography, or check size.</p>
+        <p class="body text-fg">Verify founders through real work — code, traction, product history.</p>
+        <p class="body text-fg">An <strong>AI investor agent</strong> sources and ranks deals by your thesis, drafts outreach, and follows up on your schedule.</p>
       </div>
-      <div class="card card--muted">
-        <div class="head"><span class="check">✓</span><h3 class="h-sm">For founders</h3></div>
-        <p class="body">Get discovered by what you've built, not who you know. Your code, traction, and product become your pitch.</p>
-        <p class="body">Instantly matched to investors whose thesis actually fits your startup.</p>
-        <p class="body">An AI agent reaches the right investors for you — personalized, not spammed.</p>
+      <div class="card card--muted" style="display:flex; flex-direction:column; gap:14px;">
+        <div class="head"><span class="check">✓</span><h3 class="h-sm">For founders</h3><svg class="vb" viewBox="0 0 22 22"><path fill="#1D9BF0" d="M20.396 11c-.018-.646-.215-1.275-.57-1.816-.354-.54-.852-.972-1.438-1.246.223-.607.27-1.264.14-1.897-.131-.634-.437-1.218-.882-1.687-.47-.445-1.053-.75-1.687-.882-.633-.13-1.29-.083-1.897.14-.273-.587-.704-1.086-1.245-1.44S11.647 1.62 11 1.604c-.646.017-1.273.213-1.813.568s-.969.854-1.24 1.44c-.608-.223-1.267-.272-1.902-.14-.635.13-1.22.436-1.69.882-.445.47-.749 1.055-.878 1.69-.13.635-.08 1.293.144 1.896-.587.274-1.087.705-1.443 1.245-.356.54-.555 1.17-.574 1.817.02.647.218 1.276.574 1.817.356.54.856.972 1.443 1.245-.224.604-.274 1.26-.144 1.896.13.636.433 1.221.878 1.69.47.446 1.055.752 1.69.883.635.13 1.294.083 1.902-.141.27.587.7 1.086 1.24 1.44s1.167.551 1.813.568c.647-.016 1.276-.213 1.817-.567s.972-.854 1.245-1.44c.604.224 1.26.272 1.895.141.636-.13 1.22-.436 1.69-.883.445-.468.749-1.053.882-1.688.13-.634.085-1.29-.138-1.896.587-.274 1.084-.705 1.438-1.246.354-.54.551-1.17.569-1.816zM9.662 14.85l-3.429-3.428 1.293-1.302 2.072 2.072 4.4-4.794 1.347 1.246z"/></svg></div>
+        <p class="body text-fg">Get discovered by what you've built, not who you know. Code, traction, and product become your pitch.</p>
+        <p class="body text-fg">Instantly matched to investors whose thesis actually fits your startup.</p>
+        <p class="body text-fg">An <strong>AI founder agent</strong> reaches the right investors for you — personalized intros, not spam.</p>
       </div>
     </div>
     <div class="footer">
-      <span class="page-num">Apparent</span>
-      <span class="page-num">03 / 14</span>
+      <span class="pn">Apparent</span>
+      <span class="pn">03 / 10</span>
     </div>
   </div>
 </section>
 
-<!-- ════════════════════════════════════════════════════════════════
-     SLIDE 4 — WHY NOW
-     ════════════════════════════════════════════════════════════════ -->
-<section class="slide slide--dark s4" data-slide="04-why-now">
-  <div class="notch">Why Now</div>
-  <div class="slide-inner">
-    <div class="wordmark"><svg class="logo-icon" viewBox="0 0 256 256" xmlns="http://www.w3.org/2000/svg"><path d="M128.005 191.173C128.448 156.208 156.93 128 192 128V64H128C128 99.346 99.346 128 64 128V192H128ZM192 256H64C28.654 256 0 227.346 0 192V64H64V0H192C227.346 0 256 28.654 256 64V192H192Z"/></svg> Apparent</div>
-    <div style="margin-top: 56px;">
-      <h2 class="h-lg">Three shifts made this possible.</h2>
-    </div>
-    <div class="why-grid">
-      <div class="card" style="background: rgba(255,255,255,0.06); border-color: rgba(255,255,255,0.12);">
-        <div class="num">01</div>
-        <h3 class="h-sm" style="color: #ffffff;">AI can verify work</h3>
-        <p class="body">Agents can now read a startup's code, traction, and product history — and reason about investor fit at global scale.</p>
-      </div>
-      <div class="card" style="background: rgba(255,255,255,0.06); border-color: rgba(255,255,255,0.12);">
-        <div class="num">02</div>
-        <h3 class="h-sm" style="color: #ffffff;">Capital is going global</h3>
-        <p class="body">Cross-border investing is surging, but sourcing is still local and relationship-gated. The tools haven't caught up.</p>
-      </div>
-      <div class="card" style="background: rgba(255,255,255,0.06); border-color: rgba(255,255,255,0.12);">
-        <div class="num">03</div>
-        <h3 class="h-sm" style="color: #ffffff;">Cold outreach is dead</h3>
-        <p class="body">Inboxes are flooded with AI-generated pitches. Verified proof of real work is the only signal that cuts through.</p>
-      </div>
-    </div>
-    <div class="footer">
-      <span class="page-num">Apparent</span>
-      <span class="page-num">04 / 14</span>
-    </div>
-  </div>
-</section>
-
-<!-- ════════════════════════════════════════════════════════════════
-     SLIDE 5 — PRODUCT
-     ════════════════════════════════════════════════════════════════ -->
-<section class="slide s5" data-slide="05-product">
+<!-- ═══ SLIDE 4 — PRODUCT + MAP ═══ -->
+<section class="slide s4" data-slide="04-product">
   <div class="notch">Product</div>
-  <div class="slide-inner">
-    <div class="wordmark"><svg class="logo-icon" viewBox="0 0 256 256" xmlns="http://www.w3.org/2000/svg"><path d="M128.005 191.173C128.448 156.208 156.93 128 192 128V64H128C128 99.346 99.346 128 64 128V192H128ZM192 256H64C28.654 256 0 227.346 0 192V64H64V0H192C227.346 0 256 28.654 256 64V192H192Z"/></svg> Apparent</div>
-    <div style="margin-top: 56px;">
-      <h2 class="h-lg">Browse. Verify. Invest.</h2>
-    </div>
-    <div class="steps">
-      <div class="card">
-        <div class="step-num">01</div>
-        <h3 class="h-sm">Set your criteria</h3>
-        <p class="body">Investors define what they're looking for — sector, stage, geography, check size. Founders list what they've built.</p>
+  <div class="si">
+    <div class="wordmark"><svg class="li" viewBox="0 0 256 256"><path d="M128.005 191.173C128.448 156.208 156.93 128 192 128V64H128C128 99.346 99.346 128 64 128V192H128ZM192 256H64C28.654 256 0 227.346 0 192V64H64V0H192C227.346 0 256 28.654 256 64V192H192Z"/></svg> Apparent</div>
+    <h2 class="h-lg" style="margin-top: 28px;">Browse. Verify. Invest.</h2>
+    <div class="content">
+      <div class="steps-col">
+        <div class="step"><div class="n">1</div><div><h3 class="h-sm" style="margin-bottom:6px;">Set criteria</h3><p class="body">Investors define sector, stage, geography, check size. Founders list what they've built.</p></div></div>
+        <div class="step"><div class="n">2</div><div><h3 class="h-sm" style="margin-bottom:6px;">Verified matches</h3><p class="body">Apparent ranks every startup against your criteria. Verify through real code, revenue, product.</p></div></div>
+        <div class="step"><div class="n">3</div><div><h3 class="h-sm" style="margin-bottom:6px;">Connect instantly</h3><p class="body">AI agents handle intros. No cold emails. No gatekeepers. Both sides opt in.</p></div></div>
       </div>
-      <div class="card">
-        <div class="step-num">02</div>
-        <h3 class="h-sm">See verified matches</h3>
-        <p class="body">Apparent ranks every startup against your criteria. Verify any founder through their real work — code, revenue, product.</p>
-      </div>
-      <div class="card">
-        <div class="step-num">03</div>
-        <h3 class="h-sm">Connect instantly</h3>
-        <p class="body">AI agents handle introductions. No cold emails. No gatekeepers. Both sides opt in.</p>
-      </div>
-    </div>
-    <div class="map-preview">
-      <div class="map-field"></div>
-      <div class="map-pin" style="top:30%; left:18%;"></div>
-      <div class="map-pin" style="top:55%; left:42%;"></div>
-      <div class="map-pin" style="top:35%; left:64%;"></div>
-      <div class="map-pin" style="top:70%; left:78%;"></div>
-      <div class="map-pin" style="top:22%; left:84%;"></div>
-      <div class="showcase-card" style="bottom: 20px; left: 20px; width: 360px;">
-        <div class="sc-meta">Builder Radar — global map</div>
-        <div class="body-sm" style="margin-top:4px; color: var(--muted-fg);">Verified startups and investors worldwide, ranked by fit.</div>
+      <!-- Network map visualization -->
+      <div class="network-map">
+        <svg viewBox="0 0 900 700" fill="none" xmlns="http://www.w3.org/2000/svg" style="width:100%; height:100%;">
+          <!-- Grid dots -->
+          <defs><pattern id="dots" width="36" height="36" patternUnits="userSpaceOnUse"><circle cx="18" cy="18" r="1" fill="rgba(255,255,255,0.08)"/></pattern></defs>
+          <rect width="900" height="700" fill="url(#dots)"/>
+          <!-- Connection lines -->
+          <line x1="140" y1="220" x2="420" y2="300" stroke="rgba(220,239,199,0.2)" stroke-width="1.5"/>
+          <line x1="420" y1="300" x2="700" y2="180" stroke="rgba(220,239,199,0.2)" stroke-width="1.5"/>
+          <line x1="420" y1="300" x2="580" y2="460" stroke="rgba(220,239,199,0.2)" stroke-width="1.5"/>
+          <line x1="140" y1="220" x2="260" y2="440" stroke="rgba(220,239,199,0.2)" stroke-width="1.5"/>
+          <line x1="260" y1="440" x2="580" y2="460" stroke="rgba(220,239,199,0.2)" stroke-width="1.5"/>
+          <line x1="700" y1="180" x2="780" y2="380" stroke="rgba(220,239,199,0.2)" stroke-width="1.5"/>
+          <line x1="580" y1="460" x2="780" y2="380" stroke="rgba(220,239,199,0.2)" stroke-width="1.5"/>
+          <!-- City nodes — Investors (olive) -->
+          <circle cx="140" cy="220" r="20" fill="#42520d" stroke="rgba(255,255,255,0.3)" stroke-width="2"/>
+          <text x="140" y="225" font-family="Inter" font-size="11" font-weight="800" fill="#fff" text-anchor="middle">VC</text>
+          <text x="140" y="258" font-family="Inter" font-size="11" font-weight="600" fill="rgba(255,255,255,0.5)" text-anchor="middle">San Francisco</text>
+          <circle cx="700" cy="180" r="20" fill="#42520d" stroke="rgba(255,255,255,0.3)" stroke-width="2"/>
+          <text x="700" y="185" font-family="Inter" font-size="11" font-weight="800" fill="#fff" text-anchor="middle">VC</text>
+          <text x="700" y="218" font-family="Inter" font-size="11" font-weight="600" fill="rgba(255,255,255,0.5)" text-anchor="middle">London</text>
+          <circle cx="780" cy="380" r="16" fill="#42520d" stroke="rgba(255,255,255,0.3)" stroke-width="2"/>
+          <text x="780" y="385" font-family="Inter" font-size="10" font-weight="800" fill="#fff" text-anchor="middle">LP</text>
+          <text x="780" y="414" font-family="Inter" font-size="11" font-weight="600" fill="rgba(255,255,255,0.5)" text-anchor="middle">Singapore</text>
+          <!-- City nodes — Founders (green) -->
+          <circle cx="260" cy="440" r="18" fill="#dcefc7" stroke="rgba(255,255,255,0.3)" stroke-width="2"/>
+          <text x="260" y="445" font-family="Inter" font-size="10" font-weight="800" fill="#42520d" text-anchor="middle">🧑‍💻</text>
+          <text x="260" y="476" font-family="Inter" font-size="11" font-weight="600" fill="rgba(255,255,255,0.5)" text-anchor="middle">São Paulo</text>
+          <circle cx="580" cy="460" r="18" fill="#dcefc7" stroke="rgba(255,255,255,0.3)" stroke-width="2"/>
+          <text x="580" y="465" font-family="Inter" font-size="10" font-weight="800" fill="#42520d" text-anchor="middle">🧑‍💻</text>
+          <text x="580" y="496" font-family="Inter" font-size="11" font-weight="600" fill="rgba(255,255,255,0.5)" text-anchor="middle">Bangalore</text>
+          <!-- Center hub: Apparent -->
+          <circle cx="420" cy="300" r="36" fill="#dcefc7"/>
+          <g transform="translate(404, 284) scale(0.125)"><path d="M128.005 191.173C128.448 156.208 156.93 128 192 128V64H128C128 99.346 99.346 128 64 128V192H128ZM192 256H64C28.654 256 0 227.346 0 192V64H64V0H192C227.346 0 256 28.654 256 64V192H192Z" fill="#42520d"/></g>
+          <!-- Match card -->
+          <rect x="460" y="236" width="220" height="56" rx="12" fill="rgba(255,255,255,0.12)" stroke="rgba(255,255,255,0.2)" stroke-width="1"/>
+          <text x="476" y="258" font-family="Inter" font-size="10" font-weight="700" fill="rgba(255,255,255,0.5)" letter-spacing="0.1em">MATCH FOUND</text>
+          <text x="476" y="278" font-family="Inter" font-size="14" font-weight="700" fill="#dcefc7">94% thesis fit</text>
+          <g transform="translate(650, 248)"><svg viewBox="0 0 22 22" width="16" height="16"><path fill="#1D9BF0" d="M20.396 11c-.018-.646-.215-1.275-.57-1.816-.354-.54-.852-.972-1.438-1.246.223-.607.27-1.264.14-1.897-.131-.634-.437-1.218-.882-1.687-.47-.445-1.053-.75-1.687-.882-.633-.13-1.29-.083-1.897.14-.273-.587-.704-1.086-1.245-1.44S11.647 1.62 11 1.604c-.646.017-1.273.213-1.813.568s-.969.854-1.24 1.44c-.608-.223-1.267-.272-1.902-.14-.635.13-1.22.436-1.69.882-.445.47-.749 1.055-.878 1.69-.13.635-.08 1.293.144 1.896-.587.274-1.087.705-1.443 1.245-.356.54-.555 1.17-.574 1.817.02.647.218 1.276.574 1.817.356.54.856.972 1.443 1.245-.224.604-.274 1.26-.144 1.896.13.636.433 1.221.878 1.69.47.446 1.055.752 1.69.883.635.13 1.294.083 1.902-.141.27.587.7 1.086 1.24 1.44s1.167.551 1.813.568c.647-.016 1.276-.213 1.817-.567s.972-.854 1.245-1.44c.604.224 1.26.272 1.895.141.636-.13 1.22-.436 1.69-.883.445-.468.749-1.053.882-1.688.13-.634.085-1.29-.138-1.896.587-.274 1.084-.705 1.438-1.246.354-.54.551-1.17.569-1.816zM9.662 14.85l-3.429-3.428 1.293-1.302 2.072 2.072 4.4-4.794 1.347 1.246z"/></svg></g>
+          <!-- Legend -->
+          <circle cx="60" cy="620" r="8" fill="#42520d"/><text x="78" y="624" font-family="Inter" font-size="12" font-weight="600" fill="rgba(255,255,255,0.45)">Investor</text>
+          <circle cx="180" cy="620" r="8" fill="#dcefc7"/><text x="198" y="624" font-family="Inter" font-size="12" font-weight="600" fill="rgba(255,255,255,0.45)">Startup</text>
+          <text x="750" y="624" font-family="Inter" font-size="12" font-weight="600" fill="rgba(255,255,255,0.3)" text-anchor="end">Builder Radar — Global Network</text>
+        </svg>
       </div>
     </div>
     <div class="footer">
-      <span class="page-num">Apparent</span>
-      <span class="page-num">05 / 14</span>
+      <span class="pn">Apparent</span>
+      <span class="pn">04 / 10</span>
     </div>
   </div>
 </section>
 
-<!-- ════════════════════════════════════════════════════════════════
-     SLIDE 6 — AI AGENTS
-     ════════════════════════════════════════════════════════════════ -->
-<section class="slide s6" data-slide="06-agents">
-  <div class="notch">AI Agents</div>
-  <div class="slide-inner">
-    <div class="wordmark"><svg class="logo-icon" viewBox="0 0 256 256" xmlns="http://www.w3.org/2000/svg"><path d="M128.005 191.173C128.448 156.208 156.93 128 192 128V64H128C128 99.346 99.346 128 64 128V192H128ZM192 256H64C28.654 256 0 227.346 0 192V64H64V0H192C227.346 0 256 28.654 256 64V192H192Z"/></svg> Apparent</div>
-    <div style="margin-top: 56px;">
-      <h2 class="h-lg" style="max-width: 1200px;">Your AI deal team. Always on.</h2>
-      <p class="body-lg" style="margin-top: 20px; max-width: 900px;">Every user gets a dedicated AI agent that finds matches, verifies work, and handles outreach — around the clock.</p>
-    </div>
-    <div class="agent-grid">
-      <div class="card card--muted agent-card">
-        <h3 class="h-sm">Investor agent</h3>
-        <p class="body">Finds startups that fit your thesis, anywhere in the world.</p>
-        <div class="tools">
-          <div class="tool-row"><span class="check">✓</span><span class="body text-fg">Searches and ranks startups by your exact criteria</span></div>
-          <div class="tool-row"><span class="check">✓</span><span class="body text-fg">Verifies founders through code, traction, and history</span></div>
-          <div class="tool-row"><span class="check">✓</span><span class="body text-fg">Drafts personalized outreach — you control the autonomy</span></div>
-        </div>
-      </div>
-      <div class="card card--green agent-card">
-        <h3 class="h-sm">Founder agent</h3>
-        <p class="body">Gets your startup in front of every investor who fits.</p>
-        <div class="tools">
-          <div class="tool-row"><span class="check">✓</span><span class="body text-fg">Matches you to investors by real thesis overlap</span></div>
-          <div class="tool-row"><span class="check">✓</span><span class="body text-fg">Writes personalized intros in your voice</span></div>
-          <div class="tool-row"><span class="check">✓</span><span class="body text-fg">Amplifies your verified profile to every matched investor</span></div>
-        </div>
-      </div>
-    </div>
-    <div class="footer">
-      <span class="page-num">Apparent</span>
-      <span class="page-num">06 / 14</span>
-    </div>
-  </div>
-</section>
-
-<!-- ════════════════════════════════════════════════════════════════
-     SLIDE 7 — MARKET
-     ════════════════════════════════════════════════════════════════ -->
-<section class="slide s7" data-slide="07-market">
+<!-- ═══ SLIDE 5 — MARKET ═══ -->
+<section class="slide s5" data-slide="05-market">
   <div class="notch">Market</div>
-  <div class="slide-inner">
-    <div class="wordmark"><svg class="logo-icon" viewBox="0 0 256 256" xmlns="http://www.w3.org/2000/svg"><path d="M128.005 191.173C128.448 156.208 156.93 128 192 128V64H128C128 99.346 99.346 128 64 128V192H128ZM192 256H64C28.654 256 0 227.346 0 192V64H64V0H192C227.346 0 256 28.654 256 64V192H192Z"/></svg> Apparent</div>
-    <div style="margin-top: 56px;">
-      <h2 class="h-lg">The infrastructure layer for private capital.</h2>
-    </div>
-    <div class="market-wrap">
-      <div class="market-list">
-        <div class="card">
+  <div class="si">
+    <div class="wordmark"><svg class="li" viewBox="0 0 256 256"><path d="M128.005 191.173C128.448 156.208 156.93 128 192 128V64H128C128 99.346 99.346 128 64 128V192H128ZM192 256H64C28.654 256 0 227.346 0 192V64H64V0H192C227.346 0 256 28.654 256 64V192H192Z"/></svg> Apparent</div>
+    <h2 class="h-lg" style="margin-top: 28px;">The infrastructure layer for private capital.</h2>
+    <div class="content">
+      <div class="market-cards">
+        <div class="card" style="padding:24px;">
           <div class="meta">TAM</div>
-          <h3 class="h-sm" style="margin-top:8px;">$12B / yr</h3>
-          <p class="body" style="margin-top:8px;">Global private capital intelligence, data, and deal infrastructure — the tooling layer between investors and companies.</p>
+          <h3 class="h-md" style="margin-top:6px;">$12B / yr</h3>
+          <p class="body" style="margin-top:6px;">Global private capital intelligence, data, and deal infrastructure — the tooling layer between investors and companies.</p>
         </div>
-        <div class="card card--green">
-          <div class="meta" style="color: var(--olive);">SAM</div>
-          <h3 class="h-sm" style="margin-top:8px;">$3.2B / yr</h3>
-          <p class="body" style="margin-top:8px;">VC and growth equity sourcing, CRM, and verification tools globally.</p>
+        <div class="card card--green" style="padding:24px;">
+          <div class="meta" style="color:var(--olive);">SAM</div>
+          <h3 class="h-md" style="margin-top:6px;">$3.2B / yr</h3>
+          <p class="body" style="margin-top:6px;">VC and growth equity sourcing, CRM, and verification tools globally.</p>
         </div>
-        <div class="card card--olive">
-          <div class="meta" style="color: var(--green);">SOM (5 yr)</div>
-          <h3 class="h-sm" style="margin-top:8px;">$320M / yr</h3>
-          <p class="body">10% of SAM — captured through the verified startup marketplace and AI-powered deal flow.</p>
+        <div class="card card--olive" style="padding:24px;">
+          <div class="meta" style="color:var(--green);">SOM (5 yr)</div>
+          <h3 class="h-md" style="margin-top:6px; color:#fff;">$320M / yr</h3>
+          <p class="body" style="margin-top:6px;">10% of SAM via verified startup marketplace + AI-powered deal flow.</p>
         </div>
+        <p class="body-sm" style="margin-top:8px; opacity:0.5;">Based on PitchBook, Preqin, Affinity, Crunchbase combined market. ~40K+ institutional investors globally.</p>
       </div>
       <div class="circles">
         <div class="circle circle-tam"><div class="lbl"><div class="meta">TAM</div><div class="amt">$12B</div></div></div>
-        <div class="circle circle-sam"><div class="lbl"><div class="meta" style="color: var(--olive);">SAM</div><div class="amt">$3.2B</div></div></div>
+        <div class="circle circle-sam"><div class="lbl"><div class="meta" style="color:var(--olive);">SAM</div><div class="amt">$3.2B</div></div></div>
         <div class="circle circle-som"><div class="lbl"><div class="meta">SOM</div><div class="amt">$320M</div></div></div>
       </div>
     </div>
-    <p class="body-sm footnote" style="margin-top: 16px; opacity: 0.6;">Based on PitchBook, Preqin, Affinity, and Crunchbase combined market sizing. ~40,000+ institutional investors globally.</p>
     <div class="footer">
-      <span class="page-num">Apparent</span>
-      <span class="page-num">07 / 14</span>
+      <span class="pn">Apparent</span>
+      <span class="pn">05 / 10</span>
     </div>
   </div>
 </section>
 
-<!-- ════════════════════════════════════════════════════════════════
-     SLIDE 8 — BUSINESS MODEL
-     ════════════════════════════════════════════════════════════════ -->
-<section class="slide s8" data-slide="08-business-model">
+<!-- ═══ SLIDE 6 — BUSINESS MODEL + GTM ═══ -->
+<section class="slide s6" data-slide="06-business">
   <div class="notch">Business Model</div>
-  <div class="slide-inner">
-    <div class="wordmark"><svg class="logo-icon" viewBox="0 0 256 256" xmlns="http://www.w3.org/2000/svg"><path d="M128.005 191.173C128.448 156.208 156.93 128 192 128V64H128C128 99.346 99.346 128 64 128V192H128ZM192 256H64C28.654 256 0 227.346 0 192V64H64V0H192C227.346 0 256 28.654 256 64V192H192Z"/></svg> Apparent</div>
-    <div style="margin-top: 56px;">
-      <h2 class="h-lg">Free for startups. Paid by the investors who find them.</h2>
-      <p class="body-lg" style="margin-top: 20px; max-width: 900px;">Startups are the supply. They're free, forever. Investors pay for verified deal flow, AI agents, and a ranked pipeline.</p>
-    </div>
-    <div class="tiers">
-      <div class="card tier">
-        <h3 class="h-sm">Solo</h3>
-        <p class="body" style="color: var(--fg); font-weight: 500;">Angel / scout</p>
-        <div class="feat"><span class="check">✓</span><span class="body text-fg">Verified startup matches, ranked by fit</span></div>
-        <div class="feat"><span class="check">✓</span><span class="body text-fg">Global startup map, full access</span></div>
-        <div class="feat"><span class="check">✓</span><span class="body text-fg">AI agent — manual mode</span></div>
+  <div class="si">
+    <div class="wordmark"><svg class="li" viewBox="0 0 256 256"><path d="M128.005 191.173C128.448 156.208 156.93 128 192 128V64H128C128 99.346 99.346 128 64 128V192H128ZM192 256H64C28.654 256 0 227.346 0 192V64H64V0H192C227.346 0 256 28.654 256 64V192H192Z"/></svg> Apparent</div>
+    <h2 class="h-lg" style="margin-top: 28px;">Free for startups. Paid by investors.</h2>
+    <div class="content">
+      <div class="tiers">
+        <div class="card tier" style="padding:20px 24px;">
+          <div style="display:flex; justify-content:space-between; align-items:center;"><h3 class="h-sm">Solo</h3><span class="meta" style="color:var(--olive);">Angel / scout</span></div>
+          <div class="feat"><span class="check" style="width:22px;height:22px;font-size:11px;">✓</span><span class="body text-fg">Verified startup matches, ranked by fit</span></div>
+          <div class="feat"><span class="check" style="width:22px;height:22px;font-size:11px;">✓</span><span class="body text-fg">Global map access + AI agent (manual)</span></div>
+        </div>
+        <div class="card card--green tier" style="padding:20px 24px;">
+          <div style="display:flex; justify-content:space-between; align-items:center;"><h3 class="h-sm">Team</h3><span class="meta" style="color:var(--olive);">VC fund</span></div>
+          <div class="feat"><span class="check" style="width:22px;height:22px;font-size:11px;">✓</span><span class="body text-fg">Everything in Solo, shared across partners</span></div>
+          <div class="feat"><span class="check" style="width:22px;height:22px;font-size:11px;">✓</span><span class="body text-fg">Deal pipeline + CRM + autonomous agent</span></div>
+        </div>
+        <div class="card card--olive tier" style="padding:20px 24px;">
+          <div style="display:flex; justify-content:space-between; align-items:center;"><h3 class="h-sm" style="color:#fff;">Fund</h3><span class="meta" style="color:var(--green);">Multi-fund / LP</span></div>
+          <div class="feat"><span class="check" style="width:22px;height:22px;font-size:11px;background:#fff;color:var(--olive);">✓</span><span class="body" style="color:rgba(255,255,255,0.75);">Multiple theses + 24/7 autonomous agent</span></div>
+          <div class="feat"><span class="check" style="width:22px;height:22px;font-size:11px;background:#fff;color:var(--olive);">✓</span><span class="body" style="color:rgba(255,255,255,0.75);">Priority access to verified startups</span></div>
+        </div>
+        <div style="padding:16px 24px; background:var(--olive); border-radius:var(--r-xl); display:flex; align-items:center; justify-content:space-between;">
+          <h3 class="h-sm" style="color:#fff;">Startups: free, forever.</h3>
+          <span class="body" style="color:rgba(255,255,255,0.6); max-width:400px; text-align:right;">Profiles, verification, and the founder agent — at no cost.</span>
+        </div>
       </div>
-      <div class="card card--green tier">
-        <h3 class="h-sm">Team</h3>
-        <p class="body" style="color: var(--fg); font-weight: 500;">VC fund</p>
-        <div class="feat"><span class="check">✓</span><span class="body text-fg">Everything in Solo, shared across partners</span></div>
-        <div class="feat"><span class="check">✓</span><span class="body text-fg">Deal pipeline + outreach CRM</span></div>
-        <div class="feat"><span class="check">✓</span><span class="body text-fg">AI agent — autonomous outreach</span></div>
-      </div>
-      <div class="card card--olive tier">
-        <h3 class="h-sm">Fund</h3>
-        <p class="body">Multi-fund / LP</p>
-        <div class="feat"><span class="check" style="background:#ffffff; color:var(--olive);">✓</span><span class="body" style="color:rgba(255,255,255,0.8);">Everything in Team, multiple theses</span></div>
-        <div class="feat"><span class="check" style="background:#ffffff; color:var(--olive);">✓</span><span class="body" style="color:rgba(255,255,255,0.8);">AI agent — fully autonomous, 24/7</span></div>
-        <div class="feat"><span class="check" style="background:#ffffff; color:var(--olive);">✓</span><span class="body" style="color:rgba(255,255,255,0.8);">Priority access to verified startups</span></div>
-      </div>
-    </div>
-    <div class="free-banner">
-      <h3 class="h-sm" style="color: #ffffff;">Startups: free, forever.</h3>
-      <span class="body" style="color: rgba(255,255,255,0.7); max-width: 540px;">Every startup profile, verification, and the founder agent — at no cost. They're what makes the platform valuable.</span>
-    </div>
-    <div class="footer">
-      <span class="page-num">Apparent</span>
-      <span class="page-num">08 / 14</span>
-    </div>
-  </div>
-</section>
-
-<!-- ════════════════════════════════════════════════════════════════
-     SLIDE 9 — GO-TO-MARKET
-     ════════════════════════════════════════════════════════════════ -->
-<section class="slide s9" data-slide="09-gtm">
-  <div class="notch">Go-To-Market</div>
-  <div class="slide-inner">
-    <div class="wordmark"><svg class="logo-icon" viewBox="0 0 256 256" xmlns="http://www.w3.org/2000/svg"><path d="M128.005 191.173C128.448 156.208 156.93 128 192 128V64H128C128 99.346 99.346 128 64 128V192H128ZM192 256H64C28.654 256 0 227.346 0 192V64H64V0H192C227.346 0 256 28.654 256 64V192H192Z"/></svg> Apparent</div>
-    <div style="margin-top: 56px;">
-      <h2 class="h-lg">Startups onboard in 30 seconds.</h2>
-      <p class="body-lg" style="margin-top: 20px; max-width: 900px;"><strong style="font-weight:600; color:var(--fg);">npx apparent</strong> reads a founder's local git history, builds a verified profile, and matches them to investors — no code ever leaves their machine.</p>
-    </div>
-    <div class="gtm-grid">
       <div class="terminal">
         <div><span class="prompt">$</span> npx apparent</div>
         <div class="dim">apparent · make your real work apparent</div>
         <div>&nbsp;</div>
-        <div>Reading local git — your code never leaves this machine</div>
+        <div>Reading local git — code never leaves this machine</div>
         <div>&nbsp;</div>
-        <div>Commits&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="prompt">428</span></div>
-        <div>Projects&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="prompt">3</span></div>
-        <div>Lines added&nbsp;&nbsp;&nbsp;<span class="prompt">61,204</span></div>
-        <div>Languages&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="prompt">TypeScript, Python, Rust</span></div>
+        <div>Commits&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="prompt">428</span></div>
+        <div>Projects&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="prompt">3</span></div>
+        <div>Lines added&nbsp;&nbsp;<span class="prompt">61,204</span></div>
+        <div>Languages&nbsp;&nbsp;&nbsp;&nbsp;<span class="prompt">TS, Python, Rust</span></div>
         <div>&nbsp;</div>
         <div class="dim">Claim your verified profile? (y/N)</div>
-      </div>
-      <div class="loop-steps">
-        <div class="loop-step"><div class="n">01</div><span class="body text-fg">Founder runs <strong style="font-weight:600;">npx apparent</strong> — gets a verified build card, instantly.</span></div>
-        <div class="loop-step"><div class="n">02</div><span class="body text-fg">Claims their profile. Aggregate stats only — never source code.</span></div>
-        <div class="loop-step"><div class="n">03</div><span class="body text-fg">Automatically matched to every investor whose thesis fits.</span></div>
-        <div class="loop-step"><div class="n">04</div><span class="body text-fg">Shares card on social → more founders run it → network grows.</span></div>
+        <div>&nbsp;</div>
+        <div style="color: var(--green); font-weight:600;">✓ Profile claimed — 12 investors matched</div>
       </div>
     </div>
     <div class="footer">
-      <span class="page-num">Apparent</span>
-      <span class="page-num">09 / 14</span>
+      <span class="pn">Apparent</span>
+      <span class="pn">06 / 10</span>
     </div>
   </div>
 </section>
 
-<!-- ════════════════════════════════════════════════════════════════
-     SLIDE 10 — STATUS
-     ════════════════════════════════════════════════════════════════ -->
-<section class="slide s10" data-slide="10-status">
-  <div class="notch">Traction</div>
-  <div class="slide-inner">
-    <div class="wordmark"><svg class="logo-icon" viewBox="0 0 256 256" xmlns="http://www.w3.org/2000/svg"><path d="M128.005 191.173C128.448 156.208 156.93 128 192 128V64H128C128 99.346 99.346 128 64 128V192H128ZM192 256H64C28.654 256 0 227.346 0 192V64H64V0H192C227.346 0 256 28.654 256 64V192H192Z"/></svg> Apparent</div>
-    <div style="margin-top: 56px;">
-      <h2 class="h-lg">Built. Launching first cohorts.</h2>
-    </div>
-    <div class="status-grid">
-      <div class="card card--green">
-        <h3 class="h-sm">Shipped</h3>
-        <div class="feat"><span class="check">✓</span><span class="body text-fg">Full two-sided platform — investors and founders</span></div>
-        <div class="feat"><span class="check">✓</span><span class="body text-fg">AI agents for both sides, live</span></div>
-        <div class="feat"><span class="check">✓</span><span class="body text-fg">Startup verification — GitHub, traction, product</span></div>
-        <div class="feat"><span class="check">✓</span><span class="body text-fg">Global startup map, messaging, deal pipeline</span></div>
-        <div class="feat"><span class="check">✓</span><span class="body text-fg"><strong style="font-weight:600;">npx apparent</strong> CLI — 30-second onboarding</span></div>
-      </div>
-      <div class="card">
-        <h3 class="h-sm">Next 90 days</h3>
-        <div class="feat feat--next"><span class="check">→</span><span class="body text-fg">First investor and founder cohorts live</span></div>
-        <div class="feat feat--next"><span class="check">→</span><span class="body text-fg">24/7 autonomous AI agent runs</span></div>
-        <div class="feat feat--next"><span class="check">→</span><span class="body text-fg"><strong style="font-weight:600;">npx apparent</strong> public launch on npm</span></div>
-        <div class="feat feat--next"><span class="check">→</span><span class="body text-fg">First paying investor workspaces</span></div>
-      </div>
-    </div>
-    <div class="footer">
-      <span class="page-num">Apparent</span>
-      <span class="page-num">10 / 14</span>
-    </div>
-  </div>
-</section>
-
-<!-- ════════════════════════════════════════════════════════════════
-     SLIDE 11 — COMPETITION
-     ════════════════════════════════════════════════════════════════ -->
-<section class="slide s11" data-slide="11-competition">
-  <div class="notch">Competition</div>
-  <div class="slide-inner">
-    <div class="wordmark"><svg class="logo-icon" viewBox="0 0 256 256" xmlns="http://www.w3.org/2000/svg"><path d="M128.005 191.173C128.448 156.208 156.93 128 192 128V64H128C128 99.346 99.346 128 64 128V192H128ZM192 256H64C28.654 256 0 227.346 0 192V64H64V0H192C227.346 0 256 28.654 256 64V192H192Z"/></svg> Apparent</div>
-    <div style="margin-top: 56px;">
-      <h2 class="h-lg" style="max-width: 1200px;">Data platforms inform. We verify and match.</h2>
-    </div>
-    <div class="comp-wrap">
-      <div class="matrix">
-        <div class="axis-label" style="bottom:-30px; left:50%; transform:translateX(-50%);">Static data → AI-powered</div>
-        <div class="axis-label" style="left:-30px; top:50%; transform-origin:center; transform:translateY(-50%) rotate(-90deg);">Unverified → Verified</div>
-        <div class="pt" style="left:16%; bottom:60%;"><div class="dotbig"></div><div class="lbl">PitchBook / Preqin</div></div>
-        <div class="pt" style="left:14%; bottom:16%;"><div class="dotbig"></div><div class="lbl">LinkedIn / AngelList</div></div>
-        <div class="pt" style="left:70%; bottom:16%;"><div class="dotbig"></div><div class="lbl">Apollo / Clay</div></div>
-        <div class="pt" style="left:36%; bottom:36%;"><div class="dotbig"></div><div class="lbl">Crunchbase / Carta</div></div>
-        <div class="pt us" style="left:82%; bottom:82%;"><div class="dotbig"></div><div class="lbl">Apparent</div></div>
-      </div>
-      <div style="display:flex; flex-direction:column; gap: 20px;">
-        <div class="card">
-          <h3 class="h-sm">Why Apparent wins</h3>
-          <p class="body" style="margin-top: 8px;">Incumbents sell data about companies. Apparent verifies the work, matches both sides, and has AI agents close the gap — end to end.</p>
+<!-- ═══ SLIDE 7 — TRACTION + COMPETITION ═══ -->
+<section class="slide s7" data-slide="07-traction">
+  <div class="notch">Traction &amp; Competition</div>
+  <div class="si">
+    <div class="wordmark"><svg class="li" viewBox="0 0 256 256"><path d="M128.005 191.173C128.448 156.208 156.93 128 192 128V64H128C128 99.346 99.346 128 64 128V192H128ZM192 256H64C28.654 256 0 227.346 0 192V64H64V0H192C227.346 0 256 28.654 256 64V192H192Z"/></svg> Apparent</div>
+    <h2 class="h-lg" style="margin-top: 28px;">Built. Verified. Launching.</h2>
+    <div class="content">
+      <div class="traction-col">
+        <div class="card card--green" style="padding:22px;">
+          <h3 class="h-sm" style="margin-bottom:12px;">Shipped <svg class="vb" viewBox="0 0 22 22"><path fill="#1D9BF0" d="M20.396 11c-.018-.646-.215-1.275-.57-1.816-.354-.54-.852-.972-1.438-1.246.223-.607.27-1.264.14-1.897-.131-.634-.437-1.218-.882-1.687-.47-.445-1.053-.75-1.687-.882-.633-.13-1.29-.083-1.897.14-.273-.587-.704-1.086-1.245-1.44S11.647 1.62 11 1.604c-.646.017-1.273.213-1.813.568s-.969.854-1.24 1.44c-.608-.223-1.267-.272-1.902-.14-.635.13-1.22.436-1.69.882-.445.47-.749 1.055-.878 1.69-.13.635-.08 1.293.144 1.896-.587.274-1.087.705-1.443 1.245-.356.54-.555 1.17-.574 1.817.02.647.218 1.276.574 1.817.356.54.856.972 1.443 1.245-.224.604-.274 1.26-.144 1.896.13.636.433 1.221.878 1.69.47.446 1.055.752 1.69.883.635.13 1.294.083 1.902-.141.27.587.7 1.086 1.24 1.44s1.167.551 1.813.568c.647-.016 1.276-.213 1.817-.567s.972-.854 1.245-1.44c.604.224 1.26.272 1.895.141.636-.13 1.22-.436 1.69-.883.445-.468.749-1.053.882-1.688.13-.634.085-1.29-.138-1.896.587-.274 1.084-.705 1.438-1.246.354-.54.551-1.17.569-1.816zM9.662 14.85l-3.429-3.428 1.293-1.302 2.072 2.072 4.4-4.794 1.347 1.246z"/></svg></h3>
+          <div class="feat"><span class="check" style="width:22px;height:22px;font-size:11px;">✓</span><span class="body text-fg">Full two-sided platform — live</span></div>
+          <div class="feat"><span class="check" style="width:22px;height:22px;font-size:11px;">✓</span><span class="body text-fg">AI agents for both sides — live</span></div>
+          <div class="feat"><span class="check" style="width:22px;height:22px;font-size:11px;">✓</span><span class="body text-fg">Startup verification (GitHub, traction)</span></div>
+          <div class="feat"><span class="check" style="width:22px;height:22px;font-size:11px;">✓</span><span class="body text-fg">Global map, messaging, deal pipeline</span></div>
+          <div class="feat"><span class="check" style="width:22px;height:22px;font-size:11px;">✓</span><span class="body text-fg"><strong>npx apparent</strong> CLI</span></div>
         </div>
-        <div class="card card--green">
-          <div class="feat"><span class="check">✓</span><span class="body text-fg">Verified proof — real code, real traction, real product</span></div>
+        <div class="card" style="padding:22px;">
+          <h3 class="h-sm" style="margin-bottom:12px;">Next 90 days</h3>
+          <div class="feat"><span class="check check--empty" style="width:22px;height:22px;font-size:11px;">→</span><span class="body text-fg">First investor + founder cohorts</span></div>
+          <div class="feat"><span class="check check--empty" style="width:22px;height:22px;font-size:11px;">→</span><span class="body text-fg">24/7 autonomous agent runs</span></div>
+          <div class="feat"><span class="check check--empty" style="width:22px;height:22px;font-size:11px;">→</span><span class="body text-fg">First paying investor workspaces</span></div>
         </div>
-        <div class="card card--muted">
-          <div class="feat"><span class="check">✓</span><span class="body text-fg">Two-sided AI agents, not just a database</span></div>
+      </div>
+      <div class="matrix-col">
+        <h3 class="h-sm">Data platforms inform. We verify and match.</h3>
+        <div class="matrix">
+          <div class="al" style="bottom:-26px; left:50%; transform:translateX(-50%);">Static data → AI-powered</div>
+          <div class="al" style="left:-26px; top:50%; transform-origin:center; transform:translateY(-50%) rotate(-90deg);">Unverified → Verified</div>
+          <div class="pt" style="left:16%; bottom:58%;"><div class="d"></div><div class="l">PitchBook</div></div>
+          <div class="pt" style="left:14%; bottom:14%;"><div class="d"></div><div class="l">LinkedIn</div></div>
+          <div class="pt" style="left:68%; bottom:14%;"><div class="d"></div><div class="l">Apollo / Clay</div></div>
+          <div class="pt" style="left:34%; bottom:34%;"><div class="d"></div><div class="l">Crunchbase</div></div>
+          <div class="pt us" style="left:82%; bottom:82%;"><div class="d"></div><div class="l">Apparent</div></div>
         </div>
       </div>
     </div>
     <div class="footer">
-      <span class="page-num">Apparent</span>
-      <span class="page-num">11 / 14</span>
+      <span class="pn">Apparent</span>
+      <span class="pn">07 / 10</span>
     </div>
   </div>
 </section>
 
-<!-- ════════════════════════════════════════════════════════════════
-     SLIDE 12 — TEAM
-     ════════════════════════════════════════════════════════════════ -->
-<section class="slide s12" data-slide="12-team">
-  <div class="notch">Team</div>
-  <div class="slide-inner">
-    <div class="wordmark"><svg class="logo-icon" viewBox="0 0 256 256" xmlns="http://www.w3.org/2000/svg"><path d="M128.005 191.173C128.448 156.208 156.93 128 192 128V64H128C128 99.346 99.346 128 64 128V192H128ZM192 256H64C28.654 256 0 227.346 0 192V64H64V0H192C227.346 0 256 28.654 256 64V192H192Z"/></svg> Apparent</div>
-    <div style="margin-top: 56px;">
-      <h2 class="h-lg">Built by builders.</h2>
-      <p class="body-lg" style="margin-top: 20px; max-width: 900px;">We built the product first, then the pitch. That's how we think founders should show up too.</p>
-    </div>
-    <div class="team-grid">
-      <div class="person">
-        <div class="avatar">SK</div>
-        <div class="name">[Founder Name]</div>
-        <div class="role">Founder &amp; CEO</div>
-        <p class="body">[One line on background — replace with real bio.]</p>
+<!-- ═══ SLIDE 8 — TEAM + ASK ═══ -->
+<section class="slide s8" data-slide="08-team-ask">
+  <div class="notch">Team &amp; Ask</div>
+  <div class="si">
+    <div class="wordmark"><svg class="li" viewBox="0 0 256 256"><path d="M128.005 191.173C128.448 156.208 156.93 128 192 128V64H128C128 99.346 99.346 128 64 128V192H128ZM192 256H64C28.654 256 0 227.346 0 192V64H64V0H192C227.346 0 256 28.654 256 64V192H192Z"/></svg> Apparent</div>
+    <h2 class="h-lg" style="margin-top: 28px;">Built by builders. Ready to scale.</h2>
+    <div class="content">
+      <div class="team-col">
+        <h3 class="h-sm">Team</h3>
+        <div class="person">
+          <div class="avatar">SK</div>
+          <div>
+            <div style="font-size:20px; font-weight:700; color:var(--fg);">[Founder Name] <svg class="vb" viewBox="0 0 22 22"><path fill="#1D9BF0" d="M20.396 11c-.018-.646-.215-1.275-.57-1.816-.354-.54-.852-.972-1.438-1.246.223-.607.27-1.264.14-1.897-.131-.634-.437-1.218-.882-1.687-.47-.445-1.053-.75-1.687-.882-.633-.13-1.29-.083-1.897.14-.273-.587-.704-1.086-1.245-1.44S11.647 1.62 11 1.604c-.646.017-1.273.213-1.813.568s-.969.854-1.24 1.44c-.608-.223-1.267-.272-1.902-.14-.635.13-1.22.436-1.69.882-.445.47-.749 1.055-.878 1.69-.13.635-.08 1.293.144 1.896-.587.274-1.087.705-1.443 1.245-.356.54-.555 1.17-.574 1.817.02.647.218 1.276.574 1.817.356.54.856.972 1.443 1.245-.224.604-.274 1.26-.144 1.896.13.636.433 1.221.878 1.69.47.446 1.055.752 1.69.883.635.13 1.294.083 1.902-.141.27.587.7 1.086 1.24 1.44s1.167.551 1.813.568c.647-.016 1.276-.213 1.817-.567s.972-.854 1.245-1.44c.604.224 1.26.272 1.895.141.636-.13 1.22-.436 1.69-.883.445-.468.749-1.053.882-1.688.13-.634.085-1.29-.138-1.896.587-.274 1.084-.705 1.438-1.246.354-.54.551-1.17.569-1.816zM9.662 14.85l-3.429-3.428 1.293-1.302 2.072 2.072 4.4-4.794 1.347 1.246z"/></svg></div>
+            <div class="meta" style="margin-top:2px;">Founder &amp; CEO</div>
+            <p class="body" style="margin-top:4px;">[Replace with real bio — one line.]</p>
+          </div>
+        </div>
+        <div class="person">
+          <div class="avatar" style="background:var(--muted); color:var(--muted-fg);">+</div>
+          <div>
+            <div style="font-size:20px; font-weight:700; color:var(--fg);">[Open seat]</div>
+            <div class="meta" style="margin-top:2px;">Co-founder / early hire</div>
+            <p class="body" style="margin-top:4px;">Add up to 4 team members with one credential each.</p>
+          </div>
+        </div>
       </div>
-      <div class="person">
-        <div class="avatar" style="background: var(--muted); color: var(--muted-fg);">+</div>
-        <div class="name">[Open seat]</div>
-        <div class="role">Co-founder / early hire</div>
-        <p class="body">Room for up to 4 on this slide. Add co-founder or key hire with one credential each.</p>
-      </div>
-    </div>
-    <div class="footer">
-      <span class="page-num">Apparent</span>
-      <span class="page-num">12 / 14</span>
-    </div>
-  </div>
-</section>
-
-<!-- ════════════════════════════════════════════════════════════════
-     SLIDE 13 — THE ASK
-     ════════════════════════════════════════════════════════════════ -->
-<section class="slide s13" data-slide="13-ask">
-  <div class="notch">The Ask</div>
-  <div class="slide-inner">
-    <div class="wordmark"><svg class="logo-icon" viewBox="0 0 256 256" xmlns="http://www.w3.org/2000/svg"><path d="M128.005 191.173C128.448 156.208 156.93 128 192 128V64H128C128 99.346 99.346 128 64 128V192H128ZM192 256H64C28.654 256 0 227.346 0 192V64H64V0H192C227.346 0 256 28.654 256 64V192H192Z"/></svg> Apparent</div>
-    <div style="margin-top: 56px;">
-      <h2 class="h-lg">Taking Apparent from built to global.</h2>
-    </div>
-    <div class="ask-grid">
       <div class="raise-card">
-        <div class="meta" style="color: var(--green);">Pre-Seed</div>
+        <div class="meta" style="color:var(--green);">Pre-Seed</div>
         <div class="raise-amt">$[ ]</div>
-        <p class="body" style="color: rgba(255,255,255,0.6);">[Replace: raise size, instrument, runway.] Enough to launch, get paying investors, and prove the model.</p>
-      </div>
-      <div>
-        <h3 class="h-sm" style="margin-bottom: 24px;">Use of funds</h3>
-        <div class="use-of-funds">
-          <div class="fund-row">
-            <span class="fund-label">Engineering &amp; AI agents</span>
-            <div class="fund-bar"><div class="fill" style="width: 40%;"></div></div>
-            <span class="fund-pct">40%</span>
-          </div>
-          <div class="fund-row">
-            <span class="fund-label">Go-to-market &amp; growth</span>
-            <div class="fund-bar"><div class="fill" style="width: 30%;"></div></div>
-            <span class="fund-pct">30%</span>
-          </div>
-          <div class="fund-row">
-            <span class="fund-label">Operations &amp; legal</span>
-            <div class="fund-bar"><div class="fill" style="width: 15%;"></div></div>
-            <span class="fund-pct">15%</span>
-          </div>
-          <div class="fund-row">
-            <span class="fund-label">Founder runway</span>
-            <div class="fund-bar"><div class="fill" style="width: 15%;"></div></div>
-            <span class="fund-pct">15%</span>
-          </div>
+        <p class="body" style="color:rgba(255,255,255,0.55);">[Replace: raise size, instrument, runway.]</p>
+        <div style="margin-top:12px;">
+          <div class="fund-row"><span class="fund-label">Engineering &amp; AI agents</span><div class="fund-bar"><div class="fill" style="width:40%;"></div></div><span class="fund-pct">40%</span></div>
+          <div class="fund-row"><span class="fund-label">Go-to-market &amp; growth</span><div class="fund-bar"><div class="fill" style="width:30%;"></div></div><span class="fund-pct">30%</span></div>
+          <div class="fund-row"><span class="fund-label">Operations &amp; legal</span><div class="fund-bar"><div class="fill" style="width:15%;"></div></div><span class="fund-pct">15%</span></div>
+          <div class="fund-row"><span class="fund-label">Founder runway</span><div class="fund-bar"><div class="fill" style="width:15%;"></div></div><span class="fund-pct">15%</span></div>
         </div>
-        <div class="milestones">
-          <h3 class="h-sm" style="margin-bottom: 16px;">Milestones</h3>
-          <div class="feat"><span class="check">✓</span><span class="body text-fg">First [N] paying investor workspaces</span></div>
-          <div class="feat" style="margin-top:8px;"><span class="check">✓</span><span class="body text-fg">[N] verified startups on the platform</span></div>
-          <div class="feat" style="margin-top:8px;"><span class="check">✓</span><span class="body text-fg">24/7 autonomous AI agents live</span></div>
+        <div style="margin-top:16px; border-top:1px solid rgba(255,255,255,0.12); padding-top:16px;">
+          <div class="meta" style="color:var(--green); margin-bottom:10px;">Milestones</div>
+          <div class="feat"><span class="check" style="width:20px;height:20px;font-size:10px;background:var(--green);color:var(--olive);">✓</span><span class="body" style="color:rgba(255,255,255,0.7);">First [N] paying investor workspaces</span></div>
+          <div class="feat" style="margin-top:6px;"><span class="check" style="width:20px;height:20px;font-size:10px;background:var(--green);color:var(--olive);">✓</span><span class="body" style="color:rgba(255,255,255,0.7);">[N] verified startups on platform</span></div>
+          <div class="feat" style="margin-top:6px;"><span class="check" style="width:20px;height:20px;font-size:10px;background:var(--green);color:var(--olive);">✓</span><span class="body" style="color:rgba(255,255,255,0.7);">24/7 autonomous AI agents live</span></div>
         </div>
       </div>
     </div>
-    <p class="body-sm" style="margin-top: 12px; opacity: 0.5;">Illustrative allocation — replace with actual figures before sharing.</p>
     <div class="footer">
-      <span class="page-num">Apparent</span>
-      <span class="page-num">13 / 14</span>
+      <span class="pn">Apparent</span>
+      <span class="pn">08 / 10</span>
     </div>
   </div>
 </section>
 
-<!-- ════════════════════════════════════════════════════════════════
-     SLIDE 14 — VISION / CLOSING
-     ════════════════════════════════════════════════════════════════ -->
-<section class="slide slide--dark s14" data-slide="14-vision">
-  <div class="notch">Vision</div>
-  <div class="slide-inner">
-    <div class="wordmark"><svg class="logo-icon" viewBox="0 0 256 256" xmlns="http://www.w3.org/2000/svg"><path d="M128.005 191.173C128.448 156.208 156.93 128 192 128V64H128C128 99.346 99.346 128 64 128V192H128ZM192 256H64C28.654 256 0 227.346 0 192V64H64V0H192C227.346 0 256 28.654 256 64V192H192Z"/></svg> Apparent</div>
+<!-- ═══ SLIDE 9 — WHY NOW (dark) ═══ -->
+<section class="slide slide--dark s4" data-slide="09-why-now" style="background: var(--fg);">
+  <div class="notch" style="background: var(--green); color: var(--olive);">Why Now</div>
+  <div class="si">
+    <div class="wordmark"><svg class="li" viewBox="0 0 256 256"><path d="M128.005 191.173C128.448 156.208 156.93 128 192 128V64H128C128 99.346 99.346 128 64 128V192H128ZM192 256H64C28.654 256 0 227.346 0 192V64H64V0H192C227.346 0 256 28.654 256 64V192H192Z"/></svg> Apparent</div>
+    <h2 class="h-xl" style="margin-top: 48px; max-width: 1400px;">Three shifts made this possible.</h2>
+    <div style="margin-top:48px; display:grid; grid-template-columns:repeat(3,1fr); gap:24px; flex:1;">
+      <div class="card" style="background:rgba(255,255,255,0.04); border-color:rgba(255,255,255,0.08); display:flex; flex-direction:column; gap:16px; padding:32px;">
+        <div style="font-size:48px; font-weight:800; color:rgba(255,255,255,0.15);">01</div>
+        <h3 class="h-md" style="color:#fff;">AI can verify work</h3>
+        <p class="body-lg" style="color:rgba(255,255,255,0.55);">Agents read a startup's code, traction, and product history — and reason about investor fit at global scale.</p>
+      </div>
+      <div class="card" style="background:rgba(255,255,255,0.04); border-color:rgba(255,255,255,0.08); display:flex; flex-direction:column; gap:16px; padding:32px;">
+        <div style="font-size:48px; font-weight:800; color:rgba(255,255,255,0.15);">02</div>
+        <h3 class="h-md" style="color:#fff;">Capital is going global</h3>
+        <p class="body-lg" style="color:rgba(255,255,255,0.55);">Cross-border investing is surging, but sourcing is still local and relationship-gated.</p>
+      </div>
+      <div class="card" style="background:rgba(255,255,255,0.04); border-color:rgba(255,255,255,0.08); display:flex; flex-direction:column; gap:16px; padding:32px;">
+        <div style="font-size:48px; font-weight:800; color:rgba(255,255,255,0.15);">03</div>
+        <h3 class="h-md" style="color:#fff;">Cold outreach is dead</h3>
+        <p class="body-lg" style="color:rgba(255,255,255,0.55);">Inboxes are flooded with AI pitches. Verified proof of real work is the only signal that cuts through.</p>
+      </div>
+    </div>
+    <div class="footer" style="border-top-color:rgba(255,255,255,0.08);">
+      <span class="pn" style="color:rgba(255,255,255,0.3);">Apparent</span>
+      <span class="pn" style="color:rgba(255,255,255,0.3);">09 / 10</span>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ SLIDE 10 — CLOSING ═══ -->
+<section class="slide slide--dark s9" data-slide="10-closing" style="background: var(--olive);">
+  <div class="si">
+    <div class="wordmark"><svg class="li" viewBox="0 0 256 256"><path d="M128.005 191.173C128.448 156.208 156.93 128 192 128V64H128C128 99.346 99.346 128 64 128V192H128ZM192 256H64C28.654 256 0 227.346 0 192V64H64V0H192C227.346 0 256 28.654 256 64V192H192Z"/></svg> Apparent</div>
     <div class="close-wrap">
-      <svg class="close-logo" viewBox="0 0 256 256" xmlns="http://www.w3.org/2000/svg"><path d="M128.005 191.173C128.448 156.208 156.93 128 192 128V64H128C128 99.346 99.346 128 64 128V192H128ZM192 256H64C28.654 256 0 227.346 0 192V64H64V0H192C227.346 0 256 28.654 256 64V192H192Z"/></svg>
-      <h1 class="h-xl">Every startup, verified.<br/>Every investor, matched.</h1>
-      <p class="body-lg" style="max-width: 850px;">Apparent is the global platform where capital meets proof. We're building the infrastructure that makes private investing faster, smarter, and open to everyone.</p>
+      <svg class="close-logo" viewBox="0 0 256 256"><path d="M128.005 191.173C128.448 156.208 156.93 128 192 128V64H128C128 99.346 99.346 128 64 128V192H128ZM192 256H64C28.654 256 0 227.346 0 192V64H64V0H192C227.346 0 256 28.654 256 64V192H192Z"/></svg>
+      <h1 class="h-xl" style="color:#fff;">Every startup, verified.<br/>Every investor, matched.</h1>
+      <p class="body-xl" style="max-width: 800px; color:rgba(255,255,255,0.55);">Apparent is the global platform where capital meets proof. We're building the infrastructure that makes private investing faster, smarter, and open to everyone.</p>
       <div class="contact-row">
         <span class="pill pill--outline">apparent.social</span>
         <span class="pill pill--outline">[founder@apparent.social]</span>
@@ -848,8 +654,8 @@
       </div>
     </div>
     <div class="footer">
-      <span class="page-num">Apparent</span>
-      <span class="page-num">14 / 14</span>
+      <span class="pn">Apparent</span>
+      <span class="pn">10 / 10</span>
     </div>
   </div>
 </section>
