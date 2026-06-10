@@ -1,0 +1,936 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Apparent — Pitch Deck</title>
+<meta name="viewport" content="width=1920" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300&family=Inter:wght@300;400&display=swap" rel="stylesheet">
+<style>
+  /* ──────────────────────────────────────────────────────────────────
+     APPARENT — Pitch Deck
+     "Sunlit clinic on white linen" design system.
+     1920 × 1080 slides. Open in browser, or run promo/export-pitch-deck.mjs
+     to render PNGs / a print-to-PDF deck.
+     ────────────────────────────────────────────────────────────────── */
+
+  :root {
+    /* Color tokens */
+    --forest: #0f3e17;       /* primary accent — single saturated color */
+    --sage: #b1dbb8;
+    --mist: #b6ced5;
+    --mint: #cfe7d3;
+    --linen: #e1f4df;
+    --linen-white: #fffefc;  /* base surface — never pure white */
+    --hairline: #e5e7eb;
+    --charcoal: #222222;
+    --graphite: #333333;
+    --black: #000000;
+
+    /* Radii — only these three */
+    --r-sm: 7px;
+    --r-md: 14px;
+    --r-pill: 999px;
+
+    /* Type */
+    --serif: 'Fraunces', Georgia, 'Cormorant Garamond', serif;
+    --sans: 'Inter', 'Suisse Int\'l', -apple-system, sans-serif;
+
+    /* Spacing scale */
+    --sp-1: 8px;  --sp-2: 12px; --sp-3: 16px; --sp-4: 24px;
+    --sp-5: 32px; --sp-6: 48px; --sp-7: 64px; --sp-8: 96px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body {
+    background: #d7ded9;
+    font-family: var(--sans);
+    font-weight: 300;
+    color: var(--graphite);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+
+  body {
+    padding: 40px 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 28px;
+  }
+
+  .slide {
+    width: 1920px;
+    height: 1080px;
+    position: relative;
+    overflow: hidden;
+    background: var(--linen-white);
+    flex: none;
+  }
+
+  @media print {
+    html, body { background: #fff; padding: 0; gap: 0; }
+    .slide { page-break-after: always; break-after: page; }
+  }
+
+  .slide-inner {
+    position: absolute;
+    inset: var(--sp-8);
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* ── Typography ─────────────────────────────────────────────────── */
+
+  .display {
+    font-family: var(--serif);
+    font-weight: 300;
+    letter-spacing: -0.02em;
+    color: var(--forest);
+  }
+  .display-xl { font-size: 92px; line-height: 1.04; }
+  .display-lg { font-size: 68px; line-height: 1.08; }
+  .display-md { font-size: 52px; line-height: 1.15; }
+  .display-sm { font-size: 36px; line-height: 1.2; }
+
+  .eyebrow {
+    font-family: var(--sans);
+    font-size: 14px;
+    font-weight: 400;
+    text-transform: uppercase;
+    letter-spacing: 0.22em;
+    color: var(--forest);
+  }
+
+  .body-lg { font-size: 24px; line-height: 1.6; font-weight: 300; color: var(--graphite); }
+  .body    { font-size: 18px; line-height: 1.65; font-weight: 300; color: var(--graphite); }
+  .body-sm { font-size: 15px; line-height: 1.55; font-weight: 300; color: var(--graphite); }
+  .meta    { font-size: 13px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--graphite); opacity: 0.6; }
+
+  strong, b { font-weight: 400; color: var(--charcoal); }
+
+  /* ── Surfaces (tint progression — no shadows) ──────────────────── */
+
+  .bg-linen-white { background: var(--linen-white); }
+  .bg-linen       { background: var(--linen); }
+  .bg-mint        { background: var(--mint); }
+  .bg-sage        { background: var(--sage); }
+  .bg-mist        { background: var(--mist); }
+  .bg-forest      { background: var(--forest); color: var(--linen-white); }
+  .bg-forest .display,
+  .bg-forest .eyebrow { color: var(--linen-white); }
+  .bg-forest .body, .bg-forest .body-lg, .bg-forest .body-sm { color: rgba(255,255,255,0.72); }
+  .bg-forest .meta { color: rgba(255,255,255,0.5); }
+
+  /* ── Components ─────────────────────────────────────────────────── */
+
+  .pill {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 9px 20px; border-radius: var(--r-pill);
+    background: var(--mint); color: var(--forest);
+    font-size: 14px; font-weight: 400; letter-spacing: 0.03em;
+    border: 1px solid transparent;
+  }
+  .pill--outline { background: transparent; border: 1px solid var(--hairline); color: var(--graphite); }
+  .pill--sage { background: var(--sage); color: var(--forest); }
+  .pill--forest { background: var(--forest); color: var(--linen-white); }
+  .bg-forest .pill--outline { border-color: rgba(255,255,255,0.3); color: var(--linen-white); }
+
+  .btn-primary {
+    display: inline-flex; align-items: center; gap: 10px;
+    padding: 18px 36px; border-radius: var(--r-pill);
+    background: var(--forest); color: var(--linen-white);
+    font-size: 17px; font-weight: 400; letter-spacing: 0.02em;
+  }
+
+  .check {
+    width: 30px; height: 30px; border-radius: var(--r-pill);
+    background: var(--forest); color: var(--linen-white);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 15px; flex: 0 0 auto;
+  }
+
+  .card {
+    background: var(--linen-white);
+    border: 1px solid var(--hairline);
+    border-radius: var(--r-md);
+    padding: var(--sp-5);
+  }
+  .card--mint { background: var(--mint); border-color: transparent; }
+  .card--linen { background: var(--linen); border-color: transparent; }
+
+  .dot {
+    width: 9px; height: 9px; border-radius: var(--r-pill);
+    background: var(--forest); display: inline-block; flex: 0 0 auto;
+  }
+
+  /* ── Slide chrome ───────────────────────────────────────────────── */
+
+  .wordmark {
+    font-family: var(--serif); font-size: 22px; font-weight: 300;
+    color: var(--forest); display: flex; align-items: center; gap: 12px;
+    letter-spacing: -0.01em;
+  }
+  .wordmark .mark {
+    width: 12px; height: 12px; background: var(--forest);
+    border-radius: var(--r-sm); display: inline-block;
+  }
+  .bg-forest .wordmark, .bg-forest .wordmark .mark { color: var(--linen-white); background: var(--linen-white); }
+  .bg-forest .wordmark .mark { background: var(--linen-white); }
+
+  .footer {
+    margin-top: auto; display: flex; align-items: center; justify-content: space-between;
+    padding-top: var(--sp-4); border-top: 1px solid var(--hairline);
+  }
+  .bg-forest .footer { border-top-color: rgba(255,255,255,0.18); }
+  .page-num { font-family: var(--sans); font-size: 13px; color: var(--graphite); letter-spacing: 0.14em; opacity: 0.55; }
+  .bg-forest .page-num { color: var(--linen-white); opacity: 0.5; }
+
+  /* ── Layout helpers ─────────────────────────────────────────────── */
+
+  .row { display: flex; }
+  .col { display: flex; flex-direction: column; }
+  .gap-1 { gap: var(--sp-1); } .gap-2 { gap: var(--sp-2); } .gap-3 { gap: var(--sp-3); }
+  .gap-4 { gap: var(--sp-4); } .gap-5 { gap: var(--sp-5); } .gap-6 { gap: var(--sp-6); }
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: var(--sp-5); }
+  .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--sp-5); }
+  .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--sp-4); }
+
+  /* ──────────────────────────────────────────────────────────────────
+     SLIDE 1 — Cover
+     ────────────────────────────────────────────────────────────────── */
+
+  .s1 .hero-grid { position: absolute; inset: 0; display: grid; grid-template-columns: 58% 42%; }
+  .s1 .hero-left .slide-inner { position: absolute; inset: var(--sp-8); display: flex; flex-direction: column; }
+  .s1 .hero-left { position: relative; }
+  .s1 .hero-right { position: relative; }
+
+  .s1 .lede { margin-top: auto; }
+  .s1 .lede h1 { margin-top: var(--sp-4); }
+  .s1 .lede .body-lg { margin-top: var(--sp-5); max-width: 560px; }
+  .s1 .lede .pills { margin-top: var(--sp-6); display: flex; gap: var(--sp-2); }
+
+  /* abstract product showcase */
+  .map-field {
+    position: absolute; inset: 0;
+    background-image: radial-gradient(var(--forest) 1px, transparent 1.5px);
+    background-size: 36px 36px;
+    opacity: 0.10;
+  }
+  .showcase-card {
+    position: absolute; background: var(--linen-white);
+    border: 1px solid var(--hairline); border-radius: var(--r-md);
+    padding: var(--sp-4);
+  }
+  .showcase-card .meta { margin-bottom: 6px; }
+  .showcase-card .name { font-family: var(--serif); font-size: 24px; font-weight: 300; color: var(--charcoal); }
+  .showcase-card .fit { color: var(--forest); font-size: 14px; margin-top: 6px; }
+  .showcase-card--match { border-color: var(--forest); }
+
+  /* ──────────────────────────────────────────────────────────────────
+     SLIDE 2 — Problem
+     ────────────────────────────────────────────────────────────────── */
+
+  .s2 .stat-row { margin-top: var(--sp-7); display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--sp-5); }
+  .s2 .stat .num { font-family: var(--serif); font-weight: 300; font-size: 88px; color: var(--forest); line-height: 1; }
+  .s2 .stat .label { margin-top: var(--sp-2); }
+  .s2 .compare {
+    margin-top: var(--sp-7); display: flex; align-items: center; gap: var(--sp-4);
+    padding: var(--sp-5); background: var(--linen); border-radius: var(--r-md);
+  }
+  .s2 .compare .strike { text-decoration: line-through; text-decoration-thickness: 2px; opacity: 0.5; }
+  .s2 .compare .arrow { color: var(--forest); font-size: 22px; }
+  .s2 .compare .win { color: var(--forest); font-weight: 400; }
+
+  /* ──────────────────────────────────────────────────────────────────
+     SLIDE 3 — Solution
+     ────────────────────────────────────────────────────────────────── */
+
+  .s3 .lede { max-width: 980px; }
+  .s3 .feature-grid { margin-top: var(--sp-7); display: grid; grid-template-columns: 1fr 1fr; gap: var(--sp-5); flex: 1; }
+  .s3 .feature-grid .card { display: flex; flex-direction: column; gap: var(--sp-3); }
+  .s3 .feature-grid .card .head { display: flex; align-items: center; gap: var(--sp-2); }
+
+  /* ──────────────────────────────────────────────────────────────────
+     SLIDE 4 — Why Now
+     ────────────────────────────────────────────────────────────────── */
+
+  .s4 .why-grid { margin-top: var(--sp-7); display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--sp-5); }
+  .s4 .why-grid .card { min-height: 280px; display: flex; flex-direction: column; gap: var(--sp-3); }
+  .s4 .why-grid .num { font-family: var(--serif); font-size: 40px; color: var(--linen-white); }
+  .s4 .closing { margin-top: var(--sp-7); }
+
+  /* ──────────────────────────────────────────────────────────────────
+     SLIDE 5 — Product / How it works
+     ────────────────────────────────────────────────────────────────── */
+
+  .s5 .steps { margin-top: var(--sp-7); display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--sp-5); }
+  .s5 .steps .card { display: flex; flex-direction: column; gap: var(--sp-3); }
+  .s5 .step-num { font-family: var(--serif); font-size: 40px; color: var(--forest); }
+  .s5 .map-preview {
+    margin-top: var(--sp-6); flex: 1; position: relative; min-height: 200px;
+    border-radius: var(--r-md); overflow: hidden; background: var(--mist); border: 1px solid var(--hairline);
+  }
+  .s5 .map-field { position: absolute; inset: 0; }
+  .s5 .map-pin {
+    position: absolute; width: 14px; height: 14px; border-radius: var(--r-pill);
+    background: var(--forest); border: 3px solid var(--linen-white);
+  }
+
+  /* ──────────────────────────────────────────────────────────────────
+     SLIDE 6 — The Agents
+     ────────────────────────────────────────────────────────────────── */
+
+  .s6 .agent-grid { margin-top: var(--sp-6); display: grid; grid-template-columns: 1fr 1fr; gap: var(--sp-5); flex: 1; }
+  .s6 .agent-card { display: flex; flex-direction: column; gap: var(--sp-3); }
+  .s6 .tools { display: flex; flex-direction: column; gap: var(--sp-3); margin-top: var(--sp-2); }
+  .s6 .tool-row { display: flex; align-items: flex-start; gap: var(--sp-3); }
+
+  /* ──────────────────────────────────────────────────────────────────
+     SLIDE 7 — Market
+     ────────────────────────────────────────────────────────────────── */
+
+  .s7 .market-wrap { margin-top: var(--sp-6); flex: 1; display: grid; grid-template-columns: 1fr 560px; gap: var(--sp-7); align-items: center; }
+  .s7 .market-list { display: flex; flex-direction: column; gap: var(--sp-4); }
+  .s7 .circles { position: relative; width: 520px; height: 520px; margin: 0 auto; }
+  .s7 .circle { position: absolute; border-radius: var(--r-pill); display: flex; align-items: flex-start; justify-content: center; padding-top: var(--sp-5); }
+  .s7 .circle-tam { width: 520px; height: 520px; background: var(--mint); top: 0; left: 0; }
+  .s7 .circle-sam { width: 350px; height: 350px; background: var(--sage); top: 85px; left: 85px; }
+  .s7 .circle-som { width: 190px; height: 190px; background: var(--forest); top: 165px; left: 165px; align-items: center; padding-top: 0; }
+  .s7 .circle .lbl { text-align: center; }
+  .s7 .circle .amt { font-family: var(--serif); font-size: 34px; color: var(--forest); margin-top: 6px; }
+  .s7 .circle-som .amt { color: var(--linen-white); font-size: 28px; }
+  .s7 .circle-som .eyebrow { color: var(--linen-white); }
+  .s7 .footnote { margin-top: var(--sp-4); }
+
+  /* ──────────────────────────────────────────────────────────────────
+     SLIDE 8 — Business model
+     ────────────────────────────────────────────────────────────────── */
+
+  .s8 .tiers { margin-top: var(--sp-6); display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--sp-5); flex: 1; }
+  .s8 .tier { display: flex; flex-direction: column; gap: var(--sp-3); }
+  .s8 .feat { display: flex; gap: var(--sp-2); align-items: flex-start; }
+  .s8 .free-banner {
+    margin-top: var(--sp-5); padding: var(--sp-5); border-radius: var(--r-md);
+    background: var(--forest); display: flex; align-items: center; justify-content: space-between; gap: var(--sp-5);
+  }
+
+  /* ──────────────────────────────────────────────────────────────────
+     SLIDE 9 — GTM / CLI growth loop
+     ────────────────────────────────────────────────────────────────── */
+
+  .s9 .gtm-grid { margin-top: var(--sp-6); flex: 1; display: grid; grid-template-columns: 1fr 1fr; gap: var(--sp-7); align-items: center; }
+  .s9 .terminal {
+    background: var(--forest); border-radius: var(--r-md); padding: var(--sp-5);
+    font-family: 'SFMono-Regular', Consolas, 'Courier New', monospace; font-size: 16px; line-height: 1.8;
+    color: var(--linen-white);
+  }
+  .s9 .terminal .prompt { color: var(--sage); }
+  .s9 .terminal .dim { color: rgba(255,255,255,0.5); }
+  .s9 .loop-steps { display: flex; flex-direction: column; gap: var(--sp-4); }
+  .s9 .loop-step { display: flex; gap: var(--sp-4); align-items: flex-start; }
+  .s9 .loop-step .n { font-family: var(--serif); font-size: 28px; color: var(--forest); flex: 0 0 auto; width: 56px; }
+
+  /* ──────────────────────────────────────────────────────────────────
+     SLIDE 10 — Status (built / next)
+     ────────────────────────────────────────────────────────────────── */
+
+  .s10 .status-grid { margin-top: var(--sp-6); flex: 1; display: grid; grid-template-columns: 1fr 1fr; gap: var(--sp-5); }
+  .s10 .status-grid .card { display: flex; flex-direction: column; gap: var(--sp-3); }
+  .s10 .feat { display: flex; gap: var(--sp-3); align-items: flex-start; }
+  .s10 .feat--next .check { background: transparent; border: 1px solid var(--hairline); color: var(--graphite); }
+
+  /* ──────────────────────────────────────────────────────────────────
+     SLIDE 11 — Competition
+     ────────────────────────────────────────────────────────────────── */
+
+  .s11 .comp-wrap { margin-top: var(--sp-6); flex: 1; display: grid; grid-template-columns: 520px 1fr; gap: var(--sp-7); align-items: center; }
+  .s11 .matrix { position: relative; width: 480px; height: 480px; border-left: 1px solid var(--hairline); border-bottom: 1px solid var(--hairline); margin: 0 auto; }
+  .s11 .matrix .axis-label { position: absolute; font-size: 13px; color: var(--graphite); opacity: 0.55; letter-spacing: 0.12em; text-transform: uppercase; white-space: nowrap; }
+  .s11 .matrix .pt { position: absolute; display: flex; flex-direction: column; align-items: center; gap: 8px; transform: translate(-50%, 50%); }
+  .s11 .matrix .pt .dotbig { width: 18px; height: 18px; border-radius: var(--r-pill); background: var(--mist); border: 1px solid var(--hairline); }
+  .s11 .matrix .pt.us .dotbig { width: 26px; height: 26px; background: var(--forest); border: none; }
+  .s11 .matrix .pt .lbl { font-size: 14px; white-space: nowrap; color: var(--graphite); }
+  .s11 .matrix .pt.us .lbl { color: var(--forest); font-weight: 400; }
+
+  /* ──────────────────────────────────────────────────────────────────
+     SLIDE 12 — Team
+     ────────────────────────────────────────────────────────────────── */
+
+  .s12 .team-grid { margin-top: var(--sp-7); flex: 1; display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--sp-7); align-content: center; }
+  .s12 .person { display: flex; flex-direction: column; gap: var(--sp-3); }
+  .s12 .avatar { width: 120px; height: 120px; border-radius: var(--r-pill); background: var(--mint); display: flex; align-items: center; justify-content: center; font-family: var(--serif); font-weight: 300; font-size: 40px; color: var(--forest); }
+  .s12 .person .name { font-family: var(--serif); font-weight: 300; font-size: 34px; color: var(--forest); }
+  .s12 .person .role { font-size: 14px; text-transform: uppercase; letter-spacing: 0.18em; color: var(--graphite); margin-top: 4px; }
+  .s12 .person .bio { margin-top: var(--sp-2); max-width: 520px; }
+
+  /* ──────────────────────────────────────────────────────────────────
+     SLIDE 13 — The Ask
+     ────────────────────────────────────────────────────────────────── */
+
+  .s13 .ask-grid { margin-top: var(--sp-6); flex: 1; display: grid; grid-template-columns: 1fr 1.1fr; gap: var(--sp-8); align-items: center; }
+  .s13 .raise-card { background: var(--forest); border-radius: var(--r-md); padding: var(--sp-6); display: flex; flex-direction: column; gap: var(--sp-4); height: 100%; justify-content: center; }
+  .s13 .raise-card .eyebrow, .s13 .raise-card .body { color: var(--linen-white); }
+  .s13 .raise-amt { font-family: var(--serif); font-weight: 300; font-size: 110px; color: var(--linen-white); line-height: 1; }
+  .s13 .use-of-funds { display: flex; flex-direction: column; gap: var(--sp-4); }
+  .s13 .fund-row { display: flex; align-items: center; gap: var(--sp-4); }
+  .s13 .fund-row .fund-label { width: 320px; }
+  .s13 .fund-bar { height: 10px; border-radius: var(--r-pill); background: var(--mint); flex: 1; position: relative; overflow: hidden; }
+  .s13 .fund-bar .fill { position: absolute; left: 0; top: 0; bottom: 0; background: var(--forest); border-radius: var(--r-pill); }
+  .s13 .fund-pct { font-family: var(--serif); font-weight: 300; font-size: 28px; color: var(--forest); width: 72px; text-align: right; }
+  .s13 .milestones { margin-top: var(--sp-6); }
+
+  /* ──────────────────────────────────────────────────────────────────
+     SLIDE 14 — Vision / Closing
+     ────────────────────────────────────────────────────────────────── */
+
+  .s14 .close-wrap { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: var(--sp-5); }
+  .s14 .close-wrap .display-xl { max-width: 1500px; }
+  .s14 .contact-row { display: flex; gap: var(--sp-4); margin-top: var(--sp-3); }
+</style>
+</head>
+<body>
+
+<!-- ════════════════════════════════════════════════════════════════
+     SLIDE 1 — COVER
+     ════════════════════════════════════════════════════════════════ -->
+<section class="slide s1" data-slide="01-cover">
+  <div class="hero-grid">
+    <div class="hero-left bg-linen-white">
+      <div class="slide-inner">
+        <div class="wordmark"><span class="mark"></span> Apparent</div>
+        <div class="lede">
+          <div class="eyebrow">Pre-Seed · apparent.social</div>
+          <h1 class="display display-xl">Find investors<br/>who actually fit.</h1>
+          <p class="body-lg">A two-sided network where founders prove their work and investors find it — matched by thesis, not by who you know.</p>
+          <div class="pills">
+            <span class="pill pill--sage">For Founders</span>
+            <span class="pill pill--sage">For Investors</span>
+            <span class="pill pill--outline">AI-matched</span>
+          </div>
+        </div>
+        <div class="footer">
+          <span class="page-num">The right match beats a hundred wrong ones.</span>
+          <span class="page-num">01 / 14</span>
+        </div>
+      </div>
+    </div>
+    <div class="hero-right bg-mist">
+      <div class="map-field"></div>
+      <div class="showcase-card" style="top:120px; left:80px; width:340px;">
+        <div class="meta">Founder · Verified GitHub</div>
+        <div class="name">Asha Kapoor</div>
+        <div class="body-sm" style="margin-top:8px;">Building infra for energy-grid forecasting. 312 commits / 90d.</div>
+      </div>
+      <div class="showcase-card showcase-card--match" style="top:340px; right:90px; width:380px;">
+        <div class="meta">Match · 92% thesis fit</div>
+        <div class="name">Sage Ridge Capital</div>
+        <div class="fit">Climate infra · Pre-seed · $250K–$1M checks</div>
+      </div>
+      <div class="showcase-card" style="bottom:140px; left:140px; width:320px;">
+        <div class="meta">Investor agent</div>
+        <div class="body-sm">"3 founders this week match your thesis on climate infrastructure — want intros drafted?"</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════════════════════
+     SLIDE 2 — PROBLEM
+     ════════════════════════════════════════════════════════════════ -->
+<section class="slide s2 bg-linen-white" data-slide="02-problem">
+  <div class="slide-inner">
+    <div class="wordmark"><span class="mark"></span> Apparent</div>
+    <div style="margin-top: var(--sp-7);">
+      <div class="eyebrow">The Problem</div>
+      <h2 class="display display-lg" style="margin-top: var(--sp-3);">Two broken markets, sharing one cause: nobody can tell who actually fits.</h2>
+      <p class="body-lg" style="margin-top: var(--sp-4); max-width: 920px;">Founders fundraise by spraying cold emails into a void. Investors drown in inbound that has nothing to do with their thesis. Both sides are working hard — at the wrong problem.</p>
+    </div>
+    <div class="stat-row">
+      <div class="stat">
+        <div class="num">500+</div>
+        <div class="label body">cold emails sent per fundraise — most to investors who were never going to say yes.</div>
+      </div>
+      <div class="stat">
+        <div class="num">&lt;5%</div>
+        <div class="label body">average response rate. Founders can't tell signal from noise until after they've already pitched.</div>
+      </div>
+      <div class="stat">
+        <div class="num">1000s</div>
+        <div class="label body">of inbound decks per fund, most off-thesis — so sourcing stays relationship-gated and slow.</div>
+      </div>
+    </div>
+    <div class="compare">
+      <span class="strike body-lg">"Spray and pray" outreach</span>
+      <span class="arrow">→</span>
+      <span class="win body-lg">Thesis-fit, ranked, two-sided matching</span>
+    </div>
+    <div class="footer">
+      <span class="page-num">Apparent — Pitch Deck</span>
+      <span class="page-num">02 / 14</span>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════════════════════
+     SLIDE 3 — SOLUTION
+     ════════════════════════════════════════════════════════════════ -->
+<section class="slide s3 bg-linen-white" data-slide="03-solution">
+  <div class="slide-inner">
+    <div class="wordmark"><span class="mark"></span> Apparent</div>
+    <div style="margin-top: var(--sp-7);">
+      <div class="eyebrow">The Solution</div>
+      <h2 class="display display-lg lede" style="margin-top: var(--sp-3);">Apparent turns a founder's real work into a profile — then ranks it against an investor's actual thesis, and lets two AI agents do the outreach.</h2>
+    </div>
+    <div class="feature-grid">
+      <div class="card card--linen">
+        <div class="head"><span class="check">✓</span><span class="display display-sm">For founders</span></div>
+        <p class="body">Connect GitHub and your launch — Apparent builds a proof profile from real commits, traction, and story. No pitch deck required to get discovered.</p>
+        <p class="body">A founder agent finds the on-platform investors whose thesis fits, drafts intros in your voice, and amplifies you to every match — once.</p>
+      </div>
+      <div class="card card--mint">
+        <div class="head"><span class="check">✓</span><span class="display display-sm">For investors</span></div>
+        <p class="body">Set a private thesis — sectors, stage, geography, check size, founder signals. Apparent ranks every builder on and off the platform against it.</p>
+        <p class="body">An investor agent sources founders who fit, drafts personalized outreach, and — if you let it — follows up, on autonomy you control.</p>
+      </div>
+    </div>
+    <div class="footer">
+      <span class="page-num">Apparent — Pitch Deck</span>
+      <span class="page-num">03 / 14</span>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════════════════════
+     SLIDE 4 — WHY NOW
+     ════════════════════════════════════════════════════════════════ -->
+<section class="slide s4 bg-forest" data-slide="04-why-now">
+  <div class="slide-inner">
+    <div class="wordmark"><span class="mark"></span> Apparent</div>
+    <div style="margin-top: var(--sp-7);">
+      <div class="eyebrow">Why Now</div>
+      <h2 class="display display-lg" style="margin-top: var(--sp-3); color: var(--linen-white);">The work became the pitch.</h2>
+    </div>
+    <div class="why-grid">
+      <div class="card" style="background: rgba(255,255,255,0.06); border-color: rgba(255,255,255,0.16);">
+        <div class="num">01</div>
+        <div class="display display-sm" style="color: var(--linen-white);">Agents can read the work</div>
+        <p class="body">Claude-class agents can read a founder's GitHub, traction, and launch history and reason about thesis fit — at a scale no analyst pool can match.</p>
+      </div>
+      <div class="card" style="background: rgba(255,255,255,0.06); border-color: rgba(255,255,255,0.16);">
+        <div class="num">02</div>
+        <div class="display display-sm" style="color: var(--linen-white);">Cold outreach stopped working</div>
+        <p class="body">Inboxes are saturated with AI-written pitches. Investors now filter almost entirely on relationships and proof — exactly what Apparent supplies.</p>
+      </div>
+      <div class="card" style="background: rgba(255,255,255,0.06); border-color: rgba(255,255,255,0.16);">
+        <div class="num">03</div>
+        <div class="display display-sm" style="color: var(--linen-white);">Builders are now legible</div>
+        <p class="body">GitHub activity, public launches, even live MRR are now verifiable signals — a founder's work can speak before the first call.</p>
+      </div>
+    </div>
+    <div class="footer">
+      <span class="page-num">Apparent — Pitch Deck</span>
+      <span class="page-num">04 / 14</span>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════════════════════
+     SLIDE 5 — PRODUCT / HOW IT WORKS
+     ════════════════════════════════════════════════════════════════ -->
+<section class="slide s5 bg-linen-white" data-slide="05-product">
+  <div class="slide-inner">
+    <div class="wordmark"><span class="mark"></span> Apparent</div>
+    <div style="margin-top: var(--sp-7);">
+      <div class="eyebrow">The Product</div>
+      <h2 class="display display-lg" style="margin-top: var(--sp-3);">Show up. Match on fit. Connect.</h2>
+    </div>
+    <div class="steps">
+      <div class="card">
+        <div class="step-num">01</div>
+        <div class="display display-sm">Show up</div>
+        <p class="body">Founders connect GitHub and publish a launch. Investors set a private thesis — sectors, stage, geography, check size, founder signals.</p>
+      </div>
+      <div class="card">
+        <div class="step-num">02</div>
+        <div class="display display-sm">Match on fit</div>
+        <p class="body">Apparent ranks every builder against every thesis — on the Builder Radar map and in a ranked signal inbox. No relationship required.</p>
+      </div>
+      <div class="card">
+        <div class="step-num">03</div>
+        <div class="display display-sm">Connect</div>
+        <p class="body">Two AI agents do the legwork — drafting intros, queueing outreach, and following up — while founders and investors stay in control.</p>
+      </div>
+    </div>
+    <div class="map-preview">
+      <div class="map-field" style="background-image: radial-gradient(var(--forest) 1px, transparent 1.5px); background-size: 32px 32px; opacity: 0.16;"></div>
+      <div class="map-pin" style="top:30%; left:18%;"></div>
+      <div class="map-pin" style="top:55%; left:42%;"></div>
+      <div class="map-pin" style="top:35%; left:64%;"></div>
+      <div class="map-pin" style="top:70%; left:78%;"></div>
+      <div class="map-pin" style="top:22%; left:84%;"></div>
+      <div class="showcase-card" style="bottom: var(--sp-4); left: var(--sp-4); width: 380px;">
+        <div class="meta">Builder Radar — live map</div>
+        <div class="body-sm" style="margin-top:6px;">Founders and investors, clustered by city and ranked by thesis fit — public and on-platform builders side by side.</div>
+      </div>
+    </div>
+    <div class="footer">
+      <span class="page-num">Apparent — Pitch Deck</span>
+      <span class="page-num">05 / 14</span>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════════════════════
+     SLIDE 6 — THE AGENTS
+     ════════════════════════════════════════════════════════════════ -->
+<section class="slide s6 bg-linen-white" data-slide="06-agents">
+  <div class="slide-inner">
+    <div class="wordmark"><span class="mark"></span> Apparent</div>
+    <div style="margin-top: var(--sp-7);">
+      <div class="eyebrow">The Differentiator</div>
+      <h2 class="display display-lg" style="margin-top: var(--sp-3);">Two agents, working for each side.</h2>
+      <p class="body-lg" style="margin-top: var(--sp-3); max-width: 980px;">Apparent isn't a directory — it's staffed. Every founder and every investor gets a Claude-powered agent that works on their behalf, with autonomy they control.</p>
+    </div>
+    <div class="agent-grid">
+      <div class="card card--linen agent-card">
+        <div class="display display-sm">Investor agent</div>
+        <p class="body">Sources founders — on Apparent and across the open web — who fit a fund's private thesis.</p>
+        <div class="tools">
+          <div class="tool-row"><span class="check">✓</span><span class="body">Searches and ranks founders by thesis, sector, stage, geography</span></div>
+          <div class="tool-row"><span class="check">✓</span><span class="body">Enriches contacts and drafts personalized outreach</span></div>
+          <div class="tool-row"><span class="check">✓</span><span class="body">Autonomy dial: manual review → on-platform send → fully autonomous follow-ups</span></div>
+        </div>
+      </div>
+      <div class="card card--mint agent-card">
+        <div class="display display-sm">Founder agent</div>
+        <p class="body">Makes a founder "Apparent" to every investor already on the platform whose thesis fits.</p>
+        <div class="tools">
+          <div class="tool-row"><span class="check">✓</span><span class="body">Ranks on-platform investors by real thesis overlap — never invents matches</span></div>
+          <div class="tool-row"><span class="check">✓</span><span class="body">Drafts personalized intros in the founder's voice, for review</span></div>
+          <div class="tool-row"><span class="check">✓</span><span class="body">Amplifies the founder's dossier to every matched investor, once</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="footer">
+      <span class="page-num">Apparent — Pitch Deck</span>
+      <span class="page-num">06 / 14</span>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════════════════════
+     SLIDE 7 — MARKET
+     ════════════════════════════════════════════════════════════════ -->
+<section class="slide s7 bg-linen-white" data-slide="07-market">
+  <div class="slide-inner">
+    <div class="wordmark"><span class="mark"></span> Apparent</div>
+    <div style="margin-top: var(--sp-7);">
+      <div class="eyebrow">The Market</div>
+      <h2 class="display display-lg" style="margin-top: var(--sp-3);">The deal-sourcing layer for venture.</h2>
+    </div>
+    <div class="market-wrap">
+      <div class="market-list">
+        <div class="card">
+          <div class="eyebrow">TAM</div>
+          <div class="display display-sm" style="margin-top:8px;">~$300M / yr</div>
+          <p class="body" style="margin-top:8px;">Sourcing &amp; CRM tooling spend across ~18,000 active VC and angel firms worldwide.</p>
+        </div>
+        <div class="card card--linen">
+          <div class="eyebrow">SAM</div>
+          <div class="display display-sm" style="margin-top:8px;">~$70M / yr</div>
+          <p class="body" style="margin-top:8px;">~6,000 thesis-driven pre-seed and seed firms across the US and Europe — Apparent's initial buyer.</p>
+        </div>
+        <div class="card card--mint">
+          <div class="eyebrow">SOM (3–5 yr)</div>
+          <div class="display display-sm" style="margin-top:8px;">~$7M / yr</div>
+          <p class="body" style="margin-top:8px;">10% of SAM — roughly 600 funds running an active thesis workspace and sourcing agent on Apparent.</p>
+        </div>
+      </div>
+      <div class="circles">
+        <div class="circle circle-tam"><div class="lbl"><div class="eyebrow">TAM</div><div class="amt">$300M</div></div></div>
+        <div class="circle circle-sam"><div class="lbl"><div class="eyebrow">SAM</div><div class="amt">$70M</div></div></div>
+        <div class="circle circle-som"><div class="lbl"><div class="eyebrow">SOM</div><div class="amt">$7M</div></div></div>
+      </div>
+    </div>
+    <p class="meta footnote">Illustrative, bottom-up: ~18K active institutional VC / angel firms globally, at ~$1.0–1.5K/mo average sourcing &amp; CRM tooling spend per firm.</p>
+    <div class="footer">
+      <span class="page-num">Apparent — Pitch Deck</span>
+      <span class="page-num">07 / 14</span>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════════════════════
+     SLIDE 8 — BUSINESS MODEL
+     ════════════════════════════════════════════════════════════════ -->
+<section class="slide s8 bg-linen-white" data-slide="08-business-model">
+  <div class="slide-inner">
+    <div class="wordmark"><span class="mark"></span> Apparent</div>
+    <div style="margin-top: var(--sp-7);">
+      <div class="eyebrow">Business Model</div>
+      <h2 class="display display-lg" style="margin-top: var(--sp-3);">Free for founders. Paid for the funds that find them.</h2>
+      <p class="body-lg" style="margin-top: var(--sp-3); max-width: 980px;">Founders are the supply that makes the network valuable — so they're free, forever. Investors pay for a private thesis workspace, a ranked signal inbox, and a sourcing agent.</p>
+    </div>
+    <div class="tiers">
+      <div class="card tier">
+        <div class="eyebrow">Solo</div>
+        <div class="display display-sm">Angel / scout</div>
+        <div class="feat"><span class="check">✓</span><span class="body">Private thesis + ranked builder matches</span></div>
+        <div class="feat"><span class="check">✓</span><span class="body">Builder Radar map, full access</span></div>
+        <div class="feat"><span class="check">✓</span><span class="body">Manual-autonomy sourcing agent</span></div>
+      </div>
+      <div class="card card--linen tier">
+        <div class="eyebrow">Team</div>
+        <div class="display display-sm">Seed fund</div>
+        <div class="feat"><span class="check">✓</span><span class="body">Everything in Solo, shared across partners</span></div>
+        <div class="feat"><span class="check">✓</span><span class="body">Deal-flow Kanban + outreach CRM</span></div>
+        <div class="feat"><span class="check">✓</span><span class="body">On-platform autonomous outreach</span></div>
+      </div>
+      <div class="card card--mint tier">
+        <div class="eyebrow">Fund</div>
+        <div class="display display-sm">Multi-fund / platform</div>
+        <div class="feat"><span class="check">✓</span><span class="body">Everything in Team, multiple theses</span></div>
+        <div class="feat"><span class="check">✓</span><span class="body">Off-hours autonomous follow-ups</span></div>
+        <div class="feat"><span class="check">✓</span><span class="body">Priority placement in founder amplification</span></div>
+      </div>
+    </div>
+    <div class="free-banner">
+      <span class="display display-sm" style="color: var(--linen-white);">Founders: free, forever.</span>
+      <span class="body" style="color: rgba(255,255,255,0.8); max-width: 560px;">Every founder profile, GitHub dossier, and the founder agent — no cost. They're the reason investors keep coming back.</span>
+    </div>
+    <div class="footer">
+      <span class="page-num">Apparent — Pitch Deck</span>
+      <span class="page-num">08 / 14</span>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════════════════════
+     SLIDE 9 — GO-TO-MARKET (CLI GROWTH LOOP)
+     ════════════════════════════════════════════════════════════════ -->
+<section class="slide s9 bg-linen-white" data-slide="09-gtm">
+  <div class="slide-inner">
+    <div class="wordmark"><span class="mark"></span> Apparent</div>
+    <div style="margin-top: var(--sp-7);">
+      <div class="eyebrow">Go-To-Market</div>
+      <h2 class="display display-lg" style="margin-top: var(--sp-3);">Growth that starts in the terminal.</h2>
+      <p class="body-lg" style="margin-top: var(--sp-3); max-width: 980px;"><span style="font-family: var(--mono, monospace);">npx apparent</span> turns a founder's local git history into a brag-worthy build card and a ready-to-claim profile — no source code ever leaves their machine.</p>
+    </div>
+    <div class="gtm-grid">
+      <div class="terminal">
+        <div><span class="prompt">$</span> npx apparent</div>
+        <div class="dim">apparent · make your real work apparent</div>
+        <div>&nbsp;</div>
+        <div>Reading local git — your code never leaves this machine</div>
+        <div>&nbsp;</div>
+        <div>Commits&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="prompt">428</span></div>
+        <div>Projects&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="prompt">3</span></div>
+        <div>Lines added&nbsp;&nbsp;&nbsp;<span class="prompt">61,204</span></div>
+        <div>Languages&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="prompt">TypeScript, Python, Rust</span></div>
+        <div>&nbsp;</div>
+        <div class="dim">Add this to your Apparent profile? (y/N)</div>
+      </div>
+      <div class="loop-steps">
+        <div class="loop-step"><div class="n">01</div><div class="body">Founder runs <strong>npx apparent</strong> in their repo — gets a screenshot-ready build card, instantly.</div></div>
+        <div class="loop-step"><div class="n">02</div><div class="body">They opt in to add aggregate stats — never source code — to a claimable profile.</div></div>
+        <div class="loop-step"><div class="n">03</div><div class="body">Claiming the profile signs them in as a founder, already ranked against every investor thesis on Apparent.</div></div>
+        <div class="loop-step"><div class="n">04</div><div class="body"><strong>npx apparent findinvestors</strong> hands them a ranked list to email right now — the loop's first payoff.</div></div>
+      </div>
+    </div>
+    <div class="footer">
+      <span class="page-num">Apparent — Pitch Deck</span>
+      <span class="page-num">09 / 14</span>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════════════════════
+     SLIDE 10 — STATUS (BUILT / NEXT)
+     ════════════════════════════════════════════════════════════════ -->
+<section class="slide s10 bg-linen-white" data-slide="10-status">
+  <div class="slide-inner">
+    <div class="wordmark"><span class="mark"></span> Apparent</div>
+    <div style="margin-top: var(--sp-7);">
+      <div class="eyebrow">Where We Are</div>
+      <h2 class="display display-lg" style="margin-top: var(--sp-3);">Built end to end — heading into first cohorts.</h2>
+    </div>
+    <div class="status-grid">
+      <div class="card card--linen">
+        <div class="display display-sm">Shipped</div>
+        <div class="feat"><span class="check">✓</span><span class="body">Two-sided dashboards — founder and investor intake, profiles, matching</span></div>
+        <div class="feat"><span class="check">✓</span><span class="body">Investor and founder agents, live on Claude Sonnet 4.6</span></div>
+        <div class="feat"><span class="check">✓</span><span class="body">Builder Radar map, GitHub dossier enrichment, trust layer</span></div>
+        <div class="feat"><span class="check">✓</span><span class="body">In-app messaging, notifications, deal-flow CRM</span></div>
+        <div class="feat"><span class="check">✓</span><span class="body"><strong>npx apparent</strong> CLI — build card and investor matching</span></div>
+      </div>
+      <div class="card">
+        <div class="display display-sm">Next 90 days</div>
+        <div class="feat feat--next"><span class="check">→</span><span class="body">First cohort live — founders onboarded, investor theses seeded</span></div>
+        <div class="feat feat--next"><span class="check">→</span><span class="body">Off-hours autonomous follow-ups (scheduled agent runs)</span></div>
+        <div class="feat feat--next"><span class="check">→</span><span class="body"><strong>npx apparent</strong> public launch on npm</span></div>
+        <div class="feat feat--next"><span class="check">→</span><span class="body">First paid investor workspaces</span></div>
+      </div>
+    </div>
+    <div class="footer">
+      <span class="page-num">Apparent — Pitch Deck</span>
+      <span class="page-num">10 / 14</span>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════════════════════
+     SLIDE 11 — COMPETITION (2x2 POSITIONING)
+     ════════════════════════════════════════════════════════════════ -->
+<section class="slide s11 bg-linen-white" data-slide="11-competition">
+  <div class="slide-inner">
+    <div class="wordmark"><span class="mark"></span> Apparent</div>
+    <div style="margin-top: var(--sp-7);">
+      <div class="eyebrow">Competition</div>
+      <h2 class="display display-lg" style="margin-top: var(--sp-3);">Directories list. Outreach tools blast. Apparent matches — and works the room.</h2>
+    </div>
+    <div class="comp-wrap">
+      <div class="matrix">
+        <div class="axis-label" style="bottom:-34px; left:50%; transform:translateX(-50%);">Directory → Agentic</div>
+        <div class="axis-label" style="left:-34px; top:50%; transform-origin:center; transform:translateY(-50%) rotate(-90deg);">Generic → Thesis-fit</div>
+        <div class="pt" style="left:14%; bottom:14%;"><div class="dotbig"></div><div class="lbl">LinkedIn / AngelList</div></div>
+        <div class="pt" style="left:80%; bottom:20%;"><div class="dotbig"></div><div class="lbl">Apollo / Clay / Hunter</div></div>
+        <div class="pt" style="left:28%; bottom:58%;"><div class="dotbig"></div><div class="lbl">Carta / Syndicates</div></div>
+        <div class="pt us" style="left:82%; bottom:84%;"><div class="dotbig"></div><div class="lbl">Apparent</div></div>
+      </div>
+      <div style="display:flex; flex-direction:column; gap: var(--sp-4);">
+        <div class="card">
+          <div class="display display-sm">Why Apparent wins</div>
+          <p class="body" style="margin-top: 8px;">Every other tool optimizes one half of the problem — better lists, or better lookalike directories. Apparent ranks both sides against each other's real criteria, then has agents act on the match.</p>
+        </div>
+        <div class="card card--mint">
+          <div class="feat"><span class="check">✓</span><span class="body">Proof, not pitch — GitHub-verified founder dossiers</span></div>
+        </div>
+        <div class="card card--linen">
+          <div class="feat"><span class="check">✓</span><span class="body">Two agents working the match, not just a database</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="footer">
+      <span class="page-num">Apparent — Pitch Deck</span>
+      <span class="page-num">11 / 14</span>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════════════════════
+     SLIDE 12 — TEAM
+     ════════════════════════════════════════════════════════════════ -->
+<section class="slide s12 bg-linen-white" data-slide="12-team">
+  <div class="slide-inner">
+    <div class="wordmark"><span class="mark"></span> Apparent</div>
+    <div style="margin-top: var(--sp-7);">
+      <div class="eyebrow">Team</div>
+      <h2 class="display display-lg" style="margin-top: var(--sp-3);">Builders, building the thing that finds builders.</h2>
+      <p class="body-lg" style="margin-top: var(--sp-3); max-width: 980px;">Apparent is built the way it asks founders to show up: shipped product first, profile second.</p>
+    </div>
+    <div class="team-grid">
+      <div class="person">
+        <div class="avatar">SK</div>
+        <div class="name">[Founder Name]</div>
+        <div class="role">Founder &amp; CEO</div>
+        <p class="body bio">[One line on background — prior company, technical depth, why this problem. Replace with real bio.]</p>
+      </div>
+      <div class="person">
+        <div class="avatar" style="background: var(--sage);">+</div>
+        <div class="name">[Open seat]</div>
+        <div class="role">Co-founder / early hire</div>
+        <p class="body bio">Room for up to four on this slide — add a co-founder, technical lead, or first hire with a one-line credential each.</p>
+      </div>
+    </div>
+    <div class="footer">
+      <span class="page-num">Apparent — Pitch Deck</span>
+      <span class="page-num">12 / 14</span>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════════════════════
+     SLIDE 13 — THE ASK
+     ════════════════════════════════════════════════════════════════ -->
+<section class="slide s13 bg-linen-white" data-slide="13-ask">
+  <div class="slide-inner">
+    <div class="wordmark"><span class="mark"></span> Apparent</div>
+    <div style="margin-top: var(--sp-7);">
+      <div class="eyebrow">The Ask</div>
+      <h2 class="display display-lg" style="margin-top: var(--sp-3);">Raising to take Apparent from built to live.</h2>
+    </div>
+    <div class="ask-grid">
+      <div class="raise-card">
+        <div class="eyebrow">Pre-Seed</div>
+        <div class="raise-amt">$[ ]</div>
+        <p class="body">[Replace with raise size and instrument — e.g. SAFE, post-money cap]. ~[18] months of runway to first paid investor cohorts.</p>
+      </div>
+      <div>
+        <div class="display display-sm" style="margin-bottom: var(--sp-4);">Use of funds</div>
+        <div class="use-of-funds">
+          <div class="fund-row">
+            <span class="body fund-label">Engineering &amp; agents</span>
+            <div class="fund-bar"><div class="fill" style="width: 40%;"></div></div>
+            <span class="fund-pct">40%</span>
+          </div>
+          <div class="fund-row">
+            <span class="body fund-label">Go-to-market &amp; founder growth loop</span>
+            <div class="fund-bar"><div class="fill" style="width: 30%;"></div></div>
+            <span class="fund-pct">30%</span>
+          </div>
+          <div class="fund-row">
+            <span class="body fund-label">Operations &amp; legal</span>
+            <div class="fund-bar"><div class="fill" style="width: 15%;"></div></div>
+            <span class="fund-pct">15%</span>
+          </div>
+          <div class="fund-row">
+            <span class="body fund-label">Founder runway</span>
+            <div class="fund-bar"><div class="fill" style="width: 15%;"></div></div>
+            <span class="fund-pct">15%</span>
+          </div>
+        </div>
+        <div class="milestones">
+          <div class="display display-sm" style="margin-bottom: var(--sp-3);">This buys us</div>
+          <div class="feat"><span class="check">✓</span><span class="body">First [N] paying investor workspaces</span></div>
+          <div class="feat"><span class="check">✓</span><span class="body"><strong>npx apparent</strong> public launch + [N] founder profiles claimed</span></div>
+          <div class="feat"><span class="check">✓</span><span class="body">Off-hours autonomous agents live for both sides</span></div>
+        </div>
+      </div>
+    </div>
+    <p class="meta footnote">Illustrative allocation — replace with actual raise size and breakdown before sharing.</p>
+    <div class="footer">
+      <span class="page-num">Apparent — Pitch Deck</span>
+      <span class="page-num">13 / 14</span>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════════════════════
+     SLIDE 14 — VISION / CLOSING
+     ════════════════════════════════════════════════════════════════ -->
+<section class="slide s14 bg-forest" data-slide="14-vision">
+  <div class="slide-inner">
+    <div class="wordmark"><span class="mark"></span> Apparent</div>
+    <div class="close-wrap">
+      <div class="eyebrow">Apparent</div>
+      <h1 class="display display-xl">The right match beats<br/>a hundred wrong ones.</h1>
+      <p class="body-lg" style="max-width: 900px;">We're building the deal-sourcing layer for venture — where founders show up as their real work, and investors find exactly who fits.</p>
+      <div class="contact-row">
+        <span class="pill pill--outline">apparent.social</span>
+        <span class="pill pill--outline">[founder@apparent.social]</span>
+        <span class="pill pill--outline">Pre-Seed · Raising now</span>
+      </div>
+    </div>
+    <div class="footer">
+      <span class="page-num">Apparent — Pitch Deck</span>
+      <span class="page-num">14 / 14</span>
+    </div>
+  </div>
+</section>
+
+</body>
+</html>
