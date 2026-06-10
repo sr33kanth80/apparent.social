@@ -43,7 +43,7 @@ After adding/changing env vars: **redeploy**.
 
 - [ ] Confirm `https://apparent.social` serves THIS deployment (where `/api/cli-ingest` lives).
       If not, either attach the domain in Vercel **or** change `BASE_URL` in `cli/lib/config.js`
-      to the live URL (e.g. `https://apparentsocial.vercel.app`) before publishing.
+      to the live production URL before publishing.
 - [ ] Publish:
       ```cmd
       cd /d D:\SocialVC\apparent\cli

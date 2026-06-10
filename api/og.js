@@ -253,7 +253,7 @@ ${meta.bodyHtml || `<p><a href="${esc(meta.url)}">${esc(meta.title)}</a></p>`}
 }
 
 export default async function handler(req, res) {
-  const host = req.headers['x-forwarded-host'] || req.headers.host || 'apparentsocial.vercel.app';
+  const host = req.headers['x-forwarded-host'] || req.headers.host || 'apparent.social';
   const origin = `https://${host}`;
   const query = req.query || {};
   const type = String(query.type || 'static');

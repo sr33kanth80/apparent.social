@@ -55,7 +55,8 @@ const GITHUB_CLIENT_ID =
   (import.meta.env.VITE_GITHUB_CLIENT_ID as string | undefined) || 'Ov23li5dwJPP1dGzfy38';
 
 // Must exactly match the OAuth App's registered Authorization callback URL.
-const GITHUB_REDIRECT_URI = 'https://apparentsocial.vercel.app/api/github/callback';
+const APP_URL = ((import.meta.env.VITE_APP_URL as string | undefined) || 'https://apparent.social').replace(/\/+$/, '');
+const GITHUB_REDIRECT_URI = `${APP_URL}/api/github/callback`;
 
 const GH_STATE_KEY = 'apparent:gh-oauth-state';
 

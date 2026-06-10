@@ -15,7 +15,7 @@ const CLIENT_ID = process.env.GITHUB_OAUTH_CLIENT_ID || 'Ov23li5dwJPP1dGzfy38';
 const CLIENT_SECRET = process.env.GITHUB_OAUTH_SECRET || '';
 // Where to send the browser back to. Must be the deployed origin so the
 // dashboard route exists.
-const APP_URL = process.env.APP_URL || 'https://apparentsocial.vercel.app';
+const APP_URL = (process.env.APP_URL || 'https://apparent.social').replace(/\/+$/, '');
 // Signed blobs live for 10 minutes — plenty for the redirect round-trip.
 const BLOB_TTL_MS = 10 * 60 * 1000;
 
