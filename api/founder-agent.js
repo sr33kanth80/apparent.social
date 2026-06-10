@@ -14,7 +14,9 @@
 
 import Anthropic from '@anthropic-ai/sdk';
 
-const MODEL = 'claude-opus-4-8';
+// Sonnet 4.6 is the right-sized default for chat + thesis-fit reasoning
+// (cheaper/faster than Opus, same 1M context). Override with FOUNDER_AGENT_MODEL.
+const MODEL = process.env.FOUNDER_AGENT_MODEL || 'claude-sonnet-4-6';
 const MAX_TOKENS = 8192;
 const MAX_AGENT_STEPS = 6;
 
