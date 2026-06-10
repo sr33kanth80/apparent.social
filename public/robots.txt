@@ -1,0 +1,10 @@
+User-agent: *
+Allow: /
+
+Disallow: /dashboard/
+Disallow: /login
+Disallow: /claim/
+Disallow: /claim-build
+Disallow: /api/
+
+Sitemap: https://apparent.social/sitemap.xml

@@ -1,0 +1,43 @@
+# Apparent
+
+Apparent helps founders find thesis-fit venture investors and helps investors discover founders who match their stage, sector, geography, and proof signals.
+
+Canonical site: https://apparent.social
+
+## Public Pages
+
+- Home: https://apparent.social/
+- Thesis: https://apparent.social/our-thesis
+- For founders: https://apparent.social/for-founders
+- For VCs: https://apparent.social/for-vcs
+- VC heat map: https://apparent.social/heat-map
+- About: https://apparent.social/about
+- Resources: https://apparent.social/resources
+- Blog: https://apparent.social/blog
+- Contact: https://apparent.social/contact
+
+## Blog Posts
+
+- 21 Seattle and PNW-Relevant Venture Funds Founders Should Know: https://apparent.social/blog/venture-funds-in-seattle-seed-growth-2026
+- 26 Pre-Seed VCs Writing First Checks Right Now (2026): https://apparent.social/blog/pre-seed-vcs-writing-first-checks-2026
+- We Mapped 4,305 Investors. Here Are the Best for Your Vertical: https://apparent.social/blog/best-investors-by-vertical-2026
+- Emerging Managers Still Matter More Than Most Founders Think: https://apparent.social/blog/emerging-managers-worth-watching-2026
+- How to Find Warm Intros to Any Fund (Without Knowing Anyone): https://apparent.social/blog/how-to-find-warm-intros-to-any-fund
+- AI Fundraising in 2026: 8 Funds Worth Watching Beyond the Obvious Names: https://apparent.social/blog/unexpected-ai-funds-writing-checks-2026
+- We Research 4,305 Investors. 51.6% Look Like Dead Ends for Founders Right Now: https://apparent.social/blog/investors-dead-ends-for-founders-2026
+- The $25M Question: Which Funds Actually Move Fast on Pre-Seed?: https://apparent.social/blog/which-funds-actually-move-fast-on-pre-seed
+- YC Demo Day Fatigue Is Real. Here's Who Actually Buys the Backfill: https://apparent.social/blog/who-actually-buys-yc-deals
+- Founder Salary vs. Founder Fundraise: The Numbers Nobody Wants to Talk About: https://apparent.social/blog/founder-salary-vs-founder-fundraise
+- The VC Map That Founders Keep Sending to Each Other: https://apparent.social/blog/the-vc-map-founders-keep-sending
+
+## Private Or Sensitive Routes
+
+Do not index or summarize authenticated dashboards, login flows, claim flows, API responses, or user-specific private workspace content:
+
+- /dashboard/
+- /login
+- /claim/
+- /claim-build
+- /api/
+
+Public founder, investor, and project profile URLs may exist outside this file. Treat them as public only when the page itself is accessible without authentication and returns public metadata.

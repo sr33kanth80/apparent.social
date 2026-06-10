@@ -1,12 +1,155 @@
 {
   "rewrites": [
     {
+      "source": "/",
+      "has": [
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": ".*(facebookexternalhit|Facebot|Twitterbot|LinkedInBot|Slackbot|Slack-ImgProxy|WhatsApp|Discordbot|TelegramBot|Pinterest|redditbot|Googlebot|bingbot|Applebot|Embedly|vkShare|W3C_Validator|Nuzzel|Skype|Qwantify|Yeti|Iframely|SkypeUriPreview|GPTBot|ChatGPT-User|OAI-SearchBot|PerplexityBot|ClaudeBot|Claude-SearchBot|anthropic-ai|CCBot|Bytespider|Amazonbot|YouBot|cohere-ai|Diffbot).*"
+        }
+      ],
+      "destination": "/api/og?type=static&path=/"
+    },
+    {
+      "source": "/our-thesis",
+      "has": [
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": ".*(facebookexternalhit|Facebot|Twitterbot|LinkedInBot|Slackbot|Slack-ImgProxy|WhatsApp|Discordbot|TelegramBot|Pinterest|redditbot|Googlebot|bingbot|Applebot|Embedly|vkShare|W3C_Validator|Nuzzel|Skype|Qwantify|Yeti|Iframely|SkypeUriPreview|GPTBot|ChatGPT-User|OAI-SearchBot|PerplexityBot|ClaudeBot|Claude-SearchBot|anthropic-ai|CCBot|Bytespider|Amazonbot|YouBot|cohere-ai|Diffbot).*"
+        }
+      ],
+      "destination": "/api/og?type=static&path=/our-thesis"
+    },
+    {
+      "source": "/for-founders",
+      "has": [
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": ".*(facebookexternalhit|Facebot|Twitterbot|LinkedInBot|Slackbot|Slack-ImgProxy|WhatsApp|Discordbot|TelegramBot|Pinterest|redditbot|Googlebot|bingbot|Applebot|Embedly|vkShare|W3C_Validator|Nuzzel|Skype|Qwantify|Yeti|Iframely|SkypeUriPreview|GPTBot|ChatGPT-User|OAI-SearchBot|PerplexityBot|ClaudeBot|Claude-SearchBot|anthropic-ai|CCBot|Bytespider|Amazonbot|YouBot|cohere-ai|Diffbot).*"
+        }
+      ],
+      "destination": "/api/og?type=static&path=/for-founders"
+    },
+    {
+      "source": "/for-vcs",
+      "has": [
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": ".*(facebookexternalhit|Facebot|Twitterbot|LinkedInBot|Slackbot|Slack-ImgProxy|WhatsApp|Discordbot|TelegramBot|Pinterest|redditbot|Googlebot|bingbot|Applebot|Embedly|vkShare|W3C_Validator|Nuzzel|Skype|Qwantify|Yeti|Iframely|SkypeUriPreview|GPTBot|ChatGPT-User|OAI-SearchBot|PerplexityBot|ClaudeBot|Claude-SearchBot|anthropic-ai|CCBot|Bytespider|Amazonbot|YouBot|cohere-ai|Diffbot).*"
+        }
+      ],
+      "destination": "/api/og?type=static&path=/for-vcs"
+    },
+    {
+      "source": "/heat-map",
+      "has": [
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": ".*(facebookexternalhit|Facebot|Twitterbot|LinkedInBot|Slackbot|Slack-ImgProxy|WhatsApp|Discordbot|TelegramBot|Pinterest|redditbot|Googlebot|bingbot|Applebot|Embedly|vkShare|W3C_Validator|Nuzzel|Skype|Qwantify|Yeti|Iframely|SkypeUriPreview|GPTBot|ChatGPT-User|OAI-SearchBot|PerplexityBot|ClaudeBot|Claude-SearchBot|anthropic-ai|CCBot|Bytespider|Amazonbot|YouBot|cohere-ai|Diffbot).*"
+        }
+      ],
+      "destination": "/api/og?type=static&path=/heat-map"
+    },
+    {
+      "source": "/about",
+      "has": [
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": ".*(facebookexternalhit|Facebot|Twitterbot|LinkedInBot|Slackbot|Slack-ImgProxy|WhatsApp|Discordbot|TelegramBot|Pinterest|redditbot|Googlebot|bingbot|Applebot|Embedly|vkShare|W3C_Validator|Nuzzel|Skype|Qwantify|Yeti|Iframely|SkypeUriPreview|GPTBot|ChatGPT-User|OAI-SearchBot|PerplexityBot|ClaudeBot|Claude-SearchBot|anthropic-ai|CCBot|Bytespider|Amazonbot|YouBot|cohere-ai|Diffbot).*"
+        }
+      ],
+      "destination": "/api/og?type=static&path=/about"
+    },
+    {
+      "source": "/resources",
+      "has": [
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": ".*(facebookexternalhit|Facebot|Twitterbot|LinkedInBot|Slackbot|Slack-ImgProxy|WhatsApp|Discordbot|TelegramBot|Pinterest|redditbot|Googlebot|bingbot|Applebot|Embedly|vkShare|W3C_Validator|Nuzzel|Skype|Qwantify|Yeti|Iframely|SkypeUriPreview|GPTBot|ChatGPT-User|OAI-SearchBot|PerplexityBot|ClaudeBot|Claude-SearchBot|anthropic-ai|CCBot|Bytespider|Amazonbot|YouBot|cohere-ai|Diffbot).*"
+        }
+      ],
+      "destination": "/api/og?type=static&path=/resources"
+    },
+    {
+      "source": "/blog",
+      "has": [
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": ".*(facebookexternalhit|Facebot|Twitterbot|LinkedInBot|Slackbot|Slack-ImgProxy|WhatsApp|Discordbot|TelegramBot|Pinterest|redditbot|Googlebot|bingbot|Applebot|Embedly|vkShare|W3C_Validator|Nuzzel|Skype|Qwantify|Yeti|Iframely|SkypeUriPreview|GPTBot|ChatGPT-User|OAI-SearchBot|PerplexityBot|ClaudeBot|Claude-SearchBot|anthropic-ai|CCBot|Bytespider|Amazonbot|YouBot|cohere-ai|Diffbot).*"
+        }
+      ],
+      "destination": "/api/og?type=static&path=/blog"
+    },
+    {
+      "source": "/blog/:slug",
+      "has": [
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": ".*(facebookexternalhit|Facebot|Twitterbot|LinkedInBot|Slackbot|Slack-ImgProxy|WhatsApp|Discordbot|TelegramBot|Pinterest|redditbot|Googlebot|bingbot|Applebot|Embedly|vkShare|W3C_Validator|Nuzzel|Skype|Qwantify|Yeti|Iframely|SkypeUriPreview|GPTBot|ChatGPT-User|OAI-SearchBot|PerplexityBot|ClaudeBot|Claude-SearchBot|anthropic-ai|CCBot|Bytespider|Amazonbot|YouBot|cohere-ai|Diffbot).*"
+        }
+      ],
+      "destination": "/api/og?type=blog&slug=:slug"
+    },
+    {
+      "source": "/contact",
+      "has": [
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": ".*(facebookexternalhit|Facebot|Twitterbot|LinkedInBot|Slackbot|Slack-ImgProxy|WhatsApp|Discordbot|TelegramBot|Pinterest|redditbot|Googlebot|bingbot|Applebot|Embedly|vkShare|W3C_Validator|Nuzzel|Skype|Qwantify|Yeti|Iframely|SkypeUriPreview|GPTBot|ChatGPT-User|OAI-SearchBot|PerplexityBot|ClaudeBot|Claude-SearchBot|anthropic-ai|CCBot|Bytespider|Amazonbot|YouBot|cohere-ai|Diffbot).*"
+        }
+      ],
+      "destination": "/api/og?type=static&path=/contact"
+    },
+    {
+      "source": "/privacy",
+      "has": [
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": ".*(facebookexternalhit|Facebot|Twitterbot|LinkedInBot|Slackbot|Slack-ImgProxy|WhatsApp|Discordbot|TelegramBot|Pinterest|redditbot|Googlebot|bingbot|Applebot|Embedly|vkShare|W3C_Validator|Nuzzel|Skype|Qwantify|Yeti|Iframely|SkypeUriPreview|GPTBot|ChatGPT-User|OAI-SearchBot|PerplexityBot|ClaudeBot|Claude-SearchBot|anthropic-ai|CCBot|Bytespider|Amazonbot|YouBot|cohere-ai|Diffbot).*"
+        }
+      ],
+      "destination": "/api/og?type=static&path=/privacy"
+    },
+    {
+      "source": "/terms",
+      "has": [
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": ".*(facebookexternalhit|Facebot|Twitterbot|LinkedInBot|Slackbot|Slack-ImgProxy|WhatsApp|Discordbot|TelegramBot|Pinterest|redditbot|Googlebot|bingbot|Applebot|Embedly|vkShare|W3C_Validator|Nuzzel|Skype|Qwantify|Yeti|Iframely|SkypeUriPreview|GPTBot|ChatGPT-User|OAI-SearchBot|PerplexityBot|ClaudeBot|Claude-SearchBot|anthropic-ai|CCBot|Bytespider|Amazonbot|YouBot|cohere-ai|Diffbot).*"
+        }
+      ],
+      "destination": "/api/og?type=static&path=/terms"
+    },
+    {
+      "source": "/cookies",
+      "has": [
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": ".*(facebookexternalhit|Facebot|Twitterbot|LinkedInBot|Slackbot|Slack-ImgProxy|WhatsApp|Discordbot|TelegramBot|Pinterest|redditbot|Googlebot|bingbot|Applebot|Embedly|vkShare|W3C_Validator|Nuzzel|Skype|Qwantify|Yeti|Iframely|SkypeUriPreview|GPTBot|ChatGPT-User|OAI-SearchBot|PerplexityBot|ClaudeBot|Claude-SearchBot|anthropic-ai|CCBot|Bytespider|Amazonbot|YouBot|cohere-ai|Diffbot).*"
+        }
+      ],
+      "destination": "/api/og?type=static&path=/cookies"
+    },
+    {
       "source": "/@:handle",
       "has": [
         {
           "type": "header",
           "key": "user-agent",
-          "value": ".*(facebookexternalhit|Facebot|Twitterbot|LinkedInBot|Slackbot|Slack-ImgProxy|WhatsApp|Discordbot|TelegramBot|Pinterest|redditbot|Googlebot|bingbot|Applebot|Embedly|vkShare|W3C_Validator|Nuzzel|Skype|Qwantify|Yeti|Iframely|SkypeUriPreview).*"
+          "value": ".*(facebookexternalhit|Facebot|Twitterbot|LinkedInBot|Slackbot|Slack-ImgProxy|WhatsApp|Discordbot|TelegramBot|Pinterest|redditbot|Googlebot|bingbot|Applebot|Embedly|vkShare|W3C_Validator|Nuzzel|Skype|Qwantify|Yeti|Iframely|SkypeUriPreview|GPTBot|ChatGPT-User|OAI-SearchBot|PerplexityBot|ClaudeBot|Claude-SearchBot|anthropic-ai|CCBot|Bytespider|Amazonbot|YouBot|cohere-ai|Diffbot).*"
         }
       ],
       "destination": "/api/og?type=profile&handle=:handle"
@@ -17,7 +160,7 @@
         {
           "type": "header",
           "key": "user-agent",
-          "value": ".*(facebookexternalhit|Facebot|Twitterbot|LinkedInBot|Slackbot|Slack-ImgProxy|WhatsApp|Discordbot|TelegramBot|Pinterest|redditbot|Googlebot|bingbot|Applebot|Embedly|vkShare|W3C_Validator|Nuzzel|Skype|Qwantify|Yeti|Iframely|SkypeUriPreview).*"
+          "value": ".*(facebookexternalhit|Facebot|Twitterbot|LinkedInBot|Slackbot|Slack-ImgProxy|WhatsApp|Discordbot|TelegramBot|Pinterest|redditbot|Googlebot|bingbot|Applebot|Embedly|vkShare|W3C_Validator|Nuzzel|Skype|Qwantify|Yeti|Iframely|SkypeUriPreview|GPTBot|ChatGPT-User|OAI-SearchBot|PerplexityBot|ClaudeBot|Claude-SearchBot|anthropic-ai|CCBot|Bytespider|Amazonbot|YouBot|cohere-ai|Diffbot).*"
         }
       ],
       "destination": "/api/og?type=profile&id=:id"
@@ -28,10 +171,54 @@
         {
           "type": "header",
           "key": "user-agent",
-          "value": ".*(facebookexternalhit|Facebot|Twitterbot|LinkedInBot|Slackbot|Slack-ImgProxy|WhatsApp|Discordbot|TelegramBot|Pinterest|redditbot|Googlebot|bingbot|Applebot|Embedly|vkShare|W3C_Validator|Nuzzel|Skype|Qwantify|Yeti|Iframely|SkypeUriPreview).*"
+          "value": ".*(facebookexternalhit|Facebot|Twitterbot|LinkedInBot|Slackbot|Slack-ImgProxy|WhatsApp|Discordbot|TelegramBot|Pinterest|redditbot|Googlebot|bingbot|Applebot|Embedly|vkShare|W3C_Validator|Nuzzel|Skype|Qwantify|Yeti|Iframely|SkypeUriPreview|GPTBot|ChatGPT-User|OAI-SearchBot|PerplexityBot|ClaudeBot|Claude-SearchBot|anthropic-ai|CCBot|Bytespider|Amazonbot|YouBot|cohere-ai|Diffbot).*"
         }
       ],
       "destination": "/api/og?type=project&id=:id"
+    },
+    {
+      "source": "/login",
+      "has": [
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": ".*(facebookexternalhit|Facebot|Twitterbot|LinkedInBot|Slackbot|Slack-ImgProxy|WhatsApp|Discordbot|TelegramBot|Pinterest|redditbot|Googlebot|bingbot|Applebot|Embedly|vkShare|W3C_Validator|Nuzzel|Skype|Qwantify|Yeti|Iframely|SkypeUriPreview|GPTBot|ChatGPT-User|OAI-SearchBot|PerplexityBot|ClaudeBot|Claude-SearchBot|anthropic-ai|CCBot|Bytespider|Amazonbot|YouBot|cohere-ai|Diffbot).*"
+        }
+      ],
+      "destination": "/api/og?type=noindex&path=/login"
+    },
+    {
+      "source": "/claim/:signalId",
+      "has": [
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": ".*(facebookexternalhit|Facebot|Twitterbot|LinkedInBot|Slackbot|Slack-ImgProxy|WhatsApp|Discordbot|TelegramBot|Pinterest|redditbot|Googlebot|bingbot|Applebot|Embedly|vkShare|W3C_Validator|Nuzzel|Skype|Qwantify|Yeti|Iframely|SkypeUriPreview|GPTBot|ChatGPT-User|OAI-SearchBot|PerplexityBot|ClaudeBot|Claude-SearchBot|anthropic-ai|CCBot|Bytespider|Amazonbot|YouBot|cohere-ai|Diffbot).*"
+        }
+      ],
+      "destination": "/api/og?type=noindex&path=/claim/:signalId"
+    },
+    {
+      "source": "/claim-build",
+      "has": [
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": ".*(facebookexternalhit|Facebot|Twitterbot|LinkedInBot|Slackbot|Slack-ImgProxy|WhatsApp|Discordbot|TelegramBot|Pinterest|redditbot|Googlebot|bingbot|Applebot|Embedly|vkShare|W3C_Validator|Nuzzel|Skype|Qwantify|Yeti|Iframely|SkypeUriPreview|GPTBot|ChatGPT-User|OAI-SearchBot|PerplexityBot|ClaudeBot|Claude-SearchBot|anthropic-ai|CCBot|Bytespider|Amazonbot|YouBot|cohere-ai|Diffbot).*"
+        }
+      ],
+      "destination": "/api/og?type=noindex&path=/claim-build"
+    },
+    {
+      "source": "/dashboard/:path*",
+      "has": [
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": ".*(facebookexternalhit|Facebot|Twitterbot|LinkedInBot|Slackbot|Slack-ImgProxy|WhatsApp|Discordbot|TelegramBot|Pinterest|redditbot|Googlebot|bingbot|Applebot|Embedly|vkShare|W3C_Validator|Nuzzel|Skype|Qwantify|Yeti|Iframely|SkypeUriPreview|GPTBot|ChatGPT-User|OAI-SearchBot|PerplexityBot|ClaudeBot|Claude-SearchBot|anthropic-ai|CCBot|Bytespider|Amazonbot|YouBot|cohere-ai|Diffbot).*"
+        }
+      ],
+      "destination": "/api/og?type=noindex&path=/dashboard/:path*"
     },
     { "source": "/(.*)", "destination": "/index.html" }
   ]
