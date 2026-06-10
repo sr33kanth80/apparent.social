@@ -37,11 +37,28 @@
     position: relative; overflow: hidden;
     background: var(--bg); flex: none;
   }
+  .slide::before {
+    content: "";
+    position: absolute; inset: 0;
+    background: var(--olive);
+    opacity: 0.055;
+    pointer-events: none; z-index: 0;
+    -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Cg transform='scale(0.35)' fill='none' stroke='black' stroke-width='5'%3E%3Cpath d='M128.005 191.173C128.448 156.208 156.93 128 192 128V64H128C128 99.346 99.346 128 64 128V192H128ZM192 256H64C28.654 256 0 227.346 0 192V64H64V0H192C227.346 0 256 28.654 256 64V192H192Z'/%3E%3C/g%3E%3C/svg%3E");
+    -webkit-mask-repeat: repeat;
+    -webkit-mask-size: 100px 100px;
+    mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Cg transform='scale(0.35)' fill='none' stroke='black' stroke-width='5'%3E%3Cpath d='M128.005 191.173C128.448 156.208 156.93 128 192 128V64H128C128 99.346 99.346 128 64 128V192H128ZM192 256H64C28.654 256 0 227.346 0 192V64H64V0H192C227.346 0 256 28.654 256 64V192H192Z'/%3E%3C/g%3E%3C/svg%3E");
+    mask-repeat: repeat;
+    mask-size: 100px 100px;
+  }
+  .slide--dark::before {
+    background: #fff;
+    opacity: 0.06;
+  }
   @media print {
     html, body { background: #fff; padding: 0; gap: 0; }
     .slide { page-break-after: always; break-after: page; }
   }
-  .si { position: absolute; inset: 72px; display: flex; flex-direction: column; }
+  .si { position: absolute; inset: 72px; display: flex; flex-direction: column; z-index: 2; }
 
   /* ── Page number (top-right) ───────────────────────────────────── */
   .pg {
@@ -123,14 +140,7 @@
   .slide--dark .wordmark { color: #fff; }
   .slide--dark .wordmark .li { fill: #fff; }
 
-  /* ── Logo pattern strips ───────────────────────────────────────── */
-  .logo-strip {
-    position: absolute; left: 0; right: 0; height: 140px;
-    pointer-events: none; z-index: 1;
-  }
-  .logo-strip--top { top: 0; }
-  .logo-strip--bottom { bottom: 0; }
-
+  /* ── Logo pattern background ───────────────────────────────────── */
   /* ══════════════════════════════════════════════════════════════════
      SLIDE-SPECIFIC
      ══════════════════════════════════════════════════════════════════ */
@@ -236,16 +246,6 @@
 <!-- ═══ SLIDE 1 : COVER ═══ -->
 <section class="slide s1" data-slide="01-cover">
   <span class="pg">01 / 10</span>
-  <!-- Logo pattern strip top -->
-  <svg class="logo-strip logo-strip--top" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none">
-    <defs><pattern id="lp1t" width="100" height="100" patternUnits="userSpaceOnUse"><g transform="scale(0.35)" fill="none" stroke="#42520d" stroke-width="5" opacity="0.06"><path d="M128.005 191.173C128.448 156.208 156.93 128 192 128V64H128C128 99.346 99.346 128 64 128V192H128ZM192 256H64C28.654 256 0 227.346 0 192V64H64V0H192C227.346 0 256 28.654 256 64V192H192Z"/></g></pattern></defs>
-    <rect width="100%" height="100%" fill="url(#lp1t)"/>
-  </svg>
-  <!-- Logo pattern strip bottom -->
-  <svg class="logo-strip logo-strip--bottom" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none">
-    <defs><pattern id="lp1b" width="100" height="100" patternUnits="userSpaceOnUse"><g transform="scale(0.35)" fill="none" stroke="#42520d" stroke-width="5" opacity="0.06"><path d="M128.005 191.173C128.448 156.208 156.93 128 192 128V64H128C128 99.346 99.346 128 64 128V192H128ZM192 256H64C28.654 256 0 227.346 0 192V64H64V0H192C227.346 0 256 28.654 256 64V192H192Z"/></g></pattern></defs>
-    <rect width="100%" height="100%" fill="url(#lp1b)"/>
-  </svg>
   <div class="si">
     <div style="display:flex; justify-content:space-between; align-items:center; position:relative; z-index:2;">
       <div class="wordmark"><svg class="li" viewBox="0 0 256 256"><path d="M128.005 191.173C128.448 156.208 156.93 128 192 128V64H128C128 99.346 99.346 128 64 128V192H128ZM192 256H64C28.654 256 0 227.346 0 192V64H64V0H192C227.346 0 256 28.654 256 64V192H192Z"/></svg> Apparent</div>
@@ -257,7 +257,7 @@
         <span class="logo-name">Apparent</span>
         <svg class="vb vb--xl" viewBox="0 0 22 22"><path fill="#1D9BF0" d="M20.396 11c-.018-.646-.215-1.275-.57-1.816-.354-.54-.852-.972-1.438-1.246.223-.607.27-1.264.14-1.897-.131-.634-.437-1.218-.882-1.687-.47-.445-1.053-.75-1.687-.882-.633-.13-1.29-.083-1.897.14-.273-.587-.704-1.086-1.245-1.44S11.647 1.62 11 1.604c-.646.017-1.273.213-1.813.568s-.969.854-1.24 1.44c-.608-.223-1.267-.272-1.902-.14-.635.13-1.22.436-1.69.882-.445.47-.749 1.055-.878 1.69-.13.635-.08 1.293.144 1.896-.587.274-1.087.705-1.443 1.245-.356.54-.555 1.17-.574 1.817.02.647.218 1.276.574 1.817.356.54.856.972 1.443 1.245-.224.604-.274 1.26-.144 1.896.13.636.433 1.221.878 1.69.47.446 1.055.752 1.69.883.635.13 1.294.083 1.902-.141.27.587.7 1.086 1.24 1.44s1.167.551 1.813.568c.647-.016 1.276-.213 1.817-.567s.972-.854 1.245-1.44c.604.224 1.26.272 1.895.141.636-.13 1.22-.436 1.69-.883.445-.468.749-1.053.882-1.688.13-.634.085-1.29-.138-1.896.587-.274 1.084-.705 1.438-1.246.354-.54.551-1.17.569-1.816zM9.662 14.85l-3.429-3.428 1.293-1.302 2.072 2.072 4.4-4.794 1.347 1.246z"/></svg>
       </div>
-      <p class="oneliner">Investors discover, verify, and invest in startups globally. Matched by AI, proven by real work.</p>
+      <p class="oneliner">Where investors find real startups early, and founders get discovered for proof, not proximity.</p>
       <span style="font-size:15px; font-weight:500; color:var(--muted-fg); letter-spacing:0.02em;">www.apparent.social</span>
     </div>
   </div>
@@ -784,16 +784,6 @@
 <!-- ═══ SLIDE 10 : CLOSING ═══ -->
 <section class="slide slide--dark s10" data-slide="10-closing" style="background: var(--olive);">
   <span class="pg">10 / 10</span>
-  <!-- Logo pattern strip top -->
-  <svg class="logo-strip logo-strip--top" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none">
-    <defs><pattern id="lp10t" width="100" height="100" patternUnits="userSpaceOnUse"><g transform="scale(0.35)" fill="none" stroke="#ffffff" stroke-width="5" opacity="0.06"><path d="M128.005 191.173C128.448 156.208 156.93 128 192 128V64H128C128 99.346 99.346 128 64 128V192H128ZM192 256H64C28.654 256 0 227.346 0 192V64H64V0H192C227.346 0 256 28.654 256 64V192H192Z"/></g></pattern></defs>
-    <rect width="100%" height="100%" fill="url(#lp10t)"/>
-  </svg>
-  <!-- Logo pattern strip bottom -->
-  <svg class="logo-strip logo-strip--bottom" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none">
-    <defs><pattern id="lp10b" width="100" height="100" patternUnits="userSpaceOnUse"><g transform="scale(0.35)" fill="none" stroke="#ffffff" stroke-width="5" opacity="0.06"><path d="M128.005 191.173C128.448 156.208 156.93 128 192 128V64H128C128 99.346 99.346 128 64 128V192H128ZM192 256H64C28.654 256 0 227.346 0 192V64H64V0H192C227.346 0 256 28.654 256 64V192H192Z"/></g></pattern></defs>
-    <rect width="100%" height="100%" fill="url(#lp10b)"/>
-  </svg>
   <div class="si">
     <div class="wordmark"><svg class="li" viewBox="0 0 256 256"><path d="M128.005 191.173C128.448 156.208 156.93 128 192 128V64H128C128 99.346 99.346 128 64 128V192H128ZM192 256H64C28.654 256 0 227.346 0 192V64H64V0H192C227.346 0 256 28.654 256 64V192H192Z"/></svg> Apparent</div>
     <div class="close-wrap">
@@ -802,7 +792,7 @@
         <span style="font-size: 72px; font-weight: 800; letter-spacing: -0.04em; color: #fff;">Apparent</span>
         <svg class="vb vb--xxl" viewBox="0 0 22 22"><path fill="#1D9BF0" d="M20.396 11c-.018-.646-.215-1.275-.57-1.816-.354-.54-.852-.972-1.438-1.246.223-.607.27-1.264.14-1.897-.131-.634-.437-1.218-.882-1.687-.47-.445-1.053-.75-1.687-.882-.633-.13-1.29-.083-1.897.14-.273-.587-.704-1.086-1.245-1.44S11.647 1.62 11 1.604c-.646.017-1.273.213-1.813.568s-.969.854-1.24 1.44c-.608-.223-1.267-.272-1.902-.14-.635.13-1.22.436-1.69.882-.445.47-.749 1.055-.878 1.69-.13.635-.08 1.293.144 1.896-.587.274-1.087.705-1.443 1.245-.356.54-.555 1.17-.574 1.817.02.647.218 1.276.574 1.817.356.54.856.972 1.443 1.245-.224.604-.274 1.26-.144 1.896.13.636.433 1.221.878 1.69.47.446 1.055.752 1.69.883.635.13 1.294.083 1.902-.141.27.587.7 1.086 1.24 1.44s1.167.551 1.813.568c.647-.016 1.276-.213 1.817-.567s.972-.854 1.245-1.44c.604.224 1.26.272 1.895.141.636-.13 1.22-.436 1.69-.883.445-.468.749-1.053.882-1.688.13-.634.085-1.29-.138-1.896.587-.274 1.084-.705 1.438-1.246.354-.54.551-1.17.569-1.816zM9.662 14.85l-3.429-3.428 1.293-1.302 2.072 2.072 4.4-4.794 1.347 1.246z"/></svg>
       </div>
-      <p class="body-xl" style="max-width: 900px; color:rgba(255,255,255,0.7);">Investors discover, verify, and invest in startups globally. Matched by AI, proven by real work.</p>
+      <p class="body-xl" style="max-width: 900px; color:rgba(255,255,255,0.7);">Where investors find real startups early, and founders get discovered for proof, not proximity.</p>
       <div class="contact-row">
         <span class="pill pill--outline" style="font-size:20px; padding:16px 36px; font-weight:700;">www.apparent.social</span>
         <span class="pill pill--outline" style="font-size:20px; padding:16px 36px; font-weight:700;">contact@apparent.social</span>
