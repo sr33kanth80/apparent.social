@@ -3,7 +3,7 @@
 // The public app is a client-rendered SPA. Bots often read only the first HTML
 // response, so Vercel rewrites crawler requests here for shareable public URLs.
 
-import { findBlogArticle, siteMeta, staticPageMeta } from './public-meta-data.js';
+import { findBlogArticle, siteMeta, staticPageMeta } from '../server/public-meta-data.js';
 
 const SUPABASE_URL = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL || '';
 const SUPABASE_ANON = process.env.VITE_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY || '';

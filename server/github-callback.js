@@ -9,7 +9,7 @@
 // so it doesn't need to know who the Apparent user is.
 
 import crypto from 'crypto';
-import { encryptToken } from './_crypto.js';
+import { encryptToken } from './github-crypto.js';
 
 const CLIENT_ID = process.env.GITHUB_OAUTH_CLIENT_ID || 'Ov23li5dwJPP1dGzfy38';
 const CLIENT_SECRET = process.env.GITHUB_OAUTH_SECRET || '';

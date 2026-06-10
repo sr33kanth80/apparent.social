@@ -11,7 +11,7 @@
 // server.
 
 import { createClient } from '@supabase/supabase-js';
-import { decryptToken } from './_crypto.js';
+import { decryptToken } from './github-crypto.js';
 
 const CLIENT_SECRET = process.env.GITHUB_OAUTH_SECRET || '';
 const SUPABASE_URL = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || '';

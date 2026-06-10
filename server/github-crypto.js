@@ -5,8 +5,7 @@
 // token. The output is base64url(iv).base64url(ciphertext).base64url(tag) —
 // three dot-separated chunks the DB stores as a single text column.
 //
-// Lives under /api so it's shared by callback + confirm + contributions
-// without bundling into the client.
+// Lives outside /api so Vercel does not deploy it as a standalone function.
 
 import crypto from 'crypto';
 

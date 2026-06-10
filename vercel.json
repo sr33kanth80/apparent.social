@@ -1,6 +1,30 @@
 {
   "rewrites": [
     {
+      "source": "/api/github/callback",
+      "destination": "/api/github?route=callback"
+    },
+    {
+      "source": "/api/github/confirm",
+      "destination": "/api/github?route=confirm"
+    },
+    {
+      "source": "/api/github/contributions",
+      "destination": "/api/github?route=contributions"
+    },
+    {
+      "source": "/api/github/disconnect",
+      "destination": "/api/github?route=disconnect"
+    },
+    {
+      "source": "/api/upload/presign",
+      "destination": "/api/upload?route=presign"
+    },
+    {
+      "source": "/api/upload/delete",
+      "destination": "/api/upload?route=delete"
+    },
+    {
       "source": "/",
       "has": [
         {

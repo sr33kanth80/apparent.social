@@ -4,6 +4,11 @@
 // unauthenticated; setting an optional read-only GITHUB_TOKEN in the Vercel
 // project just raises the rate limit (no GitHub App / OAuth needed).
 
+import githubCallback from '../server/github-callback.js';
+import githubConfirm from '../server/github-confirm.js';
+import githubContributions from '../server/github-contributions.js';
+import githubDisconnect from '../server/github-disconnect.js';
+
 const GH_TOKEN = process.env.GITHUB_TOKEN || process.env.GH_TOKEN || '';
 
 // GitHub usernames: 1–39 chars, alphanumeric or single hyphens (not leading/trailing).
@@ -26,6 +31,12 @@ async function ghRest(path) {
 }
 
 export default async function handler(req, res) {
+  const route = String((req.query && req.query.route) || '').trim();
+  if (route === 'callback') return githubCallback(req, res);
+  if (route === 'confirm') return githubConfirm(req, res);
+  if (route === 'contributions') return githubContributions(req, res);
+  if (route === 'disconnect') return githubDisconnect(req, res);
+
   const username = String((req.query && req.query.username) || '').trim();
   if (!VALID_LOGIN.test(username)) {
     res.status(400).json({ error: 'invalid username' });
