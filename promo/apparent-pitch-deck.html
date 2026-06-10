@@ -16,28 +16,21 @@
      ────────────────────────────────────────────────────────────────── */
 
   :root {
-    /* Color tokens */
-    --forest: #0f3e17;       /* primary accent — single saturated color */
+    --forest: #0f3e17;
     --sage: #b1dbb8;
     --mist: #b6ced5;
     --mint: #cfe7d3;
     --linen: #e1f4df;
-    --linen-white: #fffefc;  /* base surface — never pure white */
+    --linen-white: #fffefc;
     --hairline: #e5e7eb;
     --charcoal: #222222;
     --graphite: #333333;
     --black: #000000;
-
-    /* Radii — only these three */
     --r-sm: 7px;
     --r-md: 14px;
     --r-pill: 999px;
-
-    /* Type */
     --serif: 'Fraunces', Georgia, 'Cormorant Garamond', serif;
     --sans: 'Inter', 'Suisse Int\'l', -apple-system, sans-serif;
-
-    /* Spacing scale */
     --sp-1: 8px;  --sp-2: 12px; --sp-3: 16px; --sp-4: 24px;
     --sp-5: 32px; --sp-6: 48px; --sp-7: 64px; --sp-8: 96px;
   }
@@ -112,7 +105,7 @@
 
   strong, b { font-weight: 400; color: var(--charcoal); }
 
-  /* ── Surfaces (tint progression — no shadows) ──────────────────── */
+  /* ── Surfaces ───────────────────────────────────────────────────── */
 
   .bg-linen-white { background: var(--linen-white); }
   .bg-linen       { background: var(--linen); }
@@ -138,13 +131,6 @@
   .pill--sage { background: var(--sage); color: var(--forest); }
   .pill--forest { background: var(--forest); color: var(--linen-white); }
   .bg-forest .pill--outline { border-color: rgba(255,255,255,0.3); color: var(--linen-white); }
-
-  .btn-primary {
-    display: inline-flex; align-items: center; gap: 10px;
-    padding: 18px 36px; border-radius: var(--r-pill);
-    background: var(--forest); color: var(--linen-white);
-    font-size: 17px; font-weight: 400; letter-spacing: 0.02em;
-  }
 
   .check {
     width: 30px; height: 30px; border-radius: var(--r-pill);
@@ -174,12 +160,12 @@
     color: var(--forest); display: flex; align-items: center; gap: 12px;
     letter-spacing: -0.01em;
   }
-  .wordmark .mark {
-    width: 12px; height: 12px; background: var(--forest);
-    border-radius: var(--r-sm); display: inline-block;
+  .wordmark .logo-icon {
+    width: 28px; height: 28px; flex: 0 0 auto; display: inline-block;
+    fill: var(--forest);
   }
-  .bg-forest .wordmark, .bg-forest .wordmark .mark { color: var(--linen-white); background: var(--linen-white); }
-  .bg-forest .wordmark .mark { background: var(--linen-white); }
+  .bg-forest .wordmark { color: var(--linen-white); }
+  .bg-forest .wordmark .logo-icon { fill: var(--linen-white); }
 
   .footer {
     margin-top: auto; display: flex; align-items: center; justify-content: space-between;
@@ -198,6 +184,7 @@
   .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: var(--sp-5); }
   .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--sp-5); }
   .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--sp-4); }
+  .feat { display: flex; gap: var(--sp-2); align-items: flex-start; }
 
   /* ──────────────────────────────────────────────────────────────────
      SLIDE 1 — Cover
@@ -207,13 +194,14 @@
   .s1 .hero-left .slide-inner { position: absolute; inset: var(--sp-8); display: flex; flex-direction: column; }
   .s1 .hero-left { position: relative; }
   .s1 .hero-right { position: relative; }
-
   .s1 .lede { margin-top: auto; }
   .s1 .lede h1 { margin-top: var(--sp-4); }
   .s1 .lede .body-lg { margin-top: var(--sp-5); max-width: 560px; }
   .s1 .lede .pills { margin-top: var(--sp-6); display: flex; gap: var(--sp-2); }
-
-  /* abstract product showcase */
+  .s1 .hero-logo {
+    position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+    width: 280px; height: 280px; opacity: 0.12; fill: var(--forest);
+  }
   .map-field {
     position: absolute; inset: 0;
     background-image: radial-gradient(var(--forest) 1px, transparent 1.5px);
@@ -249,7 +237,6 @@
      SLIDE 3 — Solution
      ────────────────────────────────────────────────────────────────── */
 
-  .s3 .lede { max-width: 980px; }
   .s3 .feature-grid { margin-top: var(--sp-7); display: grid; grid-template-columns: 1fr 1fr; gap: var(--sp-5); flex: 1; }
   .s3 .feature-grid .card { display: flex; flex-direction: column; gap: var(--sp-3); }
   .s3 .feature-grid .card .head { display: flex; align-items: center; gap: var(--sp-2); }
@@ -261,10 +248,9 @@
   .s4 .why-grid { margin-top: var(--sp-7); display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--sp-5); }
   .s4 .why-grid .card { min-height: 280px; display: flex; flex-direction: column; gap: var(--sp-3); }
   .s4 .why-grid .num { font-family: var(--serif); font-size: 40px; color: var(--linen-white); }
-  .s4 .closing { margin-top: var(--sp-7); }
 
   /* ──────────────────────────────────────────────────────────────────
-     SLIDE 5 — Product / How it works
+     SLIDE 5 — Product
      ────────────────────────────────────────────────────────────────── */
 
   .s5 .steps { margin-top: var(--sp-7); display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--sp-5); }
@@ -281,7 +267,7 @@
   }
 
   /* ──────────────────────────────────────────────────────────────────
-     SLIDE 6 — The Agents
+     SLIDE 6 — Agents
      ────────────────────────────────────────────────────────────────── */
 
   .s6 .agent-grid { margin-top: var(--sp-6); display: grid; grid-template-columns: 1fr 1fr; gap: var(--sp-5); flex: 1; }
@@ -312,14 +298,13 @@
 
   .s8 .tiers { margin-top: var(--sp-6); display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--sp-5); flex: 1; }
   .s8 .tier { display: flex; flex-direction: column; gap: var(--sp-3); }
-  .s8 .feat { display: flex; gap: var(--sp-2); align-items: flex-start; }
   .s8 .free-banner {
     margin-top: var(--sp-5); padding: var(--sp-5); border-radius: var(--r-md);
     background: var(--forest); display: flex; align-items: center; justify-content: space-between; gap: var(--sp-5);
   }
 
   /* ──────────────────────────────────────────────────────────────────
-     SLIDE 9 — GTM / CLI growth loop
+     SLIDE 9 — GTM
      ────────────────────────────────────────────────────────────────── */
 
   .s9 .gtm-grid { margin-top: var(--sp-6); flex: 1; display: grid; grid-template-columns: 1fr 1fr; gap: var(--sp-7); align-items: center; }
@@ -335,12 +320,11 @@
   .s9 .loop-step .n { font-family: var(--serif); font-size: 28px; color: var(--forest); flex: 0 0 auto; width: 56px; }
 
   /* ──────────────────────────────────────────────────────────────────
-     SLIDE 10 — Status (built / next)
+     SLIDE 10 — Status
      ────────────────────────────────────────────────────────────────── */
 
   .s10 .status-grid { margin-top: var(--sp-6); flex: 1; display: grid; grid-template-columns: 1fr 1fr; gap: var(--sp-5); }
   .s10 .status-grid .card { display: flex; flex-direction: column; gap: var(--sp-3); }
-  .s10 .feat { display: flex; gap: var(--sp-3); align-items: flex-start; }
   .s10 .feat--next .check { background: transparent; border: 1px solid var(--hairline); color: var(--graphite); }
 
   /* ──────────────────────────────────────────────────────────────────
@@ -390,6 +374,7 @@
   .s14 .close-wrap { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: var(--sp-5); }
   .s14 .close-wrap .display-xl { max-width: 1500px; }
   .s14 .contact-row { display: flex; gap: var(--sp-4); margin-top: var(--sp-3); }
+  .s14 .close-logo { width: 120px; height: 120px; fill: var(--linen-white); opacity: 0.25; margin-bottom: var(--sp-4); }
 </style>
 </head>
 <body>
@@ -401,38 +386,39 @@
   <div class="hero-grid">
     <div class="hero-left bg-linen-white">
       <div class="slide-inner">
-        <div class="wordmark"><span class="mark"></span> Apparent</div>
+        <div class="wordmark"><svg class="logo-icon" viewBox="0 0 256 256" xmlns="http://www.w3.org/2000/svg"><path d="M128.005 191.173C128.448 156.208 156.93 128 192 128V64H128C128 99.346 99.346 128 64 128V192H128ZM192 256H64C28.654 256 0 227.346 0 192V64H64V0H192C227.346 0 256 28.654 256 64V192H192Z"/></svg> Apparent</div>
         <div class="lede">
           <div class="eyebrow">Pre-Seed · apparent.social</div>
-          <h1 class="display display-xl">Find investors<br/>who actually fit.</h1>
-          <p class="body-lg">A two-sided network where founders prove their work and investors find it — matched by thesis, not by who you know.</p>
+          <h1 class="display display-xl">Where capital<br/>meets proof.</h1>
+          <p class="body-lg">The global platform where investors discover, verify, and invest in startups — matched by fit, powered by AI.</p>
           <div class="pills">
-            <span class="pill pill--sage">For Founders</span>
             <span class="pill pill--sage">For Investors</span>
-            <span class="pill pill--outline">AI-matched</span>
+            <span class="pill pill--sage">For Founders</span>
+            <span class="pill pill--outline">AI-powered</span>
           </div>
         </div>
         <div class="footer">
-          <span class="page-num">The right match beats a hundred wrong ones.</span>
+          <span class="page-num">Every startup, verified. Every investor, matched.</span>
           <span class="page-num">01 / 14</span>
         </div>
       </div>
     </div>
     <div class="hero-right bg-mist">
       <div class="map-field"></div>
+      <svg class="hero-logo" viewBox="0 0 256 256" xmlns="http://www.w3.org/2000/svg"><path d="M128.005 191.173C128.448 156.208 156.93 128 192 128V64H128C128 99.346 99.346 128 64 128V192H128ZM192 256H64C28.654 256 0 227.346 0 192V64H64V0H192C227.346 0 256 28.654 256 64V192H192Z"/></svg>
       <div class="showcase-card" style="top:120px; left:80px; width:340px;">
-        <div class="meta">Founder · Verified GitHub</div>
-        <div class="name">Asha Kapoor</div>
-        <div class="body-sm" style="margin-top:8px;">Building infra for energy-grid forecasting. 312 commits / 90d.</div>
+        <div class="meta">Startup · Verified</div>
+        <div class="name">GridSync Energy</div>
+        <div class="body-sm" style="margin-top:8px;">Series A ready. 312 commits / 90d. Revenue verified.</div>
       </div>
       <div class="showcase-card showcase-card--match" style="top:340px; right:90px; width:380px;">
-        <div class="meta">Match · 92% thesis fit</div>
+        <div class="meta">Match · 94% thesis fit</div>
         <div class="name">Sage Ridge Capital</div>
-        <div class="fit">Climate infra · Pre-seed · $250K–$1M checks</div>
+        <div class="fit">Climate infra · Series A · $2M–$8M checks</div>
       </div>
       <div class="showcase-card" style="bottom:140px; left:140px; width:320px;">
-        <div class="meta">Investor agent</div>
-        <div class="body-sm">"3 founders this week match your thesis on climate infrastructure — want intros drafted?"</div>
+        <div class="meta">AI Agent</div>
+        <div class="body-sm">"3 startups this week match your thesis — ready to connect?"</div>
       </div>
     </div>
   </div>
@@ -443,30 +429,30 @@
      ════════════════════════════════════════════════════════════════ -->
 <section class="slide s2 bg-linen-white" data-slide="02-problem">
   <div class="slide-inner">
-    <div class="wordmark"><span class="mark"></span> Apparent</div>
+    <div class="wordmark"><svg class="logo-icon" viewBox="0 0 256 256" xmlns="http://www.w3.org/2000/svg"><path d="M128.005 191.173C128.448 156.208 156.93 128 192 128V64H128C128 99.346 99.346 128 64 128V192H128ZM192 256H64C28.654 256 0 227.346 0 192V64H64V0H192C227.346 0 256 28.654 256 64V192H192Z"/></svg> Apparent</div>
     <div style="margin-top: var(--sp-7);">
       <div class="eyebrow">The Problem</div>
-      <h2 class="display display-lg" style="margin-top: var(--sp-3);">Two broken markets, sharing one cause: nobody can tell who actually fits.</h2>
-      <p class="body-lg" style="margin-top: var(--sp-4); max-width: 920px;">Founders fundraise by spraying cold emails into a void. Investors drown in inbound that has nothing to do with their thesis. Both sides are working hard — at the wrong problem.</p>
+      <h2 class="display display-lg" style="margin-top: var(--sp-3);">$350B in venture deployed last year. Most of it still starts with a warm intro.</h2>
+      <p class="body-lg" style="margin-top: var(--sp-4); max-width: 920px;">Investors can't find the best startups fast enough. Founders can't reach the right investors. Both sides waste months on mismatches.</p>
     </div>
     <div class="stat-row">
       <div class="stat">
-        <div class="num">500+</div>
-        <div class="label body">cold emails sent per fundraise — most to investors who were never going to say yes.</div>
+        <div class="num">85%</div>
+        <div class="label body">of VC deals come through warm intros or existing networks — locking out the best founders globally.</div>
       </div>
       <div class="stat">
-        <div class="num">&lt;5%</div>
-        <div class="label body">average response rate. Founders can't tell signal from noise until after they've already pitched.</div>
+        <div class="num">&lt;3%</div>
+        <div class="label body">of startups that pitch actually get funded. The rest never reached the right investor.</div>
       </div>
       <div class="stat">
-        <div class="num">1000s</div>
-        <div class="label body">of inbound decks per fund, most off-thesis — so sourcing stays relationship-gated and slow.</div>
+        <div class="num">6 mo</div>
+        <div class="label body">average time to close a round. Most of that is spent finding the right match, not doing the deal.</div>
       </div>
     </div>
     <div class="compare">
-      <span class="strike body-lg">"Spray and pray" outreach</span>
+      <span class="strike body-lg">Warm intros, cold emails, and guesswork</span>
       <span class="arrow">→</span>
-      <span class="win body-lg">Thesis-fit, ranked, two-sided matching</span>
+      <span class="win body-lg">Verified startups, matched investors, globally</span>
     </div>
     <div class="footer">
       <span class="page-num">Apparent — Pitch Deck</span>
@@ -480,21 +466,23 @@
      ════════════════════════════════════════════════════════════════ -->
 <section class="slide s3 bg-linen-white" data-slide="03-solution">
   <div class="slide-inner">
-    <div class="wordmark"><span class="mark"></span> Apparent</div>
+    <div class="wordmark"><svg class="logo-icon" viewBox="0 0 256 256" xmlns="http://www.w3.org/2000/svg"><path d="M128.005 191.173C128.448 156.208 156.93 128 192 128V64H128C128 99.346 99.346 128 64 128V192H128ZM192 256H64C28.654 256 0 227.346 0 192V64H64V0H192C227.346 0 256 28.654 256 64V192H192Z"/></svg> Apparent</div>
     <div style="margin-top: var(--sp-7);">
       <div class="eyebrow">The Solution</div>
-      <h2 class="display display-lg lede" style="margin-top: var(--sp-3);">Apparent turns a founder's real work into a profile — then ranks it against an investor's actual thesis, and lets two AI agents do the outreach.</h2>
+      <h2 class="display display-lg" style="margin-top: var(--sp-3); max-width: 1200px;">One platform. Every startup verified. Every investor matched.</h2>
     </div>
     <div class="feature-grid">
       <div class="card card--linen">
-        <div class="head"><span class="check">✓</span><span class="display display-sm">For founders</span></div>
-        <p class="body">Connect GitHub and your launch — Apparent builds a proof profile from real commits, traction, and story. No pitch deck required to get discovered.</p>
-        <p class="body">A founder agent finds the on-platform investors whose thesis fits, drafts intros in your voice, and amplifies you to every match — once.</p>
+        <div class="head"><span class="check">✓</span><span class="display display-sm">For investors</span></div>
+        <p class="body">Unlimited access to verified startups worldwide. Browse by sector, stage, geography, or check size.</p>
+        <p class="body">Verify founders through real work — code, traction, product history. No guesswork.</p>
+        <p class="body">AI agents source and rank deals that fit your thesis, and handle outreach.</p>
       </div>
       <div class="card card--mint">
-        <div class="head"><span class="check">✓</span><span class="display display-sm">For investors</span></div>
-        <p class="body">Set a private thesis — sectors, stage, geography, check size, founder signals. Apparent ranks every builder on and off the platform against it.</p>
-        <p class="body">An investor agent sources founders who fit, drafts personalized outreach, and — if you let it — follows up, on autonomy you control.</p>
+        <div class="head"><span class="check">✓</span><span class="display display-sm">For founders</span></div>
+        <p class="body">Get discovered by what you've built, not who you know. Your code, traction, and product become your pitch.</p>
+        <p class="body">Instantly matched to investors whose thesis actually fits your startup.</p>
+        <p class="body">An AI agent reaches the right investors for you — personalized, not spammed.</p>
       </div>
     </div>
     <div class="footer">
@@ -509,26 +497,26 @@
      ════════════════════════════════════════════════════════════════ -->
 <section class="slide s4 bg-forest" data-slide="04-why-now">
   <div class="slide-inner">
-    <div class="wordmark"><span class="mark"></span> Apparent</div>
+    <div class="wordmark"><svg class="logo-icon" viewBox="0 0 256 256" xmlns="http://www.w3.org/2000/svg"><path d="M128.005 191.173C128.448 156.208 156.93 128 192 128V64H128C128 99.346 99.346 128 64 128V192H128ZM192 256H64C28.654 256 0 227.346 0 192V64H64V0H192C227.346 0 256 28.654 256 64V192H192Z"/></svg> Apparent</div>
     <div style="margin-top: var(--sp-7);">
       <div class="eyebrow">Why Now</div>
-      <h2 class="display display-lg" style="margin-top: var(--sp-3); color: var(--linen-white);">The work became the pitch.</h2>
+      <h2 class="display display-lg" style="margin-top: var(--sp-3);">Three shifts made this possible.</h2>
     </div>
     <div class="why-grid">
       <div class="card" style="background: rgba(255,255,255,0.06); border-color: rgba(255,255,255,0.16);">
         <div class="num">01</div>
-        <div class="display display-sm" style="color: var(--linen-white);">Agents can read the work</div>
-        <p class="body">Claude-class agents can read a founder's GitHub, traction, and launch history and reason about thesis fit — at a scale no analyst pool can match.</p>
+        <div class="display display-sm" style="color: var(--linen-white);">AI can verify work</div>
+        <p class="body">Agents can now read a startup's code, traction, and product history — and reason about investor fit at global scale.</p>
       </div>
       <div class="card" style="background: rgba(255,255,255,0.06); border-color: rgba(255,255,255,0.16);">
         <div class="num">02</div>
-        <div class="display display-sm" style="color: var(--linen-white);">Cold outreach stopped working</div>
-        <p class="body">Inboxes are saturated with AI-written pitches. Investors now filter almost entirely on relationships and proof — exactly what Apparent supplies.</p>
+        <div class="display display-sm" style="color: var(--linen-white);">Capital is going global</div>
+        <p class="body">Cross-border investing is surging, but sourcing is still local and relationship-gated. The tools haven't caught up.</p>
       </div>
       <div class="card" style="background: rgba(255,255,255,0.06); border-color: rgba(255,255,255,0.16);">
         <div class="num">03</div>
-        <div class="display display-sm" style="color: var(--linen-white);">Builders are now legible</div>
-        <p class="body">GitHub activity, public launches, even live MRR are now verifiable signals — a founder's work can speak before the first call.</p>
+        <div class="display display-sm" style="color: var(--linen-white);">Cold outreach is dead</div>
+        <p class="body">Inboxes are flooded with AI-generated pitches. Verified proof of real work is the only signal that cuts through.</p>
       </div>
     </div>
     <div class="footer">
@@ -539,30 +527,30 @@
 </section>
 
 <!-- ════════════════════════════════════════════════════════════════
-     SLIDE 5 — PRODUCT / HOW IT WORKS
+     SLIDE 5 — PRODUCT
      ════════════════════════════════════════════════════════════════ -->
 <section class="slide s5 bg-linen-white" data-slide="05-product">
   <div class="slide-inner">
-    <div class="wordmark"><span class="mark"></span> Apparent</div>
+    <div class="wordmark"><svg class="logo-icon" viewBox="0 0 256 256" xmlns="http://www.w3.org/2000/svg"><path d="M128.005 191.173C128.448 156.208 156.93 128 192 128V64H128C128 99.346 99.346 128 64 128V192H128ZM192 256H64C28.654 256 0 227.346 0 192V64H64V0H192C227.346 0 256 28.654 256 64V192H192Z"/></svg> Apparent</div>
     <div style="margin-top: var(--sp-7);">
-      <div class="eyebrow">The Product</div>
-      <h2 class="display display-lg" style="margin-top: var(--sp-3);">Show up. Match on fit. Connect.</h2>
+      <div class="eyebrow">How It Works</div>
+      <h2 class="display display-lg" style="margin-top: var(--sp-3);">Browse. Verify. Invest.</h2>
     </div>
     <div class="steps">
       <div class="card">
         <div class="step-num">01</div>
-        <div class="display display-sm">Show up</div>
-        <p class="body">Founders connect GitHub and publish a launch. Investors set a private thesis — sectors, stage, geography, check size, founder signals.</p>
+        <div class="display display-sm">Set your criteria</div>
+        <p class="body">Investors define what they're looking for — sector, stage, geography, check size. Founders list what they've built.</p>
       </div>
       <div class="card">
         <div class="step-num">02</div>
-        <div class="display display-sm">Match on fit</div>
-        <p class="body">Apparent ranks every builder against every thesis — on the Builder Radar map and in a ranked signal inbox. No relationship required.</p>
+        <div class="display display-sm">See verified matches</div>
+        <p class="body">Apparent ranks every startup against your criteria. Verify any founder through their real work — code, revenue, product.</p>
       </div>
       <div class="card">
         <div class="step-num">03</div>
-        <div class="display display-sm">Connect</div>
-        <p class="body">Two AI agents do the legwork — drafting intros, queueing outreach, and following up — while founders and investors stay in control.</p>
+        <div class="display display-sm">Connect instantly</div>
+        <p class="body">AI agents handle the introductions. No cold emails. No gatekeepers. Both sides opt in.</p>
       </div>
     </div>
     <div class="map-preview">
@@ -573,8 +561,8 @@
       <div class="map-pin" style="top:70%; left:78%;"></div>
       <div class="map-pin" style="top:22%; left:84%;"></div>
       <div class="showcase-card" style="bottom: var(--sp-4); left: var(--sp-4); width: 380px;">
-        <div class="meta">Builder Radar — live map</div>
-        <div class="body-sm" style="margin-top:6px;">Founders and investors, clustered by city and ranked by thesis fit — public and on-platform builders side by side.</div>
+        <div class="meta">Builder Radar — global map</div>
+        <div class="body-sm" style="margin-top:6px;">Verified startups and investors worldwide, ranked by fit.</div>
       </div>
     </div>
     <div class="footer">
@@ -585,33 +573,33 @@
 </section>
 
 <!-- ════════════════════════════════════════════════════════════════
-     SLIDE 6 — THE AGENTS
+     SLIDE 6 — AI AGENTS
      ════════════════════════════════════════════════════════════════ -->
 <section class="slide s6 bg-linen-white" data-slide="06-agents">
   <div class="slide-inner">
-    <div class="wordmark"><span class="mark"></span> Apparent</div>
+    <div class="wordmark"><svg class="logo-icon" viewBox="0 0 256 256" xmlns="http://www.w3.org/2000/svg"><path d="M128.005 191.173C128.448 156.208 156.93 128 192 128V64H128C128 99.346 99.346 128 64 128V192H128ZM192 256H64C28.654 256 0 227.346 0 192V64H64V0H192C227.346 0 256 28.654 256 64V192H192Z"/></svg> Apparent</div>
     <div style="margin-top: var(--sp-7);">
-      <div class="eyebrow">The Differentiator</div>
-      <h2 class="display display-lg" style="margin-top: var(--sp-3);">Two agents, working for each side.</h2>
-      <p class="body-lg" style="margin-top: var(--sp-3); max-width: 980px;">Apparent isn't a directory — it's staffed. Every founder and every investor gets a Claude-powered agent that works on their behalf, with autonomy they control.</p>
+      <div class="eyebrow">AI Agents</div>
+      <h2 class="display display-lg" style="margin-top: var(--sp-3);">Your AI deal team. Always on.</h2>
+      <p class="body-lg" style="margin-top: var(--sp-3); max-width: 980px;">Every user gets a dedicated AI agent that works on their behalf — finding matches, verifying work, and handling outreach around the clock.</p>
     </div>
     <div class="agent-grid">
       <div class="card card--linen agent-card">
         <div class="display display-sm">Investor agent</div>
-        <p class="body">Sources founders — on Apparent and across the open web — who fit a fund's private thesis.</p>
+        <p class="body">Finds startups that fit your thesis, anywhere in the world.</p>
         <div class="tools">
-          <div class="tool-row"><span class="check">✓</span><span class="body">Searches and ranks founders by thesis, sector, stage, geography</span></div>
-          <div class="tool-row"><span class="check">✓</span><span class="body">Enriches contacts and drafts personalized outreach</span></div>
-          <div class="tool-row"><span class="check">✓</span><span class="body">Autonomy dial: manual review → on-platform send → fully autonomous follow-ups</span></div>
+          <div class="tool-row"><span class="check">✓</span><span class="body">Searches and ranks startups by your exact criteria</span></div>
+          <div class="tool-row"><span class="check">✓</span><span class="body">Verifies founders through code, traction, and history</span></div>
+          <div class="tool-row"><span class="check">✓</span><span class="body">Drafts personalized outreach — you control the autonomy</span></div>
         </div>
       </div>
       <div class="card card--mint agent-card">
         <div class="display display-sm">Founder agent</div>
-        <p class="body">Makes a founder "Apparent" to every investor already on the platform whose thesis fits.</p>
+        <p class="body">Gets your startup in front of every investor who fits.</p>
         <div class="tools">
-          <div class="tool-row"><span class="check">✓</span><span class="body">Ranks on-platform investors by real thesis overlap — never invents matches</span></div>
-          <div class="tool-row"><span class="check">✓</span><span class="body">Drafts personalized intros in the founder's voice, for review</span></div>
-          <div class="tool-row"><span class="check">✓</span><span class="body">Amplifies the founder's dossier to every matched investor, once</span></div>
+          <div class="tool-row"><span class="check">✓</span><span class="body">Matches you to investors by real thesis overlap</span></div>
+          <div class="tool-row"><span class="check">✓</span><span class="body">Writes personalized intros in your voice</span></div>
+          <div class="tool-row"><span class="check">✓</span><span class="body">Amplifies your verified profile to every matched investor</span></div>
         </div>
       </div>
     </div>
@@ -627,36 +615,36 @@
      ════════════════════════════════════════════════════════════════ -->
 <section class="slide s7 bg-linen-white" data-slide="07-market">
   <div class="slide-inner">
-    <div class="wordmark"><span class="mark"></span> Apparent</div>
+    <div class="wordmark"><svg class="logo-icon" viewBox="0 0 256 256" xmlns="http://www.w3.org/2000/svg"><path d="M128.005 191.173C128.448 156.208 156.93 128 192 128V64H128C128 99.346 99.346 128 64 128V192H128ZM192 256H64C28.654 256 0 227.346 0 192V64H64V0H192C227.346 0 256 28.654 256 64V192H192Z"/></svg> Apparent</div>
     <div style="margin-top: var(--sp-7);">
-      <div class="eyebrow">The Market</div>
-      <h2 class="display display-lg" style="margin-top: var(--sp-3);">The deal-sourcing layer for venture.</h2>
+      <div class="eyebrow">Market Opportunity</div>
+      <h2 class="display display-lg" style="margin-top: var(--sp-3);">The infrastructure layer for private capital.</h2>
     </div>
     <div class="market-wrap">
       <div class="market-list">
         <div class="card">
           <div class="eyebrow">TAM</div>
-          <div class="display display-sm" style="margin-top:8px;">~$300M / yr</div>
-          <p class="body" style="margin-top:8px;">Sourcing &amp; CRM tooling spend across ~18,000 active VC and angel firms worldwide.</p>
+          <div class="display display-sm" style="margin-top:8px;">$12B / yr</div>
+          <p class="body" style="margin-top:8px;">Global private capital intelligence, data, and deal infrastructure — the tooling layer between investors and companies.</p>
         </div>
         <div class="card card--linen">
           <div class="eyebrow">SAM</div>
-          <div class="display display-sm" style="margin-top:8px;">~$70M / yr</div>
-          <p class="body" style="margin-top:8px;">~6,000 thesis-driven pre-seed and seed firms across the US and Europe — Apparent's initial buyer.</p>
+          <div class="display display-sm" style="margin-top:8px;">$3.2B / yr</div>
+          <p class="body" style="margin-top:8px;">VC and growth equity sourcing, CRM, and verification tools — globally. The part of the stack Apparent directly replaces.</p>
         </div>
         <div class="card card--mint">
-          <div class="eyebrow">SOM (3–5 yr)</div>
-          <div class="display display-sm" style="margin-top:8px;">~$7M / yr</div>
-          <p class="body" style="margin-top:8px;">10% of SAM — roughly 600 funds running an active thesis workspace and sourcing agent on Apparent.</p>
+          <div class="eyebrow">SOM (5 yr)</div>
+          <div class="display display-sm" style="margin-top:8px;">$320M / yr</div>
+          <p class="body" style="margin-top:8px;">10% of SAM — captured through the verified startup marketplace and AI-powered deal flow that no incumbent offers today.</p>
         </div>
       </div>
       <div class="circles">
-        <div class="circle circle-tam"><div class="lbl"><div class="eyebrow">TAM</div><div class="amt">$300M</div></div></div>
-        <div class="circle circle-sam"><div class="lbl"><div class="eyebrow">SAM</div><div class="amt">$70M</div></div></div>
-        <div class="circle circle-som"><div class="lbl"><div class="eyebrow">SOM</div><div class="amt">$7M</div></div></div>
+        <div class="circle circle-tam"><div class="lbl"><div class="eyebrow">TAM</div><div class="amt">$12B</div></div></div>
+        <div class="circle circle-sam"><div class="lbl"><div class="eyebrow">SAM</div><div class="amt">$3.2B</div></div></div>
+        <div class="circle circle-som"><div class="lbl"><div class="eyebrow">SOM</div><div class="amt">$320M</div></div></div>
       </div>
     </div>
-    <p class="meta footnote">Illustrative, bottom-up: ~18K active institutional VC / angel firms globally, at ~$1.0–1.5K/mo average sourcing &amp; CRM tooling spend per firm.</p>
+    <p class="meta footnote">Based on PitchBook, Preqin, Affinity, and Crunchbase combined market sizing. ~40,000+ institutional investors globally at $15–50K/yr average data and sourcing spend.</p>
     <div class="footer">
       <span class="page-num">Apparent — Pitch Deck</span>
       <span class="page-num">07 / 14</span>
@@ -669,38 +657,38 @@
      ════════════════════════════════════════════════════════════════ -->
 <section class="slide s8 bg-linen-white" data-slide="08-business-model">
   <div class="slide-inner">
-    <div class="wordmark"><span class="mark"></span> Apparent</div>
+    <div class="wordmark"><svg class="logo-icon" viewBox="0 0 256 256" xmlns="http://www.w3.org/2000/svg"><path d="M128.005 191.173C128.448 156.208 156.93 128 192 128V64H128C128 99.346 99.346 128 64 128V192H128ZM192 256H64C28.654 256 0 227.346 0 192V64H64V0H192C227.346 0 256 28.654 256 64V192H192Z"/></svg> Apparent</div>
     <div style="margin-top: var(--sp-7);">
       <div class="eyebrow">Business Model</div>
-      <h2 class="display display-lg" style="margin-top: var(--sp-3);">Free for founders. Paid for the funds that find them.</h2>
-      <p class="body-lg" style="margin-top: var(--sp-3); max-width: 980px;">Founders are the supply that makes the network valuable — so they're free, forever. Investors pay for a private thesis workspace, a ranked signal inbox, and a sourcing agent.</p>
+      <h2 class="display display-lg" style="margin-top: var(--sp-3);">Free for startups. Paid by the investors who find them.</h2>
+      <p class="body-lg" style="margin-top: var(--sp-3); max-width: 980px;">Startups are the supply. They're free, forever. Investors pay for verified deal flow, AI agents, and a ranked pipeline.</p>
     </div>
     <div class="tiers">
       <div class="card tier">
         <div class="eyebrow">Solo</div>
         <div class="display display-sm">Angel / scout</div>
-        <div class="feat"><span class="check">✓</span><span class="body">Private thesis + ranked builder matches</span></div>
-        <div class="feat"><span class="check">✓</span><span class="body">Builder Radar map, full access</span></div>
-        <div class="feat"><span class="check">✓</span><span class="body">Manual-autonomy sourcing agent</span></div>
+        <div class="feat"><span class="check">✓</span><span class="body">Verified startup matches, ranked by fit</span></div>
+        <div class="feat"><span class="check">✓</span><span class="body">Global startup map, full access</span></div>
+        <div class="feat"><span class="check">✓</span><span class="body">AI agent — manual mode</span></div>
       </div>
       <div class="card card--linen tier">
         <div class="eyebrow">Team</div>
-        <div class="display display-sm">Seed fund</div>
+        <div class="display display-sm">VC fund</div>
         <div class="feat"><span class="check">✓</span><span class="body">Everything in Solo, shared across partners</span></div>
-        <div class="feat"><span class="check">✓</span><span class="body">Deal-flow Kanban + outreach CRM</span></div>
-        <div class="feat"><span class="check">✓</span><span class="body">On-platform autonomous outreach</span></div>
+        <div class="feat"><span class="check">✓</span><span class="body">Deal pipeline + outreach CRM</span></div>
+        <div class="feat"><span class="check">✓</span><span class="body">AI agent — autonomous outreach</span></div>
       </div>
       <div class="card card--mint tier">
         <div class="eyebrow">Fund</div>
-        <div class="display display-sm">Multi-fund / platform</div>
-        <div class="feat"><span class="check">✓</span><span class="body">Everything in Team, multiple theses</span></div>
-        <div class="feat"><span class="check">✓</span><span class="body">Off-hours autonomous follow-ups</span></div>
-        <div class="feat"><span class="check">✓</span><span class="body">Priority placement in founder amplification</span></div>
+        <div class="display display-sm">Multi-fund / LP</div>
+        <div class="feat"><span class="check">✓</span><span class="body">Everything in Team, multiple investment theses</span></div>
+        <div class="feat"><span class="check">✓</span><span class="body">AI agent — fully autonomous, 24/7</span></div>
+        <div class="feat"><span class="check">✓</span><span class="body">Priority access to verified startups</span></div>
       </div>
     </div>
     <div class="free-banner">
-      <span class="display display-sm" style="color: var(--linen-white);">Founders: free, forever.</span>
-      <span class="body" style="color: rgba(255,255,255,0.8); max-width: 560px;">Every founder profile, GitHub dossier, and the founder agent — no cost. They're the reason investors keep coming back.</span>
+      <span class="display display-sm" style="color: var(--linen-white);">Startups: free, forever.</span>
+      <span class="body" style="color: rgba(255,255,255,0.8); max-width: 560px;">Every startup profile, verification, and the founder agent — at no cost. They're what makes the platform valuable.</span>
     </div>
     <div class="footer">
       <span class="page-num">Apparent — Pitch Deck</span>
@@ -710,15 +698,15 @@
 </section>
 
 <!-- ════════════════════════════════════════════════════════════════
-     SLIDE 9 — GO-TO-MARKET (CLI GROWTH LOOP)
+     SLIDE 9 — GO-TO-MARKET
      ════════════════════════════════════════════════════════════════ -->
 <section class="slide s9 bg-linen-white" data-slide="09-gtm">
   <div class="slide-inner">
-    <div class="wordmark"><span class="mark"></span> Apparent</div>
+    <div class="wordmark"><svg class="logo-icon" viewBox="0 0 256 256" xmlns="http://www.w3.org/2000/svg"><path d="M128.005 191.173C128.448 156.208 156.93 128 192 128V64H128C128 99.346 99.346 128 64 128V192H128ZM192 256H64C28.654 256 0 227.346 0 192V64H64V0H192C227.346 0 256 28.654 256 64V192H192Z"/></svg> Apparent</div>
     <div style="margin-top: var(--sp-7);">
       <div class="eyebrow">Go-To-Market</div>
-      <h2 class="display display-lg" style="margin-top: var(--sp-3);">Growth that starts in the terminal.</h2>
-      <p class="body-lg" style="margin-top: var(--sp-3); max-width: 980px;"><span style="font-family: var(--mono, monospace);">npx apparent</span> turns a founder's local git history into a brag-worthy build card and a ready-to-claim profile — no source code ever leaves their machine.</p>
+      <h2 class="display display-lg" style="margin-top: var(--sp-3);">Startups onboard in 30 seconds.</h2>
+      <p class="body-lg" style="margin-top: var(--sp-3); max-width: 980px;"><strong>npx apparent</strong> reads a founder's local git history, builds a verified profile, and matches them to investors — no code ever leaves their machine.</p>
     </div>
     <div class="gtm-grid">
       <div class="terminal">
@@ -732,13 +720,13 @@
         <div>Lines added&nbsp;&nbsp;&nbsp;<span class="prompt">61,204</span></div>
         <div>Languages&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="prompt">TypeScript, Python, Rust</span></div>
         <div>&nbsp;</div>
-        <div class="dim">Add this to your Apparent profile? (y/N)</div>
+        <div class="dim">Claim your verified profile? (y/N)</div>
       </div>
       <div class="loop-steps">
-        <div class="loop-step"><div class="n">01</div><div class="body">Founder runs <strong>npx apparent</strong> in their repo — gets a screenshot-ready build card, instantly.</div></div>
-        <div class="loop-step"><div class="n">02</div><div class="body">They opt in to add aggregate stats — never source code — to a claimable profile.</div></div>
-        <div class="loop-step"><div class="n">03</div><div class="body">Claiming the profile signs them in as a founder, already ranked against every investor thesis on Apparent.</div></div>
-        <div class="loop-step"><div class="n">04</div><div class="body"><strong>npx apparent findinvestors</strong> hands them a ranked list to email right now — the loop's first payoff.</div></div>
+        <div class="loop-step"><div class="n">01</div><div class="body">Founder runs <strong>npx apparent</strong> — gets a verified build card, instantly.</div></div>
+        <div class="loop-step"><div class="n">02</div><div class="body">Claims their profile. Aggregate stats only — never source code.</div></div>
+        <div class="loop-step"><div class="n">03</div><div class="body">Automatically matched to every investor whose thesis fits.</div></div>
+        <div class="loop-step"><div class="n">04</div><div class="body">Shares card on social → more founders run it → network grows.</div></div>
       </div>
     </div>
     <div class="footer">
@@ -749,30 +737,30 @@
 </section>
 
 <!-- ════════════════════════════════════════════════════════════════
-     SLIDE 10 — STATUS (BUILT / NEXT)
+     SLIDE 10 — STATUS
      ════════════════════════════════════════════════════════════════ -->
 <section class="slide s10 bg-linen-white" data-slide="10-status">
   <div class="slide-inner">
-    <div class="wordmark"><span class="mark"></span> Apparent</div>
+    <div class="wordmark"><svg class="logo-icon" viewBox="0 0 256 256" xmlns="http://www.w3.org/2000/svg"><path d="M128.005 191.173C128.448 156.208 156.93 128 192 128V64H128C128 99.346 99.346 128 64 128V192H128ZM192 256H64C28.654 256 0 227.346 0 192V64H64V0H192C227.346 0 256 28.654 256 64V192H192Z"/></svg> Apparent</div>
     <div style="margin-top: var(--sp-7);">
       <div class="eyebrow">Where We Are</div>
-      <h2 class="display display-lg" style="margin-top: var(--sp-3);">Built end to end — heading into first cohorts.</h2>
+      <h2 class="display display-lg" style="margin-top: var(--sp-3);">Built. Launching first cohorts.</h2>
     </div>
     <div class="status-grid">
       <div class="card card--linen">
         <div class="display display-sm">Shipped</div>
-        <div class="feat"><span class="check">✓</span><span class="body">Two-sided dashboards — founder and investor intake, profiles, matching</span></div>
-        <div class="feat"><span class="check">✓</span><span class="body">Investor and founder agents, live on Claude Sonnet 4.6</span></div>
-        <div class="feat"><span class="check">✓</span><span class="body">Builder Radar map, GitHub dossier enrichment, trust layer</span></div>
-        <div class="feat"><span class="check">✓</span><span class="body">In-app messaging, notifications, deal-flow CRM</span></div>
-        <div class="feat"><span class="check">✓</span><span class="body"><strong>npx apparent</strong> CLI — build card and investor matching</span></div>
+        <div class="feat"><span class="check">✓</span><span class="body">Full two-sided platform — investors and founders</span></div>
+        <div class="feat"><span class="check">✓</span><span class="body">AI agents for both sides, live</span></div>
+        <div class="feat"><span class="check">✓</span><span class="body">Startup verification — GitHub, traction, product</span></div>
+        <div class="feat"><span class="check">✓</span><span class="body">Global startup map, messaging, deal pipeline</span></div>
+        <div class="feat"><span class="check">✓</span><span class="body"><strong>npx apparent</strong> CLI — 30-second onboarding</span></div>
       </div>
       <div class="card">
         <div class="display display-sm">Next 90 days</div>
-        <div class="feat feat--next"><span class="check">→</span><span class="body">First cohort live — founders onboarded, investor theses seeded</span></div>
-        <div class="feat feat--next"><span class="check">→</span><span class="body">Off-hours autonomous follow-ups (scheduled agent runs)</span></div>
+        <div class="feat feat--next"><span class="check">→</span><span class="body">First investor and founder cohorts live</span></div>
+        <div class="feat feat--next"><span class="check">→</span><span class="body">24/7 autonomous AI agent runs</span></div>
         <div class="feat feat--next"><span class="check">→</span><span class="body"><strong>npx apparent</strong> public launch on npm</span></div>
-        <div class="feat feat--next"><span class="check">→</span><span class="body">First paid investor workspaces</span></div>
+        <div class="feat feat--next"><span class="check">→</span><span class="body">First paying investor workspaces</span></div>
       </div>
     </div>
     <div class="footer">
@@ -783,34 +771,35 @@
 </section>
 
 <!-- ════════════════════════════════════════════════════════════════
-     SLIDE 11 — COMPETITION (2x2 POSITIONING)
+     SLIDE 11 — COMPETITION
      ════════════════════════════════════════════════════════════════ -->
 <section class="slide s11 bg-linen-white" data-slide="11-competition">
   <div class="slide-inner">
-    <div class="wordmark"><span class="mark"></span> Apparent</div>
+    <div class="wordmark"><svg class="logo-icon" viewBox="0 0 256 256" xmlns="http://www.w3.org/2000/svg"><path d="M128.005 191.173C128.448 156.208 156.93 128 192 128V64H128C128 99.346 99.346 128 64 128V192H128ZM192 256H64C28.654 256 0 227.346 0 192V64H64V0H192C227.346 0 256 28.654 256 64V192H192Z"/></svg> Apparent</div>
     <div style="margin-top: var(--sp-7);">
       <div class="eyebrow">Competition</div>
-      <h2 class="display display-lg" style="margin-top: var(--sp-3);">Directories list. Outreach tools blast. Apparent matches — and works the room.</h2>
+      <h2 class="display display-lg" style="margin-top: var(--sp-3);">Data platforms inform. We verify and match.</h2>
     </div>
     <div class="comp-wrap">
       <div class="matrix">
-        <div class="axis-label" style="bottom:-34px; left:50%; transform:translateX(-50%);">Directory → Agentic</div>
-        <div class="axis-label" style="left:-34px; top:50%; transform-origin:center; transform:translateY(-50%) rotate(-90deg);">Generic → Thesis-fit</div>
-        <div class="pt" style="left:14%; bottom:14%;"><div class="dotbig"></div><div class="lbl">LinkedIn / AngelList</div></div>
-        <div class="pt" style="left:80%; bottom:20%;"><div class="dotbig"></div><div class="lbl">Apollo / Clay / Hunter</div></div>
-        <div class="pt" style="left:28%; bottom:58%;"><div class="dotbig"></div><div class="lbl">Carta / Syndicates</div></div>
-        <div class="pt us" style="left:82%; bottom:84%;"><div class="dotbig"></div><div class="lbl">Apparent</div></div>
+        <div class="axis-label" style="bottom:-34px; left:50%; transform:translateX(-50%);">Static data → AI-powered</div>
+        <div class="axis-label" style="left:-34px; top:50%; transform-origin:center; transform:translateY(-50%) rotate(-90deg);">Unverified → Verified</div>
+        <div class="pt" style="left:16%; bottom:62%;"><div class="dotbig"></div><div class="lbl">PitchBook / Preqin</div></div>
+        <div class="pt" style="left:14%; bottom:18%;"><div class="dotbig"></div><div class="lbl">LinkedIn / AngelList</div></div>
+        <div class="pt" style="left:72%; bottom:18%;"><div class="dotbig"></div><div class="lbl">Apollo / Clay</div></div>
+        <div class="pt" style="left:36%; bottom:38%;"><div class="dotbig"></div><div class="lbl">Crunchbase / Carta</div></div>
+        <div class="pt us" style="left:82%; bottom:82%;"><div class="dotbig"></div><div class="lbl">Apparent</div></div>
       </div>
       <div style="display:flex; flex-direction:column; gap: var(--sp-4);">
         <div class="card">
           <div class="display display-sm">Why Apparent wins</div>
-          <p class="body" style="margin-top: 8px;">Every other tool optimizes one half of the problem — better lists, or better lookalike directories. Apparent ranks both sides against each other's real criteria, then has agents act on the match.</p>
+          <p class="body" style="margin-top: 8px;">Incumbents sell data about companies. Apparent verifies the work, matches both sides, and has AI agents close the gap — end to end.</p>
         </div>
         <div class="card card--mint">
-          <div class="feat"><span class="check">✓</span><span class="body">Proof, not pitch — GitHub-verified founder dossiers</span></div>
+          <div class="feat"><span class="check">✓</span><span class="body">Verified proof — real code, real traction, real product</span></div>
         </div>
         <div class="card card--linen">
-          <div class="feat"><span class="check">✓</span><span class="body">Two agents working the match, not just a database</span></div>
+          <div class="feat"><span class="check">✓</span><span class="body">Two-sided AI agents, not just a database</span></div>
         </div>
       </div>
     </div>
@@ -826,24 +815,24 @@
      ════════════════════════════════════════════════════════════════ -->
 <section class="slide s12 bg-linen-white" data-slide="12-team">
   <div class="slide-inner">
-    <div class="wordmark"><span class="mark"></span> Apparent</div>
+    <div class="wordmark"><svg class="logo-icon" viewBox="0 0 256 256" xmlns="http://www.w3.org/2000/svg"><path d="M128.005 191.173C128.448 156.208 156.93 128 192 128V64H128C128 99.346 99.346 128 64 128V192H128ZM192 256H64C28.654 256 0 227.346 0 192V64H64V0H192C227.346 0 256 28.654 256 64V192H192Z"/></svg> Apparent</div>
     <div style="margin-top: var(--sp-7);">
       <div class="eyebrow">Team</div>
-      <h2 class="display display-lg" style="margin-top: var(--sp-3);">Builders, building the thing that finds builders.</h2>
-      <p class="body-lg" style="margin-top: var(--sp-3); max-width: 980px;">Apparent is built the way it asks founders to show up: shipped product first, profile second.</p>
+      <h2 class="display display-lg" style="margin-top: var(--sp-3);">Built by builders.</h2>
+      <p class="body-lg" style="margin-top: var(--sp-3); max-width: 980px;">We built the product first, then the pitch. That's how we think founders should show up too.</p>
     </div>
     <div class="team-grid">
       <div class="person">
         <div class="avatar">SK</div>
         <div class="name">[Founder Name]</div>
         <div class="role">Founder &amp; CEO</div>
-        <p class="body bio">[One line on background — prior company, technical depth, why this problem. Replace with real bio.]</p>
+        <p class="body bio">[One line on background — replace with real bio.]</p>
       </div>
       <div class="person">
         <div class="avatar" style="background: var(--sage);">+</div>
         <div class="name">[Open seat]</div>
         <div class="role">Co-founder / early hire</div>
-        <p class="body bio">Room for up to four on this slide — add a co-founder, technical lead, or first hire with a one-line credential each.</p>
+        <p class="body bio">Room for up to 4 on this slide. Add co-founder or key hire with one credential each.</p>
       </div>
     </div>
     <div class="footer">
@@ -858,27 +847,27 @@
      ════════════════════════════════════════════════════════════════ -->
 <section class="slide s13 bg-linen-white" data-slide="13-ask">
   <div class="slide-inner">
-    <div class="wordmark"><span class="mark"></span> Apparent</div>
+    <div class="wordmark"><svg class="logo-icon" viewBox="0 0 256 256" xmlns="http://www.w3.org/2000/svg"><path d="M128.005 191.173C128.448 156.208 156.93 128 192 128V64H128C128 99.346 99.346 128 64 128V192H128ZM192 256H64C28.654 256 0 227.346 0 192V64H64V0H192C227.346 0 256 28.654 256 64V192H192Z"/></svg> Apparent</div>
     <div style="margin-top: var(--sp-7);">
       <div class="eyebrow">The Ask</div>
-      <h2 class="display display-lg" style="margin-top: var(--sp-3);">Raising to take Apparent from built to live.</h2>
+      <h2 class="display display-lg" style="margin-top: var(--sp-3);">Taking Apparent from built to global.</h2>
     </div>
     <div class="ask-grid">
       <div class="raise-card">
         <div class="eyebrow">Pre-Seed</div>
         <div class="raise-amt">$[ ]</div>
-        <p class="body">[Replace with raise size and instrument — e.g. SAFE, post-money cap]. ~[18] months of runway to first paid investor cohorts.</p>
+        <p class="body">[Replace: raise size, instrument, runway.] Enough to launch, get paying investors, and prove the model.</p>
       </div>
       <div>
         <div class="display display-sm" style="margin-bottom: var(--sp-4);">Use of funds</div>
         <div class="use-of-funds">
           <div class="fund-row">
-            <span class="body fund-label">Engineering &amp; agents</span>
+            <span class="body fund-label">Engineering &amp; AI agents</span>
             <div class="fund-bar"><div class="fill" style="width: 40%;"></div></div>
             <span class="fund-pct">40%</span>
           </div>
           <div class="fund-row">
-            <span class="body fund-label">Go-to-market &amp; founder growth loop</span>
+            <span class="body fund-label">Go-to-market &amp; growth</span>
             <div class="fund-bar"><div class="fill" style="width: 30%;"></div></div>
             <span class="fund-pct">30%</span>
           </div>
@@ -894,14 +883,14 @@
           </div>
         </div>
         <div class="milestones">
-          <div class="display display-sm" style="margin-bottom: var(--sp-3);">This buys us</div>
+          <div class="display display-sm" style="margin-bottom: var(--sp-3);">Milestones</div>
           <div class="feat"><span class="check">✓</span><span class="body">First [N] paying investor workspaces</span></div>
-          <div class="feat"><span class="check">✓</span><span class="body"><strong>npx apparent</strong> public launch + [N] founder profiles claimed</span></div>
-          <div class="feat"><span class="check">✓</span><span class="body">Off-hours autonomous agents live for both sides</span></div>
+          <div class="feat"><span class="check">✓</span><span class="body">[N] verified startups on the platform</span></div>
+          <div class="feat"><span class="check">✓</span><span class="body">24/7 autonomous AI agents live</span></div>
         </div>
       </div>
     </div>
-    <p class="meta footnote">Illustrative allocation — replace with actual raise size and breakdown before sharing.</p>
+    <p class="meta footnote">Illustrative allocation — replace with actual figures before sharing.</p>
     <div class="footer">
       <span class="page-num">Apparent — Pitch Deck</span>
       <span class="page-num">13 / 14</span>
@@ -914,15 +903,15 @@
      ════════════════════════════════════════════════════════════════ -->
 <section class="slide s14 bg-forest" data-slide="14-vision">
   <div class="slide-inner">
-    <div class="wordmark"><span class="mark"></span> Apparent</div>
+    <div class="wordmark"><svg class="logo-icon" viewBox="0 0 256 256" xmlns="http://www.w3.org/2000/svg"><path d="M128.005 191.173C128.448 156.208 156.93 128 192 128V64H128C128 99.346 99.346 128 64 128V192H128ZM192 256H64C28.654 256 0 227.346 0 192V64H64V0H192C227.346 0 256 28.654 256 64V192H192Z"/></svg> Apparent</div>
     <div class="close-wrap">
-      <div class="eyebrow">Apparent</div>
-      <h1 class="display display-xl">The right match beats<br/>a hundred wrong ones.</h1>
-      <p class="body-lg" style="max-width: 900px;">We're building the deal-sourcing layer for venture — where founders show up as their real work, and investors find exactly who fits.</p>
+      <svg class="close-logo" viewBox="0 0 256 256" xmlns="http://www.w3.org/2000/svg"><path d="M128.005 191.173C128.448 156.208 156.93 128 192 128V64H128C128 99.346 99.346 128 64 128V192H128ZM192 256H64C28.654 256 0 227.346 0 192V64H64V0H192C227.346 0 256 28.654 256 64V192H192Z"/></svg>
+      <h1 class="display display-xl">Every startup, verified.<br/>Every investor, matched.</h1>
+      <p class="body-lg" style="max-width: 900px;">Apparent is the global platform where capital meets proof. We're building the infrastructure that makes private investing faster, smarter, and open to everyone.</p>
       <div class="contact-row">
         <span class="pill pill--outline">apparent.social</span>
         <span class="pill pill--outline">[founder@apparent.social]</span>
-        <span class="pill pill--outline">Pre-Seed · Raising now</span>
+        <span class="pill pill--outline">Pre-Seed · Open now</span>
       </div>
     </div>
     <div class="footer">
