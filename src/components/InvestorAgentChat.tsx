@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { Check, Copy, ExternalLink, Loader2, Mail, Maximize2, Minimize2, Send, Sparkles, Trash2, X } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 
@@ -502,7 +503,10 @@ export const InvestorAgentChat = ({
         </>
       )}
 
-      <AnimatePresence>
+      {/* Portal to <body>: ancestors animated by framer-motion keep transform/filter
+          styles that would otherwise re-anchor this fixed overlay to the page content. */}
+      {createPortal(
+        <AnimatePresence>
         {expanded && (
           <motion.div
             key="agent-chat-overlay"
@@ -566,7 +570,9 @@ export const InvestorAgentChat = ({
             </div>
           </motion.div>
         )}
-      </AnimatePresence>
+        </AnimatePresence>,
+        document.body,
+      )}
     </div>
   );
 };
