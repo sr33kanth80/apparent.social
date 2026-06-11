@@ -2,6 +2,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { ArrowUpRight, Check } from 'lucide-react';
 import { EditorialNavbar } from '../components/EditorialNavbar';
 import { LogoIcon } from '../components/LogoIcon';
+import { DataFlowDiagram } from '../components/DataFlowDiagram';
 import { useReveal } from '../lib/useReveal';
 import { HeatMap } from './HeatMap';
 
@@ -14,13 +15,6 @@ const heroInvestors: { name: string; domain: string }[] = [
   { name: 'Accel', domain: 'accel.com' },
   { name: 'Antler', domain: 'antler.co' },
 ];
-
-// Data-flow diagram: founder proof (sources) → Apparent (processing) → investor
-// thesis (destinations). Encodes the two-sided agent matching as a Monad-style
-// flow composition.
-const founderSources = ['PROOF OF WORK', 'GITHUB', 'TRACTION', 'LAUNCHES', 'NPX APPARENT'];
-const investorCriteria = ['THESIS FIT', 'STAGE', 'SECTOR', 'CHECK SIZE'];
-const agentStages = ['VERIFY', 'MATCH', 'RANK', 'INTRO'];
 
 const founderBullets = [
   'Verify your work in seconds with npx apparent. GitHub, traction, and shipped products become your pitch.',
@@ -39,35 +33,6 @@ const howItWorks = [
   { title: 'Match on fit', text: 'Apparent ranks the investors whose thesis, stage, and sector actually fit your raise.' },
   { title: 'Let the agents connect you', text: "Your AI agent reaches the funds that fit, or signal you're raising and let theirs come to you." },
 ];
-
-const SourceTag = ({
-  label,
-  align,
-  index = 0,
-  tone,
-}: {
-  label: string;
-  align: 'left' | 'right';
-  index?: number;
-  tone: 'peach' | 'mint';
-}) => (
-  <span
-    data-reveal
-    style={{ transitionDelay: `${index * 80}ms` }}
-    className={`reveal inline-flex items-center gap-2.5 rounded-full border border-ink bg-parchment px-4 py-2 font-mono text-[12px] tracking-[-0.02em] text-ink ${
-      align === 'right' ? 'flex-row-reverse' : ''
-    }`}
-  >
-    <span
-      className="h-1.5 w-1.5 shrink-0 rounded-full"
-      style={{
-        background: tone === 'peach' ? '#ff9473' : '#5fcf8e',
-        boxShadow: `0 0 5px ${tone === 'peach' ? 'rgba(255,148,115,0.8)' : 'rgba(95,207,142,0.8)'}`,
-      }}
-    />
-    {label}
-  </span>
-);
 
 export const Home = () => {
   const navigate = useNavigate();
@@ -148,68 +113,7 @@ export const Home = () => {
       </section>
 
       {/* DATA-FLOW DIAGRAM — founder proof → Apparent → investor thesis */}
-      <section className="mx-auto max-w-[1200px] px-6 pb-20">
-        <div className="relative grid items-center gap-10 md:grid-cols-[1fr_auto_1fr] md:gap-6">
-          {/* connector wire + traveling packets: founder proof flows in (peach)
-              and converges on the node, investor thesis flows out (mint) */}
-          <div aria-hidden className="pointer-events-none absolute inset-x-0 top-1/2 hidden md:block">
-            <div className="flow-wire absolute inset-x-10 top-0 h-px -translate-y-1/2" />
-            <span className="flow-packet flow-packet--in" style={{ animationDelay: '0s' }} />
-            <span className="flow-packet flow-packet--in" style={{ animationDelay: '1.3s' }} />
-            <span className="flow-packet flow-packet--out" style={{ animationDelay: '0.65s' }} />
-            <span className="flow-packet flow-packet--out" style={{ animationDelay: '1.95s' }} />
-          </div>
-
-          {/* Left: founder proof */}
-          <div className="flex flex-col items-center gap-3 md:items-end">
-            <span className="mb-1 font-mono text-[11px] uppercase tracking-[0.1em] text-stone">Founder proof</span>
-            {founderSources.map((tag, i) => (
-              <SourceTag key={tag} label={tag} align="right" index={i} tone="peach" />
-            ))}
-          </div>
-
-          {/* Center: Apparent node */}
-          <div className="relative z-10 flex flex-col items-center">
-            <div
-              aria-hidden
-              className="flow-aura pointer-events-none absolute left-1/2 top-[3.5rem] -z-10 h-56 w-56 rounded-full"
-              style={{
-                background:
-                  'radial-gradient(circle, rgba(167,252,205,0.6) 0%, rgba(160,181,235,0.2) 52%, rgba(246,243,241,0) 74%)',
-              }}
-            />
-            <div className="flex h-28 w-28 items-center justify-center rounded-full border border-ink bg-parchment shadow-[0_0_10px_rgba(0,0,0,0.1)]">
-              <LogoIcon className="h-10 w-10 text-ink" />
-            </div>
-            <span className="mt-4 font-mono text-[13px] tracking-[-0.02em] text-ink">APPARENT</span>
-            <div className="mt-4 flex flex-wrap justify-center gap-2">
-              {agentStages.map((stage, i) => (
-                <span
-                  key={stage}
-                  className="inline-flex items-center gap-1.5 rounded-full border border-ink/30 px-2.5 py-1 font-mono text-[11px] text-graphite"
-                >
-                  <span
-                    className="flow-dot h-1.5 w-1.5 rounded-full bg-[#5fcf8e]"
-                    style={{ animationDelay: `${i * 0.6}s` }}
-                  />
-                  {stage}
-                </span>
-              ))}
-            </div>
-          </div>
-
-          {/* Right: investor thesis */}
-          <div className="flex flex-col items-center gap-3 md:items-start">
-            <span className="mb-1 font-mono text-[11px] uppercase tracking-[0.1em] text-stone">Investor thesis</span>
-            {investorCriteria.map((tag, i) => (
-              <SourceTag key={tag} label={tag} align="left" index={i} tone="mint" />
-            ))}
-          </div>
-        </div>
-        <p className="mt-10 text-center font-mono text-[13px] tracking-[-0.02em] text-stone">
-          Founder proof in. Investor thesis out. Agents match both sides.
-        </p>
-      </section>
+      <DataFlowDiagram />
 
       {/* MAP — the live front door */}
       <section data-reveal className="reveal mx-auto max-w-[1200px] border-t border-ink/12 px-6 py-20">

@@ -106,70 +106,31 @@
   border-color: rgba(0, 0, 0, 0.12);
 }
 
-/* ── Data-flow diagram motion ────────────────────────────────────────────────
-   Founder proof flows IN from the left (peach packets) and investor thesis
-   flows OUT to the right (mint packets), both converging on / emerging from
-   the Apparent node — so the wire reads as actual throughput, not a sweep.
-   The node aura breathes and the agent-stage dots pulse in sequence. All
-   scoped to .monad and disabled under reduced-motion. */
-.monad .flow-wire {
-  background: linear-gradient(
-    90deg,
-    transparent 0,
-    rgba(0, 0, 0, 0.16) 14%,
-    rgba(0, 0, 0, 0.16) 86%,
-    transparent 100%
-  );
+/* ── Data-flow diagram motion (Monad-style) ──────────────────────────────────
+   Curved SVG connectors fan from each founder-proof tag into the central node
+   and back out to each investor-thesis tag. A short bright dash travels along
+   every curve — peach inbound, mint outbound — so data visibly flows through
+   the node. The node aura breathes and the agent-stage dots pulse in sequence.
+   All scoped to .monad and disabled under reduced-motion. */
+.monad .flow-line {
+  fill: none;
+  stroke-dasharray: 0.16 0.84;
+  animation: dashFlow 2.9s linear infinite;
 }
-.monad .flow-packet {
-  position: absolute;
-  top: 50%;
-  height: 10px;
-  width: 10px;
-  border-radius: 9999px;
-  transform: translate(-50%, -50%);
-  will-change: left, opacity;
+.monad .flow-line--in {
+  stroke: #ff9473;
+  filter: drop-shadow(0 0 2px rgba(255, 148, 115, 0.55));
 }
-.monad .flow-packet--in {
-  background: #ff9473;
-  box-shadow: 0 0 10px 1px rgba(255, 148, 115, 0.75);
-  animation: packetIn 2.6s linear infinite both;
+.monad .flow-line--out {
+  stroke: #5fcf8e;
+  filter: drop-shadow(0 0 2px rgba(95, 207, 142, 0.55));
 }
-.monad .flow-packet--out {
-  background: #a7fccd;
-  box-shadow: 0 0 10px 1px rgba(122, 224, 170, 0.8);
-  animation: packetOut 2.6s linear infinite both;
-}
-@keyframes packetIn {
-  0% {
-    left: 2.5rem;
-    opacity: 0;
+@keyframes dashFlow {
+  from {
+    stroke-dashoffset: 1;
   }
-  14% {
-    opacity: 1;
-  }
-  82% {
-    opacity: 1;
-  }
-  100% {
-    left: 50%;
-    opacity: 0;
-  }
-}
-@keyframes packetOut {
-  0% {
-    left: 50%;
-    opacity: 0;
-  }
-  18% {
-    opacity: 1;
-  }
-  86% {
-    opacity: 1;
-  }
-  100% {
-    left: calc(100% - 2.5rem);
-    opacity: 0;
+  to {
+    stroke-dashoffset: 0;
   }
 }
 
@@ -205,8 +166,9 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .monad .flow-packet {
-    display: none;
+  .monad .flow-line {
+    animation: none;
+    opacity: 0;
   }
   .monad .flow-aura,
   .monad .flow-dot {
