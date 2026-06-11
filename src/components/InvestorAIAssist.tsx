@@ -11,6 +11,8 @@ type AIPromptProps = {
   placeholder?: string;
   onSubmit?: (value: string) => void;
   className?: string;
+  /** Focus the textarea on mount (used when the fullscreen chat opens). */
+  autoFocus?: boolean;
 };
 
 const promptPlaceholders = [
@@ -64,12 +66,17 @@ export const InvestorAIPrompt = ({
   placeholder = 'What can I do you for?',
   onSubmit,
   className,
+  autoFocus = false,
 }: AIPromptProps) => {
   const [value, setValue] = useState('');
   const { textareaRef, adjustHeight } = useAutoResizeTextarea({
     minHeight: 72,
     maxHeight: 300,
   });
+
+  useEffect(() => {
+    if (autoFocus) textareaRef.current?.focus();
+  }, [autoFocus, textareaRef]);
 
   const submitPrompt = () => {
     if (!value.trim()) return;
