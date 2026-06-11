@@ -40,7 +40,17 @@ const howItWorks = [
   { title: 'Let the agents connect you', text: "Your AI agent reaches the funds that fit, or signal you're raising and let theirs come to you." },
 ];
 
-const SourceTag = ({ label, align, index = 0 }: { label: string; align: 'left' | 'right'; index?: number }) => (
+const SourceTag = ({
+  label,
+  align,
+  index = 0,
+  tone,
+}: {
+  label: string;
+  align: 'left' | 'right';
+  index?: number;
+  tone: 'peach' | 'mint';
+}) => (
   <span
     data-reveal
     style={{ transitionDelay: `${index * 80}ms` }}
@@ -48,7 +58,13 @@ const SourceTag = ({ label, align, index = 0 }: { label: string; align: 'left' |
       align === 'right' ? 'flex-row-reverse' : ''
     }`}
   >
-    <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-ink" />
+    <span
+      className="h-1.5 w-1.5 shrink-0 rounded-full"
+      style={{
+        background: tone === 'peach' ? '#ff9473' : '#5fcf8e',
+        boxShadow: `0 0 5px ${tone === 'peach' ? 'rgba(255,148,115,0.8)' : 'rgba(95,207,142,0.8)'}`,
+      }}
+    />
     {label}
   </span>
 );
@@ -75,7 +91,17 @@ export const Home = () => {
       <EditorialNavbar />
 
       {/* HERO */}
-      <section className="mx-auto max-w-[1200px] px-6 pb-12 pt-16 text-center md:pt-20">
+      <section className="relative isolate mx-auto max-w-[1200px] px-6 pb-12 pt-16 text-center md:pt-20">
+        {/* Colour wash — peach · periwinkle · mint, the brand's three accents,
+            blurred into a soft cloud behind the headline */}
+        <div
+          aria-hidden
+          className="pointer-events-none absolute left-1/2 top-[-2rem] -z-10 h-[460px] w-[900px] max-w-[96vw] -translate-x-1/2 rounded-full opacity-80 blur-3xl"
+          style={{
+            background:
+              'radial-gradient(42% 55% at 28% 38%, rgba(255,148,115,0.55), transparent 70%), radial-gradient(40% 52% at 74% 32%, rgba(160,181,235,0.55), transparent 72%), radial-gradient(44% 58% at 54% 82%, rgba(167,252,205,0.5), transparent 72%)',
+          }}
+        />
         <div className="mb-8 flex justify-center">
           <div className="inline-flex items-center gap-2.5 rounded-full border border-ink bg-parchment px-3 py-1.5">
             <div className="flex items-center">
@@ -93,8 +119,11 @@ export const Home = () => {
           </div>
         </div>
 
-        <h1 className="mx-auto max-w-[920px] font-serif text-[clamp(2.6rem,6vw,5rem)] leading-[1.08] tracking-[-0.02em] text-ink">
-          Founders and investors who&nbsp;fit.
+        <h1 className="mx-auto whitespace-nowrap font-serif text-[clamp(1.3rem,5.6vw,4.5rem)] leading-[1.05] tracking-[-0.02em] text-ink">
+          Founders and funds that{' '}
+          <span className="bg-gradient-to-r from-[#ff7a52] via-[#7e9bf0] to-[#37d28b] bg-clip-text text-transparent">
+            fit.
+          </span>
         </h1>
         <p className="mx-auto mt-6 max-w-[640px] font-mono text-[16px] leading-[1.6] tracking-[-0.02em] text-graphite">
           AI agents work both sides of the table. Founders find the right funds, investors find the right founders. No cold emails.
@@ -121,19 +150,26 @@ export const Home = () => {
       {/* DATA-FLOW DIAGRAM — founder proof → Apparent → investor thesis */}
       <section className="mx-auto max-w-[1200px] px-6 pb-20">
         <div className="relative grid items-center gap-10 md:grid-cols-[1fr_auto_1fr] md:gap-6">
-          {/* connector axis — dashes travel left→right to read as throughput */}
-          <div aria-hidden className="flow-axis pointer-events-none absolute inset-x-10 top-1/2 hidden h-px -translate-y-1/2 md:block" />
+          {/* connector wire + traveling packets: founder proof flows in (peach)
+              and converges on the node, investor thesis flows out (mint) */}
+          <div aria-hidden className="pointer-events-none absolute inset-x-0 top-1/2 hidden md:block">
+            <div className="flow-wire absolute inset-x-10 top-0 h-px -translate-y-1/2" />
+            <span className="flow-packet flow-packet--in" style={{ animationDelay: '0s' }} />
+            <span className="flow-packet flow-packet--in" style={{ animationDelay: '1.3s' }} />
+            <span className="flow-packet flow-packet--out" style={{ animationDelay: '0.65s' }} />
+            <span className="flow-packet flow-packet--out" style={{ animationDelay: '1.95s' }} />
+          </div>
 
           {/* Left: founder proof */}
           <div className="flex flex-col items-center gap-3 md:items-end">
             <span className="mb-1 font-mono text-[11px] uppercase tracking-[0.1em] text-stone">Founder proof</span>
             {founderSources.map((tag, i) => (
-              <SourceTag key={tag} label={tag} align="right" index={i} />
+              <SourceTag key={tag} label={tag} align="right" index={i} tone="peach" />
             ))}
           </div>
 
           {/* Center: Apparent node */}
-          <div className="relative flex flex-col items-center">
+          <div className="relative z-10 flex flex-col items-center">
             <div
               aria-hidden
               className="flow-aura pointer-events-none absolute left-1/2 top-[3.5rem] -z-10 h-56 w-56 rounded-full"
@@ -166,7 +202,7 @@ export const Home = () => {
           <div className="flex flex-col items-center gap-3 md:items-start">
             <span className="mb-1 font-mono text-[11px] uppercase tracking-[0.1em] text-stone">Investor thesis</span>
             {investorCriteria.map((tag, i) => (
-              <SourceTag key={tag} label={tag} align="left" index={i} />
+              <SourceTag key={tag} label={tag} align="left" index={i} tone="mint" />
             ))}
           </div>
         </div>
