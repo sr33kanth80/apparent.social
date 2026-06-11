@@ -1,6 +1,6 @@
 import { ArrowRight, Paperclip } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { useEffect, useState, type KeyboardEvent } from 'react';
+import { useEffect, useState, type KeyboardEvent, type ReactNode } from 'react';
 
 import { LogoIcon } from '@/components/LogoIcon';
 import { Textarea } from '@/components/ui/textarea';
@@ -13,6 +13,8 @@ type AIPromptProps = {
   className?: string;
   /** Focus the textarea on mount (used when the fullscreen chat opens). */
   autoFocus?: boolean;
+  /** Extra controls rendered in the bottom toolbar, next to the attach button. */
+  toolbarExtras?: ReactNode;
 };
 
 const promptPlaceholders = [
@@ -67,6 +69,7 @@ export const InvestorAIPrompt = ({
   onSubmit,
   className,
   autoFocus = false,
+  toolbarExtras,
 }: AIPromptProps) => {
   const [value, setValue] = useState('');
   const { textareaRef, adjustHeight } = useAutoResizeTextarea({
@@ -137,6 +140,12 @@ export const InvestorAIPrompt = ({
                     <input className="hidden" type="file" />
                     <Paperclip className="h-4 w-4 transition-colors" />
                   </label>
+                  {toolbarExtras && (
+                    <>
+                      <div className="mx-0.5 h-4 w-px bg-white/10" />
+                      {toolbarExtras}
+                    </>
+                  )}
                 </div>
                 <button
                   aria-label="Send message"

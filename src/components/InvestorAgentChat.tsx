@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Check, Copy, ExternalLink, Loader2, Mail, Maximize2, Minimize2, Send, Sparkles, Trash2, X } from 'lucide-react';
+import { Check, Copy, ExternalLink, Loader2, Mail, Maximize2, Minimize2, Send, Trash2, X } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 
 import { InvestorAIPrompt } from '@/components/InvestorAIAssist';
@@ -335,9 +335,10 @@ export const InvestorAgentChat = ({
     );
   };
 
-  const autonomySwitch = (
+  // `labelClass` lets the label read on both the light page and the dark prompt box.
+  const autonomySwitch = (labelClass = 'text-gray-500') => (
     <div className="flex items-center gap-2">
-      <span className="text-xs font-medium text-gray-500">Agent mode</span>
+      <span className={`hidden text-xs font-medium sm:inline ${labelClass}`}>Agent mode</span>
       <Switch
         name="agent-autonomy"
         size="tiny"
@@ -454,7 +455,12 @@ export const InvestorAgentChat = ({
   // fullscreen bottom dock via framer-motion's layoutId.
   const promptDock = (
     <motion.div layoutId="agent-prompt-dock" transition={DOCK_TRANSITION}>
-      <InvestorAIPrompt className="py-0" onSubmit={send} autoFocus={expanded} />
+      <InvestorAIPrompt
+        className="py-0"
+        onSubmit={send}
+        autoFocus={expanded}
+        toolbarExtras={expanded ? autonomySwitch('text-white/60') : undefined}
+      />
     </motion.div>
   );
 
@@ -466,7 +472,7 @@ export const InvestorAgentChat = ({
             <div className="mb-3 overflow-hidden rounded-2xl border border-black/10 bg-white shadow-[0_10px_34px_rgba(0,0,0,0.04)]">
               <div className="flex items-center justify-between border-b border-black/5 px-4 py-2.5">
                 <div className="flex items-center gap-2 text-sm font-semibold text-black">
-                  <Sparkles className="h-4 w-4 text-[#42520d]" />
+                  <LogoIcon className="h-4 w-4 text-[#42520d]" />
                   Apparent agent
                 </div>
                 <div className="flex items-center gap-1">
@@ -497,7 +503,7 @@ export const InvestorAgentChat = ({
 
           {promptDock}
 
-          <div className="mt-3 flex flex-wrap items-center gap-2">{autonomySwitch}</div>
+          <div className="mt-3">{autonomySwitch()}</div>
 
           {!hasConversation && <div className="mt-3">{suggestionChips()}</div>}
         </>
@@ -518,11 +524,10 @@ export const InvestorAgentChat = ({
           >
             <div className="flex flex-wrap items-center justify-between gap-3 border-b border-black/5 bg-white/80 px-4 py-3 backdrop-blur sm:px-6">
               <div className="flex items-center gap-2 text-sm font-semibold text-black">
-                <Sparkles className="h-4 w-4 text-[#42520d]" />
+                <LogoIcon className="h-4 w-4 text-[#42520d]" />
                 Apparent agent
               </div>
               <div className="flex flex-wrap items-center gap-3">
-                {autonomySwitch}
                 {hasConversation && (
                   <button
                     type="button"
