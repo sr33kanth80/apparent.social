@@ -29,6 +29,7 @@ drop policy if exists "founder profiles discoverable reads" on public.founder_pr
 
 -- 3. Tighten investor_criteria reads to opted-in-public rows (or the owner).
 drop policy if exists "investor criteria platform reads" on public.investor_criteria;
+drop policy if exists "investor criteria public reads" on public.investor_criteria;
 create policy "investor criteria public reads" on public.investor_criteria
   for select using (
     public_profile_enabled = true   -- opted into a public profile
