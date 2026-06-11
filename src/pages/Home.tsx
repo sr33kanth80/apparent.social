@@ -52,9 +52,9 @@ export const Home = () => {
             <span className="pz pz-light pz-end-l pz-knob-r" style={{ zIndex: 4 }}>Find<i className="pz-nub pz-nub-b" /></span><span className="pz pz-olive pz-socket-l pz-knob-r pz-drop" style={{ zIndex: 3 }}>investors<i className="pz-nub pz-nub-t" /></span><span className="pz pz-light pz-socket-l pz-knob-r" style={{ zIndex: 2 }}>who actually<i className="pz-nub pz-nub-b" /></span><span className="pz pz-olive pz-socket-l pz-end-r pz-slide" style={{ zIndex: 1 }}>fit.<i className="pz-nub pz-nub-t" /></span>
           </h1>
           <p className="mt-5 max-w-3xl text-base leading-7 text-black/65 md:text-lg">
-            Apparent matches founders and investors by thesis, stage, and sector.
+            AI agents work both sides of the table&nbsp;&mdash; sourcing, matching, and opening intros between founders and investors by thesis, stage, and proof of real work.
             <br />
-            Founders find the right funds. Investors find the right founders.
+            Founders find the right funds. Investors find the right founders. Neither sends a cold email.
           </p>
           <div className="mt-7 flex flex-wrap items-center justify-center gap-3">
             <button
@@ -104,9 +104,9 @@ export const Home = () => {
             <h3 className="mt-5 text-2xl font-semibold tracking-[-0.02em]">Reach the investors who fit your raise.</h3>
             <ul className="mt-5 grid gap-3 text-sm leading-6 text-black/65">
               {[
+                'Verify your work in seconds with npx apparent — GitHub, traction, and shipped products become your pitch.',
                 'Match to funds by thesis, stage, and sector, not a generic list of thousands.',
-                'See which investors fit your raise and which are already tracking you.',
-                "Flip on 'raising now' so the right funds know you're open, and approach them with context.",
+                'Your AI founder agent reaches the investors who fit and opens the intro for you — never spam.',
               ].map((item) => (
                 <li key={item} className="flex items-start gap-2.5">
                   <Check className="mt-0.5 h-4 w-4 shrink-0 text-[#42520d]" />
@@ -130,8 +130,8 @@ export const Home = () => {
             <ul className="mt-5 grid gap-3 text-sm leading-6 text-white/70">
               {[
                 'A live map of builders who fit your stage, sector, and geography.',
-                "Filter by thesis fit and who's raising right now, not a static directory.",
-                'Approach the founders who actually fit, the moment the signal is fresh.',
+                'Your AI investor agent sources and ranks deals against your thesis 24/7, then drafts the outreach.',
+                'Every founder verified by real code and traction, so diligence starts before the first call.',
               ].map((item) => (
                 <li key={item} className="flex items-start gap-2.5">
                   <Check className="mt-0.5 h-4 w-4 shrink-0 text-[#bcd99a]" />
@@ -185,14 +185,14 @@ export const Home = () => {
         <div className="grid gap-6 lg:grid-cols-[0.8fr_1.2fr] lg:items-start">
           <div>
             <h2 className="max-w-xl text-3xl font-normal leading-tight tracking-[-0.035em] md:text-4xl" style={serifDisplay}>
-              Show up. Match on fit. Connect.
+              Verify. Match on fit. Let the agents connect you.
             </h2>
           </div>
           <ol className="grid gap-x-6 gap-y-8 sm:grid-cols-3">
             {[
-              { icon: Zap, title: 'Show your work', text: 'Launches, commits, and traction become a profile that proves itself.' },
-              { icon: Radar, title: 'Match on fit', text: 'See the investors whose thesis, stage, and sector actually fit your raise.' },
-              { icon: Send, title: 'Start the right conversation', text: "Approach the funds that fit, or signal you're raising and let them come to you." },
+              { icon: Zap, title: 'Show your work', text: 'Run npx apparent and your launches, commits, and traction become a profile that proves itself.' },
+              { icon: Radar, title: 'Match on fit', text: 'Apparent ranks the investors whose thesis, stage, and sector actually fit your raise.' },
+              { icon: Send, title: 'Let the agents connect you', text: "Your AI agent reaches the funds that fit — or signal you're raising and let theirs come to you." },
             ].map((item, i) => (
               <li key={item.title} className="border-t border-black/10 pt-4">
                 <div className="flex items-baseline justify-between">

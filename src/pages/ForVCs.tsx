@@ -138,21 +138,21 @@ const RankedByFitCard = () => {
 
 const vcRows = [
   ['01', 'Define thesis', 'Capture sectors, stages, geographies, check size, founder signals, pass signals, and examples.'],
-  ['02', 'Rank public proof', 'Signals are scored by relevance, freshness, source type, stage, geography, and founder taste.'],
+  ['02', 'Let your agent source', 'Your AI investor agent works 24/7, ranking verified founders against your thesis by proof, freshness, and fit.'],
   ['03', 'Map builder density', 'Drop a place, locate projects nearby, and see Apparent builders around that focus.'],
-  ['04', 'Move through deal flow', 'Save a builder, draft outreach, and drag opportunities through a Kanban pipeline.'],
+  ['04', 'Move through deal flow', 'Save a builder, let the agent draft outreach, and drag opportunities through a Kanban pipeline.'],
 ];
 
 const investorBenefits = [
   {
     title: 'Private thesis workspace',
     icon: Target,
-    text: 'Turn your taste into criteria the sourcing system can use repeatedly.',
+    text: 'Turn your taste into criteria your AI agent can source against, repeatedly.',
   },
   {
-    title: 'Ranked signal inbox',
+    title: 'Agent-sourced signal inbox',
     icon: Search,
-    text: 'Fresh companies and builders appear with source links, proof, and relevance.',
+    text: 'Your agent surfaces verified founders with source links, proof, and relevance, fresh every day.',
   },
   {
     title: 'Deal-flow Kanban',
@@ -183,7 +183,7 @@ export const ForVCs = () => {
         </h1>
         <div className="mt-10 grid gap-6 md:grid-cols-[minmax(0,1fr)_auto] md:items-end">
           <p className="max-w-2xl text-lg leading-8 text-black/65 md:text-xl">
-            Apparent gives investors a private sourcing desk. Capture your thesis once, then meet the founders who fit it, ranked by proof, stage, and freshness.
+            Apparent gives investors a private sourcing desk with an AI agent that works 24/7. Capture your thesis once, and it sources, ranks, and drafts outreach to verified founders who fit, by proof, stage, and freshness.
           </p>
           <button
             type="button"
@@ -271,8 +271,8 @@ export const ForVCs = () => {
           <p className="text-sm font-semibold text-[#42520d]">From inbox to pipeline</p>
           <div className="mt-8 grid gap-6">
             {[
-              ['Inbox', 'Rank founder/company signals by thesis, proof, freshness, and geography.'],
-              ['Outreach', 'Draft first messages from the thesis and signal context.'],
+              ['Inbox', 'Your agent ranks founder and company signals by thesis, proof, freshness, and geography.'],
+              ['Outreach', 'The agent drafts first messages from your thesis and the founder signal that triggered the match.'],
               ['Pipeline', 'Drag saved builders through a clean venture CRM-style board.'],
             ].map(([title, text]) => (
               <div key={title}>

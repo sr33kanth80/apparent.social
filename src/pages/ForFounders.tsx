@@ -8,17 +8,17 @@ const serifDisplay = {
 };
 
 const founderRows = [
-  ['01', 'Make proof legible', 'Products, GitHub, press, traction, launches, location, and capital goals sit in one focused profile.'],
+  ['01', 'Verify in seconds', 'Run npx apparent and your GitHub, shipped products, traction, and launches become a verified proof profile.'],
   ['02', 'Get matched by thesis', 'Investors find you through criteria, founder signals, stage, category, and the evidence you already have.'],
-  ['03', 'Find your local network', 'Builder Radar shows peers, meetups, and nearby capital around your city, venue, or current location.'],
+  ['03', 'Let your agent reach out', 'Your AI founder agent finds the investors who fit and opens personalized intros on your behalf, never spam.'],
   ['04', 'Move from DM to deal room', 'Messages, terms review, and investor follow-up stay connected to the profile that created interest.'],
 ];
 
 const founderBenefits = [
   {
-    title: 'Proof profile',
+    title: 'Verified in one command',
     icon: CheckCircle2,
-    text: 'Turn what you shipped into a profile that investors can actually evaluate.',
+    text: 'Run npx apparent and turn what you shipped into a profile investors can actually trust.',
   },
   {
     title: 'GitHub context',
@@ -26,9 +26,9 @@ const founderBenefits = [
     text: 'Show technical depth and project history without forcing people to hunt.',
   },
   {
-    title: 'Investor matches',
+    title: 'An agent that pitches for you',
     icon: Search,
-    text: 'See investors whose thesis maps to your category, stage, and traction.',
+    text: 'Your AI agent surfaces and reaches investors whose thesis maps to your category, stage, and traction.',
   },
   {
     title: 'Founder network',
@@ -54,7 +54,7 @@ export const ForFounders = () => {
         </h1>
         <div className="mt-10 grid gap-6 md:grid-cols-[minmax(0,1fr)_auto] md:items-end">
           <p className="max-w-2xl text-lg leading-8 text-black/65 md:text-xl">
-            Apparent turns what you&apos;ve shipped into a proof profile, then matches you to the investors whose thesis, stage, and sector actually fit your raise. No warm intro required.
+            Run <span className="font-mono text-[0.9em] text-[#42520d]">npx apparent</span> and what you&apos;ve shipped becomes a verified proof profile. Then your AI agent matches and reaches the investors whose thesis, stage, and sector actually fit your raise. No warm intro required.
           </p>
           <button
             type="button"
@@ -229,9 +229,9 @@ export const ForFounders = () => {
           <p className="text-sm font-semibold text-[#42520d]">From profile to deal</p>
           <div className="mt-8 grid gap-6">
             {[
-              ['Launch', 'List products, metrics, links, and proof for each build.'],
+              ['Verify', 'Run npx apparent to attach real code, products, metrics, and proof to each build.'],
               ['Match', 'See investors ranked by thesis fit and founder signal.'],
-              ['Message', 'Start DMs with context already attached to your profile.'],
+              ['Let your agent open it', 'Your AI agent drafts the intro and starts the conversation with context attached.'],
             ].map(([title, text]) => (
               <div key={title}>
                 <h3 className="text-base font-semibold">{title}</h3>

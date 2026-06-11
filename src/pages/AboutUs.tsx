@@ -9,10 +9,10 @@ const serifDisplay = {
 };
 
 const proofRows = [
-  ['01', 'Proof beats proximity', 'Products, GitHub, launches, press, traction, and location should travel farther than a warm intro.'],
+  ['01', 'Proof beats proximity', 'Products, GitHub, launches, press, and traction, verified in one command, should travel farther than a warm intro.'],
   ['02', 'Taste should be searchable', 'Investors need a place to declare thesis, stage, sector, geography, and founder signals clearly.'],
   ['03', 'Place reveals momentum', 'Builder Radar makes local clusters and nearby rooms visible before they become consensus.'],
-  ['04', 'Relationships need context', 'Messages, terms, meetups, and deal flow stay connected to the signal that started the conversation.'],
+  ['04', 'The intro should write itself', 'AI agents work both sides, matching founders and investors on each other’s criteria and opening the first message.'],
 ];
 
 const values = [
@@ -452,7 +452,7 @@ export const AboutUs = () => {
         <div className="bg-[#fbfaf7] px-0 py-10 lg:px-14 lg:py-16">
           <p className="text-sm font-semibold text-[#42520d]">What we believe</p>
           <p className="mt-6 max-w-xl text-base leading-8 text-black/60">
-            The next great companies are already shipping in public. They just aren&apos;t easy to find yet. Apparent makes proof legible and thesis searchable, so the right founder and the right investor meet in that early window instead of missing it.
+            The next great companies are already shipping in public. They just aren&apos;t easy to find yet. Apparent verifies proof in one command and makes thesis searchable, then puts an AI agent on each side, so the right founder and the right investor meet in that early window instead of missing it.
           </p>
           <p className="mt-8 text-xs font-semibold uppercase tracking-[0.16em] text-[#42520d]">Proof before consensus</p>
         </div>
