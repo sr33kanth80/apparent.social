@@ -9,7 +9,7 @@ import { VerifiedAvatar } from '@/components/VerifiedAvatar';
 import NotFound4042 from '@/components/4042';
 
 const serifDisplay = {
-  fontFamily: 'Georgia, "Times New Roman", serif',
+  fontFamily: "'Source Serif 4', ui-serif, Georgia, 'Times New Roman', serif",
 };
 
 const getDomain = (url: string) => {
@@ -102,15 +102,15 @@ export const ProjectDetail = () => {
 
   if (isLoading) {
     return (
-      <main className="min-h-screen bg-[#fbfaf7] px-5 py-20 text-black sm:px-8">
-        <p className="text-sm font-semibold text-[#42520d]">Loading project profile...</p>
+      <main className="monadmin-h-screen bg-[#f6f3f1] px-5 py-20 text-black sm:px-8">
+        <p className="text-sm font-semibold text-[#242424]">Loading project profile...</p>
       </main>
     );
   }
 
   if (!detail) {
     return (
-      <main className="min-h-screen bg-[#fbfaf7]">
+      <main className="monadmin-h-screen bg-[#f6f3f1]">
         <NotFound4042
           title="Project not found"
           message="That launch is unavailable or does not exist on Apparent yet."
@@ -125,7 +125,7 @@ export const ProjectDetail = () => {
   const founderName = founder?.profileName || 'Founder on Apparent';
 
   return (
-    <main className="overflow-x-hidden bg-[#fbfaf7] text-black">
+    <main className="monadoverflow-x-hidden bg-[#f6f3f1] text-black">
       <section className="mx-auto max-w-[92rem] px-5 pb-14 pt-14 sm:px-8 md:pt-20">
         <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_22rem] lg:items-end">
           <div>
@@ -136,7 +136,7 @@ export const ProjectDetail = () => {
                 className="h-14 w-14 rounded-[18px] bg-white object-contain p-3 shadow-sm"
               />
               <div>
-                <p className="text-sm font-semibold text-[#42520d]">{launch.category || 'Project profile'}</p>
+                <p className="text-sm font-semibold text-[#242424]">{launch.category || 'Project profile'}</p>
                 <p className="mt-1 text-sm text-black/50">{launch.stage || 'Live on Apparent'}</p>
               </div>
             </div>
@@ -152,12 +152,12 @@ export const ProjectDetail = () => {
           </div>
 
           <aside className="rounded-[24px] bg-white/75 p-5 shadow-[0_14px_44px_rgba(0,0,0,0.05)]">
-            <p className="text-sm font-semibold text-[#42520d]">Launched by</p>
+            <p className="text-sm font-semibold text-[#242424]">Launched by</p>
 
             {/* Founder card — entire row is one clickable link */}
             <Link
               to={`/profile/${founder?.userId || launch.ownerId}`}
-              className="mt-4 flex items-center gap-3 rounded-[18px] p-2 -mx-2 transition-colors hover:bg-[#f4f1eb] group"
+              className="mt-4 flex items-center gap-3 rounded-[18px] p-2 -mx-2 transition-colors hover:bg-[#f6f3f1] group"
             >
               {/* Avatar */}
               <VerifiedAvatar
@@ -169,7 +169,7 @@ export const ProjectDetail = () => {
 
               {/* Name + headline */}
               <div className="min-w-0 flex-1">
-                <p className="text-base font-semibold leading-tight group-hover:text-[#42520d] transition-colors">
+                <p className="text-base font-semibold leading-tight group-hover:text-[#242424] transition-colors">
                   {founderName}
                 </p>
                 <p className="mt-1 truncate text-sm text-black/50">
@@ -178,16 +178,16 @@ export const ProjectDetail = () => {
               </div>
 
               {/* Arrow hint */}
-              <ArrowUpRight className="h-4 w-4 shrink-0 text-black/25 transition-colors group-hover:text-[#42520d]" />
+              <ArrowUpRight className="h-4 w-4 shrink-0 text-black/25 transition-colors group-hover:text-[#242424]" />
             </Link>
             <div className="mt-5 grid gap-3">
               {launch.launchUrl && (
-                <a href={launch.launchUrl} target="_blank" rel="noreferrer" className="inline-flex justify-center rounded-full bg-[#42520d] px-5 py-3 text-sm font-semibold text-white hover:bg-[#34420a]">
+                <a href={launch.launchUrl} target="_blank" rel="noreferrer" className="inline-flex justify-center rounded-full bg-[#242424] px-5 py-3 text-sm font-semibold text-white hover:bg-[#000000]">
                   Visit website <ArrowUpRight className="ml-2 h-4 w-4" />
                 </a>
               )}
               {launch.proofUrl && (
-                <a href={launch.proofUrl} target="_blank" rel="noreferrer" className="inline-flex justify-center rounded-full bg-[#dcefc7] px-5 py-3 text-sm font-semibold text-black hover:bg-[#cce8ae]">
+                <a href={launch.proofUrl} target="_blank" rel="noreferrer" className="inline-flex justify-center rounded-full bg-[#cfdaf5] px-5 py-3 text-sm font-semibold text-black hover:bg-[#bcc8ef]">
                   View proof <ArrowUpRight className="ml-2 h-4 w-4" />
                 </a>
               )}
@@ -199,7 +199,7 @@ export const ProjectDetail = () => {
                     <button
                       type="button"
                       onClick={() => navigate('/dashboard/investor/messages')}
-                      className="inline-flex items-center justify-center gap-2 rounded-full border border-[#42520d]/30 bg-white px-5 py-3 text-sm font-semibold text-[#42520d] hover:bg-[#f4f1eb]"
+                      className="inline-flex items-center justify-center gap-2 rounded-full border border-[#242424]/30 bg-white px-5 py-3 text-sm font-semibold text-[#242424] hover:bg-[#f6f3f1]"
                     >
                       <MessageCircle className="h-4 w-4" /> Outreach sent · open inbox
                     </button>
@@ -222,7 +222,7 @@ export const ProjectDetail = () => {
               {!currentUser && (
                 <Link
                   to="/login?role=investor"
-                  className="inline-flex items-center justify-center gap-2 rounded-full border border-black/10 bg-white px-5 py-3 text-sm font-semibold text-black hover:bg-[#f4f1eb]"
+                  className="inline-flex items-center justify-center gap-2 rounded-full border border-black/10 bg-white px-5 py-3 text-sm font-semibold text-black hover:bg-[#f6f3f1]"
                 >
                   <MessageCircle className="h-4 w-4" /> Sign in to send outreach
                 </Link>
@@ -249,7 +249,7 @@ export const ProjectDetail = () => {
             ['Funding', launch.fundingStatus || 'Not provided', Globe2],
           ].map(([label, value, Icon]) => (
             <article key={String(label)} className="rounded-[24px] bg-white/70 p-5">
-              <Icon className="mb-5 h-4 w-4 text-[#42520d]" />
+              <Icon className="mb-5 h-4 w-4 text-[#242424]" />
               <p className="text-xs font-semibold uppercase tracking-[0.14em] text-black/40">{String(label)}</p>
               <p className="mt-3 text-sm leading-6 text-black/65">{String(value)}</p>
             </article>
@@ -265,7 +265,7 @@ export const ProjectDetail = () => {
           <div className="mt-6 grid gap-3">
             {proofSignals.map((signal) => (
               <div key={signal} className="flex items-start gap-3 text-sm leading-7 text-black/60">
-                <Star className="mt-1 h-4 w-4 shrink-0 text-[#42520d]" />
+                <Star className="mt-1 h-4 w-4 shrink-0 text-[#242424]" />
                 <span>{signal}</span>
               </div>
             ))}
@@ -289,7 +289,7 @@ export const ProjectDetail = () => {
                 {member.avatarUrl ? (
                   <img src={member.avatarUrl} alt="" className="h-12 w-12 rounded-2xl object-cover" />
                 ) : (
-                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#dcefc7] text-sm font-semibold">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#cfdaf5] text-sm font-semibold">
                     {member.name.slice(0, 2).toUpperCase()}
                   </div>
                 )}
@@ -301,12 +301,12 @@ export const ProjectDetail = () => {
               <p className="mt-5 text-sm leading-7 text-black/60">{member.bio || 'Team context has not been added yet.'}</p>
               <div className="mt-5 flex flex-wrap gap-2">
                 {(member.apparentUserId || member.profileUrl) && (
-                  <Link to={member.apparentUserId ? `/profile/${member.apparentUserId}` : member.profileUrl} className="rounded-full bg-[#dcefc7] px-3 py-1.5 text-xs font-semibold text-black">
+                  <Link to={member.apparentUserId ? `/profile/${member.apparentUserId}` : member.profileUrl} className="rounded-full bg-[#cfdaf5] px-3 py-1.5 text-xs font-semibold text-black">
                     Apparent profile
                   </Link>
                 )}
                 {member.linkedinUrl && (
-                  <a href={member.linkedinUrl} target="_blank" rel="noreferrer" className="rounded-full bg-[#fbfaf7] px-3 py-1.5 text-xs font-semibold text-black/60">
+                  <a href={member.linkedinUrl} target="_blank" rel="noreferrer" className="rounded-full bg-[#f6f3f1] px-3 py-1.5 text-xs font-semibold text-black/60">
                     <LinkIcon className="mr-1 inline h-3.5 w-3.5" />
                     LinkedIn
                   </a>
@@ -316,7 +316,7 @@ export const ProjectDetail = () => {
           ))}
           {teamMembers.length === 0 && (
             <div className="rounded-[28px] bg-white/70 p-6 text-sm leading-7 text-black/60 md:col-span-3">
-              <Users className="mb-5 h-5 w-5 text-[#42520d]" />
+              <Users className="mb-5 h-5 w-5 text-[#242424]" />
               Team members have not been added yet.
             </div>
           )}
@@ -331,10 +331,10 @@ export const ProjectDetail = () => {
             {launch.pitchVideoUrl && <video className="aspect-video w-full rounded-[24px] bg-black object-cover" src={launch.pitchVideoUrl} controls />}
             {(launch.pitchDeckUrl || launch.pitchBookNote) && (
               <article className="rounded-[28px] bg-white/70 p-6 lg:col-span-2">
-                <FileText className="mb-5 h-5 w-5 text-[#42520d]" />
+                <FileText className="mb-5 h-5 w-5 text-[#242424]" />
                 <p className="text-sm leading-7 text-black/60">{launch.pitchBookNote || 'Pitch material attached.'}</p>
                 {launch.pitchDeckUrl && (
-                  <a href={launch.pitchDeckUrl} target="_blank" rel="noreferrer" className="mt-5 inline-flex rounded-full bg-[#dcefc7] px-4 py-2 text-sm font-semibold text-black">
+                  <a href={launch.pitchDeckUrl} target="_blank" rel="noreferrer" className="mt-5 inline-flex rounded-full bg-[#cfdaf5] px-4 py-2 text-sm font-semibold text-black">
                     Open pitch deck <ArrowUpRight className="ml-2 h-4 w-4" />
                   </a>
                 )}

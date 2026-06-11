@@ -4,7 +4,7 @@ import { GitHubIcon } from '../components/GitHubIcon';
 import { useReveal } from '../lib/useReveal';
 
 const serifDisplay = {
-  fontFamily: 'Georgia, "Times New Roman", serif',
+  fontFamily: "'Source Serif 4', ui-serif, Georgia, 'Times New Roman', serif",
 };
 
 const founderRows = [
@@ -42,7 +42,7 @@ export const ForFounders = () => {
   useReveal();
 
   return (
-    <main className="overflow-x-hidden bg-[#fbfaf7] text-black">
+    <main className="monad overflow-x-hidden bg-[#f6f3f1] text-black">
       <section data-reveal className="reveal mx-auto max-w-[92rem] px-5 pb-14 pt-14 sm:px-8 md:pt-20">
         <h1
           className="max-w-[86rem] text-[3.35rem] font-normal leading-[0.88] tracking-[-0.055em] sm:text-[7rem] md:text-[8.5rem] lg:text-[10rem]"
@@ -54,12 +54,12 @@ export const ForFounders = () => {
         </h1>
         <div className="mt-10 grid gap-6 md:grid-cols-[minmax(0,1fr)_auto] md:items-end">
           <p className="max-w-2xl text-lg leading-8 text-black/65 md:text-xl">
-            Run <span className="font-mono text-[0.9em] text-[#42520d]">npx apparent</span> and what you&apos;ve shipped becomes a verified proof profile. Then your AI agent matches and reaches the investors whose thesis, stage, and sector actually fit your raise. No warm intro required.
+            Run <span className="font-mono text-[0.9em] text-[#242424]">npx apparent</span> and what you&apos;ve shipped becomes a verified proof profile. Then your AI agent matches and reaches the investors whose thesis, stage, and sector actually fit your raise. No warm intro required.
           </p>
           <button
             type="button"
             onClick={() => navigate('/login?role=founder')}
-            className="w-full rounded-full bg-[#dcefc7] px-6 py-3 text-sm font-semibold text-black hover:bg-[#cce8ae] sm:w-auto"
+            className="w-full rounded-full bg-[#cfdaf5] px-6 py-3 text-sm font-semibold text-black hover:bg-[#bcc8ef] sm:w-auto"
           >
             Create founder profile <ArrowUpRight className="ml-1 inline h-3.5 w-3.5 align-[-2px]" />
           </button>
@@ -87,22 +87,22 @@ export const ForFounders = () => {
           <button
             type="button"
             onClick={() => navigate('/login?role=founder')}
-            className="mt-10 rounded-full bg-[#dcefc7] px-6 py-3 text-sm font-semibold text-black transition-colors hover:bg-[#cce8ae]"
+            className="mt-10 rounded-full bg-[#cfdaf5] px-6 py-3 text-sm font-semibold text-black transition-colors hover:bg-[#bcc8ef]"
           >
             Start building your profile
           </button>
         </div>
 
         {/* Example profile layout; real profiles are populated from founder data. */}
-        <div className="relative flex min-h-[520px] flex-col justify-between overflow-hidden rounded-[32px] bg-[#1c1c1a] p-7 text-white">
+        <div className="relative flex min-h-[520px] flex-col justify-between overflow-hidden rounded-[40px] bg-[#242424] p-7 text-white">
           <div>
             <div className="flex flex-wrap items-center gap-2">
-              <span className="rounded-full bg-[#dcefc7] px-3 py-1 text-xs font-semibold text-[#42520d]">Founder on Apparent</span>
-              <span className="rounded-full bg-[#42520d] px-3 py-1 text-xs font-semibold text-white">Raise context</span>
+              <span className="rounded-full bg-[#cfdaf5] px-3 py-1 text-xs font-semibold text-[#242424]">Founder on Apparent</span>
+              <span className="rounded-full bg-[#242424] px-3 py-1 text-xs font-semibold text-white">Raise context</span>
               <span className="flex items-center gap-1 text-xs text-white/50"><MapPin className="h-3 w-3" /> Founder location</span>
             </div>
             <div className="mt-6 flex items-center gap-4">
-              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#dcefc7] text-sm font-semibold text-[#42520d]">
+              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#cfdaf5] text-sm font-semibold text-[#242424]">
                 AP
               </div>
               <div className="min-w-0">
@@ -112,7 +112,7 @@ export const ForFounders = () => {
               <div className="shrink-0 border-l border-white/10 pl-4">
                 <p className="text-[0.6rem] font-semibold uppercase tracking-[0.14em] text-white/40">Proof</p>
                 <p className="text-lg font-semibold leading-none">Verified</p>
-                <span className="mt-1 inline-flex text-[0.65rem] font-semibold text-[#58d39a]">Owner supplied</span>
+                <span className="mt-1 inline-flex text-[0.65rem] font-semibold text-[#a7fccd]">Owner supplied</span>
               </div>
             </div>
             <p className="mt-4 text-sm leading-6 text-white/70">A focused snapshot of what the founder is building, shipping, and looking for.</p>
@@ -137,11 +137,11 @@ export const ForFounders = () => {
                 {/* Mock video player */}
                 <button
                   type="button"
-                  className="group relative flex aspect-video w-full overflow-hidden rounded-xl bg-gradient-to-br from-[#42520d] via-[#1c1c1a] to-[#02402f]"
+                  className="group relative flex aspect-video w-full overflow-hidden rounded-xl bg-gradient-to-br from-[#242424] via-[#242424] to-[#242424]"
                   aria-label="Play founder pitch video"
                 >
                   <span className="absolute inset-0 flex items-center justify-center">
-                    <span className="flex h-9 w-9 items-center justify-center rounded-full bg-white/90 text-[#1c1c1a] shadow-lg transition-transform duration-200 group-hover:scale-110">
+                    <span className="flex h-9 w-9 items-center justify-center rounded-full bg-white/90 text-[#242424] shadow-lg transition-transform duration-200 group-hover:scale-110">
                       <Play className="ml-0.5 h-4 w-4 fill-current" />
                     </span>
                   </span>
@@ -204,7 +204,7 @@ export const ForFounders = () => {
       </section>
 
       <section data-reveal className="reveal mx-auto max-w-[92rem] px-5 py-10 sm:px-8">
-        <div className="flex min-h-[320px] items-center overflow-hidden rounded-[32px] bg-[#1c1c1a] px-8 py-14 text-white md:min-h-[420px] md:px-16">
+        <div className="flex min-h-[320px] items-center overflow-hidden rounded-[40px] bg-[#242424] px-8 py-14 text-white md:min-h-[420px] md:px-16">
           <div>
             <h2 className="max-w-4xl text-4xl font-normal leading-[1.05] tracking-[-0.04em] md:text-6xl" style={serifDisplay}>
               Your GitHub is a better pitch than your network.
@@ -217,12 +217,12 @@ export const ForFounders = () => {
       </section>
 
       <section data-reveal className="reveal mx-auto grid max-w-[92rem] border-t border-black/10 px-5 py-16 sm:px-8 lg:grid-cols-[0.95fr_1.05fr]">
-        <div className="flex min-h-[420px] items-center overflow-hidden rounded-[32px] bg-[#42520d] p-10 text-white lg:min-h-[520px] lg:rounded-r-none lg:p-14">
+        <div className="flex min-h-[420px] items-center overflow-hidden rounded-[40px] bg-[#242424] p-10 text-white lg:min-h-[520px] lg:rounded-r-none lg:p-14">
           <blockquote className="max-w-md text-3xl font-normal leading-tight tracking-[-0.03em] md:text-4xl" style={serifDisplay}>
             “Your work should speak before your network does.”
           </blockquote>
         </div>
-        <div className="bg-[#fbfaf7] px-0 py-10 lg:px-14 lg:py-16">
+        <div className="bg-[#f6f3f1] px-0 py-10 lg:px-14 lg:py-16">
           <div className="mt-8 grid gap-6">
             {[
               ['Verify', 'Run npx apparent to attach real code, products, metrics, and proof to each build.'],
@@ -240,7 +240,7 @@ export const ForFounders = () => {
 
       <section data-reveal className="reveal mx-auto max-w-[92rem] border-t border-black/10 px-5 py-20 sm:px-8">
         <div className="py-10 text-center">
-          <Map className="mx-auto mb-10 h-6 w-6 text-[#02A070]" />
+          <Map className="mx-auto mb-10 h-6 w-6 text-[#000000]" />
           <h2 className="mx-auto max-w-3xl text-5xl font-normal leading-none tracking-[-0.045em] md:text-7xl" style={serifDisplay}>
             Put your proof where capital can find it.
           </h2>
@@ -250,7 +250,7 @@ export const ForFounders = () => {
           <button
             type="button"
             onClick={() => navigate('/login?role=founder')}
-            className="mt-10 rounded-full bg-[#dcefc7] px-8 py-3 text-sm font-semibold text-black hover:bg-[#cce8ae]"
+            className="mt-10 rounded-full bg-[#cfdaf5] px-8 py-3 text-sm font-semibold text-black hover:bg-[#bcc8ef]"
           >
             Create founder profile
           </button>

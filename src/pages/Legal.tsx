@@ -1,5 +1,5 @@
 const serifDisplay = {
-  fontFamily: 'Georgia, "Times New Roman", serif',
+  fontFamily: "'Source Serif 4', ui-serif, Georgia, 'Times New Roman', serif",
 };
 
 type LegalSection = {
@@ -180,7 +180,7 @@ const LegalPage = ({ type }: { type: keyof typeof legalContent }) => {
   const content = legalContent[type];
 
   return (
-    <main className="min-h-screen overflow-x-hidden bg-[#fbfaf7] text-black">
+    <main className="monadmin-h-screen overflow-x-hidden bg-[#f6f3f1] text-black">
       <section className="mx-auto max-w-[92rem] px-5 pb-14 pt-14 sm:px-8 md:pt-20">
         <h1
           className="max-w-[82rem] text-[3.1rem] font-normal leading-[0.9] tracking-[-0.055em] sm:text-[6rem] md:text-[7.5rem] lg:text-[8.5rem]"

@@ -29,7 +29,7 @@ type BlogArticle = {
 };
 
 const serifDisplay = {
-  fontFamily: 'Georgia, "Times New Roman", serif',
+  fontFamily: "'Source Serif 4', ui-serif, Georgia, 'Times New Roman', serif",
 };
 
 const fundDirectory: Record<string, string> = {
@@ -123,7 +123,7 @@ const renderBullet = (bullet: string) => {
   if (!website) {
     return (
       <div className="grid gap-3 md:grid-cols-[1.25rem,1fr] md:items-start">
-        <span className="mt-1 h-2.5 w-2.5 rounded-full bg-[#c7deb1]" />
+        <span className="mt-1 h-2.5 w-2.5 rounded-full bg-[#cfdaf5]" />
         <div>
           <p className="text-lg font-normal leading-tight tracking-[-0.03em] text-black" style={serifDisplay}>
             {title}
@@ -144,7 +144,7 @@ const renderBullet = (bullet: string) => {
         href={href}
         target="_blank"
         rel="noreferrer"
-        className="flex h-12 w-12 items-center justify-center rounded-[16px] bg-[#eef5e2] transition-colors hover:bg-[#e3efd1]"
+        className="flex h-12 w-12 items-center justify-center rounded-[16px] bg-[#f6f3f1] transition-colors hover:bg-[#cfdaf5]"
       >
         <img
           src={getLogoUrl(website)}
@@ -173,7 +173,7 @@ const renderBullet = (bullet: string) => {
         href={href}
         target="_blank"
         rel="noreferrer"
-        className="inline-flex items-center gap-2 text-sm font-semibold text-[#0f5f49] underline-offset-4 transition-opacity hover:opacity-70 md:justify-self-end"
+        className="inline-flex items-center gap-2 text-sm font-semibold text-[#242424] underline-offset-4 transition-opacity hover:opacity-70 md:justify-self-end"
       >
         {domainLabel}
         <ExternalLink className="h-4 w-4" />
@@ -183,9 +183,9 @@ const renderBullet = (bullet: string) => {
 };
 
 const renderInsightCard = (bullets: string[]) => (
-  <div className="mt-8 overflow-hidden rounded-[28px] border border-[#dcefc7]/18 bg-[#111712] p-5 shadow-[0_24px_80px_rgba(0,0,0,0.18)] sm:p-6">
+  <div className="mt-8 overflow-hidden rounded-[28px] border border-[#cfdaf5]/18 bg-[#242424] p-5 shadow-[0_24px_80px_rgba(0,0,0,0.18)] sm:p-6">
     <div className="border-b border-white/10 pb-5">
-      <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#dcefc7]/70">Seattle fundraising filter</p>
+      <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#cfdaf5]/70">Seattle fundraising filter</p>
       <p className="mt-2 text-2xl font-normal leading-tight tracking-[-0.035em] text-white" style={serifDisplay}>
         What actually moves the list
       </p>
@@ -195,9 +195,9 @@ const renderInsightCard = (bullets: string[]) => (
         const [title, description = ''] = bullet.split(' | ');
 
         return (
-          <div key={bullet} className="bg-[#111712] p-5">
+          <div key={bullet} className="bg-[#242424] p-5">
             <div className="flex items-start gap-4">
-              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#dcefc7] text-sm font-semibold text-black">
+              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#cfdaf5] text-sm font-semibold text-black">
                 {index + 1}
               </span>
               <div>
@@ -887,10 +887,10 @@ const postMeta = (article: BlogArticle) => `${article.author} / ${article.date} 
 
 export const Blog = () => {
   return (
-    <main className="relative isolate overflow-x-hidden bg-[#f7f1e7] text-black">
-      <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden bg-[linear-gradient(180deg,#f7f1e7_0%,#fbfaf7_48%,#edf5e8_100%)]">
+    <main className="monadrelative isolate overflow-x-hidden bg-[#f6f3f1] text-black">
+      <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden bg-[linear-gradient(180deg,#f6f3f1_0%,#f6f3f1_48%,#f6f3f1_100%)]">
         <PixelSnow
-          color="#34412b"
+          color="#4e4d4d"
           flakeSize={0.012}
           minFlakeSize={1.15}
           pixelResolution={190}
@@ -930,7 +930,7 @@ export const Blog = () => {
                 </h2>
                 <p className="mx-auto mt-4 max-w-3xl text-base leading-8 text-black/60">{article.excerpt}</p>
                 <div className="mt-6">
-                  <span className="inline-flex items-center rounded-full bg-[#dcefc7] px-5 py-2.5 text-sm font-semibold text-black">
+                  <span className="inline-flex items-center rounded-full bg-[#cfdaf5] px-5 py-2.5 text-sm font-semibold text-black">
                     Read more
                     <ArrowRight className="ml-2 h-4 w-4" />
                   </span>
@@ -968,12 +968,12 @@ export const BlogPost = () => {
   const nextArticle = articles[(articleIndex + 1) % articles.length];
 
   return (
-    <main className="overflow-x-hidden bg-[#fbfaf7] text-black">
+    <main className="monadoverflow-x-hidden bg-[#f6f3f1] text-black">
       <article className="mx-auto max-w-[44rem] px-5 py-20 sm:px-8 md:py-24">
         <button
           type="button"
           onClick={() => navigate('/blog')}
-          className="mb-10 inline-flex items-center gap-2 rounded-full bg-[#dcefc7] px-5 py-2.5 text-sm font-semibold text-black transition-colors hover:bg-[#cce8ae]"
+          className="mb-10 inline-flex items-center gap-2 rounded-full bg-[#cfdaf5] px-5 py-2.5 text-sm font-semibold text-black transition-colors hover:bg-[#bcc8ef]"
         >
           <ArrowLeft className="h-4 w-4" />
           Back to blog
@@ -1029,7 +1029,7 @@ export const BlogPost = () => {
         <div className="mt-10">
           <Link
             to={`/blog/${nextArticle.slug}`}
-            className="inline-flex items-center rounded-full bg-[#dcefc7] px-8 py-3 text-sm font-semibold text-black transition-colors hover:bg-[#cce8ae]"
+            className="inline-flex items-center rounded-full bg-[#cfdaf5] px-8 py-3 text-sm font-semibold text-black transition-colors hover:bg-[#bcc8ef]"
           >
             Read next post
             <ArrowRight className="ml-2 h-4 w-4" />

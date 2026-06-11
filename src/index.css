@@ -750,7 +750,7 @@ a.rounded-full:hover {
   width: 0.56em;
   height: 0.56em;
   transform: translateY(-50%);
-  background: #fbfaf7;
+  background: #f6f3f1;
   border-radius: 50%;
 }
 /* Decorative top/bottom knobs (child element, since ::before/::after carry the
@@ -851,7 +851,7 @@ a.rounded-full:hover {
   width: 28px;
   height: 28px;
   transform: translateY(-50%);
-  background-color: #fbfaf7;
+  background-color: #f6f3f1;
   border-radius: 50%;
   pointer-events: none;
 }

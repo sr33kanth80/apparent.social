@@ -21,7 +21,7 @@ export default function _4042({
   secondaryTo = "/contact",
 }: NotFound4042Props) {
   return (
-    <section className="mx-auto grid min-h-[70vh] max-w-4xl grid-cols-1 items-center gap-6 px-5 py-16 text-black sm:px-8 md:grid-cols-2">
+    <section className="monad mx-auto grid min-h-[70vh] max-w-4xl grid-cols-1 items-center gap-6 px-5 py-16 text-black sm:px-8 md:grid-cols-2">
       <div className="space-y-6">
         <div className="space-y-2 text-center md:text-left">
           <span className="font-semibold uppercase text-muted-foreground">

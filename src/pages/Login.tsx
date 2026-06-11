@@ -71,7 +71,7 @@ const ROLE_SWAP_VARIANTS = {
 };
 
 const serifDisplay = {
-  fontFamily: 'Georgia, "Times New Roman", serif',
+  fontFamily: "'Source Serif 4', ui-serif, Georgia, 'Times New Roman', serif",
 };
 
 export const Login = () => {
@@ -125,7 +125,7 @@ export const Login = () => {
   };
 
   return (
-    <main className="overflow-x-hidden bg-[#fbfaf7] text-black">
+    <main className="monadoverflow-x-hidden bg-[#f6f3f1] text-black">
       <section className="mx-auto max-w-[92rem] px-5 py-14 sm:px-8 md:py-20">
         <div className="grid items-start gap-10 lg:grid-cols-[minmax(0,1fr)_440px] xl:gap-16">
           <section className="hidden py-4 lg:block">
@@ -175,11 +175,11 @@ export const Login = () => {
                     // Olive in the middle, light on the ends — high-contrast
                     // sequence that mirrors the hero headline.
                     const isMiddle = index === 1;
-                    const pieceBg = isMiddle ? '#42520d' : '#dcefc7';
-                    const pieceFg = isMiddle ? '#f4f1eb' : '#20300a';
-                    const labelMuted = isMiddle ? 'text-white/60' : 'text-[#20300a]/60';
-                    const supportMuted = isMiddle ? 'text-white/75' : 'text-[#20300a]/72';
-                    const iconBadgeBg = isMiddle ? 'bg-white/15 text-white' : 'bg-[#42520d] text-[#dcefc7]';
+                    const pieceBg = isMiddle ? '#242424' : '#cfdaf5';
+                    const pieceFg = isMiddle ? '#f6f3f1' : '#242424';
+                    const labelMuted = isMiddle ? 'text-white/60' : 'text-[#242424]/60';
+                    const supportMuted = isMiddle ? 'text-white/75' : 'text-[#242424]/72';
+                    const iconBadgeBg = isMiddle ? 'bg-white/15 text-white' : 'bg-[#242424] text-[#cfdaf5]';
 
                     // Puzzle joint class — leftmost only has knob, middle has
                     // both, rightmost only has socket. Z-index decreases
@@ -272,12 +272,12 @@ export const Login = () => {
                 <Switch.Control
                   label="For Founders"
                   value="founder"
-                  activeClassName="bg-[#dcefc7] text-black fill-black"
+                  activeClassName="bg-[#cfdaf5] text-black fill-black"
                 />
                 <Switch.Control
                   label="For VCs"
                   value="investor"
-                  activeClassName="bg-[#42520d] text-white fill-white"
+                  activeClassName="bg-[#242424] text-white fill-white"
                 />
               </Switch>
             </div>
@@ -397,12 +397,12 @@ const KindeAuthPanel = ({
   return (
     // Dark olive-charcoal panel on the light editorial page — same contrast
     // trick Vercel/Linear use to make auth feel like the focal CTA. Subtle
-    // sage hairline (#42520d at low alpha) ties it to the rest of the brand.
-    <div className="relative overflow-hidden rounded-[18px] border border-[#42520d]/40 bg-[#181a13] p-7 text-white shadow-[0_30px_80px_rgba(20,24,8,0.32)]">
+    // sage hairline (#242424 at low alpha) ties it to the rest of the brand.
+    <div className="relative overflow-hidden rounded-[18px] border border-[#242424]/40 bg-[#242424] p-7 text-white shadow-[0_30px_80px_rgba(20,24,8,0.32)]">
       {/* Soft top-corner halo so the dark box doesn't read flat. */}
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute -right-20 -top-24 h-56 w-56 rounded-full bg-[#dcefc7]/[0.07] blur-3xl"
+        className="pointer-events-none absolute -right-20 -top-24 h-56 w-56 rounded-full bg-[#cfdaf5]/[0.07] blur-3xl"
       />
 
       <div className="relative">
@@ -416,13 +416,13 @@ const KindeAuthPanel = ({
       </div>
 
       <div className="relative mt-6 rounded-[14px] border border-white/10 bg-white/[0.04] p-4 backdrop-blur">
-        <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#dcefc7]/75">
+        <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#cfdaf5]/75">
           {contextLabel}
         </p>
         <div className="mt-3 grid gap-2">
           {contextItems.map((item) => (
             <div key={item} className="flex items-start gap-2.5 text-sm leading-5 text-white/80">
-              <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-[#dcefc7]" />
+              <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-[#cfdaf5]" />
               {item}
             </div>
           ))}
@@ -447,7 +447,7 @@ const KindeAuthPanel = ({
                       onClick={() => setAuthMode(mode)}
                       className={`h-8 flex-1 rounded-full text-xs font-semibold transition-colors ${
                         active
-                          ? 'bg-[#dcefc7] text-[#181a13] shadow-[0_4px_14px_rgba(220,239,199,0.18)]'
+                          ? 'bg-[#cfdaf5] text-[#242424] shadow-[0_4px_14px_rgba(220,239,199,0.18)]'
                           : 'text-white/55 hover:text-white/85'
                       }`}
                     >
@@ -464,7 +464,7 @@ const KindeAuthPanel = ({
                   type="button"
                   onClick={() => continueWith(kindeConnectionIds.google)}
                   disabled={isLoading}
-                  className="group inline-flex h-11 w-full items-center justify-center gap-3 rounded-[10px] bg-white px-4 text-sm font-semibold text-[#181a13] shadow-[0_8px_22px_rgba(0,0,0,0.25)] transition-all hover:-translate-y-px hover:shadow-[0_12px_28px_rgba(0,0,0,0.32)] disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0"
+                  className="group inline-flex h-11 w-full items-center justify-center gap-3 rounded-[10px] bg-white px-4 text-sm font-semibold text-[#242424] shadow-[0_8px_22px_rgba(0,0,0,0.25)] transition-all hover:-translate-y-px hover:shadow-[0_12px_28px_rgba(0,0,0,0.32)] disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0"
                 >
                   <GoogleMark className="h-4 w-4" />
                   {isLoading ? 'Loading…' : isSignup ? 'Sign up with Google' : 'Sign in with Google'}
@@ -487,7 +487,7 @@ const KindeAuthPanel = ({
                   type="button"
                   onClick={() => continueWith(kindeConnectionIds.email)}
                   disabled={isLoading}
-                  className="group inline-flex h-11 w-full items-center justify-center gap-3 rounded-[10px] bg-[#dcefc7] px-4 text-sm font-semibold text-[#181a13] shadow-[0_8px_22px_rgba(220,239,199,0.18)] transition-all hover:-translate-y-px hover:bg-[#e7f5d4] hover:shadow-[0_12px_28px_rgba(220,239,199,0.26)] disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0"
+                  className="group inline-flex h-11 w-full items-center justify-center gap-3 rounded-[10px] bg-[#cfdaf5] px-4 text-sm font-semibold text-[#242424] shadow-[0_8px_22px_rgba(220,239,199,0.18)] transition-all hover:-translate-y-px hover:bg-[#cfdaf5] hover:shadow-[0_12px_28px_rgba(220,239,199,0.26)] disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0"
                 >
                   <AtSign className="h-4 w-4" />
                   {isLoading ? 'Loading…' : isSignup ? 'Sign up with email' : 'Sign in with email'}
@@ -523,7 +523,7 @@ const KindeAuthPanel = ({
                 type="button"
                 onClick={() => continueWith('')}
                 disabled={isLoading}
-                className="inline-flex h-11 w-full items-center justify-center rounded-[10px] bg-[#dcefc7] px-4 text-sm font-semibold text-[#181a13] shadow-[0_8px_22px_rgba(220,239,199,0.18)] transition-all hover:-translate-y-px hover:bg-[#e7f5d4] disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0"
+                className="inline-flex h-11 w-full items-center justify-center rounded-[10px] bg-[#cfdaf5] px-4 text-sm font-semibold text-[#242424] shadow-[0_8px_22px_rgba(220,239,199,0.18)] transition-all hover:-translate-y-px hover:bg-[#cfdaf5] disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0"
               >
                 {isLoading ? 'Loading…' : 'Sign in'}
               </button>
@@ -558,7 +558,7 @@ const KindeAuthPanel = ({
               const targetRole = kindeUser ? resolveKindeRole(kindeUser.id, role) : role;
               navigate(`/dashboard/${targetRole}`);
             }}
-            className="inline-flex h-9 items-center justify-center rounded-[8px] bg-[#dcefc7] px-4 text-sm font-semibold text-[#181a13] transition-colors hover:bg-[#e7f5d4]"
+            className="inline-flex h-9 items-center justify-center rounded-[8px] bg-[#cfdaf5] px-4 text-sm font-semibold text-[#242424] transition-colors hover:bg-[#cfdaf5]"
           >
             Open workspace
           </button>

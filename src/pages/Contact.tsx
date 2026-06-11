@@ -4,7 +4,7 @@ import { LogoIcon } from '@/components/LogoIcon';
 import { isSupabaseConfigured, supabase } from '@/lib/supabase';
 
 const serifDisplay = {
-  fontFamily: 'Georgia, "Times New Roman", serif',
+  fontFamily: "'Source Serif 4', ui-serif, Georgia, 'Times New Roman', serif",
 };
 
 const CONTACT_EMAIL = 'hello@apparent.dev';
@@ -109,7 +109,7 @@ export const Contact = () => {
   };
 
   return (
-    <main className="overflow-x-hidden bg-[#fbfaf7] text-black">
+    <main className="monadoverflow-x-hidden bg-[#f6f3f1] text-black">
       <section className="mx-auto max-w-[92rem] px-5 pb-14 pt-14 sm:px-8 md:pt-20">
         <h1
           className="max-w-[86rem] text-[3.45rem] font-normal leading-[0.88] tracking-[-0.055em] sm:text-[7rem] md:text-[8.5rem] lg:text-[10rem]"
@@ -138,7 +138,7 @@ export const Contact = () => {
           <div className="mt-14 grid gap-8">
             {contactNotes.map((note) => (
               <article key={note.title} className="grid gap-4 sm:grid-cols-[2.5rem_1fr]">
-                <note.icon className="mt-1 h-5 w-5 text-[#42520d]" />
+                <note.icon className="mt-1 h-5 w-5 text-[#242424]" />
                 <div>
                   <h3 className="text-lg font-normal tracking-[-0.025em]" style={serifDisplay}>
                     {note.title}
@@ -159,7 +159,7 @@ export const Contact = () => {
                 name="name"
                 value={values.name}
                 onChange={handleChange}
-                className="h-12 rounded-2xl border border-black/10 bg-[#fbfaf7] px-4 text-sm font-normal outline-none transition-colors placeholder:text-black/35 focus:border-[#8E9C78]"
+                className="h-12 rounded-2xl border border-black/10 bg-[#f6f3f1] px-4 text-sm font-normal outline-none transition-colors placeholder:text-black/35 focus:border-[#4e4d4d]"
                 placeholder="Your name"
               />
             </label>
@@ -172,7 +172,7 @@ export const Contact = () => {
                 name="email"
                 value={values.email}
                 onChange={handleChange}
-                className="h-12 rounded-2xl border border-black/10 bg-[#fbfaf7] px-4 text-sm font-normal outline-none transition-colors placeholder:text-black/35 focus:border-[#8E9C78]"
+                className="h-12 rounded-2xl border border-black/10 bg-[#f6f3f1] px-4 text-sm font-normal outline-none transition-colors placeholder:text-black/35 focus:border-[#4e4d4d]"
                 placeholder="you@company.com"
               />
             </label>
@@ -183,7 +183,7 @@ export const Contact = () => {
                 name="company"
                 value={values.company}
                 onChange={handleChange}
-                className="h-12 rounded-2xl border border-black/10 bg-[#fbfaf7] px-4 text-sm font-normal outline-none transition-colors placeholder:text-black/35 focus:border-[#8E9C78]"
+                className="h-12 rounded-2xl border border-black/10 bg-[#f6f3f1] px-4 text-sm font-normal outline-none transition-colors placeholder:text-black/35 focus:border-[#4e4d4d]"
                 placeholder="Company or fund"
               />
             </label>
@@ -194,7 +194,7 @@ export const Contact = () => {
                 name="role"
                 value={values.role}
                 onChange={handleChange}
-                className="h-12 rounded-2xl border border-black/10 bg-[#fbfaf7] px-4 text-sm font-normal outline-none transition-colors focus:border-[#8E9C78]"
+                className="h-12 rounded-2xl border border-black/10 bg-[#f6f3f1] px-4 text-sm font-normal outline-none transition-colors focus:border-[#4e4d4d]"
               >
                 {roleOptions.map((role) => (
                   <option key={role} value={role}>
@@ -210,7 +210,7 @@ export const Contact = () => {
                 name="topic"
                 value={values.topic}
                 onChange={handleChange}
-                className="h-12 rounded-2xl border border-black/10 bg-[#fbfaf7] px-4 text-sm font-normal outline-none transition-colors focus:border-[#8E9C78]"
+                className="h-12 rounded-2xl border border-black/10 bg-[#f6f3f1] px-4 text-sm font-normal outline-none transition-colors focus:border-[#4e4d4d]"
               >
                 {topicOptions.map((topic) => (
                   <option key={topic} value={topic}>
@@ -227,7 +227,7 @@ export const Contact = () => {
                 name="message"
                 value={values.message}
                 onChange={handleChange}
-                className="min-h-44 resize-none rounded-[24px] border border-black/10 bg-[#fbfaf7] px-4 py-3 text-sm font-normal leading-7 outline-none transition-colors placeholder:text-black/35 focus:border-[#8E9C78]"
+                className="min-h-44 resize-none rounded-[24px] border border-black/10 bg-[#f6f3f1] px-4 py-3 text-sm font-normal leading-7 outline-none transition-colors placeholder:text-black/35 focus:border-[#4e4d4d]"
                 placeholder="Tell us what you need, who should follow up, and any relevant context."
               />
             </label>
@@ -245,7 +245,7 @@ export const Contact = () => {
             <button
               type="submit"
               disabled={status === 'submitting'}
-              className="inline-flex shrink-0 items-center justify-center rounded-full bg-[#8E9C78] px-6 py-3 text-sm font-semibold text-white transition-all hover:-translate-y-0.5 hover:text-black disabled:cursor-not-allowed disabled:opacity-60"
+              className="inline-flex shrink-0 items-center justify-center rounded-full bg-[#4e4d4d] px-6 py-3 text-sm font-semibold text-white transition-all hover:-translate-y-0.5 hover:text-black disabled:cursor-not-allowed disabled:opacity-60"
             >
               {status === 'submitting' ? 'Sending...' : 'Send message'}
               {status === 'submitting' ? null : <Send className="ml-2 h-4 w-4" />}
@@ -253,16 +253,16 @@ export const Contact = () => {
           </div>
 
           {status === 'success' ? (
-            <div className="mt-6 flex items-start gap-3 rounded-[22px] bg-[#dcefc7] px-4 py-4 text-sm leading-6 text-black">
+            <div className="mt-6 flex items-start gap-3 rounded-[22px] bg-[#cfdaf5] px-4 py-4 text-sm leading-6 text-black">
               <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0" />
               <p>Your message is in. We will route it to the right person.</p>
             </div>
           ) : null}
 
           {status === 'fallback' || status === 'error' ? (
-            <div className="mt-6 rounded-[22px] bg-[#fbfaf7] px-4 py-4 text-sm leading-6 text-black/60">
+            <div className="mt-6 rounded-[22px] bg-[#f6f3f1] px-4 py-4 text-sm leading-6 text-black/60">
               Your email client should open with the message prepared. You can also email{' '}
-              <a href={`mailto:${CONTACT_EMAIL}`} className="font-semibold text-black hover:text-[#42520d]">
+              <a href={`mailto:${CONTACT_EMAIL}`} className="font-semibold text-black hover:text-[#242424]">
                 {CONTACT_EMAIL}
               </a>
               .
@@ -272,7 +272,7 @@ export const Contact = () => {
       </section>
 
       <section className="mx-auto max-w-[92rem] border-t border-black/10 px-5 py-20 text-center sm:px-8">
-        <Mail className="mx-auto mb-10 h-6 w-6 text-[#02A070]" />
+        <Mail className="mx-auto mb-10 h-6 w-6 text-[#000000]" />
         <h2 className="mx-auto max-w-3xl text-5xl font-normal leading-none tracking-[-0.045em] md:text-7xl" style={serifDisplay}>
           Prefer email?
         </h2>
@@ -281,7 +281,7 @@ export const Contact = () => {
         </p>
         <a
           href={`mailto:${CONTACT_EMAIL}`}
-          className="mt-10 inline-flex rounded-full bg-[#dcefc7] px-8 py-3 text-sm font-semibold text-black transition-colors hover:bg-[#cce8ae]"
+          className="mt-10 inline-flex rounded-full bg-[#cfdaf5] px-8 py-3 text-sm font-semibold text-black transition-colors hover:bg-[#bcc8ef]"
         >
           Email {CONTACT_EMAIL}
           <ArrowUpRight className="ml-1 inline h-3.5 w-3.5 align-[-2px]" />

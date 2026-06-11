@@ -49,7 +49,7 @@ export const PublicPageShell = ({ children }: { children: ReactNode }) => {
   }, []);
 
   return (
-    <div className={user ? 'min-h-screen bg-[#fbfaf7] pl-[15rem]' : 'min-h-screen bg-[#fbfaf7]'}>
+    <div className={user ? 'min-h-screen bg-[#fbfaf7] pl-[15rem]' : 'monad min-h-screen bg-[#f6f3f1]'}>
       {user ? (
         <SessionNavBar role={user.role} user={user} />
       ) : !loading ? (

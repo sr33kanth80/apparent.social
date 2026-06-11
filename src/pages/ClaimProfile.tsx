@@ -3,7 +3,7 @@ import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { ArrowUpRight, Sparkles, Star, Zap } from 'lucide-react';
 import { loadBuilderInterestSummary, loadSourceSignal } from '../lib/dashboard-service';
 
-const serif = { fontFamily: 'Georgia, "Times New Roman", serif' };
+const serif = { fontFamily: "'Source Serif 4', ui-serif, Georgia, 'Times New Roman', serif" };
 
 /**
  * Public claim landing for an ingested (scraped) builder. Shown via a link sent
@@ -44,9 +44,9 @@ export const ClaimProfile = () => {
   const label = company || 'your work';
 
   return (
-    <main className="min-h-screen bg-[#fbfaf7] px-5 py-16 text-black sm:px-8">
+    <main className="monadmin-h-screen bg-[#f6f3f1] px-5 py-16 text-black sm:px-8">
       <div className="mx-auto max-w-2xl">
-        <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-black/10 bg-white/70 px-3 py-1.5 text-xs font-semibold text-[#42520d]">
+        <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-black/10 bg-white/70 px-3 py-1.5 text-xs font-semibold text-[#242424]">
           <Sparkles className="h-3.5 w-3.5" /> Apparent · investor interest
         </div>
 
@@ -67,7 +67,7 @@ export const ClaimProfile = () => {
 
             <div className="mt-8 grid gap-3 sm:grid-cols-2">
               <div className="flex items-center gap-3 rounded-[20px] border border-black/10 bg-white/70 p-5">
-                <span className="flex h-11 w-11 items-center justify-center rounded-full bg-[#42520d] text-white">
+                <span className="flex h-11 w-11 items-center justify-center rounded-full bg-[#242424] text-white">
                   <Star className="h-5 w-5" fill="currentColor" />
                 </span>
                 <div>
@@ -101,7 +101,7 @@ export const ClaimProfile = () => {
         <div className="mt-10 flex flex-wrap items-center gap-3">
           <Link
             to={`/login?role=founder${signalId ? `&claim=${encodeURIComponent(signalId)}` : ''}`}
-            className="inline-flex items-center gap-2 rounded-full bg-[#42520d] px-6 py-3 text-sm font-semibold text-white transition hover:bg-[#34420a]"
+            className="inline-flex items-center gap-2 rounded-full bg-[#242424] px-6 py-3 text-sm font-semibold text-white transition hover:bg-[#000000]"
           >
             Claim my profile <ArrowUpRight className="h-4 w-4" />
           </Link>

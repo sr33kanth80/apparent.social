@@ -25,7 +25,7 @@ import type { AppUser, PublicFounderProfile, PublicInvestorProfile, PublicProfil
 import { VerifiedAvatar } from '@/components/VerifiedAvatar';
 import { GitHubBadge } from '@/components/GitHubBadge';
 
-const serif = { fontFamily: 'Georgia, "Times New Roman", serif' };
+const serif = { fontFamily: "'Source Serif 4', ui-serif, Georgia, 'Times New Roman', serif" };
 
 // ─── tiny helpers ──────────────────────────────────────────────────────────────
 
@@ -36,7 +36,7 @@ const initials = (name: string) =>
     .map((w) => w[0]?.toUpperCase() ?? '')
     .join('');
 
-const Avatar = ({ src, name, size = 'lg', bg = '#dcefc7' }: { src?: string; name: string; size?: 'sm' | 'lg'; bg?: string }) => {
+const Avatar = ({ src, name, size = 'lg', bg = '#cfdaf5' }: { src?: string; name: string; size?: 'sm' | 'lg'; bg?: string }) => {
   const dim = size === 'lg' ? 'h-20 w-20 text-xl rounded-[22px]' : 'h-11 w-11 text-sm rounded-[14px]';
   return src ? (
     <img src={src} alt={name} className={`${dim} shrink-0 object-cover`} />
@@ -52,14 +52,14 @@ const Avatar = ({ src, name, size = 'lg', bg = '#dcefc7' }: { src?: string; name
 
 const Tag = ({ children, accent = false }: { children: React.ReactNode; accent?: boolean }) => (
   <span
-    className={`rounded-full px-3 py-1.5 text-xs font-semibold ${accent ? 'bg-[#42520d] text-white' : 'bg-[#dcefc7] text-black'}`}
+    className={`rounded-full px-3 py-1.5 text-xs font-semibold ${accent ? 'bg-[#242424] text-white' : 'bg-[#cfdaf5] text-black'}`}
   >
     {children}
   </span>
 );
 
 const SectionLabel = ({ children }: { children: React.ReactNode }) => (
-  <p className="mb-8 text-sm font-semibold uppercase tracking-[0.12em] text-[#42520d]">{children}</p>
+  <p className="mb-8 text-sm font-semibold uppercase tracking-[0.12em] text-[#242424]">{children}</p>
 );
 
 // ─── messaging ──────────────────────────────────────────────────────────────
@@ -69,7 +69,7 @@ const firstNameOf = (name: string) => name.split(/\s+/)[0] || 'them';
 // Primary "Message" button for the hero. DM is gated to logged-in viewers.
 const MessageButton = ({ viewer, name, onMessage }: { viewer: AppUser | null; name: string; onMessage: () => void }) => {
   const cls =
-    'inline-flex items-center gap-1.5 rounded-full bg-[#42520d] px-5 py-2.5 text-sm font-semibold text-white transition hover:opacity-90';
+    'inline-flex items-center gap-1.5 rounded-full bg-[#242424] px-5 py-2.5 text-sm font-semibold text-white transition hover:opacity-90';
   return viewer ? (
     <button type="button" onClick={onMessage} className={cls}>
       <MessageSquare className="h-4 w-4" /> Message {firstNameOf(name)}
@@ -125,7 +125,7 @@ const ShareButton = ({ username, name }: { username: string; name: string }) => 
 
   const xUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(url)}`;
   const liUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}`;
-  const itemCls = 'flex w-full items-center gap-2 rounded-xl px-3 py-2 text-sm text-black transition-colors hover:bg-[#fbf8f3]';
+  const itemCls = 'flex w-full items-center gap-2 rounded-xl px-3 py-2 text-sm text-black transition-colors hover:bg-[#f6f3f1]';
 
   return (
     <div className="inline-block">
@@ -146,7 +146,7 @@ const ShareButton = ({ username, name }: { username: string; name: string }) => 
             style={{ top: pos.top, left: pos.left }}
           >
             <button type="button" onClick={copy} className={itemCls}>
-              {copied ? <Check className="h-4 w-4 text-[#42520d]" /> : <LinkIcon className="h-4 w-4" />}
+              {copied ? <Check className="h-4 w-4 text-[#242424]" /> : <LinkIcon className="h-4 w-4" />}
               {copied ? 'Link copied!' : 'Copy link'}
             </button>
             <a href={xUrl} target="_blank" rel="noreferrer" onClick={() => setOpen(false)} className={itemCls}>
@@ -186,13 +186,13 @@ const ConnectSection = ({
   if (viewer) return null;
 
   const fname = firstNameOf(name);
-  const card = tone === 'dark' ? 'bg-[#42520d] text-white' : 'bg-[#dcefc7] text-black';
-  const eyebrow = tone === 'dark' ? 'text-white/60' : 'text-[#42520d]';
+  const card = tone === 'dark' ? 'bg-[#242424] text-white' : 'bg-[#cfdaf5] text-black';
+  const eyebrow = tone === 'dark' ? 'text-white/60' : 'text-[#242424]';
   const sub = tone === 'dark' ? 'text-white/70' : 'text-black/60';
   const primary =
     tone === 'dark'
-      ? 'bg-white text-[#42520d] hover:bg-[#dcefc7]'
-      : 'bg-[#42520d] text-white hover:opacity-90';
+      ? 'bg-white text-[#242424] hover:bg-[#cfdaf5]'
+      : 'bg-[#242424] text-white hover:opacity-90';
   const secondary =
     tone === 'dark' ? 'border-white/30 text-white hover:bg-white/10' : 'border-black/20 text-black hover:bg-black/5';
 
@@ -275,7 +275,7 @@ const ProfileMessageModal = ({
           <div className="py-6 text-center">
             <p className="text-lg font-semibold" style={serif}>Message sent</p>
             <p className="mt-2 text-sm text-black/60">Your message to {target.name} is on its way.</p>
-            <button type="button" onClick={onClose} className="mt-6 rounded-full bg-[#42520d] px-6 py-2.5 text-sm font-semibold text-white">
+            <button type="button" onClick={onClose} className="mt-6 rounded-full bg-[#242424] px-6 py-2.5 text-sm font-semibold text-white">
               Done
             </button>
           </div>
@@ -300,14 +300,14 @@ const ProfileMessageModal = ({
               className="mt-3 min-h-32 w-full resize-none rounded-xl border border-black/10 px-3 py-2 text-sm leading-relaxed outline-none focus:border-black/30"
             />
             <div className="mt-4 flex justify-end gap-2">
-              <button type="button" onClick={onClose} className="rounded-full border border-black/10 px-4 py-2 text-sm font-semibold hover:bg-[#fbf8f3]">
+              <button type="button" onClick={onClose} className="rounded-full border border-black/10 px-4 py-2 text-sm font-semibold hover:bg-[#f6f3f1]">
                 Cancel
               </button>
               <button
                 type="button"
                 onClick={send}
                 disabled={status === 'sending' || !body.trim()}
-                className="inline-flex items-center gap-1.5 rounded-full bg-[#42520d] px-5 py-2 text-sm font-semibold text-white disabled:opacity-50"
+                className="inline-flex items-center gap-1.5 rounded-full bg-[#242424] px-5 py-2 text-sm font-semibold text-white disabled:opacity-50"
               >
                 <Send className="h-3.5 w-3.5" /> {status === 'sending' ? 'Sending…' : 'Send'}
               </button>
@@ -488,11 +488,11 @@ const FounderHero = ({
 
       {/* ─ Top pill row ─ */}
       <div className="flex flex-wrap items-center gap-2">
-        <span className="rounded-full bg-[#dcefc7] px-3 py-1 text-xs font-semibold text-[#20300a]">
+        <span className="rounded-full bg-[#cfdaf5] px-3 py-1 text-xs font-semibold text-[#242424]">
           Founder on Apparent
         </span>
         {fundraisingPill && (
-          <span className="rounded-full bg-[#42520d] px-3 py-1 text-xs font-semibold text-white">
+          <span className="rounded-full bg-[#242424] px-3 py-1 text-xs font-semibold text-white">
             {fundraisingPill}
           </span>
         )}
@@ -505,7 +505,7 @@ const FounderHero = ({
 
       {/* ─ Header row ─ */}
       <div className="mt-6 flex flex-wrap items-center gap-4">
-        <VerifiedAvatar src={profile.profilePhotoUrl} name={name} size="sm" bg="#42520d" verified={profile.githubVerified} />
+        <VerifiedAvatar src={profile.profilePhotoUrl} name={name} size="sm" bg="#242424" verified={profile.githubVerified} />
         <div className="min-w-0">
           <p className="truncate text-2xl font-normal tracking-[-0.02em]" style={serif}>{name}</p>
           <p className="mt-0.5 text-xs font-semibold text-black/55">@{profile.username}</p>
@@ -535,7 +535,7 @@ const FounderHero = ({
           {isOwnProfile && (
             <Link
               to="/dashboard/founder/profile"
-              className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-[#42520d]/55 transition-colors hover:text-[#42520d]"
+              className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-[#242424]/55 transition-colors hover:text-[#242424]"
             >
               <Plus className="h-3 w-3" /> Add a headline
             </Link>
@@ -594,7 +594,7 @@ const FounderHero = ({
           </p>
           <Link
             to="/dashboard/founder/profile"
-            className="flex items-center gap-3 rounded-2xl border border-dashed border-black/15 bg-[#f4f1eb] p-4 transition-colors hover:border-[#42520d]/30 hover:bg-[#edeae3]"
+            className="flex items-center gap-3 rounded-2xl border border-dashed border-black/15 bg-[#f6f3f1] p-4 transition-colors hover:border-[#242424]/30 hover:bg-[#edeae3]"
           >
             <GitHubIcon className="h-5 w-5 shrink-0 text-black/35" />
             <div className="min-w-0">
@@ -610,7 +610,7 @@ const FounderHero = ({
       {facts.length > 0 && (
         <div className="mt-10 grid gap-px overflow-hidden rounded-2xl border border-black/10 bg-black/[0.06] sm:grid-cols-2">
           {facts.map((f) => (
-            <div key={f.label} className="bg-[#fbfaf7] px-5 py-4">
+            <div key={f.label} className="bg-[#f6f3f1] px-5 py-4">
               <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-black/45">
                 {f.label}
               </p>
@@ -623,7 +623,7 @@ const FounderHero = ({
       {/* ─ Pitch row: video + deck ─ */}
       {latestLaunch && (latestLaunch.pitchVideoUrl || latestLaunch.demoVideoUrl || latestLaunch.pitchDeckUrl) && (
         <div className="mt-10 border-t border-black/10 pt-6">
-          <p className="mb-3 text-[10px] font-semibold uppercase tracking-[0.18em] text-[#42520d]">
+          <p className="mb-3 text-[10px] font-semibold uppercase tracking-[0.18em] text-[#242424]">
             Pitch
           </p>
           <div className="grid gap-3 sm:grid-cols-2">
@@ -633,9 +633,9 @@ const FounderHero = ({
                 href={latestLaunch.pitchVideoUrl || latestLaunch.demoVideoUrl}
                 target="_blank"
                 rel="noreferrer"
-                className="group relative flex h-44 items-center justify-center overflow-hidden rounded-2xl bg-gradient-to-br from-[#dcefc7] via-[#a8c890] to-[#42520d]"
+                className="group relative flex h-44 items-center justify-center overflow-hidden rounded-2xl bg-gradient-to-br from-[#cfdaf5] via-[#cfdaf5] to-[#242424]"
               >
-                <span className="flex h-12 w-12 items-center justify-center rounded-full bg-white text-[#42520d] shadow-lg transition-transform group-hover:scale-105">
+                <span className="flex h-12 w-12 items-center justify-center rounded-full bg-white text-[#242424] shadow-lg transition-transform group-hover:scale-105">
                   <Play className="h-5 w-5 translate-x-[1px]" />
                 </span>
                 <span className="absolute bottom-3 left-3 text-xs font-semibold uppercase tracking-[0.16em] text-white">
@@ -649,7 +649,7 @@ const FounderHero = ({
                 href={latestLaunch.pitchDeckUrl}
                 target="_blank"
                 rel="noreferrer"
-                className="relative flex h-44 flex-col justify-between overflow-hidden rounded-2xl border border-black/10 bg-white p-5 transition-colors hover:bg-[#fbfaf7]"
+                className="relative flex h-44 flex-col justify-between overflow-hidden rounded-2xl border border-black/10 bg-white p-5 transition-colors hover:bg-[#f6f3f1]"
               >
                 <div className="space-y-2">
                   <div className="h-2 w-2/3 rounded-full bg-black/10" />
@@ -677,7 +677,7 @@ const FounderHero = ({
               href={href}
               target="_blank"
               rel="noreferrer"
-              className="inline-flex items-center gap-1.5 rounded-full border border-black/10 bg-white px-3 py-1.5 text-xs font-semibold text-black/70 transition-colors hover:border-black/20 hover:bg-[#fbfaf7] hover:text-black"
+              className="inline-flex items-center gap-1.5 rounded-full border border-black/10 bg-white px-3 py-1.5 text-xs font-semibold text-black/70 transition-colors hover:border-black/20 hover:bg-[#f6f3f1] hover:text-black"
             >
               <Icon className="h-3.5 w-3.5" /> {label}
               {label === 'GitHub' && profile.githubVerified && (
@@ -740,17 +740,17 @@ const FounderProfilePage = ({
   const isProfileComplete = completedCount === totalCount;
 
   return (
-    <main className="overflow-x-hidden bg-[#fbfaf7] text-black">
+    <main className="monadoverflow-x-hidden bg-[#f6f3f1] text-black">
       {/* ── Completion banner (own profile, incomplete) ── */}
       {isOwnProfile && !isProfileComplete && (
-        <div className="border-b border-black/10 bg-[#f4f1eb] px-5 py-3 sm:px-8">
+        <div className="border-b border-black/10 bg-[#f6f3f1] px-5 py-3 sm:px-8">
           <div className="mx-auto flex max-w-[64rem] items-center justify-between gap-4">
             <div className="flex items-center gap-3">
               <div className="flex gap-1">
                 {Object.values(completionFields).map((done, i) => (
                   <div
                     key={i}
-                    className={`h-1.5 w-8 rounded-full transition-colors ${done ? 'bg-[#42520d]' : 'bg-[#d4d0c8]'}`}
+                    className={`h-1.5 w-8 rounded-full transition-colors ${done ? 'bg-[#242424]' : 'bg-[#d4d0c8]'}`}
                   />
                 ))}
               </div>
@@ -760,7 +760,7 @@ const FounderProfilePage = ({
             </div>
             <Link
               to="/dashboard/founder/profile"
-              className="shrink-0 text-xs font-semibold text-[#42520d] hover:underline"
+              className="shrink-0 text-xs font-semibold text-[#242424] hover:underline"
             >
               Complete profile →
             </Link>
@@ -774,7 +774,7 @@ const FounderProfilePage = ({
       {/* ── Product launches ── */}
       <section className="mx-auto max-w-[82rem] border-t border-black/10 px-5 py-16 sm:px-8">
         <div className="mb-8 flex flex-wrap items-center gap-3">
-          <p className="text-sm font-semibold uppercase tracking-[0.12em] text-[#42520d]">Products &amp; launches</p>
+          <p className="text-sm font-semibold uppercase tracking-[0.12em] text-[#242424]">Products &amp; launches</p>
           {profile.launches.length === 0 && !isOwnProfile && (
             <span className="rounded-full border border-black/8 bg-[#ebe8e0] px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.1em] text-black/35">
               Incomplete
@@ -804,7 +804,7 @@ const FounderProfilePage = ({
                     />
                   ) : null}
                   <div
-                    className="h-10 w-10 items-center justify-center rounded-[12px] bg-[#dcefc7] text-xs font-bold text-[#42520d]"
+                    className="h-10 w-10 items-center justify-center rounded-[12px] bg-[#cfdaf5] text-xs font-bold text-[#242424]"
                     style={{ display: launch.logoUrl ? 'none' : 'flex' }}
                   >
                     {launch.name.slice(0, 2).toUpperCase()}
@@ -813,11 +813,11 @@ const FounderProfilePage = ({
                     <p className="truncate text-base font-semibold" style={serif}>{launch.name}</p>
                     <p className="mt-0.5 text-xs text-black/50">{launch.category}</p>
                   </div>
-                  <ArrowUpRight className="h-4 w-4 shrink-0 text-black/30 transition group-hover:text-[#42520d]" />
+                  <ArrowUpRight className="h-4 w-4 shrink-0 text-black/30 transition group-hover:text-[#242424]" />
                 </div>
                 <p className="mt-4 line-clamp-2 text-sm leading-6 text-black/60">{launch.tagline || launch.intro}</p>
                 {launch.metrics && (
-                  <p className="mt-3 text-xs font-medium text-[#42520d]">{launch.metrics}</p>
+                  <p className="mt-3 text-xs font-medium text-[#242424]">{launch.metrics}</p>
                 )}
                 <div className="mt-4 flex flex-wrap gap-2">
                   {[launch.stage, launch.location].filter(Boolean).map((tag) => (
@@ -832,13 +832,13 @@ const FounderProfilePage = ({
           <div className="grid gap-5 md:grid-cols-2">
             <Link
               to="/dashboard/founder/profile"
-              className="flex flex-col items-center justify-center gap-3 rounded-[28px] border-2 border-dashed border-[#42520d]/20 bg-white/60 p-8 text-center transition-colors hover:border-[#42520d]/35 hover:bg-white/80"
+              className="flex flex-col items-center justify-center gap-3 rounded-[28px] border-2 border-dashed border-[#242424]/20 bg-white/60 p-8 text-center transition-colors hover:border-[#242424]/35 hover:bg-white/80"
             >
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#dcefc7]">
-                <Plus className="h-5 w-5 text-[#42520d]" />
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#cfdaf5]">
+                <Plus className="h-5 w-5 text-[#242424]" />
               </div>
               <div>
-                <p className="text-sm font-semibold text-[#42520d]">Add your first launch</p>
+                <p className="text-sm font-semibold text-[#242424]">Add your first launch</p>
                 <p className="mt-1 text-xs text-black/45">Show investors what you've built</p>
               </div>
             </Link>
@@ -861,7 +861,7 @@ const FounderProfilePage = ({
           <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {pastProductList.map((item) => (
               <li key={item} className="flex items-center gap-2 rounded-2xl bg-white/80 px-4 py-3 text-sm text-black/70">
-                <Briefcase className="h-3.5 w-3.5 shrink-0 text-[#42520d]" />
+                <Briefcase className="h-3.5 w-3.5 shrink-0 text-[#242424]" />
                 {item}
               </li>
             ))}
@@ -926,7 +926,7 @@ const InvestorProfilePage = ({
     : [];
 
   return (
-    <main className="overflow-x-hidden bg-[#fbfaf7] text-black">
+    <main className="monadoverflow-x-hidden bg-[#f6f3f1] text-black">
       {/* ── Hero — open editorial layout, mirrors FounderHero ── */}
       <section className="mx-auto max-w-[64rem] px-5 pt-12 sm:px-8 md:pt-16">
         {/* Action bar */}
@@ -939,14 +939,14 @@ const InvestorProfilePage = ({
 
         {/* Pill row */}
         <div className="flex flex-wrap items-center gap-2">
-          <span className="rounded-full bg-[#42520d] px-3 py-1 text-xs font-semibold text-white">
+          <span className="rounded-full bg-[#242424] px-3 py-1 text-xs font-semibold text-white">
             Investor on Apparent
           </span>
         </div>
 
         {/* Header row: avatar + name */}
         <div className="mt-6 flex flex-wrap items-center gap-4">
-          <Avatar src={profile.profilePhotoUrl} name={name} bg="#42520d" />
+          <Avatar src={profile.profilePhotoUrl} name={name} bg="#242424" />
           <div className="min-w-0">
             <p className="truncate text-2xl font-normal tracking-[-0.02em]" style={serif}>{name}</p>
             <p className="mt-0.5 text-xs font-semibold text-black/55">@{profile.username}</p>
@@ -967,7 +967,7 @@ const InvestorProfilePage = ({
         {facts.length > 0 && (
           <div className="mt-10 grid gap-px overflow-hidden rounded-2xl border border-black/10 bg-black/[0.06] sm:grid-cols-2">
             {facts.map((f) => (
-              <div key={f.label} className="bg-[#fbfaf7] px-5 py-4">
+              <div key={f.label} className="bg-[#f6f3f1] px-5 py-4">
                 <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-black/45">
                   {f.label}
                 </p>
@@ -1007,9 +1007,9 @@ const InvestorProfilePage = ({
 // ─── restricted investor gate ─────────────────────────────────────────────────
 
 const InvestorRestrictedPage = ({ username }: { username: string }) => (
-  <main className="min-h-screen overflow-x-hidden bg-[#fbfaf7] text-black">
+  <main className="monadmin-h-screen overflow-x-hidden bg-[#f6f3f1] text-black">
     <section className="mx-auto flex min-h-[70vh] max-w-[92rem] flex-col items-start justify-center px-5 sm:px-8">
-      <p className="mb-6 text-sm font-semibold uppercase tracking-[0.12em] text-[#42520d]">Apparent investor</p>
+      <p className="mb-6 text-sm font-semibold uppercase tracking-[0.12em] text-[#242424]">Apparent investor</p>
       <h1 className="max-w-3xl text-5xl font-normal leading-none tracking-[-0.045em] md:text-7xl" style={serif}>
         @{username}
       </h1>
@@ -1019,13 +1019,13 @@ const InvestorRestrictedPage = ({ username }: { username: string }) => (
       <div className="mt-10 flex flex-wrap gap-3">
         <Link
           to="/login?role=founder"
-          className="rounded-full bg-[#42520d] px-6 py-3 text-sm font-semibold text-white transition hover:opacity-90"
+          className="rounded-full bg-[#242424] px-6 py-3 text-sm font-semibold text-white transition hover:opacity-90"
         >
           Sign in as founder
         </Link>
         <Link
           to="/login?role=investor"
-          className="rounded-full border border-black/20 bg-white px-6 py-3 text-sm font-semibold text-black transition hover:bg-[#dcefc7]"
+          className="rounded-full border border-black/20 bg-white px-6 py-3 text-sm font-semibold text-black transition hover:bg-[#cfdaf5]"
         >
           Sign in as investor
         </Link>
@@ -1096,9 +1096,9 @@ export const PublicProfile = () => {
 
   if (isLoading) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-[#fbfaf7]">
+      <main className="monadflex min-h-screen items-center justify-center bg-[#f6f3f1]">
         <div className="flex flex-col items-center gap-4">
-          <LogoIcon className="h-8 w-8 animate-pulse text-[#42520d]" />
+          <LogoIcon className="h-8 w-8 animate-pulse text-[#242424]" />
           <p className="text-sm text-black/40">Loading profile…</p>
         </div>
       </main>
@@ -1107,7 +1107,7 @@ export const PublicProfile = () => {
 
   if (!result || result.kind === 'not_found') {
     return (
-      <main className="min-h-screen overflow-x-hidden bg-[#fbfaf7]">
+      <main className="monadmin-h-screen overflow-x-hidden bg-[#f6f3f1]">
         <NotFound4042
           title="Profile not found"
           message={`@${handle || 'that profile'} does not exist on Apparent yet.`}

@@ -18,7 +18,7 @@ import { EditorialNavbar } from '../components/EditorialNavbar';
 import type { BuilderMapCluster, BuilderNode } from '../lib/apparent-types';
 
 const serifDisplay = {
-  fontFamily: 'Georgia, "Times New Roman", serif',
+  fontFamily: "'Source Serif 4', ui-serif, Georgia, 'Times New Roman', serif",
 };
 
 const marketRows = [
@@ -375,7 +375,7 @@ export const OurThesis = () => {
   };
 
   return (
-    <main className="min-h-screen overflow-x-hidden bg-[#fbfaf7] text-black">
+    <main className="monadmin-h-screen overflow-x-hidden bg-[#f6f3f1] text-black">
       <EditorialNavbar />
 
       <section className="mx-auto max-w-[92rem] px-5 pb-16 pt-14 sm:px-8 md:pt-20">
@@ -391,8 +391,8 @@ export const OurThesis = () => {
 
           <div className="hidden bg-white/65 px-6 py-6 lg:block">
             <div className="flex items-center justify-between pb-4">
-              <p className="text-sm font-semibold text-[#42520d]">Live market pulse</p>
-              <Sparkles className="h-4 w-4 text-[#02A070]" />
+              <p className="text-sm font-semibold text-[#242424]">Live market pulse</p>
+              <Sparkles className="h-4 w-4 text-[#000000]" />
             </div>
             <div className="grid grid-cols-2 gap-x-6 gap-y-5">
               {[
@@ -420,14 +420,14 @@ export const OurThesis = () => {
             <button
               type="button"
               onClick={() => navigate('/login?role=founder')}
-              className="w-full rounded-full bg-[#dcefc7] px-6 py-3 text-sm font-semibold text-black hover:bg-[#cce8ae] sm:w-auto"
+              className="w-full rounded-full bg-[#cfdaf5] px-6 py-3 text-sm font-semibold text-black hover:bg-[#bcc8ef] sm:w-auto"
             >
               Create founder profile
             </button>
             <button
               type="button"
               onClick={() => navigate('/login?role=investor')}
-              className="w-full rounded-full bg-[#42520d] px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-[#34420a] sm:w-auto"
+              className="w-full rounded-full bg-[#242424] px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-[#000000] sm:w-auto"
             >
               Create investor profile <ArrowUpRight className="ml-1 inline h-3.5 w-3.5 align-[-2px]" />
             </button>
@@ -456,14 +456,14 @@ export const OurThesis = () => {
           <button
             type="button"
             onClick={() => navigate('/about')}
-            className="mt-10 rounded-full bg-[#dcefc7] px-6 py-3 text-sm font-semibold text-black transition-colors hover:bg-[#cce8ae]"
+            className="mt-10 rounded-full bg-[#cfdaf5] px-6 py-3 text-sm font-semibold text-black transition-colors hover:bg-[#bcc8ef]"
           >
             Why Apparent exists
           </button>
         </div>
 
-        <div className="overflow-hidden rounded-[32px] bg-white/80 shadow-[0_18px_60px_rgba(0,0,0,0.06)]">
-          <div className="flex flex-wrap gap-2 bg-[#fbfaf7]/92 px-5 py-4 backdrop-blur">
+        <div className="overflow-hidden rounded-[40px] bg-white/80 shadow-[0_18px_60px_rgba(0,0,0,0.06)]">
+          <div className="flex flex-wrap gap-2 bg-[#f6f3f1]/92 px-5 py-4 backdrop-blur">
             {landingClusters.map((cluster) => (
               <button
                 key={cluster.city}
@@ -472,7 +472,7 @@ export const OurThesis = () => {
                 className={`rounded-full px-3 py-1 text-xs font-semibold transition-colors ${
                   selectedLandingCity === cluster.city
                     ? 'bg-black text-white'
-                    : 'bg-white/80 text-black/60 hover:bg-[#f4f1eb]'
+                    : 'bg-white/80 text-black/60 hover:bg-[#f6f3f1]'
                 }`}
               >
                 {cluster.city} {cluster.builderCount}
@@ -495,13 +495,13 @@ export const OurThesis = () => {
             className="h-[460px] min-h-[460px] rounded-none"
           />
 
-          <div className="grid bg-[#fbfaf7] lg:grid-cols-[1fr_18rem]">
+          <div className="grid bg-[#f6f3f1] lg:grid-cols-[1fr_18rem]">
             <div>
               <div className="flex items-center justify-between px-5 py-4">
                 <p className="text-sm font-semibold">
                   {selectedLandingCity} startups
                 </p>
-                <span className="text-xs font-semibold uppercase tracking-[0.16em] text-[#42520d]">
+                <span className="text-xs font-semibold uppercase tracking-[0.16em] text-[#242424]">
                   {visibleLandingBuilderIds.length || landingStartupNodes.length} visible
                 </span>
               </div>
@@ -518,7 +518,7 @@ export const OurThesis = () => {
                     <span>
                       <span className="flex flex-wrap items-center gap-2">
                         <span className="font-semibold">{builder.company}</span>
-                        <span className="rounded-full bg-[#dcefc7] px-2 py-0.5 text-xs font-semibold text-black">{builder.fitScore}%</span>
+                        <span className="rounded-full bg-[#cfdaf5] px-2 py-0.5 text-xs font-semibold text-black">{builder.fitScore}%</span>
                       </span>
                       <span className="mt-2 block text-sm leading-6 text-black/55">{builder.buildSummary}</span>
                     </span>
@@ -531,8 +531,8 @@ export const OurThesis = () => {
             </div>
 
             <aside className="p-5">
-              <div className="mb-5 flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-[#42520d]">
-                <MapPin className="h-3.5 w-3.5 text-[#02A070]" />
+              <div className="mb-5 flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-[#242424]">
+                <MapPin className="h-3.5 w-3.5 text-[#000000]" />
                 Selected
               </div>
               <h3 className="text-3xl font-normal leading-none tracking-[-0.04em]" style={serifDisplay}>
@@ -551,7 +551,7 @@ export const OurThesis = () => {
                 href={selectedLandingBuilder.profileUrl}
                 target="_blank"
                 rel="noreferrer"
-                className="mt-6 inline-flex rounded-full bg-[#42520d] px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-[#34420a]"
+                className="mt-6 inline-flex rounded-full bg-[#242424] px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-[#000000]"
               >
                 Open startup <ArrowUpRight className="ml-1.5 h-4 w-4" />
               </a>
@@ -561,7 +561,7 @@ export const OurThesis = () => {
       </section>
 
       <section className="mx-auto max-w-[92rem] px-5 py-10 sm:px-8">
-        <div className="flex min-h-[300px] items-center overflow-hidden rounded-[32px] bg-[#1c1c1a] px-8 py-14 text-white md:min-h-[360px] md:px-16">
+        <div className="flex min-h-[300px] items-center overflow-hidden rounded-[40px] bg-[#242424] px-8 py-14 text-white md:min-h-[360px] md:px-16">
           <div>
             <h2 className="max-w-4xl text-4xl font-normal leading-[1.05] tracking-[-0.04em] md:text-6xl" style={serifDisplay}>
               The next great companies are already shipping. They&apos;re just hard to find.
@@ -593,9 +593,9 @@ export const OurThesis = () => {
       </section>
 
       <section id="signals" className="mx-auto max-w-[92rem] border-t border-black/10 px-5 py-16 sm:px-8">
-        <div className="grid overflow-hidden rounded-[32px] bg-white/80 shadow-[0_18px_60px_rgba(0,0,0,0.06)] lg:grid-cols-[0.82fr_1.18fr]">
+        <div className="grid overflow-hidden rounded-[40px] bg-white/80 shadow-[0_18px_60px_rgba(0,0,0,0.06)] lg:grid-cols-[0.82fr_1.18fr]">
           <div className="p-6 sm:p-8">
-            <Target className="mb-10 h-6 w-6 text-[#02A070]" />
+            <Target className="mb-10 h-6 w-6 text-[#000000]" />
             <h2 className="max-w-xl text-5xl font-normal leading-none tracking-[-0.045em] md:text-7xl" style={serifDisplay}>
               Signals become sourceable.
             </h2>
@@ -612,13 +612,13 @@ export const OurThesis = () => {
             </div>
           </div>
 
-          <div className="bg-[#fbfaf7]">
+          <div className="bg-[#f6f3f1]">
             <div className="flex items-center justify-between px-6 py-5 sm:px-8">
               <div className="flex items-center gap-2 text-sm font-semibold">
-                <Search className="h-4 w-4 text-[#02A070]" />
+                <Search className="h-4 w-4 text-[#000000]" />
                 Ranked signal inbox
               </div>
-              <span className="rounded-full bg-[#dcefc7] px-3 py-1 text-xs font-semibold text-black">Avg fit 90%</span>
+              <span className="rounded-full bg-[#cfdaf5] px-3 py-1 text-xs font-semibold text-black">Avg fit 90%</span>
             </div>
             {signalRows.map((row) => (
               <div key={row.company} className="grid gap-4 px-6 py-6 sm:grid-cols-[1fr_auto] sm:items-center sm:px-8">
@@ -628,10 +628,10 @@ export const OurThesis = () => {
                     <span className="text-sm text-black/45">by {row.founder}</span>
                   </div>
                   <p className="mt-2 text-sm leading-6 text-black/60">{row.detail}</p>
-                  <p className="mt-3 text-xs font-semibold uppercase tracking-[0.14em] text-[#42520d]">{row.source}</p>
+                  <p className="mt-3 text-xs font-semibold uppercase tracking-[0.14em] text-[#242424]">{row.source}</p>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="rounded-full bg-[#dcefc7] px-3 py-1.5 text-sm font-semibold text-black">{row.fit}</span>
+                  <span className="rounded-full bg-[#cfdaf5] px-3 py-1.5 text-sm font-semibold text-black">{row.fit}</span>
                   <button type="button" className="rounded-full bg-white/80 px-3 py-1.5 text-sm font-semibold hover:bg-white">
                     Open
                   </button>
@@ -643,18 +643,18 @@ export const OurThesis = () => {
       </section>
 
       <section className="mx-auto grid max-w-[92rem] gap-8 border-t border-black/10 px-5 py-16 sm:px-8 lg:grid-cols-[0.95fr_1.05fr] lg:items-start">
-        <div className="overflow-hidden rounded-[32px] bg-white/80 shadow-[0_18px_60px_rgba(0,0,0,0.06)] lg:rounded-r-none">
+        <div className="overflow-hidden rounded-[40px] bg-white/80 shadow-[0_18px_60px_rgba(0,0,0,0.06)] lg:rounded-r-none">
           <div className="flex items-start justify-between gap-4 px-6 py-6 sm:px-8">
             <div>
               <p className="text-sm font-semibold">Deal-flow board</p>
               <p className="mt-1 text-sm text-black/45">Saved builders move with their source, proof, and outreach context attached.</p>
             </div>
-            <Route className="mt-1 h-5 w-5 shrink-0 text-[#42520d]" />
+            <Route className="mt-1 h-5 w-5 shrink-0 text-[#242424]" />
           </div>
 
           <div className="grid gap-3 px-6 pb-3 sm:grid-cols-3 sm:px-8">
             {dealFlowPreview.map((column) => (
-              <div key={column.stage} className="rounded-[22px] bg-[#fbfaf7] px-5 py-4">
+              <div key={column.stage} className="rounded-[22px] bg-[#f6f3f1] px-5 py-4">
                 <p className="text-xs font-semibold uppercase tracking-[0.16em] text-black/45">{column.stage}</p>
                 <p className="mt-2 text-4xl font-normal leading-none tracking-[-0.045em]" style={serifDisplay}>
                   {column.count}
@@ -665,10 +665,10 @@ export const OurThesis = () => {
 
           <div className="grid gap-4 p-4 lg:grid-cols-3">
             {dealFlowPreview.map((column) => (
-              <div key={column.stage} className="rounded-[26px] bg-[#fbfaf7] p-4">
+              <div key={column.stage} className="rounded-[26px] bg-[#f6f3f1] p-4">
                 <div className="mb-4 flex items-center justify-between px-2">
-                  <span className="text-xs font-semibold uppercase tracking-[0.16em] text-[#42520d]">{column.stage}</span>
-                  <span className="rounded-full bg-[#dcefc7] px-2.5 py-1 text-xs font-semibold text-black">{column.count}</span>
+                  <span className="text-xs font-semibold uppercase tracking-[0.16em] text-[#242424]">{column.stage}</span>
+                  <span className="rounded-full bg-[#cfdaf5] px-2.5 py-1 text-xs font-semibold text-black">{column.count}</span>
                 </div>
                 <div className="space-y-3">
                   {column.items.map(([company, fit, note], index) => (
@@ -680,7 +680,7 @@ export const OurThesis = () => {
                     >
                       <div className="flex items-center justify-between gap-3">
                         <h3 className="font-semibold tracking-[-0.02em]">{company}</h3>
-                        <span className="rounded-full bg-[#dcefc7] px-2 py-0.5 text-xs font-semibold text-black">{fit}</span>
+                        <span className="rounded-full bg-[#cfdaf5] px-2 py-0.5 text-xs font-semibold text-black">{fit}</span>
                       </div>
                       <p className="mt-3 text-sm leading-6 text-black/55">{note}</p>
                     </div>
@@ -690,14 +690,14 @@ export const OurThesis = () => {
             ))}
           </div>
 
-          <div className="grid bg-[#fbfaf7] text-xs font-semibold uppercase tracking-[0.16em] text-[#42520d] sm:grid-cols-[1fr_auto]">
+          <div className="grid bg-[#f6f3f1] text-xs font-semibold uppercase tracking-[0.16em] text-[#242424] sm:grid-cols-[1fr_auto]">
             <div className="px-6 py-4 sm:px-8">Source signal to first meeting</div>
             <div className="px-6 py-4 sm:px-8">Context follows the card</div>
           </div>
         </div>
 
         <div className="px-0 py-10 lg:px-14 lg:py-16">
-          <div className="rounded-[28px] bg-[#42520d] p-8 text-white md:p-10">
+          <div className="rounded-[28px] bg-[#242424] p-8 text-white md:p-10">
             <blockquote className="text-3xl font-normal leading-tight tracking-[-0.03em] md:text-4xl" style={serifDisplay}>
               “The best early companies are visible before they are famous. Apparent is designed for that exact window.”
             </blockquote>
@@ -726,7 +726,7 @@ export const OurThesis = () => {
             <button
               type="button"
               onClick={() => navigate('/login')}
-              className="inline-flex w-fit items-center gap-3 rounded-full bg-black px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-[#42520d]"
+              className="inline-flex w-fit items-center gap-3 rounded-full bg-black px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-[#242424]"
             >
               Enter Apparent <MoveRight className="h-4 w-4" />
             </button>
@@ -745,7 +745,7 @@ export const OurThesis = () => {
 
       <section className="mx-auto max-w-[92rem] border-t border-black/10 px-5 py-20 sm:px-8">
         <div className="py-10 text-center">
-          <Bell className="mx-auto mb-10 h-6 w-6 text-[#02A070]" />
+          <Bell className="mx-auto mb-10 h-6 w-6 text-[#000000]" />
           <h2 className="mx-auto max-w-4xl text-5xl font-normal leading-none tracking-[-0.045em] md:text-7xl" style={serifDisplay}>
             Join before the obvious round.
           </h2>
@@ -756,14 +756,14 @@ export const OurThesis = () => {
             <button
               type="button"
               onClick={() => navigate('/login?role=founder')}
-              className="flex-1 rounded-full bg-[#dcefc7] px-6 py-3 text-sm font-semibold text-black hover:bg-[#cce8ae]"
+              className="flex-1 rounded-full bg-[#cfdaf5] px-6 py-3 text-sm font-semibold text-black hover:bg-[#bcc8ef]"
             >
               Create founder profile
             </button>
             <button
               type="button"
               onClick={() => navigate('/login?role=investor')}
-              className="flex-1 rounded-full bg-[#42520d] px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-[#34420a]"
+              className="flex-1 rounded-full bg-[#242424] px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-[#000000]"
             >
               Create investor profile <ArrowUpRight className="ml-1 inline h-3.5 w-3.5 align-[-2px]" />
             </button>

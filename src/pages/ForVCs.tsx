@@ -6,7 +6,7 @@ import { LogoIcon } from '../components/LogoIcon';
 import { useReveal } from '../lib/useReveal';
 
 const serifDisplay = {
-  fontFamily: 'Georgia, "Times New Roman", serif',
+  fontFamily: "'Source Serif 4', ui-serif, Georgia, 'Times New Roman', serif",
 };
 
 // Founders shown in the interactive "Ranked by fit" inbox. Hovering a row
@@ -60,10 +60,10 @@ const rankedFounders = [
 const RankedByFitCard = () => {
   const [active, setActive] = useState(0);
   return (
-    <div className="flex min-h-[520px] flex-col rounded-[32px] bg-[#1c1c1a] p-7 text-white">
+    <div className="flex min-h-[520px] flex-col rounded-[40px] bg-[#242424] p-7 text-white">
       <div className="mb-5 flex items-center justify-between">
-        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#bcd99a]">Ranked by fit</p>
-        <LogoIcon className="h-5 w-5 text-[#02A070]" />
+        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#a7fccd]">Ranked by fit</p>
+        <LogoIcon className="h-5 w-5 text-[#000000]" />
       </div>
 
       <div className="grid gap-3">
@@ -76,17 +76,17 @@ const RankedByFitCard = () => {
               onMouseEnter={() => setActive(i)}
               onFocus={() => setActive(i)}
               className={`cursor-pointer rounded-2xl border p-4 outline-none transition-colors ${
-                open ? 'border-[#bcd99a]/40 bg-white/[0.06]' : 'border-white/10 bg-white/[0.03] hover:bg-white/[0.05]'
+                open ? 'border-[#a7fccd]/40 bg-white/[0.06]' : 'border-white/10 bg-white/[0.03] hover:bg-white/[0.05]'
               }`}
             >
               {/* Row */}
               <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#dcefc7] text-xs font-semibold text-[#42520d]">AP</div>
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#cfdaf5] text-xs font-semibold text-[#242424]">AP</div>
                 <div className="min-w-0">
                   <p className="text-sm font-semibold">{f.company}</p>
                   <p className="text-xs text-white/45">{f.meta}</p>
                 </div>
-                <span className="ml-auto rounded-full bg-[#dcefc7] px-2.5 py-1 text-xs font-semibold text-black">{f.fit}</span>
+                <span className="ml-auto rounded-full bg-[#cfdaf5] px-2.5 py-1 text-xs font-semibold text-black">{f.fit}</span>
               </div>
 
               {/* Expanded founder card (smooth height via grid-rows) */}
@@ -171,7 +171,7 @@ export const ForVCs = () => {
   useReveal();
 
   return (
-    <main className="overflow-x-hidden bg-[#fbfaf7] text-black">
+    <main className="monad overflow-x-hidden bg-[#f6f3f1] text-black">
       <section data-reveal className="reveal mx-auto max-w-[92rem] px-5 pb-14 pt-14 sm:px-8 md:pt-20">
         <h1
           className="max-w-[86rem] text-[3.35rem] font-normal leading-[0.88] tracking-[-0.055em] sm:text-[7rem] md:text-[8.5rem] lg:text-[10rem]"
@@ -188,7 +188,7 @@ export const ForVCs = () => {
           <button
             type="button"
             onClick={() => navigate('/login?role=investor')}
-            className="w-full rounded-full bg-[#42520d] px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-[#34420a] sm:w-auto"
+            className="w-full rounded-full bg-[#242424] px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-[#000000] sm:w-auto"
           >
             Create investor profile <ArrowUpRight className="ml-1 inline h-3.5 w-3.5 align-[-2px]" />
           </button>
@@ -216,7 +216,7 @@ export const ForVCs = () => {
           <button
             type="button"
             onClick={() => navigate('/login?role=investor')}
-            className="mt-10 rounded-full bg-[#dcefc7] px-6 py-3 text-sm font-semibold text-black transition-colors hover:bg-[#cce8ae]"
+            className="mt-10 rounded-full bg-[#cfdaf5] px-6 py-3 text-sm font-semibold text-black transition-colors hover:bg-[#bcc8ef]"
           >
             Build your thesis
           </button>
@@ -246,7 +246,7 @@ export const ForVCs = () => {
       </section>
 
       <section id="deal-flow" data-reveal className="reveal mx-auto max-w-[92rem] px-5 py-10 sm:px-8">
-        <div className="flex min-h-[320px] items-center overflow-hidden rounded-[32px] bg-[#1c1c1a] px-8 py-14 text-white md:min-h-[420px] md:px-16">
+        <div className="flex min-h-[320px] items-center overflow-hidden rounded-[40px] bg-[#242424] px-8 py-14 text-white md:min-h-[420px] md:px-16">
           <div>
             <h2 className="max-w-4xl text-4xl font-normal leading-[1.05] tracking-[-0.04em] md:text-6xl" style={serifDisplay}>
               By the time it&apos;s consensus, the round is full.
@@ -259,12 +259,12 @@ export const ForVCs = () => {
       </section>
 
       <section data-reveal className="reveal mx-auto grid max-w-[92rem] border-t border-black/10 px-5 py-16 sm:px-8 lg:grid-cols-[0.95fr_1.05fr]">
-        <div className="flex min-h-[420px] items-center overflow-hidden rounded-[32px] bg-[#42520d] p-10 text-white lg:min-h-[580px] lg:rounded-r-none lg:p-14">
+        <div className="flex min-h-[420px] items-center overflow-hidden rounded-[40px] bg-[#242424] p-10 text-white lg:min-h-[580px] lg:rounded-r-none lg:p-14">
           <blockquote className="max-w-md text-3xl font-normal leading-tight tracking-[-0.03em] md:text-4xl" style={serifDisplay}>
             “The best sourcing advantage is knowing which builders matter before the market agrees.”
           </blockquote>
         </div>
-        <div className="bg-[#fbfaf7] px-0 py-10 lg:px-14 lg:py-16">
+        <div className="bg-[#f6f3f1] px-0 py-10 lg:px-14 lg:py-16">
           <div className="mt-8 grid gap-6">
             {[
               ['Inbox', 'Your agent ranks founder and company signals by thesis, proof, freshness, and geography.'],
@@ -282,7 +282,7 @@ export const ForVCs = () => {
 
       <section data-reveal className="reveal mx-auto max-w-[92rem] border-t border-black/10 px-5 py-20 sm:px-8">
         <div className="py-10 text-center">
-          <BarChart3 className="mx-auto mb-10 h-6 w-6 text-[#02A070]" />
+          <BarChart3 className="mx-auto mb-10 h-6 w-6 text-[#000000]" />
           <h2 className="mx-auto max-w-3xl text-5xl font-normal leading-none tracking-[-0.045em] md:text-7xl" style={serifDisplay}>
             Build your private sourcing desk.
           </h2>
@@ -292,7 +292,7 @@ export const ForVCs = () => {
           <button
             type="button"
             onClick={() => navigate('/login?role=investor')}
-            className="mt-10 rounded-full bg-[#42520d] px-8 py-3 text-sm font-semibold text-white transition-colors hover:bg-[#34420a]"
+            className="mt-10 rounded-full bg-[#242424] px-8 py-3 text-sm font-semibold text-white transition-colors hover:bg-[#000000]"
           >
             Create investor profile
           </button>
@@ -310,7 +310,7 @@ export const ForVCs = () => {
             const Icon = icons[index];
             return (
               <div key={title} className="pt-1">
-                <Icon className="mb-5 h-4 w-4 text-[#42520d]" />
+                <Icon className="mb-5 h-4 w-4 text-[#242424]" />
                 <h3 className="font-semibold text-black">{title}</h3>
                 <p className="mt-2 leading-6">{text}</p>
               </div>

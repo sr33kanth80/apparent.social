@@ -66,9 +66,9 @@ export const ClaimBuild = () => {
   }, [code]);
 
   return (
-    <div className="flex min-h-[70vh] items-center justify-center bg-[#fbf8f3] px-6 py-16">
+    <div className="monad flex min-h-[70vh] items-center justify-center bg-[#f6f3f1] px-6 py-16">
       <div className="w-full max-w-md rounded-2xl border border-black/10 bg-white p-8 shadow-[0_10px_34px_rgba(0,0,0,0.05)]">
-        <div className="mb-4 flex items-center gap-2 text-sm font-semibold text-[#42520d]">
+        <div className="mb-4 flex items-center gap-2 text-sm font-semibold text-[#242424]">
           <Terminal className="h-4 w-4" />
           npx apparent
         </div>
@@ -99,7 +99,7 @@ export const ClaimBuild = () => {
 
         {state === 'done' && (
           <div>
-            <div className="mb-2 flex items-center gap-2 text-[#42520d]">
+            <div className="mb-2 flex items-center gap-2 text-[#242424]">
               <Check className="h-5 w-5" />
               <h1 className="text-xl font-semibold">You're on Apparent.</h1>
             </div>
@@ -107,7 +107,7 @@ export const ClaimBuild = () => {
               Your build is now part of your founder profile, and visible to the investors whose thesis you fit.
             </p>
             {result && (
-              <div className="mt-4 space-y-1 rounded-xl bg-[#fbf8f3] p-3 text-sm text-gray-700">
+              <div className="mt-4 space-y-1 rounded-xl bg-[#f6f3f1] p-3 text-sm text-gray-700">
                 {result.project ? <p className="font-medium text-black">{result.project}</p> : null}
                 <p>
                   {result.commits ? `${result.commits.toLocaleString()} commits` : ''}

@@ -5,7 +5,7 @@ import { LogoIcon } from '../components/LogoIcon';
 import { useReveal } from '../lib/useReveal';
 
 const serifDisplay = {
-  fontFamily: 'Georgia, "Times New Roman", serif',
+  fontFamily: "'Source Serif 4', ui-serif, Georgia, 'Times New Roman', serif",
 };
 
 const proofRows = [
@@ -176,7 +176,7 @@ const MatchView = ({ match, play }: { match: Match; play: boolean }) => {
               <div
                 className={`justify-self-stretch rounded-xl border px-3 py-2.5 text-right text-xs font-semibold transition-colors duration-300 ${
                   isHover
-                    ? 'border-[#bcd99a]/50 bg-[#bcd99a]/10 text-white'
+                    ? 'border-[#a7fccd]/50 bg-[#a7fccd]/10 text-white'
                     : 'border-white/10 bg-white/[0.04] text-white/80'
                 }`}
               >
@@ -186,26 +186,26 @@ const MatchView = ({ match, play }: { match: Match; play: boolean }) => {
               {/* Connector */}
               <div className="relative flex w-16 items-center sm:w-20">
                 {isHover && (
-                  <span className="absolute left-1/2 top-[-17px] -translate-x-1/2 whitespace-nowrap rounded-full bg-[#bcd99a] px-2 py-0.5 text-[9px] font-bold text-black">
+                  <span className="absolute left-1/2 top-[-17px] -translate-x-1/2 whitespace-nowrap rounded-full bg-[#a7fccd] px-2 py-0.5 text-[9px] font-bold text-black">
                     +{row.weight}%
                   </span>
                 )}
                 <span
                   className={`h-1.5 w-1.5 shrink-0 rounded-full transition-colors duration-500 ${
-                    connected ? 'bg-[#bcd99a]' : 'bg-white/20'
+                    connected ? 'bg-[#a7fccd]' : 'bg-white/20'
                   }`}
                 />
                 <span className="relative h-px flex-1 overflow-hidden bg-white/10">
                   <span
-                    className={`absolute inset-0 origin-left bg-gradient-to-r from-[#bcd99a] to-[#bcd99a]/60 transition-transform duration-700 ease-out ${
+                    className={`absolute inset-0 origin-left bg-gradient-to-r from-[#a7fccd] to-[#a7fccd]/60 transition-transform duration-700 ease-out ${
                       connected ? 'scale-x-100' : 'scale-x-0'
-                    } ${isHover ? 'shadow-[0_0_8px_#bcd99a]' : ''}`}
+                    } ${isHover ? 'shadow-[0_0_8px_#a7fccd]' : ''}`}
                     style={{ transitionDelay: `${i * 110 + 120}ms` }}
                   />
                 </span>
                 <span
                   className={`h-1.5 w-1.5 shrink-0 rounded-full transition-colors duration-500 ${
-                    connected ? 'bg-[#bcd99a]' : 'bg-white/20'
+                    connected ? 'bg-[#a7fccd]' : 'bg-white/20'
                   }`}
                   style={{ transitionDelay: `${i * 110 + 320}ms` }}
                 />
@@ -215,7 +215,7 @@ const MatchView = ({ match, play }: { match: Match; play: boolean }) => {
               <div
                 className={`justify-self-stretch rounded-xl border px-3 py-2.5 text-left text-xs font-semibold transition-colors duration-300 ${
                   isHover
-                    ? 'border-[#bcd99a]/50 bg-[#bcd99a]/10 text-white'
+                    ? 'border-[#a7fccd]/50 bg-[#a7fccd]/10 text-white'
                     : 'border-white/10 bg-white/[0.04] text-white/80'
                 }`}
               >
@@ -231,7 +231,7 @@ const MatchView = ({ match, play }: { match: Match; play: boolean }) => {
         <div className="flex items-end justify-between">
           <div>
             <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-white/35">Thesis match</p>
-            <p className="text-4xl font-normal tracking-[-0.03em] text-[#bcd99a]" style={serifDisplay}>
+            <p className="text-4xl font-normal tracking-[-0.03em] text-[#a7fccd]" style={serifDisplay}>
               {pct}%
             </p>
           </div>
@@ -241,7 +241,7 @@ const MatchView = ({ match, play }: { match: Match; play: boolean }) => {
         </div>
         <div className="mt-3 h-1 w-full overflow-hidden rounded-full bg-white/10">
           <div
-            className="h-full rounded-full bg-gradient-to-r from-[#bcd99a] to-[#02A070]"
+            className="h-full rounded-full bg-gradient-to-r from-[#a7fccd] to-[#000000]"
             style={{ width: `${pct}%` }}
           />
         </div>
@@ -289,15 +289,15 @@ const MatchCard = () => {
       onMouseLeave={() => setPaused(false)}
     >
       {/* Peeking deck behind, for depth */}
-      <div className="pointer-events-none absolute inset-x-3 top-2 -bottom-2 -z-10 rounded-[32px] bg-[#1a1a17]" />
-      <div className="pointer-events-none absolute inset-x-6 top-4 -bottom-4 -z-20 rounded-[32px] bg-[#151513]" />
+      <div className="pointer-events-none absolute inset-x-3 top-2 -bottom-2 -z-10 rounded-[40px] bg-[#1f1f1f]" />
+      <div className="pointer-events-none absolute inset-x-6 top-4 -bottom-4 -z-20 rounded-[40px] bg-[#1a1a1a]" />
 
       <div
         ref={cardRef}
-        className="relative flex h-full min-h-[520px] flex-col overflow-hidden rounded-[32px] bg-[#141412] p-8 text-white"
+        className="relative flex h-full min-h-[520px] flex-col overflow-hidden rounded-[40px] bg-[#242424] p-8 text-white"
       >
         {/* Ambient glow */}
-        <div className="pointer-events-none absolute -right-24 -top-24 h-64 w-64 rounded-full bg-[#bcd99a]/10 blur-3xl" />
+        <div className="pointer-events-none absolute -right-24 -top-24 h-64 w-64 rounded-full bg-[#a7fccd]/10 blur-3xl" />
 
         {/* Header */}
         <div className="relative flex items-start justify-between">
@@ -307,7 +307,7 @@ const MatchCard = () => {
             </h3>
             <p className="mt-2 text-sm text-white/40">Hover a signal to trace the match.</p>
           </div>
-          <LogoIcon className="h-9 w-9 text-[#bcd99a]" />
+          <LogoIcon className="h-9 w-9 text-[#a7fccd]" />
         </div>
 
         {/* Active match — keyed so the connect + count-up replays per card */}
@@ -325,7 +325,7 @@ const MatchCard = () => {
                 aria-label={`Show match ${i + 1}`}
                 onClick={() => go(i)}
                 className={`h-1.5 rounded-full transition-all duration-300 ${
-                  i === index ? 'w-6 bg-[#bcd99a]' : 'w-1.5 bg-white/25 hover:bg-white/50'
+                  i === index ? 'w-6 bg-[#a7fccd]' : 'w-1.5 bg-white/25 hover:bg-white/50'
                 }`}
               />
             ))}
@@ -362,7 +362,7 @@ export const AboutUs = () => {
   useReveal();
 
   return (
-    <main className="overflow-x-hidden bg-[#fbfaf7] text-black">
+    <main className="monadoverflow-x-hidden bg-[#f6f3f1] text-black">
       <section data-reveal className="reveal mx-auto max-w-[92rem] px-5 pb-14 pt-14 sm:px-8 md:pt-20">
         <h1
           className="max-w-[84rem] text-[3.65rem] font-normal leading-[0.88] tracking-[-0.055em] sm:text-[7rem] md:text-[8.5rem] lg:text-[10rem]"
@@ -412,7 +412,7 @@ export const AboutUs = () => {
           <button
             type="button"
             onClick={() => navigate('/login')}
-            className="mt-10 rounded-full bg-[#dcefc7] px-6 py-3 text-sm font-semibold text-black transition-colors hover:bg-[#cce8ae]"
+            className="mt-10 rounded-full bg-[#cfdaf5] px-6 py-3 text-sm font-semibold text-black transition-colors hover:bg-[#bcc8ef]"
           >
             Discover more
           </button>
@@ -442,12 +442,12 @@ export const AboutUs = () => {
       </section>
 
       <section data-reveal className="reveal mx-auto grid max-w-[92rem] border-t border-black/10 px-5 py-16 sm:px-8 lg:grid-cols-[0.95fr_1.05fr]">
-        <div className="flex min-h-[420px] items-center overflow-hidden rounded-[32px] bg-[#42520d] p-10 text-white lg:min-h-[580px] lg:rounded-r-none lg:p-14">
+        <div className="flex min-h-[420px] items-center overflow-hidden rounded-[40px] bg-[#242424] p-10 text-white lg:min-h-[580px] lg:rounded-r-none lg:p-14">
           <blockquote className="max-w-md text-3xl font-normal leading-tight tracking-[-0.03em] md:text-4xl" style={serifDisplay}>
             “The best early companies are visible before they are famous. Apparent is designed for that exact window.”
           </blockquote>
         </div>
-        <div className="bg-[#fbfaf7] px-0 py-10 lg:px-14 lg:py-16">
+        <div className="bg-[#f6f3f1] px-0 py-10 lg:px-14 lg:py-16">
           <p className="max-w-xl text-base leading-8 text-black/60">
             The next great companies are already shipping in public. They just aren&apos;t easy to find yet. Apparent verifies proof in one command and makes thesis searchable, then puts an AI agent on each side, so the right founder and the right investor meet in that early window instead of missing it.
           </p>
@@ -456,7 +456,7 @@ export const AboutUs = () => {
 
       <section data-reveal className="reveal mx-auto max-w-[92rem] border-t border-black/10 px-5 py-20 sm:px-8">
         <div className="py-10 text-center">
-          <Globe2 className="mx-auto mb-10 h-6 w-6 text-[#02A070]" />
+          <Globe2 className="mx-auto mb-10 h-6 w-6 text-[#000000]" />
           <h2 className="mx-auto max-w-3xl text-5xl font-normal leading-none tracking-[-0.045em] md:text-7xl" style={serifDisplay}>
             Join before the obvious round.
           </h2>
@@ -467,14 +467,14 @@ export const AboutUs = () => {
             <button
               type="button"
               onClick={() => navigate('/login?role=founder')}
-              className="flex-1 rounded-full bg-[#dcefc7] px-6 py-3 text-sm font-semibold text-black hover:bg-[#cce8ae]"
+              className="flex-1 rounded-full bg-[#cfdaf5] px-6 py-3 text-sm font-semibold text-black hover:bg-[#bcc8ef]"
             >
               Create founder profile
             </button>
             <button
               type="button"
               onClick={() => navigate('/login?role=investor')}
-              className="flex-1 rounded-full bg-[#42520d] px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-[#34420a]"
+              className="flex-1 rounded-full bg-[#242424] px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-[#000000]"
             >
               Create investor profile <ArrowUpRight className="ml-1 inline h-3.5 w-3.5 align-[-2px]" />
             </button>
