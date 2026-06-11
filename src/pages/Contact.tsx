@@ -128,7 +128,6 @@ export const Contact = () => {
 
       <section className="mx-auto grid max-w-[92rem] gap-10 border-t border-black/10 px-5 py-16 sm:px-8 lg:grid-cols-[0.82fr_1.18fr] lg:items-start">
         <div className="py-2">
-          <p className="mb-12 text-sm font-semibold text-[#42520d]">Contact</p>
           <h2 className="max-w-2xl text-5xl font-normal leading-none tracking-[-0.045em] md:text-7xl" style={serifDisplay}>
             Send the right signal.
           </h2>

@@ -93,7 +93,7 @@ export const ClaimBuild = () => {
             >
               <Sparkles className="h-4 w-4" /> Sign in to claim
             </Link>
-            <p className="mt-3 text-xs text-gray-400">Your code is saved — finish signing in and it'll attach itself.</p>
+            <p className="mt-3 text-xs text-gray-400">Your code is saved. Finish signing in and it'll attach itself.</p>
           </div>
         )}
 
@@ -104,7 +104,7 @@ export const ClaimBuild = () => {
               <h1 className="text-xl font-semibold">You're on Apparent.</h1>
             </div>
             <p className="text-sm leading-relaxed text-gray-600">
-              Your build is now part of your founder profile — and visible to the investors whose thesis you fit.
+              Your build is now part of your founder profile, and visible to the investors whose thesis you fit.
             </p>
             {result && (
               <div className="mt-4 space-y-1 rounded-xl bg-[#fbf8f3] p-3 text-sm text-gray-700">

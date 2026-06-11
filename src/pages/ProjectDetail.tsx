@@ -282,7 +282,6 @@ export const ProjectDetail = () => {
       </section>
 
       <section className="mx-auto max-w-[92rem] border-t border-black/10 px-5 py-16 sm:px-8">
-        <p className="mb-12 text-sm font-semibold text-[#42520d]">Team</p>
         <div className="grid gap-6 md:grid-cols-3">
           {(teamMembers.length ? teamMembers : []).map((member) => (
             <article key={`${member.name}-${member.role}`} className="rounded-[28px] bg-white/70 p-6">
@@ -327,7 +326,6 @@ export const ProjectDetail = () => {
 
       {(launch.demoVideoUrl || launch.pitchVideoUrl || launch.pitchDeckUrl || launch.pitchBookNote) && (
         <section className="mx-auto max-w-[92rem] border-t border-black/10 px-5 py-16 sm:px-8">
-          <p className="mb-12 text-sm font-semibold text-[#42520d]">Media and pitch book</p>
           <div className="grid gap-6 lg:grid-cols-2">
             {launch.demoVideoUrl && <video className="aspect-video w-full rounded-[24px] bg-black object-cover" src={launch.demoVideoUrl} controls />}
             {launch.pitchVideoUrl && <video className="aspect-video w-full rounded-[24px] bg-black object-cover" src={launch.pitchVideoUrl} controls />}

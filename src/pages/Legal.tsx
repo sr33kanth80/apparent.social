@@ -182,7 +182,6 @@ const LegalPage = ({ type }: { type: keyof typeof legalContent }) => {
   return (
     <main className="min-h-screen overflow-x-hidden bg-[#fbfaf7] text-black">
       <section className="mx-auto max-w-[92rem] px-5 pb-14 pt-14 sm:px-8 md:pt-20">
-        <p className="mb-10 text-sm font-semibold text-[#42520d]">{content.eyebrow}</p>
         <h1
           className="max-w-[82rem] text-[3.1rem] font-normal leading-[0.9] tracking-[-0.055em] sm:text-[6rem] md:text-[7.5rem] lg:text-[8.5rem]"
           style={serifDisplay}

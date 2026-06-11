@@ -393,7 +393,6 @@ export const AboutUs = () => {
 
       <section data-reveal className="reveal mx-auto grid max-w-[92rem] gap-8 border-t border-black/10 px-5 py-14 sm:px-8 lg:grid-cols-[0.95fr_1.05fr] lg:items-stretch">
         <div className="py-4 lg:py-8">
-          <p className="mb-12 text-sm font-semibold text-[#42520d]">Why Apparent exists</p>
           <h2 className="text-5xl font-normal leading-none tracking-[-0.045em] md:text-7xl" style={serifDisplay}>
             See the whole builder market.
           </h2>
@@ -425,7 +424,6 @@ export const AboutUs = () => {
 
       <section data-reveal className="reveal mx-auto max-w-[92rem] border-t border-black/10 px-5 py-16 sm:px-8">
         <div className="pt-2">
-          <p className="mb-12 text-sm font-semibold text-[#42520d]">Operating principles</p>
           <h2 className="max-w-4xl text-5xl font-normal leading-none tracking-[-0.045em] md:text-7xl" style={serifDisplay}>
             We are rebuilding discovery around work.
           </h2>
@@ -450,11 +448,9 @@ export const AboutUs = () => {
           </blockquote>
         </div>
         <div className="bg-[#fbfaf7] px-0 py-10 lg:px-14 lg:py-16">
-          <p className="text-sm font-semibold text-[#42520d]">What we believe</p>
-          <p className="mt-6 max-w-xl text-base leading-8 text-black/60">
+          <p className="max-w-xl text-base leading-8 text-black/60">
             The next great companies are already shipping in public. They just aren&apos;t easy to find yet. Apparent verifies proof in one command and makes thesis searchable, then puts an AI agent on each side, so the right founder and the right investor meet in that early window instead of missing it.
           </p>
-          <p className="mt-8 text-xs font-semibold uppercase tracking-[0.16em] text-[#42520d]">Proof before consensus</p>
         </div>
       </section>
 

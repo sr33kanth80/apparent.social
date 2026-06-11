@@ -437,7 +437,6 @@ export const OurThesis = () => {
 
       <section className="mx-auto grid max-w-[92rem] gap-8 border-t border-black/10 px-5 py-14 sm:px-8 lg:grid-cols-[0.95fr_1.05fr] lg:items-stretch">
         <div className="py-4 lg:py-8">
-          <p className="mb-12 text-sm font-semibold text-[#42520d]">The Apparent thesis</p>
           <h2 className="text-5xl font-normal leading-none tracking-[-0.045em] md:text-7xl" style={serifDisplay}>
             Discovery should start with evidence.
           </h2>
@@ -564,8 +563,7 @@ export const OurThesis = () => {
       <section className="mx-auto max-w-[92rem] px-5 py-10 sm:px-8">
         <div className="flex min-h-[300px] items-center overflow-hidden rounded-[32px] bg-[#1c1c1a] px-8 py-14 text-white md:min-h-[360px] md:px-16">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#bcd99a]">The window</p>
-            <h2 className="mt-5 max-w-4xl text-4xl font-normal leading-[1.05] tracking-[-0.04em] md:text-6xl" style={serifDisplay}>
+            <h2 className="max-w-4xl text-4xl font-normal leading-[1.05] tracking-[-0.04em] md:text-6xl" style={serifDisplay}>
               The next great companies are already shipping. They&apos;re just hard to find.
             </h2>
             <p className="mt-6 max-w-2xl text-base leading-7 text-white/55">
@@ -577,7 +575,6 @@ export const OurThesis = () => {
 
       <section className="mx-auto max-w-[92rem] border-t border-black/10 px-5 py-16 sm:px-8">
         <div className="pt-2">
-          <p className="mb-12 text-sm font-semibold text-[#42520d]">What gets connected</p>
           <h2 className="max-w-4xl text-5xl font-normal leading-none tracking-[-0.045em] md:text-7xl" style={serifDisplay}>
             The network is only useful when the context travels.
           </h2>
