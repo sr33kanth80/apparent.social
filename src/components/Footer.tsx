@@ -26,26 +26,22 @@ const footerColumns = [
 
 export const Footer = () => {
   return (
-    <footer className="bg-[#1A1A1A] text-white">
-      <div className="mx-auto max-w-[88rem] px-6 py-16">
-        <div className="mb-16 grid grid-cols-1 gap-12 md:grid-cols-[1.5fr_1fr_1fr]">
+    <footer className="monad border-t border-ink bg-parchment text-ink">
+      <div className="mx-auto max-w-[1200px] px-6 py-20">
+        <div className="grid grid-cols-1 gap-12 md:grid-cols-[1.6fr_1fr_1fr]">
           <div>
-            <div className="mb-4 flex items-center gap-3">
-              <LogoIcon className="h-7 w-7 text-white" />
-              <img
-                src="/apparent-wordmark-white.png"
-                alt="Apparent"
-                className="h-8 w-auto max-w-[10rem] object-contain"
-              />
+            <div className="mb-5 flex items-center gap-2.5">
+              <LogoIcon className="h-6 w-6 text-ink" />
+              <span className="font-serif text-[22px] leading-none text-ink">Apparent</span>
             </div>
-            <p className="mb-6 max-w-sm text-base leading-relaxed text-white/60">
-              The social capital network for builders and VCs. Profiles, launches, thesis matching, meetups, maps, and clearer deal terms.
+            <p className="max-w-sm font-mono text-[14px] leading-[1.6] text-graphite">
+              Proof of work is the new warm intro. Founders show what they have built. Investors find them by thesis, proof, and timing.
             </p>
           </div>
 
           {footerColumns.map((column) => (
             <div key={column.title}>
-              <h3 className="mb-4 text-sm font-medium uppercase tracking-wider text-white">
+              <h3 className="mb-5 font-mono text-[12px] font-medium uppercase tracking-[0.08em] text-ink">
                 {column.title}
               </h3>
               <ul className="space-y-3">
@@ -53,7 +49,7 @@ export const Footer = () => {
                   <li key={link.to}>
                     <Link
                       to={link.to}
-                      className="text-base text-white/60 transition-colors duration-200 hover:text-white"
+                      className="font-mono text-[14px] text-graphite transition-colors hover:text-ink"
                     >
                       {link.label}
                     </Link>
@@ -64,19 +60,17 @@ export const Footer = () => {
           ))}
         </div>
 
-        <div className="border-t border-white/10 pt-8">
+        <div className="mt-16 border-t border-ink/15 pt-8">
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-            <p className="text-sm text-white/40">
-            &copy; 2026 Apparent. All rights reserved.
-            </p>
+            <p className="font-mono text-[12px] text-stone">© 2026 Apparent. All rights reserved.</p>
             <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
-              <Link to="/privacy" className="text-sm text-white/40 transition-colors duration-200 hover:text-white">
+              <Link to="/privacy" className="font-mono text-[12px] text-stone transition-colors hover:text-ink">
                 Privacy Policy
               </Link>
-              <Link to="/terms" className="text-sm text-white/40 transition-colors duration-200 hover:text-white">
+              <Link to="/terms" className="font-mono text-[12px] text-stone transition-colors hover:text-ink">
                 Terms of Service
               </Link>
-              <Link to="/cookies" className="text-sm text-white/40 transition-colors duration-200 hover:text-white">
+              <Link to="/cookies" className="font-mono text-[12px] text-stone transition-colors hover:text-ink">
                 Cookie Policy
               </Link>
             </div>

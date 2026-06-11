@@ -1,6 +1,6 @@
 @import "tailwindcss";
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;1,8..60,400&family=JetBrains+Mono:wght@400;500&display=swap');
 
 @theme inline {
   --color-background: var(--background);
@@ -43,6 +43,59 @@
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
+}
+
+/* ── Monad design language ───────────────────────────────────────────────────
+   Cream parchment canvas, ink + mono type, serif-400 headlines. Scoped to the
+   public marketing site via the .monad wrapper so the dashboard (which inherits
+   Inter from <body>) is never affected. Tokens below generate Tailwind
+   utilities: bg-parchment, text-ink, text-graphite, border-ink, bg-lavender,
+   font-serif, font-mono. */
+@theme {
+  --color-parchment: #f6f3f1;
+  --color-ink: #000000;
+  --color-charcoal: #242424;
+  --color-graphite: #4e4d4d;
+  --color-slate: #3d3d3d;
+  --color-stone: #797776;
+  --color-lavender: #cfdaf5;
+  --color-mint: #a7fccd;
+  --color-peach: #ff9473;
+  --font-serif: 'Source Serif 4', ui-serif, Georgia, 'Times New Roman', serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+
+.monad {
+  background: var(--color-parchment);
+  color: var(--color-ink);
+  font-family: var(--font-mono);
+  font-size: 16px;
+  letter-spacing: -0.02em;
+  -webkit-font-smoothing: antialiased;
+}
+.monad h1,
+.monad h2,
+.monad h3,
+.monad h4 {
+  font-family: var(--font-serif);
+  font-weight: 400;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+}
+/* Mono pill button transitions, scoped so they don't fight dashboard buttons. */
+.monad .monad-cta {
+  font-family: var(--font-mono);
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  border-radius: 100px;
+  transition: transform 200ms ease, background-color 200ms ease, color 200ms ease, border-color 200ms ease;
+}
+.monad .monad-cta:hover {
+  transform: translateY(-2px);
+}
+/* Hairline divider used between sections and accordion rows. */
+.monad .monad-hr {
+  border-color: rgba(0, 0, 0, 0.12);
 }
 
 :root {

@@ -1,13 +1,8 @@
 import { Link, useNavigate } from 'react-router-dom';
-import { ArrowUpRight, Check, MapPin, Radar, Send, Zap } from 'lucide-react';
+import { ArrowUpRight, Check } from 'lucide-react';
 import { EditorialNavbar } from '../components/EditorialNavbar';
 import { LogoIcon } from '../components/LogoIcon';
-import { LogoCloud } from '../components/logo-cloud';
 import { HeatMap } from './HeatMap';
-
-const serifDisplay = {
-  fontFamily: 'Georgia, "Times New Roman", serif',
-};
 
 // Recognizable funds for the hero trust pill. Logos come from the favicon
 // service already used for launch logos, so they stay reliable (no hotlinking).
@@ -19,17 +14,66 @@ const heroInvestors: { name: string; domain: string }[] = [
   { name: 'Antler', domain: 'antler.co' },
 ];
 
+// Data-flow diagram: founder proof (sources) → Apparent (processing) → investor
+// thesis (destinations). Encodes the two-sided agent matching as a Monad-style
+// flow composition.
+const founderSources = ['PROOF OF WORK', 'GITHUB', 'TRACTION', 'LAUNCHES', 'NPX APPARENT'];
+const investorCriteria = ['THESIS FIT', 'STAGE', 'SECTOR', 'CHECK SIZE'];
+const agentStages = ['VERIFY', 'MATCH', 'RANK', 'INTRO'];
+
+const founderBullets = [
+  'Verify your work in seconds with npx apparent. GitHub, traction, and shipped products become your pitch.',
+  'Match to funds by thesis, stage, and sector, not a generic list of thousands.',
+  'Your AI founder agent reaches the investors who fit and opens the intro for you, never spam.',
+];
+
+const investorBullets = [
+  'A live map of builders who fit your stage, sector, and geography.',
+  'Your AI investor agent sources and ranks deals against your thesis 24/7, then drafts the outreach.',
+  'Every founder verified by real code and traction, so diligence starts before the first call.',
+];
+
+const howItWorks = [
+  { title: 'Show your work', text: 'Run npx apparent and your launches, commits, and traction become a profile that proves itself.' },
+  { title: 'Match on fit', text: 'Apparent ranks the investors whose thesis, stage, and sector actually fit your raise.' },
+  { title: 'Let the agents connect you', text: "Your AI agent reaches the funds that fit, or signal you're raising and let theirs come to you." },
+];
+
+const SourceTag = ({ label, align }: { label: string; align: 'left' | 'right' }) => (
+  <span
+    className={`inline-flex items-center gap-2.5 rounded-full border border-ink bg-parchment px-4 py-2 font-mono text-[12px] tracking-[-0.02em] text-ink ${
+      align === 'right' ? 'flex-row-reverse' : ''
+    }`}
+  >
+    <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-ink" />
+    {label}
+  </span>
+);
+
 export const Home = () => {
   const navigate = useNavigate();
 
   return (
-    <main className="min-h-screen overflow-x-hidden bg-[#fbfaf7] text-black">
+    <div className="monad min-h-screen bg-parchment text-ink">
+      {/* ANNOUNCEMENT BAR */}
+      <div className="w-full bg-ink">
+        <div className="mx-auto flex max-w-[1200px] flex-wrap items-center justify-center gap-x-3 gap-y-1 px-6 py-2.5 text-center">
+          <span className="font-mono text-[13px] text-parchment">Proof of work is the new warm intro.</span>
+          <Link
+            to="/our-thesis"
+            className="font-mono text-[13px] text-parchment underline decoration-parchment/40 underline-offset-4 transition hover:decoration-parchment"
+          >
+            Read the thesis ↗
+          </Link>
+        </div>
+      </div>
+
       <EditorialNavbar />
 
-      {/* HERO - founder-led: state what Apparent is and the wedge in one breath. */}
-      <section className="mx-auto max-w-[78rem] px-5 pb-6 pt-10 sm:px-8 md:pt-16">
-        <div className="mb-6 flex justify-center">
-          <div className="inline-flex items-center gap-2.5 rounded-full border border-black/10 bg-white/80 py-1.5 pl-2 pr-4 text-xs font-semibold text-[#42520d] shadow-[0_4px_14px_rgba(0,0,0,0.05)]">
+      {/* HERO */}
+      <section className="mx-auto max-w-[1200px] px-6 pb-12 pt-16 text-center md:pt-20">
+        <div className="mb-8 flex justify-center">
+          <div className="inline-flex items-center gap-2.5 rounded-full border border-ink bg-parchment px-3 py-1.5">
             <div className="flex items-center">
               {heroInvestors.map((investor, index) => (
                 <img
@@ -37,77 +81,123 @@ export const Home = () => {
                   src={`https://www.google.com/s2/favicons?domain=${investor.domain}&sz=128`}
                   alt={investor.name}
                   title={investor.name}
-                  className={`h-7 w-7 rounded-full border-2 border-white bg-white object-contain p-0.5 ${index > 0 ? '-ml-2.5' : ''}`}
+                  className={`h-5 w-5 rounded-full border border-ink bg-parchment object-contain p-0.5 ${index > 0 ? '-ml-2' : ''}`}
                 />
               ))}
             </div>
-            <span>1,800+ investors mapped</span>
+            <span className="font-mono text-[12px] tracking-[-0.02em] text-ink">1,800+ investors mapped</span>
           </div>
         </div>
-        <div className="flex flex-col items-center text-center">
-          <h1
-            className="max-w-3xl text-4xl font-normal leading-[1.15] tracking-[-0.04em] md:text-5xl lg:max-w-none lg:whitespace-nowrap xl:text-6xl"
-            style={serifDisplay}
+
+        <h1 className="mx-auto max-w-[920px] font-serif text-[clamp(2.6rem,6vw,5rem)] leading-[1.08] tracking-[-0.02em] text-ink">
+          Founders and investors who fit.
+        </h1>
+        <p className="mx-auto mt-6 max-w-[640px] font-mono text-[16px] leading-[1.6] tracking-[-0.02em] text-graphite">
+          AI agents work both sides of the table. Founders find the right funds, investors find the right founders. No cold emails.
+        </p>
+
+        <div className="mt-9 flex flex-wrap items-center justify-center gap-3">
+          <button
+            type="button"
+            onClick={() => navigate('/login?role=founder')}
+            className="monad-cta inline-flex items-center gap-2 bg-charcoal px-6 py-3 text-[14px] text-parchment"
           >
-            <span className="pz pz-light pz-end-l pz-knob-r" style={{ zIndex: 4 }}>Founders<i className="pz-nub pz-nub-b" /></span><span className="pz pz-olive pz-socket-l pz-knob-r pz-drop" style={{ zIndex: 3 }}>and investors<i className="pz-nub pz-nub-t" /></span><span className="pz pz-light pz-socket-l pz-knob-r" style={{ zIndex: 2 }}>who<i className="pz-nub pz-nub-b" /></span><span className="pz pz-olive pz-socket-l pz-end-r pz-slide" style={{ zIndex: 1 }}>fit.<i className="pz-nub pz-nub-t" /></span>
-          </h1>
-          <p className="mt-5 max-w-3xl text-base leading-7 text-black/65 md:text-lg">
-            AI agents work both sides of the table. Founders find the right funds, investors find the right founders. No cold emails.
-          </p>
-          <div className="mt-7 flex flex-wrap items-center justify-center gap-3">
-            <button
-              type="button"
-              onClick={() => navigate('/login?role=founder')}
-              className="inline-flex items-center gap-2 rounded-full bg-[#dcefc7] px-6 py-3 text-sm font-semibold text-black transition-colors hover:bg-[#cce8ae]"
-            >
-              I&apos;m a founder <ArrowUpRight className="h-4 w-4" />
-            </button>
-            <button
-              type="button"
-              onClick={() => navigate('/login?role=investor')}
-              className="inline-flex items-center gap-2 rounded-full bg-[#42520d] px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-[#34420a]"
-            >
-              I&apos;m an investor
-            </button>
-          </div>
+            I&apos;m a founder <ArrowUpRight className="h-4 w-4" />
+          </button>
+          <button
+            type="button"
+            onClick={() => navigate('/login?role=investor')}
+            className="monad-cta inline-flex items-center gap-2 border border-ink px-6 py-3 text-[14px] text-ink hover:bg-ink hover:text-parchment"
+          >
+            I&apos;m an investor
+          </button>
         </div>
       </section>
 
-      <LogoCloud />
+      {/* DATA-FLOW DIAGRAM — founder proof → Apparent → investor thesis */}
+      <section className="mx-auto max-w-[1200px] px-6 pb-20">
+        <div className="relative grid items-center gap-10 md:grid-cols-[1fr_auto_1fr] md:gap-6">
+          {/* connector axis */}
+          <div aria-hidden className="pointer-events-none absolute inset-x-10 top-1/2 hidden h-px -translate-y-1/2 bg-ink/15 md:block" />
 
-      {/* HEATMAP MAGNET - the free front door, mirrors OpenVC's investor list but alive. */}
-      <section className="mx-auto max-w-[78rem] px-5 pb-12 sm:px-8">
-        <div className="mb-4 flex justify-end">
+          {/* Left: founder proof */}
+          <div className="flex flex-col items-center gap-3 md:items-end">
+            <span className="mb-1 font-mono text-[11px] uppercase tracking-[0.1em] text-stone">Founder proof</span>
+            {founderSources.map((tag) => (
+              <SourceTag key={tag} label={tag} align="right" />
+            ))}
+          </div>
+
+          {/* Center: Apparent node */}
+          <div className="relative flex flex-col items-center">
+            <div
+              aria-hidden
+              className="pointer-events-none absolute left-1/2 top-[3.5rem] -z-10 h-56 w-56 -translate-x-1/2 -translate-y-1/2 rounded-full"
+              style={{
+                background:
+                  'radial-gradient(circle, rgba(167,252,205,0.6) 0%, rgba(160,181,235,0.2) 52%, rgba(246,243,241,0) 74%)',
+              }}
+            />
+            <div className="flex h-28 w-28 items-center justify-center rounded-full border border-ink bg-parchment shadow-[0_0_10px_rgba(0,0,0,0.1)]">
+              <LogoIcon className="h-10 w-10 text-ink" />
+            </div>
+            <span className="mt-4 font-mono text-[13px] tracking-[-0.02em] text-ink">APPARENT</span>
+            <div className="mt-4 flex flex-wrap justify-center gap-2">
+              {agentStages.map((stage) => (
+                <span
+                  key={stage}
+                  className="inline-flex items-center gap-1.5 rounded-full border border-ink/30 px-2.5 py-1 font-mono text-[11px] text-graphite"
+                >
+                  <span className="h-1.5 w-1.5 rounded-full bg-[#5fcf8e]" />
+                  {stage}
+                </span>
+              ))}
+            </div>
+          </div>
+
+          {/* Right: investor thesis */}
+          <div className="flex flex-col items-center gap-3 md:items-start">
+            <span className="mb-1 font-mono text-[11px] uppercase tracking-[0.1em] text-stone">Investor thesis</span>
+            {investorCriteria.map((tag) => (
+              <SourceTag key={tag} label={tag} align="left" />
+            ))}
+          </div>
+        </div>
+        <p className="mt-10 text-center font-mono text-[13px] tracking-[-0.02em] text-stone">
+          Founder proof in. Investor thesis out. Agents match both sides.
+        </p>
+      </section>
+
+      {/* MAP — the live front door */}
+      <section className="mx-auto max-w-[1200px] border-t border-ink/12 px-6 py-20">
+        <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
+          <div>
+            <h2 className="font-serif text-[clamp(1.8rem,3.5vw,2.5rem)] leading-[1.1] text-ink">One map. Two sides of the table.</h2>
+            <p className="mt-3 font-mono text-[14px] leading-[1.6] text-graphite">1,800+ investors, plotted by geography, stage, and thesis.</p>
+          </div>
           <Link
             to="/heat-map"
-            className="inline-flex items-center gap-1.5 rounded-full border border-black/10 bg-white px-5 py-2.5 text-sm font-semibold text-black shadow-[0_8px_24px_rgba(0,0,0,0.08)] transition-all duration-200 hover:scale-[1.01] hover:border-black hover:bg-black hover:text-white"
+            className="monad-cta inline-flex items-center gap-2 border border-ink px-5 py-2.5 font-mono text-[14px] text-ink hover:bg-ink hover:text-parchment"
           >
             Open the full map <ArrowUpRight className="h-4 w-4" />
           </Link>
         </div>
-        <div className="relative flex h-[clamp(360px,56vh,560px)] overflow-hidden rounded-[26px] border border-black/10 bg-[#e8e5dc] shadow-[0_18px_60px_rgba(0,0,0,0.08)]">
+        <div className="relative flex h-[clamp(360px,56vh,560px)] overflow-hidden rounded-[40px] border border-ink bg-[#e8e5dc]">
           <HeatMap includeVCContacts vcOnly fullBleed fillParent lockContacts />
         </div>
       </section>
 
-      {/* WHO IT'S FOR - the section that makes a stranger self-identify in 5 seconds. */}
-      <section className="mx-auto max-w-[78rem] border-t border-black/10 px-5 py-12 sm:px-8">
-        <h2 className="max-w-2xl text-3xl font-normal leading-tight tracking-[-0.035em] md:text-4xl" style={serifDisplay}>
-          One map. Two sides of the table.
-        </h2>
-        <div className="mt-8 grid gap-5 md:grid-cols-2">
+      {/* WHO IT'S FOR */}
+      <section className="mx-auto max-w-[1200px] border-t border-ink/12 px-6 py-20">
+        <div className="grid gap-6 md:grid-cols-2">
           {/* Founders */}
-          <div className="flex flex-col rounded-[24px] border border-black/10 bg-white/70 p-7">
-            <LogoIcon className="h-6 w-6 text-[#42520d]" />
-            <h3 className="mt-5 text-2xl font-semibold tracking-[-0.02em]">Reach the investors who fit your raise.</h3>
-            <ul className="mt-5 grid gap-3 text-sm leading-6 text-black/65">
-              {[
-                'Verify your work in seconds with npx apparent. GitHub, traction, and shipped products become your pitch.',
-                'Match to funds by thesis, stage, and sector, not a generic list of thousands.',
-                'Your AI founder agent reaches the investors who fit and opens the intro for you, never spam.',
-              ].map((item) => (
+          <div className="flex flex-col rounded-[40px] bg-lavender p-10 shadow-[0_0_10px_rgba(0,0,0,0.1)]">
+            <LogoIcon className="h-6 w-6 text-ink" />
+            <h3 className="mt-6 font-serif text-[28px] leading-[1.15] text-ink">Reach the investors who fit your raise.</h3>
+            <ul className="mt-6 grid gap-3.5 font-mono text-[14px] leading-[1.55] text-graphite">
+              {founderBullets.map((item) => (
                 <li key={item} className="flex items-start gap-2.5">
-                  <Check className="mt-0.5 h-4 w-4 shrink-0 text-[#42520d]" />
+                  <Check className="mt-0.5 h-4 w-4 shrink-0 text-ink" />
                   <span>{item}</span>
                 </li>
               ))}
@@ -115,24 +205,20 @@ export const Home = () => {
             <button
               type="button"
               onClick={() => navigate('/login?role=founder')}
-              className="mt-7 inline-flex w-fit items-center gap-2 rounded-full bg-[#dcefc7] px-5 py-2.5 text-sm font-semibold text-black transition-colors hover:bg-[#cce8ae]"
+              className="monad-cta mt-8 inline-flex w-fit items-center gap-2 bg-charcoal px-5 py-2.5 font-mono text-[14px] text-parchment"
             >
               Create founder profile <ArrowUpRight className="h-4 w-4" />
             </button>
           </div>
 
           {/* Investors */}
-          <div className="flex flex-col rounded-[24px] bg-[#1c1c1a] p-7 text-white">
-            <LogoIcon className="h-6 w-6 text-[#bcd99a]" />
-            <h3 className="mt-5 text-2xl font-semibold tracking-[-0.02em]">Meet the founders who fit your thesis.</h3>
-            <ul className="mt-5 grid gap-3 text-sm leading-6 text-white/70">
-              {[
-                'A live map of builders who fit your stage, sector, and geography.',
-                'Your AI investor agent sources and ranks deals against your thesis 24/7, then drafts the outreach.',
-                'Every founder verified by real code and traction, so diligence starts before the first call.',
-              ].map((item) => (
+          <div className="flex flex-col rounded-[40px] bg-charcoal p-10 text-parchment shadow-[0_0_10px_rgba(0,0,0,0.1)]">
+            <LogoIcon className="h-6 w-6 text-parchment" />
+            <h3 className="mt-6 font-serif text-[28px] leading-[1.15] text-parchment">Meet the founders who fit your thesis.</h3>
+            <ul className="mt-6 grid gap-3.5 font-mono text-[14px] leading-[1.55] text-parchment/70">
+              {investorBullets.map((item) => (
                 <li key={item} className="flex items-start gap-2.5">
-                  <Check className="mt-0.5 h-4 w-4 shrink-0 text-[#bcd99a]" />
+                  <Check className="mt-0.5 h-4 w-4 shrink-0 text-[#a7fccd]" />
                   <span>{item}</span>
                 </li>
               ))}
@@ -140,7 +226,7 @@ export const Home = () => {
             <button
               type="button"
               onClick={() => navigate('/login?role=investor')}
-              className="mt-7 inline-flex w-fit items-center gap-2 rounded-full bg-[#42520d] px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#34420a]"
+              className="monad-cta mt-8 inline-flex w-fit items-center gap-2 bg-parchment px-5 py-2.5 font-mono text-[14px] text-ink"
             >
               Create investor profile <ArrowUpRight className="h-4 w-4" />
             </button>
@@ -148,29 +234,28 @@ export const Home = () => {
         </div>
       </section>
 
-      {/* THE WEDGE - fit beats volume, on both sides. */}
-      <section className="mx-auto max-w-[78rem] border-t border-black/10 px-5 py-12 sm:px-8">
-        <div className="grid gap-8 md:grid-cols-2 md:items-center">
+      {/* THE WEDGE */}
+      <section className="mx-auto max-w-[1200px] border-t border-ink/12 px-6 py-20">
+        <div className="grid gap-10 md:grid-cols-2 md:items-center">
           <div>
-            <h2 className="max-w-xl text-3xl font-normal leading-tight tracking-[-0.035em] md:text-4xl" style={serifDisplay}>
+            <h2 className="max-w-xl font-serif text-[clamp(1.8rem,3.5vw,2.5rem)] leading-[1.12] text-ink">
               The right match beats a hundred wrong ones.
             </h2>
-            <p className="mt-4 max-w-xl text-sm leading-7 text-black/60">
-              A generic list of thousands wastes everyone&apos;s time. Apparent matches founders
-              and investors on thesis, stage, and sector first, so the conversations that happen
-              are the ones that should.
+            <p className="mt-5 max-w-xl font-mono text-[14px] leading-[1.6] text-graphite">
+              A generic list of thousands wastes everyone&apos;s time. Apparent matches founders and investors on
+              thesis, stage, and sector first, so the conversations that happen are the ones that should.
             </p>
           </div>
           <div className="grid gap-3">
-            <div className="rounded-[18px] border border-black/10 bg-white/50 p-5">
-              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-black/35">The old way</p>
-              <p className="mt-2 text-sm leading-6 text-black/55">
+            <div className="rounded-[24px] border border-ink/15 bg-parchment p-6">
+              <p className="font-mono text-[11px] uppercase tracking-[0.12em] text-stone">The old way</p>
+              <p className="mt-2 font-mono text-[14px] leading-[1.55] text-graphite">
                 Work a list of thousands. Guess at fit. Hope something sticks.
               </p>
             </div>
-            <div className="rounded-[18px] border border-[#42520d]/20 bg-[#dcefc7]/40 p-5">
-              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#42520d]">On Apparent</p>
-              <p className="mt-2 text-sm leading-6 text-black/65">
+            <div className="rounded-[24px] bg-lavender p-6">
+              <p className="font-mono text-[11px] uppercase tracking-[0.12em] text-ink">On Apparent</p>
+              <p className="mt-2 font-mono text-[14px] leading-[1.55] text-ink/80">
                 Match on thesis and stage. Talk to the few who fit. Skip the rest.
               </p>
             </div>
@@ -178,64 +263,48 @@ export const Home = () => {
         </div>
       </section>
 
-      {/* HOW IT WORKS - the two-sided loop. */}
-      <section id="how-to" className="mx-auto max-w-[78rem] border-t border-black/10 px-5 py-10 sm:px-8">
-        <div className="grid gap-6 lg:grid-cols-[0.8fr_1.2fr] lg:items-start">
-          <div>
-            <h2 className="max-w-xl text-3xl font-normal leading-tight tracking-[-0.035em] md:text-4xl" style={serifDisplay}>
-              Verify. Match on fit. Let the agents connect you.
-            </h2>
-          </div>
+      {/* HOW IT WORKS */}
+      <section id="how-to" className="mx-auto max-w-[1200px] border-t border-ink/12 px-6 py-20">
+        <div className="grid gap-10 lg:grid-cols-[0.8fr_1.2fr] lg:items-start">
+          <h2 className="max-w-xl font-serif text-[clamp(1.8rem,3.5vw,2.5rem)] leading-[1.12] text-ink">
+            Verify. Match on fit. Let the agents connect you.
+          </h2>
           <ol className="grid gap-x-6 gap-y-8 sm:grid-cols-3">
-            {[
-              { icon: Zap, title: 'Show your work', text: 'Run npx apparent and your launches, commits, and traction become a profile that proves itself.' },
-              { icon: Radar, title: 'Match on fit', text: 'Apparent ranks the investors whose thesis, stage, and sector actually fit your raise.' },
-              { icon: Send, title: 'Let the agents connect you', text: "Your AI agent reaches the funds that fit, or signal you're raising and let theirs come to you." },
-            ].map((item, i) => (
-              <li key={item.title} className="border-t border-black/10 pt-4">
-                <div className="flex items-baseline justify-between">
-                  <span className="text-2xl font-normal leading-none tracking-[-0.04em] text-[#42520d] tabular-nums" style={serifDisplay}>
-                    0{i + 1}
-                  </span>
-                  <item.icon className="h-4 w-4 text-black/30" />
-                </div>
-                <h3 className="mt-4 text-base font-semibold tracking-[-0.015em]">{item.title}</h3>
-                <p className="mt-2 text-sm leading-6 text-black/55">{item.text}</p>
+            {howItWorks.map((item, i) => (
+              <li key={item.title} className="border-t border-ink/15 pt-4">
+                <span className="font-mono text-[20px] tabular-nums text-ink">0{i + 1}</span>
+                <h3 className="mt-4 font-serif text-[20px] leading-[1.2] text-ink">{item.title}</h3>
+                <p className="mt-2 font-mono text-[13px] leading-[1.55] text-graphite">{item.text}</p>
               </li>
             ))}
           </ol>
         </div>
       </section>
 
-      <section className="mx-auto max-w-[78rem] border-t border-black/10 px-5 py-12 sm:px-8">
-        <div className="grid gap-6 rounded-[26px] bg-white/65 p-6 text-left md:grid-cols-[1fr_auto] md:items-center">
-          <div>
-            <MapPin className="mb-5 h-5 w-5 text-[#42520d]" />
-            <h2 className="max-w-2xl text-3xl font-normal leading-tight tracking-[-0.035em] md:text-4xl" style={serifDisplay}>
-              Find your fit.
-            </h2>
-            <p className="mt-4 max-w-2xl text-sm leading-7 text-black/55">
-              Founders find the investors who fit their raise. Investors find the founders who fit their thesis. Pick your side and start in under a minute.
-            </p>
-          </div>
-          <div className="flex flex-col gap-3 sm:flex-row md:flex-col">
-            <button
-              type="button"
-              onClick={() => navigate('/login?role=founder')}
-              className="rounded-full bg-[#dcefc7] px-6 py-3 text-sm font-semibold text-black hover:bg-[#cce8ae]"
-            >
-              Create founder profile
-            </button>
-            <button
-              type="button"
-              onClick={() => navigate('/login?role=investor')}
-              className="rounded-full bg-[#42520d] px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-[#34420a]"
-            >
-              Create investor profile <ArrowUpRight className="ml-1 inline h-3.5 w-3.5 align-[-2px]" />
-            </button>
-          </div>
+      {/* FINAL CTA */}
+      <section className="mx-auto max-w-[1200px] border-t border-ink/12 px-6 py-24 text-center">
+        <h2 className="mx-auto max-w-2xl font-serif text-[clamp(2.2rem,5vw,3.5rem)] leading-[1.08] text-ink">Find your fit.</h2>
+        <p className="mx-auto mt-5 max-w-xl font-mono text-[14px] leading-[1.6] text-graphite">
+          Founders find the investors who fit their raise. Investors find the founders who fit their thesis. Pick your side
+          and start in under a minute.
+        </p>
+        <div className="mt-9 flex flex-wrap items-center justify-center gap-3">
+          <button
+            type="button"
+            onClick={() => navigate('/login?role=founder')}
+            className="monad-cta inline-flex items-center gap-2 bg-charcoal px-6 py-3 text-[14px] text-parchment"
+          >
+            Create founder profile <ArrowUpRight className="h-4 w-4" />
+          </button>
+          <button
+            type="button"
+            onClick={() => navigate('/login?role=investor')}
+            className="monad-cta inline-flex items-center gap-2 border border-ink px-6 py-3 text-[14px] text-ink hover:bg-ink hover:text-parchment"
+          >
+            Create investor profile
+          </button>
         </div>
       </section>
-    </main>
+    </div>
   );
 };
