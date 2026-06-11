@@ -2,6 +2,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { ArrowUpRight, Check } from 'lucide-react';
 import { EditorialNavbar } from '../components/EditorialNavbar';
 import { LogoIcon } from '../components/LogoIcon';
+import { useReveal } from '../lib/useReveal';
 import { HeatMap } from './HeatMap';
 
 // Recognizable funds for the hero trust pill. Logos come from the favicon
@@ -39,9 +40,11 @@ const howItWorks = [
   { title: 'Let the agents connect you', text: "Your AI agent reaches the funds that fit, or signal you're raising and let theirs come to you." },
 ];
 
-const SourceTag = ({ label, align }: { label: string; align: 'left' | 'right' }) => (
+const SourceTag = ({ label, align, index = 0 }: { label: string; align: 'left' | 'right'; index?: number }) => (
   <span
-    className={`inline-flex items-center gap-2.5 rounded-full border border-ink bg-parchment px-4 py-2 font-mono text-[12px] tracking-[-0.02em] text-ink ${
+    data-reveal
+    style={{ transitionDelay: `${index * 80}ms` }}
+    className={`reveal inline-flex items-center gap-2.5 rounded-full border border-ink bg-parchment px-4 py-2 font-mono text-[12px] tracking-[-0.02em] text-ink ${
       align === 'right' ? 'flex-row-reverse' : ''
     }`}
   >
@@ -52,6 +55,7 @@ const SourceTag = ({ label, align }: { label: string; align: 'left' | 'right' })
 
 export const Home = () => {
   const navigate = useNavigate();
+  useReveal();
 
   return (
     <div className="monad min-h-screen bg-parchment text-ink">
@@ -90,7 +94,7 @@ export const Home = () => {
         </div>
 
         <h1 className="mx-auto max-w-[920px] font-serif text-[clamp(2.6rem,6vw,5rem)] leading-[1.08] tracking-[-0.02em] text-ink">
-          Founders and investors who fit.
+          Founders and investors who&nbsp;fit.
         </h1>
         <p className="mx-auto mt-6 max-w-[640px] font-mono text-[16px] leading-[1.6] tracking-[-0.02em] text-graphite">
           AI agents work both sides of the table. Founders find the right funds, investors find the right founders. No cold emails.
@@ -117,14 +121,14 @@ export const Home = () => {
       {/* DATA-FLOW DIAGRAM — founder proof → Apparent → investor thesis */}
       <section className="mx-auto max-w-[1200px] px-6 pb-20">
         <div className="relative grid items-center gap-10 md:grid-cols-[1fr_auto_1fr] md:gap-6">
-          {/* connector axis */}
-          <div aria-hidden className="pointer-events-none absolute inset-x-10 top-1/2 hidden h-px -translate-y-1/2 bg-ink/15 md:block" />
+          {/* connector axis — dashes travel left→right to read as throughput */}
+          <div aria-hidden className="flow-axis pointer-events-none absolute inset-x-10 top-1/2 hidden h-px -translate-y-1/2 md:block" />
 
           {/* Left: founder proof */}
           <div className="flex flex-col items-center gap-3 md:items-end">
             <span className="mb-1 font-mono text-[11px] uppercase tracking-[0.1em] text-stone">Founder proof</span>
-            {founderSources.map((tag) => (
-              <SourceTag key={tag} label={tag} align="right" />
+            {founderSources.map((tag, i) => (
+              <SourceTag key={tag} label={tag} align="right" index={i} />
             ))}
           </div>
 
@@ -132,7 +136,7 @@ export const Home = () => {
           <div className="relative flex flex-col items-center">
             <div
               aria-hidden
-              className="pointer-events-none absolute left-1/2 top-[3.5rem] -z-10 h-56 w-56 -translate-x-1/2 -translate-y-1/2 rounded-full"
+              className="flow-aura pointer-events-none absolute left-1/2 top-[3.5rem] -z-10 h-56 w-56 rounded-full"
               style={{
                 background:
                   'radial-gradient(circle, rgba(167,252,205,0.6) 0%, rgba(160,181,235,0.2) 52%, rgba(246,243,241,0) 74%)',
@@ -143,12 +147,15 @@ export const Home = () => {
             </div>
             <span className="mt-4 font-mono text-[13px] tracking-[-0.02em] text-ink">APPARENT</span>
             <div className="mt-4 flex flex-wrap justify-center gap-2">
-              {agentStages.map((stage) => (
+              {agentStages.map((stage, i) => (
                 <span
                   key={stage}
                   className="inline-flex items-center gap-1.5 rounded-full border border-ink/30 px-2.5 py-1 font-mono text-[11px] text-graphite"
                 >
-                  <span className="h-1.5 w-1.5 rounded-full bg-[#5fcf8e]" />
+                  <span
+                    className="flow-dot h-1.5 w-1.5 rounded-full bg-[#5fcf8e]"
+                    style={{ animationDelay: `${i * 0.6}s` }}
+                  />
                   {stage}
                 </span>
               ))}
@@ -158,8 +165,8 @@ export const Home = () => {
           {/* Right: investor thesis */}
           <div className="flex flex-col items-center gap-3 md:items-start">
             <span className="mb-1 font-mono text-[11px] uppercase tracking-[0.1em] text-stone">Investor thesis</span>
-            {investorCriteria.map((tag) => (
-              <SourceTag key={tag} label={tag} align="left" />
+            {investorCriteria.map((tag, i) => (
+              <SourceTag key={tag} label={tag} align="left" index={i} />
             ))}
           </div>
         </div>
@@ -169,7 +176,7 @@ export const Home = () => {
       </section>
 
       {/* MAP — the live front door */}
-      <section className="mx-auto max-w-[1200px] border-t border-ink/12 px-6 py-20">
+      <section data-reveal className="reveal mx-auto max-w-[1200px] border-t border-ink/12 px-6 py-20">
         <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
           <div>
             <h2 className="font-serif text-[clamp(1.8rem,3.5vw,2.5rem)] leading-[1.1] text-ink">One map. Two sides of the table.</h2>
@@ -188,10 +195,16 @@ export const Home = () => {
       </section>
 
       {/* WHO IT'S FOR */}
-      <section className="mx-auto max-w-[1200px] border-t border-ink/12 px-6 py-20">
+      <section data-reveal className="reveal mx-auto max-w-[1200px] border-t border-ink/12 px-6 py-20">
         <div className="grid gap-6 md:grid-cols-2">
           {/* Founders */}
-          <div className="flex flex-col rounded-[40px] bg-lavender p-10 shadow-[0_0_10px_rgba(0,0,0,0.1)]">
+          <div className="relative isolate flex flex-col overflow-hidden rounded-[40px] bg-lavender p-10 shadow-[0_0_10px_rgba(0,0,0,0.1)]">
+            {/* Peach → periwinkle wash, contained within the card radius */}
+            <div
+              aria-hidden
+              className="pointer-events-none absolute -right-20 -top-20 -z-10 h-64 w-64 rounded-full blur-2xl"
+              style={{ background: 'linear-gradient(150deg, rgba(255,148,115,0.55), rgba(160,181,235,0.5))' }}
+            />
             <LogoIcon className="h-6 w-6 text-ink" />
             <h3 className="mt-6 font-serif text-[28px] leading-[1.15] text-ink">Reach the investors who fit your raise.</h3>
             <ul className="mt-6 grid gap-3.5 font-mono text-[14px] leading-[1.55] text-graphite">
@@ -212,7 +225,13 @@ export const Home = () => {
           </div>
 
           {/* Investors */}
-          <div className="flex flex-col rounded-[40px] bg-charcoal p-10 text-parchment shadow-[0_0_10px_rgba(0,0,0,0.1)]">
+          <div className="relative isolate flex flex-col overflow-hidden rounded-[40px] bg-charcoal p-10 text-parchment shadow-[0_0_10px_rgba(0,0,0,0.1)]">
+            {/* Mint → periwinkle glow, reads as a soft aura on the dark surface */}
+            <div
+              aria-hidden
+              className="pointer-events-none absolute -right-20 -top-20 -z-10 h-64 w-64 rounded-full blur-2xl"
+              style={{ background: 'linear-gradient(150deg, rgba(167,252,205,0.5), rgba(160,181,235,0.45))' }}
+            />
             <LogoIcon className="h-6 w-6 text-parchment" />
             <h3 className="mt-6 font-serif text-[28px] leading-[1.15] text-parchment">Meet the founders who fit your thesis.</h3>
             <ul className="mt-6 grid gap-3.5 font-mono text-[14px] leading-[1.55] text-parchment/70">
@@ -235,7 +254,7 @@ export const Home = () => {
       </section>
 
       {/* THE WEDGE */}
-      <section className="mx-auto max-w-[1200px] border-t border-ink/12 px-6 py-20">
+      <section data-reveal className="reveal mx-auto max-w-[1200px] border-t border-ink/12 px-6 py-20">
         <div className="grid gap-10 md:grid-cols-2 md:items-center">
           <div>
             <h2 className="max-w-xl font-serif text-[clamp(1.8rem,3.5vw,2.5rem)] leading-[1.12] text-ink">
@@ -264,14 +283,19 @@ export const Home = () => {
       </section>
 
       {/* HOW IT WORKS */}
-      <section id="how-to" className="mx-auto max-w-[1200px] border-t border-ink/12 px-6 py-20">
+      <section id="how-to" data-reveal className="reveal mx-auto max-w-[1200px] border-t border-ink/12 px-6 py-20">
         <div className="grid gap-10 lg:grid-cols-[0.8fr_1.2fr] lg:items-start">
           <h2 className="max-w-xl font-serif text-[clamp(1.8rem,3.5vw,2.5rem)] leading-[1.12] text-ink">
             Verify. Match on fit. Let the agents connect you.
           </h2>
           <ol className="grid gap-x-6 gap-y-8 sm:grid-cols-3">
             {howItWorks.map((item, i) => (
-              <li key={item.title} className="border-t border-ink/15 pt-4">
+              <li
+                key={item.title}
+                data-reveal
+                style={{ transitionDelay: `${i * 90}ms` }}
+                className="reveal border-t border-ink/15 pt-4"
+              >
                 <span className="font-mono text-[20px] tabular-nums text-ink">0{i + 1}</span>
                 <h3 className="mt-4 font-serif text-[20px] leading-[1.2] text-ink">{item.title}</h3>
                 <p className="mt-2 font-mono text-[13px] leading-[1.55] text-graphite">{item.text}</p>
@@ -282,7 +306,7 @@ export const Home = () => {
       </section>
 
       {/* FINAL CTA */}
-      <section className="mx-auto max-w-[1200px] border-t border-ink/12 px-6 py-24 text-center">
+      <section data-reveal className="reveal mx-auto max-w-[1200px] border-t border-ink/12 px-6 py-24 text-center">
         <h2 className="mx-auto max-w-2xl font-serif text-[clamp(2.2rem,5vw,3.5rem)] leading-[1.08] text-ink">Find your fit.</h2>
         <p className="mx-auto mt-5 max-w-xl font-mono text-[14px] leading-[1.6] text-graphite">
           Founders find the investors who fit their raise. Investors find the founders who fit their thesis. Pick your side
