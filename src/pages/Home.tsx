@@ -49,7 +49,7 @@ export const Home = () => {
             className="max-w-3xl text-4xl font-normal leading-[1.15] tracking-[-0.04em] md:text-5xl lg:max-w-none lg:whitespace-nowrap xl:text-6xl"
             style={serifDisplay}
           >
-            <span className="pz pz-light pz-end-l pz-knob-r" style={{ zIndex: 4 }}>Find<i className="pz-nub pz-nub-b" /></span><span className="pz pz-olive pz-socket-l pz-knob-r pz-drop" style={{ zIndex: 3 }}>investors<i className="pz-nub pz-nub-t" /></span><span className="pz pz-light pz-socket-l pz-knob-r" style={{ zIndex: 2 }}>who actually<i className="pz-nub pz-nub-b" /></span><span className="pz pz-olive pz-socket-l pz-end-r pz-slide" style={{ zIndex: 1 }}>fit.<i className="pz-nub pz-nub-t" /></span>
+            <span className="pz pz-light pz-end-l pz-knob-r" style={{ zIndex: 4 }}>Founders<i className="pz-nub pz-nub-b" /></span><span className="pz pz-olive pz-socket-l pz-knob-r pz-drop" style={{ zIndex: 3 }}>and investors<i className="pz-nub pz-nub-t" /></span><span className="pz pz-light pz-socket-l pz-knob-r" style={{ zIndex: 2 }}>who<i className="pz-nub pz-nub-b" /></span><span className="pz pz-olive pz-socket-l pz-end-r pz-slide" style={{ zIndex: 1 }}>fit.<i className="pz-nub pz-nub-t" /></span>
           </h1>
           <p className="mt-5 max-w-3xl text-base leading-7 text-black/65 md:text-lg">
             AI agents work both sides of the table. Founders find the right funds, investors find the right founders. No cold emails.
