@@ -2,7 +2,7 @@ import React, { createContext, useContext, useEffect, useMemo, useState } from '
 import clsx from 'clsx';
 import { twMerge } from 'tailwind-merge';
 
-type SwitchSize = 'small' | 'medium' | 'large';
+type SwitchSize = 'tiny' | 'small' | 'medium' | 'large';
 
 const SwitchContext = createContext<{
   value: string | null;
@@ -14,6 +14,7 @@ interface SwitchProps {
   name?: string;
   size?: SwitchSize;
   style?: React.CSSProperties;
+  className?: string;
   value?: string | null;
   defaultValue?: string | null;
   onValueChange?: (value: string) => void;
@@ -24,6 +25,7 @@ export const Switch = ({
   name = 'default',
   size = 'medium',
   style,
+  className,
   value,
   defaultValue = null,
   onValueChange,
@@ -48,11 +50,15 @@ export const Switch = ({
   return (
     <SwitchContext.Provider value={contextValue}>
       <div
-        className={clsx(
-          'flex bg-white/70 p-1 shadow-sm',
-          size === 'small' && 'h-8 rounded-md',
-          size === 'medium' && 'h-10 rounded-md',
-          size === 'large' && 'h-12 rounded-lg',
+        className={twMerge(
+          clsx(
+            'flex bg-white/70 p-1 shadow-sm',
+            size === 'tiny' && 'h-7 rounded-md',
+            size === 'small' && 'h-8 rounded-md',
+            size === 'medium' && 'h-10 rounded-md',
+            size === 'large' && 'h-12 rounded-lg',
+            className,
+          ),
         )}
         style={style}
       >
@@ -121,9 +127,11 @@ const SwitchControl = ({
               ? clsx('bg-gray-100 text-gray-1000 fill-gray-1000 rounded-sm', activeClassName)
               : 'text-gray-900 hover:text-gray-1000 fill-gray-900 hover:fill-gray-1000',
             disabled && 'text-gray-800 fill-gray-800',
+            !icon && size === 'tiny' && 'text-xs px-2.5',
             !icon && size === 'small' && 'text-sm px-3',
             !icon && size === 'medium' && 'text-sm px-3',
             !icon && size === 'large' && 'text-base px-4',
+            icon && size === 'tiny' && 'py-1 px-2',
             icon && size === 'small' && 'py-1 px-2',
             icon && size === 'medium' && 'py-2 px-3',
             icon && size === 'large' && 'p-3',

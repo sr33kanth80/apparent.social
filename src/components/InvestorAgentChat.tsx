@@ -3,6 +3,8 @@ import { Check, Copy, ExternalLink, Loader2, Mail, Send, Sparkles, Trash2, X } f
 
 import { InvestorAIPrompt } from '@/components/InvestorAIAssist';
 import { LogoIcon } from '@/components/LogoIcon';
+import { Switch } from '@/components/ui/switch';
+import { Tooltip } from '@/components/ui/tooltip';
 import type { AgentAutonomy, AppUser } from '@/lib/apparent-types';
 
 export type OutreachProposal = {
@@ -313,21 +315,24 @@ export const InvestorAgentChat = ({
   const autonomyBar = (
     <div className="mt-3 flex flex-wrap items-center gap-2">
       <span className="text-xs font-medium text-gray-500">Agent mode</span>
-      <div className="inline-flex rounded-full border border-black/10 bg-white p-0.5">
+      <Switch
+        name="agent-autonomy"
+        size="tiny"
+        value={autonomy}
+        onValueChange={(next) => onAutonomyChange(next as AgentAutonomy)}
+        className="border border-gray-alpha-400 bg-background-100 shadow-none"
+      >
         {AUTONOMY_OPTIONS.map((option) => (
-          <button
-            key={option.value}
-            type="button"
-            title={option.hint}
-            onClick={() => onAutonomyChange(option.value)}
-            className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
-              autonomy === option.value ? 'bg-[#dcefc7] text-[#42520d]' : 'text-gray-500 hover:text-black'
-            }`}
-          >
-            {option.label}
-          </button>
+          <Tooltip key={option.value} text={option.hint} className="h-full">
+            <Switch.Control
+              name="agent-autonomy"
+              size="tiny"
+              label={option.label}
+              value={option.value}
+            />
+          </Tooltip>
         ))}
-      </div>
+      </Switch>
     </div>
   );
 
