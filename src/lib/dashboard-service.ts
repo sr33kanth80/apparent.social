@@ -1635,7 +1635,7 @@ export const loadApparentInvestors = async (): Promise<ApparentInvestorRow[]> =>
   try {
     const { data: profileRows, error: profilesError } = await supabase
       .from('profiles')
-      .select('id, username, display_name, email')
+      .select('id, username, display_name')
       .eq('role', 'investor');
     if (profilesError || !profileRows?.length) return [];
 
@@ -1657,7 +1657,7 @@ export const loadApparentInvestors = async (): Promise<ApparentInvestorRow[]> =>
         const criteria = criteriaByUser.get(id)!;
         const displayName =
           String(row.display_name ?? '').trim() ||
-          String(row.email ?? '').split('@')[0] ||
+          String(row.username ?? '') ||
           'Investor on Apparent';
         return {
           userId: id,
@@ -1700,7 +1700,7 @@ export const loadLaunchAuthors = async (
 
   try {
     const [{ data: profileRows }, { data: founderRows }] = await Promise.all([
-      supabase.from('profiles').select('id, username, display_name, email').in('id', uniqueIds),
+      supabase.from('profiles').select('id, username, display_name').in('id', uniqueIds),
       supabase
         .from('founder_profiles')
         .select('user_id, profile_name, profile_photo_url, github_verified')
@@ -1716,7 +1716,7 @@ export const loadLaunchAuthors = async (
       const fp = founderById.get(id);
       const founderName = fp ? String(fp.profile_name ?? '').trim() : '';
       const fallbackName =
-        String(row.display_name ?? '').trim() || String(row.email ?? '').split('@')[0] || 'Founder on Apparent';
+        String(row.display_name ?? '').trim() || String(row.username ?? '') || 'Founder on Apparent';
       result[id] = {
         name: founderName || fallbackName,
         username: String(row.username ?? ''),
@@ -1839,14 +1839,14 @@ export const loadPublicProfile = async (username: string): Promise<PublicProfile
   //    First try username match; if the handle looks like a UUID try id match too.
   let { data: profileRow } = await supabase
     .from('profiles')
-    .select('id, role, display_name, email, username')
+    .select('id, role, display_name, username')
     .ilike('username', username)
     .maybeSingle();
 
   if (!profileRow && isUuid(username)) {
     const { data: uuidRow } = await supabase
       .from('profiles')
-      .select('id, role, display_name, email, username')
+      .select('id, role, display_name, username')
       .eq('id', username)
       .maybeSingle();
     profileRow = uuidRow;
@@ -1861,7 +1861,7 @@ export const loadPublicProfile = async (username: string): Promise<PublicProfile
   const canonicalUsername = String(profileRow.username ?? username);
   const displayName =
     String(profileRow.display_name ?? '').trim() ||
-    String(profileRow.email ?? '').split('@')[0];
+    String(profileRow.username ?? '');
 
   // 2a. Investor branch
   if (role === 'investor') {

@@ -3,6 +3,7 @@
 // Uses native node:crypto for SigV4 signing — no @aws-sdk dependency.
 
 import { createHash, createHmac, randomUUID } from 'node:crypto';
+import { createClient } from '@supabase/supabase-js';
 
 const ACCOUNT_ID = process.env.R2_ACCOUNT_ID ?? '';
 const BUCKET     = process.env.R2_BUCKET_NAME ?? '';
@@ -10,8 +11,14 @@ const PUBLIC_URL = (process.env.R2_PUBLIC_URL ?? '').replace(/\/$/, '');
 const ACCESS_KEY = process.env.R2_ACCESS_KEY_ID ?? '';
 const SECRET_KEY = process.env.R2_SECRET_ACCESS_KEY ?? '';
 
+const SUPABASE_URL = (process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || '').replace(/\/$/, '');
+const ANON_KEY = process.env.VITE_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY || '';
+
+// SVG is intentionally excluded: it can carry inline <script>, so an
+// unauthenticated (or even authenticated) upload of an SVG served from our
+// CDN origin would be a stored-XSS vector. Raster/video/doc types only.
 const ALLOWED_TYPES = new Set([
-  'image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml',
+  'image/jpeg', 'image/png', 'image/gif', 'image/webp',
   'video/mp4', 'video/webm', 'video/quicktime', 'video/x-msvideo',
   'application/pdf',
   'application/vnd.ms-powerpoint',
@@ -85,6 +92,23 @@ function presignPut(host, key) {
 export default async function handler(req, res) {
   if (req.method !== 'GET') {
     return res.status(405).json({ error: 'Method not allowed' });
+  }
+
+  // Require a signed-in user. Without this, anyone could mint R2 PUT URLs and
+  // fill the bucket (cost/abuse) or stage content on the CDN domain.
+  if (!SUPABASE_URL || !ANON_KEY) {
+    return res.status(503).json({ error: 'auth_not_configured' });
+  }
+  const authHeader = String(req.headers.authorization || '');
+  const jwt = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : '';
+  if (!jwt) {
+    return res.status(401).json({ error: 'unauthenticated' });
+  }
+  const { data: userData, error: userErr } = await createClient(SUPABASE_URL, ANON_KEY, {
+    auth: { persistSession: false },
+  }).auth.getUser(jwt);
+  if (userErr || !userData?.user) {
+    return res.status(401).json({ error: 'invalid_token' });
   }
 
   const { filename, contentType, folder = 'uploads' } = req.query;

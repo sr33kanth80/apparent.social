@@ -4,6 +4,8 @@
  * (local dev without R2 env vars configured).
  */
 
+import { supabase } from '@/lib/supabase';
+
 export type UploadFolder = 'logos' | 'banners' | 'videos' | 'decks' | 'photos';
 
 /** Dev-mode fallback: read a File as a base64 data URL. */
@@ -34,7 +36,13 @@ export async function uploadFile(file: File, folder: UploadFolder): Promise<stri
       folder,
     });
 
-    const presignRes = await fetch(`/api/upload/presign?${params.toString()}`);
+    // The presign endpoint requires a signed-in user. Forward the Supabase
+    // session token so the server can authenticate the caller.
+    const { data: sessionData } = (await supabase?.auth.getSession()) ?? { data: { session: null } };
+    const accessToken = sessionData?.session?.access_token;
+    const presignRes = await fetch(`/api/upload/presign?${params.toString()}`, {
+      headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : {},
+    });
 
     if (!presignRes.ok) {
       if (import.meta.env.DEV) {
