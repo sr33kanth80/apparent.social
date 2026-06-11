@@ -1,0 +1,1191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Apparent — promo carousel (IG / LinkedIn)</title>
+<meta name="viewport" content="width=1080" />
+<style>
+  /* ──────────────────────────────────────────────────────────────────
+     APPARENT — promo carousel
+     1080 × 1350 (4:5) slides for Instagram portrait carousel + LinkedIn document posts.
+     Open in browser → screenshot each .slide block, OR run promo/export.mjs.
+     ────────────────────────────────────────────────────────────────── */
+
+  :root {
+    --cream: #fbfaf7;
+    --cream-2: #f4f1eb;
+    --ink: #0f0f0d;
+    --ink-soft: #1c1c1a;
+    --olive: #42520d;
+    --olive-dark: #34420a;
+    --lime: #bcd99a;
+    --lime-soft: #dcefc7;
+    --teal: #02A070;
+    --heat-1: #fff7bc;
+    --heat-2: #fee391;
+    --heat-3: #fec44f;
+    --heat-4: #fe9929;
+    --heat-5: #d7301f;
+    --serif: Georgia, 'Times New Roman', serif;
+    --sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Inter, Roboto, sans-serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body {
+    background: #2a2a26;
+    font-family: var(--sans);
+    color: #fff;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+
+  body {
+    padding: 32px 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 24px;
+  }
+
+  .slide {
+    width: 1080px;
+    height: 1350px;
+    position: relative;
+    overflow: hidden;
+    border-radius: 12px;
+    box-shadow: 0 24px 80px rgba(0,0,0,0.35);
+  }
+
+  .slide-tag {
+    position: absolute;
+    top: -28px;
+    left: 0;
+    font-family: var(--sans);
+    font-size: 12px;
+    font-weight: 600;
+    color: rgba(255,255,255,0.5);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  /* PRINT — each slide becomes its own page for PDF export. */
+  @media print {
+    body { background: #fff; padding: 0; gap: 0; }
+    .slide-tag, .instructions { display: none !important; }
+    .slide {
+      border-radius: 0;
+      box-shadow: none;
+      page-break-after: always;
+      break-after: page;
+      margin: 0;
+    }
+  }
+
+  /* ──────────────────────────────────────────────────────────────────
+     SHARED TYPOGRAPHY
+     ────────────────────────────────────────────────────────────────── */
+
+  .display {
+    font-family: var(--serif);
+    font-weight: 400;
+    letter-spacing: -0.045em;
+    line-height: 0.95;
+  }
+  .display-xl { font-size: 138px; letter-spacing: -0.055em; line-height: 0.88; }
+  .display-lg { font-size: 110px; letter-spacing: -0.05em; line-height: 0.9; }
+  .display-md { font-size: 92px; }
+  .display-sm { font-size: 74px; letter-spacing: -0.035em; line-height: 1.0; }
+
+  .eyebrow {
+    font-family: var(--sans);
+    font-size: 16px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.16em;
+  }
+
+  .body {
+    font-family: var(--sans);
+    font-size: 26px;
+    line-height: 1.55;
+    font-weight: 400;
+  }
+
+  .body-sm {
+    font-family: var(--sans);
+    font-size: 20px;
+    line-height: 1.55;
+  }
+
+  .meta {
+    font-family: var(--sans);
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+  }
+
+  /* ──────────────────────────────────────────────────────────────────
+     SLIDE CHROME — brand row in the corner of every slide
+     ────────────────────────────────────────────────────────────────── */
+
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-family: var(--serif);
+    font-size: 28px;
+    letter-spacing: -0.02em;
+  }
+  .brand .logo { width: 36px; height: 36px; flex: 0 0 auto; }
+  .brand-name { font-weight: 400; }
+
+  .slide-num {
+    font-family: var(--sans);
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    color: rgba(255,255,255,0.35);
+  }
+  .slide-num--dark { color: rgba(0,0,0,0.35); }
+
+  .swipe-hint {
+    font-family: var(--sans);
+    font-size: 16px;
+    font-weight: 600;
+    color: rgba(255,255,255,0.45);
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .swipe-hint--dark { color: rgba(0,0,0,0.45); }
+
+  /* ──────────────────────────────────────────────────────────────────
+     SLIDE PADDING — 88px gutter everywhere
+     ────────────────────────────────────────────────────────────────── */
+
+  .slide-inner {
+    position: absolute;
+    inset: 88px;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .slide-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .slide-footer {
+    margin-top: auto;
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+  }
+
+  /* ──────────────────────────────────────────────────────────────────
+     SLIDE 1 — Cover (dark)
+     ────────────────────────────────────────────────────────────────── */
+
+  .s1 {
+    background: var(--ink);
+    color: var(--cream);
+  }
+  .s1 .glow {
+    position: absolute;
+    width: 700px; height: 700px;
+    right: -200px; top: -180px;
+    background: radial-gradient(circle, rgba(188,217,154,0.22), transparent 65%);
+    filter: blur(10px);
+    pointer-events: none;
+  }
+  .s1 .glow2 {
+    position: absolute;
+    width: 600px; height: 600px;
+    left: -180px; bottom: -200px;
+    background: radial-gradient(circle, rgba(2,160,112,0.18), transparent 65%);
+    filter: blur(10px);
+    pointer-events: none;
+  }
+  .s1 h1 { color: var(--cream); }
+  .s1 .sub {
+    margin-top: 36px;
+    font-size: 30px;
+    line-height: 1.45;
+    color: rgba(255,255,255,0.55);
+    max-width: 780px;
+    font-family: var(--sans);
+  }
+  .s1 .brand .logo { color: var(--lime); }
+
+  /* ──────────────────────────────────────────────────────────────────
+     SLIDE 2 — Problem (cream)
+     ────────────────────────────────────────────────────────────────── */
+
+  .s2 {
+    background: var(--cream);
+    color: var(--ink);
+  }
+  .s2 h2 { color: var(--ink); }
+  .s2 .eyebrow { color: var(--olive); }
+  .s2 .sub {
+    margin-top: 40px;
+    font-size: 26px;
+    line-height: 1.55;
+    color: rgba(0,0,0,0.6);
+    max-width: 760px;
+    font-family: var(--sans);
+  }
+  .s2 .brand .logo { color: var(--olive); }
+  .s2 .visual {
+    margin-top: 44px;
+    padding: 24px;
+    background: #f1ede4;
+    border-radius: 18px;
+    display: flex;
+    align-items: center;
+    gap: 18px;
+  }
+  .s2 .visual .strikethrough {
+    font-family: var(--sans);
+    font-size: 22px;
+    color: rgba(0,0,0,0.45);
+    text-decoration: line-through;
+    text-decoration-thickness: 2px;
+  }
+  .s2 .visual .arrow {
+    color: rgba(0,0,0,0.35);
+    font-size: 22px;
+  }
+  .s2 .visual .replacement {
+    font-family: var(--sans);
+    font-size: 22px;
+    font-weight: 600;
+    color: var(--olive);
+  }
+
+  /* ──────────────────────────────────────────────────────────────────
+     SLIDE 3 — The wedge (dark, with match diagram)
+     ────────────────────────────────────────────────────────────────── */
+
+  .s3 {
+    background: var(--ink);
+    color: var(--cream);
+  }
+  .s3 .eyebrow { color: var(--lime); }
+  .s3 h2 { color: var(--cream); margin-top: 24px; }
+  .s3 .brand .logo { color: var(--lime); }
+
+  .match-diagram {
+    margin-top: 64px;
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    gap: 20px;
+    align-items: stretch;
+  }
+  .match-col {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 22px;
+    padding: 28px;
+  }
+  .match-col .h {
+    font-family: var(--sans);
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.4);
+  }
+  .match-col .who {
+    margin-top: 14px;
+    font-family: var(--serif);
+    font-size: 32px;
+    letter-spacing: -0.02em;
+    color: var(--cream);
+  }
+  .match-col .sub {
+    margin-top: 4px;
+    font-family: var(--sans);
+    font-size: 18px;
+    color: rgba(255,255,255,0.5);
+  }
+  .match-col .chips {
+    margin-top: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .match-col .chip {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 12px;
+    padding: 10px 14px;
+    font-family: var(--sans);
+    font-size: 17px;
+    font-weight: 600;
+    color: rgba(255,255,255,0.82);
+  }
+  .match-col .chip.glow {
+    background: rgba(188,217,154,0.14);
+    border-color: rgba(188,217,154,0.5);
+    color: #fff;
+  }
+  .match-bridge {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+  }
+  .match-bridge .score {
+    background: var(--lime);
+    color: var(--ink);
+    border-radius: 999px;
+    padding: 14px 22px;
+    font-family: var(--serif);
+    font-size: 38px;
+    letter-spacing: -0.02em;
+    font-weight: 400;
+    box-shadow: 0 0 40px rgba(188,217,154,0.4);
+  }
+  .match-bridge .lbl {
+    font-family: var(--sans);
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.4);
+  }
+  .match-bridge .dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--lime);
+  }
+  .match-bridge .stem {
+    width: 2px; height: 60px;
+    background: linear-gradient(180deg, transparent, var(--lime), transparent);
+  }
+
+  /* ──────────────────────────────────────────────────────────────────
+     SLIDE 4 — For founders (cream)
+     ────────────────────────────────────────────────────────────────── */
+
+  .s4 {
+    background: var(--cream);
+    color: var(--ink);
+  }
+  .s4 .eyebrow { color: var(--olive); }
+  .s4 h2 { color: var(--ink); margin-top: 24px; }
+  .s4 .brand .logo { color: var(--olive); }
+  .s4 .row {
+    display: grid;
+    grid-template-columns: 56px 1fr;
+    gap: 24px;
+    padding: 28px 0;
+    border-bottom: 1px solid rgba(0,0,0,0.08);
+  }
+  .s4 .row:last-child { border-bottom: none; }
+  .s4 .num {
+    font-family: var(--sans);
+    font-size: 18px;
+    font-weight: 600;
+    color: rgba(0,0,0,0.4);
+  }
+  .s4 .row .t {
+    font-family: var(--sans);
+    font-size: 26px;
+    font-weight: 600;
+    color: var(--ink);
+    letter-spacing: -0.01em;
+  }
+  .s4 .row .d {
+    margin-top: 8px;
+    font-family: var(--sans);
+    font-size: 19px;
+    line-height: 1.5;
+    color: rgba(0,0,0,0.6);
+  }
+  .s4 .list { margin-top: 56px; }
+
+  /* ──────────────────────────────────────────────────────────────────
+     SLIDE 5 — For investors (cream) with ranked inbox
+     ────────────────────────────────────────────────────────────────── */
+
+  .s5 {
+    background: var(--cream);
+    color: var(--ink);
+  }
+  .s5 .eyebrow { color: var(--olive); }
+  .s5 h2 { color: var(--ink); margin-top: 24px; }
+  .s5 .brand .logo { color: var(--olive); }
+  .s5 .inbox {
+    margin-top: 52px;
+    background: var(--ink-soft);
+    border-radius: 28px;
+    padding: 28px;
+    color: #fff;
+  }
+  .s5 .inbox-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 22px;
+  }
+  .s5 .inbox-head .l {
+    font-family: var(--sans);
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--lime);
+  }
+  .s5 .inbox-head .logo { width: 22px; height: 22px; color: var(--lime); }
+  .s5 .inbox-row {
+    display: grid;
+    grid-template-columns: 56px 1fr auto;
+    gap: 18px;
+    align-items: center;
+    padding: 18px;
+    border-radius: 18px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    margin-bottom: 12px;
+  }
+  .s5 .inbox-row.hot {
+    background: rgba(188,217,154,0.12);
+    border-color: rgba(188,217,154,0.4);
+  }
+  .s5 .avatar {
+    width: 56px; height: 56px;
+    border-radius: 14px;
+    background: linear-gradient(135deg, #f59e0b, #ec4899);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--sans);
+    font-weight: 700;
+    font-size: 18px;
+  }
+  .s5 .avatar.sky { background: linear-gradient(135deg, #38bdf8, #06b6d4); }
+  .s5 .avatar.violet { background: linear-gradient(135deg, #a855f7, #ec4899); }
+  .s5 .row-name {
+    font-family: var(--sans);
+    font-size: 20px;
+    font-weight: 700;
+    color: #fff;
+  }
+  .s5 .row-meta {
+    font-family: var(--sans);
+    font-size: 16px;
+    color: rgba(255,255,255,0.5);
+    margin-top: 2px;
+  }
+  .s5 .fit {
+    background: var(--lime);
+    color: var(--ink);
+    border-radius: 999px;
+    padding: 8px 16px;
+    font-family: var(--sans);
+    font-size: 16px;
+    font-weight: 700;
+  }
+
+  /* ──────────────────────────────────────────────────────────────────
+     SLIDE 6 — The map (dark)
+     ────────────────────────────────────────────────────────────────── */
+
+  .s6 {
+    background: var(--ink);
+    color: var(--cream);
+    overflow: hidden;
+  }
+  .s6 .eyebrow { color: var(--lime); }
+  .s6 h2 { color: var(--cream); margin-top: 18px; }
+  .s6 .brand .logo { color: var(--lime); }
+  .s6 .big-number {
+    margin-top: 36px;
+    font-family: var(--serif);
+    font-size: 180px;
+    letter-spacing: -0.06em;
+    line-height: 0.9;
+    color: var(--cream);
+  }
+  .s6 .big-number .plus {
+    color: var(--lime);
+    font-size: 100px;
+    vertical-align: super;
+    margin-left: 8px;
+  }
+  .s6 .sub {
+    margin-top: 18px;
+    font-family: var(--sans);
+    font-size: 26px;
+    color: rgba(255,255,255,0.55);
+    max-width: 780px;
+  }
+  .s6 .heatmap {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    opacity: 0.35;
+  }
+  .s6 .slide-inner { z-index: 1; }
+  .s6 .gradient-bar {
+    margin-top: 40px;
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 6px;
+    max-width: 480px;
+  }
+  .s6 .gradient-bar span {
+    height: 8px;
+    border-radius: 999px;
+  }
+  .s6 .gradient-labels {
+    margin-top: 10px;
+    display: flex;
+    justify-content: space-between;
+    max-width: 480px;
+    font-family: var(--sans);
+    font-size: 14px;
+    color: rgba(255,255,255,0.45);
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    font-weight: 600;
+  }
+
+  /* ──────────────────────────────────────────────────────────────────
+     SLIDE 7 — The match (dark) — solo big match card
+     ────────────────────────────────────────────────────────────────── */
+
+  .s7 {
+    background: var(--ink);
+    color: var(--cream);
+  }
+  .s7 .eyebrow { color: var(--lime); }
+  .s7 h2 { color: var(--cream); margin-top: 16px; }
+  .s7 .brand .logo { color: var(--lime); }
+  .s7 .ambient {
+    position: absolute;
+    width: 600px; height: 600px;
+    right: -180px; top: -180px;
+    background: radial-gradient(circle, rgba(188,217,154,0.18), transparent 65%);
+    filter: blur(10px);
+  }
+  .s7 .stage {
+    margin-top: 52px;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 32px;
+  }
+  .s7 .party {
+    display: grid;
+    grid-template-columns: 88px 1fr auto;
+    gap: 22px;
+    align-items: center;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.1);
+    padding: 28px;
+    border-radius: 22px;
+  }
+  .s7 .face {
+    width: 88px; height: 88px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    color: #fff;
+    font-family: var(--sans);
+    font-weight: 700;
+    font-size: 30px;
+    background: linear-gradient(135deg, #fb7185, #fbbf24);
+    box-shadow: 0 0 0 2px rgba(255,255,255,0.15);
+  }
+  .s7 .tile {
+    width: 88px; height: 88px;
+    border-radius: 18px;
+    background: var(--teal);
+    color: #fff;
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--sans);
+    font-weight: 700;
+    font-size: 26px;
+    box-shadow: 0 0 0 1px rgba(255,255,255,0.1);
+  }
+  .s7 .party .label {
+    font-family: var(--sans);
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.4);
+  }
+  .s7 .party .name {
+    font-family: var(--sans);
+    font-size: 28px;
+    font-weight: 700;
+    color: #fff;
+    margin-top: 4px;
+    letter-spacing: -0.01em;
+  }
+  .s7 .party .desc {
+    font-family: var(--sans);
+    font-size: 18px;
+    color: rgba(255,255,255,0.55);
+    margin-top: 4px;
+  }
+  .s7 .party .tag {
+    font-family: var(--sans);
+    font-size: 14px;
+    font-weight: 700;
+    color: rgba(255,255,255,0.6);
+    background: rgba(255,255,255,0.08);
+    border-radius: 999px;
+    padding: 8px 14px;
+  }
+  .s7 .connector {
+    text-align: center;
+    margin: -8px 0;
+  }
+  .s7 .connector .pill {
+    display: inline-block;
+    background: var(--lime);
+    color: var(--ink);
+    padding: 12px 26px;
+    border-radius: 999px;
+    font-family: var(--serif);
+    font-size: 34px;
+    letter-spacing: -0.02em;
+    box-shadow: 0 0 50px rgba(188,217,154,0.35);
+  }
+  .s7 .bar {
+    margin-top: 28px;
+    height: 10px;
+    border-radius: 999px;
+    background: rgba(255,255,255,0.08);
+    overflow: hidden;
+  }
+  .s7 .bar > span {
+    display: block; height: 100%;
+    width: 92%;
+    background: linear-gradient(90deg, var(--lime), var(--teal));
+    border-radius: 999px;
+  }
+  .s7 .readout {
+    margin-top: 22px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .s7 .readout .l {
+    font-family: var(--sans);
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.4);
+  }
+  .s7 .readout .r {
+    font-family: var(--sans);
+    font-size: 18px;
+    color: rgba(255,255,255,0.55);
+  }
+
+  /* ──────────────────────────────────────────────────────────────────
+     SLIDE 8 — CTA (warm cream with gradient pop)
+     ────────────────────────────────────────────────────────────────── */
+
+  .s8 {
+    background:
+      radial-gradient(circle at 18% 28%, rgba(254,196,79,0.22) 0 18%, transparent 36%),
+      radial-gradient(circle at 78% 22%, rgba(220,239,199,0.7) 0 20%, transparent 40%),
+      radial-gradient(circle at 70% 75%, rgba(254,153,41,0.18) 0 16%, transparent 36%),
+      var(--cream);
+    color: var(--ink);
+  }
+  .s8 .eyebrow { color: var(--olive); }
+  .s8 h2 { color: var(--ink); }
+  .s8 .brand .logo { color: var(--olive); }
+  .s8 .sub {
+    margin-top: 36px;
+    font-family: var(--sans);
+    font-size: 28px;
+    line-height: 1.5;
+    color: rgba(0,0,0,0.65);
+    max-width: 800px;
+  }
+  .s8 .url {
+    font-family: var(--serif);
+    font-size: 64px;
+    letter-spacing: -0.03em;
+    margin-top: 60px;
+    color: var(--olive);
+  }
+  .s8 .ctas {
+    margin-top: 36px;
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  .s8 .cta {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 22px 36px;
+    border-radius: 999px;
+    font-family: var(--sans);
+    font-size: 22px;
+    font-weight: 700;
+    text-decoration: none;
+  }
+  .s8 .cta.lime { background: var(--lime-soft); color: var(--ink); }
+  .s8 .cta.olive { background: var(--olive); color: #fff; }
+
+  /* instructions block above the slides */
+  .instructions {
+    max-width: 1080px;
+    color: rgba(255,255,255,0.7);
+    font-size: 14px;
+    line-height: 1.5;
+    padding: 24px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 12px;
+  }
+  .instructions strong { color: #fff; }
+  .instructions code {
+    background: rgba(0,0,0,0.3);
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-family: 'SF Mono', Menlo, Monaco, Consolas, monospace;
+    font-size: 13px;
+  }
+</style>
+</head>
+<body>
+
+  <div class="instructions">
+    <strong>Apparent · IG + LinkedIn promo carousel (8 slides, 1080×1350)</strong><br/>
+    Open this file in Chrome. Each slide below is exact dimensions. To export:
+    (1) right-click a slide → <em>Inspect</em> → click the slide element → in the Elements panel, three-dot menu → <em>Capture node screenshot</em> — gives you a clean PNG at full resolution.
+    Or (2) <code>File → Print → Save as PDF</code> for a LinkedIn document post — each slide is its own page.
+    Or (3) run <code>node promo/export.mjs</code> after <code>npm i -D playwright</code> to auto-export all 8 as PNGs to <code>promo/out/</code>.
+  </div>
+
+  <!-- ============================================================== -->
+  <!-- SLIDE 1 — COVER -->
+  <!-- ============================================================== -->
+  <span class="slide-tag">SLIDE 1 / 8 — COVER</span>
+  <div class="slide s1" data-slide="01-cover">
+    <div class="glow"></div>
+    <div class="glow2"></div>
+    <div class="slide-inner">
+      <div class="slide-header">
+        <div class="brand">
+          <svg class="logo" viewBox="0 0 256 256" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path d="M 128.005 191.173 C 128.448 156.208 156.93 128 192 128 L 192 64 L 128 64 C 128 99.346 99.346 128 64 128 L 64 192 L 128 192 Z M 192 256 L 64 256 C 28.654 256 0 227.346 0 192 L 0 64 L 64 64 L 64 0 L 192 0 C 227.346 0 256 28.654 256 64 L 256 192 L 192 192 Z" />
+          </svg>
+          <span class="brand-name">Apparent</span>
+        </div>
+        <span class="slide-num">01 / 08</span>
+      </div>
+
+      <div style="margin-top: 240px;">
+        <h1 class="display display-xl">Capital<br/>should find<br/>proof.</h1>
+        <p class="sub">A new way to match founders and investors — by thesis, stage, and proof of work. No warm intro required.</p>
+      </div>
+
+      <div class="slide-footer">
+        <span class="meta" style="color: var(--lime);">apparent.social</span>
+        <span class="swipe-hint">Swipe →</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================== -->
+  <!-- SLIDE 2 — PROBLEM -->
+  <!-- ============================================================== -->
+  <span class="slide-tag">SLIDE 2 / 8 — PROBLEM</span>
+  <div class="slide s2" data-slide="02-problem">
+    <div class="slide-inner">
+      <div class="slide-header">
+        <div class="brand">
+          <svg class="logo" viewBox="0 0 256 256" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path d="M 128.005 191.173 C 128.448 156.208 156.93 128 192 128 L 192 64 L 128 64 C 128 99.346 99.346 128 64 128 L 64 192 L 128 192 Z M 192 256 L 64 256 C 28.654 256 0 227.346 0 192 L 0 64 L 64 64 L 64 0 L 192 0 C 227.346 0 256 28.654 256 64 L 256 192 L 192 192 Z" />
+          </svg>
+          <span class="brand-name">Apparent</span>
+        </div>
+        <span class="slide-num slide-num--dark">02 / 08</span>
+      </div>
+
+      <div style="margin-top: 180px;">
+        <p class="eyebrow">The problem</p>
+        <h2 class="display display-lg" style="margin-top: 32px;">Warm intros are<br/>a bad database<br/>for ambition.</h2>
+        <p class="sub">
+          Today, who gets the meeting has more to do with the founder's network than the founder's work. Outsider founders lose by default. Investors miss them entirely.
+        </p>
+
+        <div class="visual">
+          <span class="strikethrough">"Hey, can you intro me to…"</span>
+          <span class="arrow">→</span>
+          <span class="replacement">Be found by thesis fit.</span>
+        </div>
+      </div>
+
+      <div class="slide-footer">
+        <span class="meta" style="color: var(--olive);">apparent.social</span>
+        <span class="swipe-hint swipe-hint--dark">Swipe →</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================== -->
+  <!-- SLIDE 3 — THE WEDGE -->
+  <!-- ============================================================== -->
+  <span class="slide-tag">SLIDE 3 / 8 — THE WEDGE</span>
+  <div class="slide s3" data-slide="03-wedge">
+    <div class="slide-inner">
+      <div class="slide-header">
+        <div class="brand">
+          <svg class="logo" viewBox="0 0 256 256" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path d="M 128.005 191.173 C 128.448 156.208 156.93 128 192 128 L 192 64 L 128 64 C 128 99.346 99.346 128 64 128 L 64 192 L 128 192 Z M 192 256 L 64 256 C 28.654 256 0 227.346 0 192 L 0 64 L 64 64 L 64 0 L 192 0 C 227.346 0 256 28.654 256 64 L 256 192 L 192 192 Z" />
+          </svg>
+          <span class="brand-name">Apparent</span>
+        </div>
+        <span class="slide-num">03 / 08</span>
+      </div>
+
+      <div style="margin-top: 110px;">
+        <p class="eyebrow">The wedge</p>
+        <h2 class="display display-md" style="margin-top: 28px;">Find investors<br/>who actually fit.</h2>
+
+        <div class="match-diagram">
+          <div class="match-col">
+            <p class="h">Founder · proof</p>
+            <p class="who">Aria Kim</p>
+            <p class="sub">AI agents · San Francisco</p>
+            <div class="chips">
+              <div class="chip glow">4.2k GitHub stars</div>
+              <div class="chip">AI agents</div>
+              <div class="chip">Seed · pre-revenue</div>
+            </div>
+          </div>
+
+          <div class="match-bridge">
+            <span class="dot"></span>
+            <span class="stem"></span>
+            <span class="score">92%</span>
+            <span class="lbl">Thesis match</span>
+            <span class="stem"></span>
+            <span class="dot"></span>
+          </div>
+
+          <div class="match-col">
+            <p class="h">Investor · thesis</p>
+            <p class="who">Northstar</p>
+            <p class="sub">Seed AI · US · pre-revenue</p>
+            <div class="chips">
+              <div class="chip glow">Technical founders</div>
+              <div class="chip">Seed AI thesis</div>
+              <div class="chip">Pre-revenue checks</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="slide-footer">
+        <span class="meta" style="color: var(--lime);">apparent.social</span>
+        <span class="swipe-hint">Swipe →</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================== -->
+  <!-- SLIDE 4 — FOR FOUNDERS -->
+  <!-- ============================================================== -->
+  <span class="slide-tag">SLIDE 4 / 8 — FOR FOUNDERS</span>
+  <div class="slide s4" data-slide="04-founders">
+    <div class="slide-inner">
+      <div class="slide-header">
+        <div class="brand">
+          <svg class="logo" viewBox="0 0 256 256" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path d="M 128.005 191.173 C 128.448 156.208 156.93 128 192 128 L 192 64 L 128 64 C 128 99.346 99.346 128 64 128 L 64 192 L 128 192 Z M 192 256 L 64 256 C 28.654 256 0 227.346 0 192 L 0 64 L 64 64 L 64 0 L 192 0 C 227.346 0 256 28.654 256 64 L 256 192 L 192 192 Z" />
+          </svg>
+          <span class="brand-name">Apparent</span>
+        </div>
+        <span class="slide-num slide-num--dark">04 / 08</span>
+      </div>
+
+      <div style="margin-top: 110px;">
+        <p class="eyebrow">For founders</p>
+        <h2 class="display display-md" style="margin-top: 28px;">Let your work<br/>find its fit.</h2>
+
+        <div class="list">
+          <div class="row">
+            <span class="num">01</span>
+            <div>
+              <p class="t">Make proof legible</p>
+              <p class="d">GitHub, products, traction, launches, and capital goals in one focused profile investors can evaluate in 30 seconds.</p>
+            </div>
+          </div>
+          <div class="row">
+            <span class="num">02</span>
+            <div>
+              <p class="t">Get matched by thesis</p>
+              <p class="d">Investors find you through criteria, founder signals, stage, sector — and the evidence you already have.</p>
+            </div>
+          </div>
+          <div class="row">
+            <span class="num">03</span>
+            <div>
+              <p class="t">Skip the cold-email lottery</p>
+              <p class="d">Pitch the 20 funds that back your category and stage, not 200 you scraped off a list.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="slide-footer">
+        <span class="meta" style="color: var(--olive);">apparent.social</span>
+        <span class="swipe-hint swipe-hint--dark">Swipe →</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================== -->
+  <!-- SLIDE 5 — FOR INVESTORS -->
+  <!-- ============================================================== -->
+  <span class="slide-tag">SLIDE 5 / 8 — FOR INVESTORS</span>
+  <div class="slide s5" data-slide="05-investors">
+    <div class="slide-inner">
+      <div class="slide-header">
+        <div class="brand">
+          <svg class="logo" viewBox="0 0 256 256" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path d="M 128.005 191.173 C 128.448 156.208 156.93 128 192 128 L 192 64 L 128 64 C 128 99.346 99.346 128 64 128 L 64 192 L 128 192 Z M 192 256 L 64 256 C 28.654 256 0 227.346 0 192 L 0 64 L 64 64 L 64 0 L 192 0 C 227.346 0 256 28.654 256 64 L 256 192 L 192 192 Z" />
+          </svg>
+          <span class="brand-name">Apparent</span>
+        </div>
+        <span class="slide-num slide-num--dark">05 / 08</span>
+      </div>
+
+      <div style="margin-top: 110px;">
+        <p class="eyebrow">For investors</p>
+        <h2 class="display display-md" style="margin-top: 28px;">Source like a big<br/>firm, without the<br/>headcount.</h2>
+
+        <div class="inbox">
+          <div class="inbox-head">
+            <span class="l">Ranked by fit</span>
+            <svg class="logo" viewBox="0 0 256 256" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+              <path d="M 128.005 191.173 C 128.448 156.208 156.93 128 192 128 L 192 64 L 128 64 C 128 99.346 99.346 128 64 128 L 64 192 L 128 192 Z M 192 256 L 64 256 C 28.654 256 0 227.346 0 192 L 0 64 L 64 64 L 64 0 L 192 0 C 227.346 0 256 28.654 256 64 L 256 192 L 192 192 Z" />
+            </svg>
+          </div>
+
+          <div class="inbox-row hot">
+            <div class="avatar">AK</div>
+            <div>
+              <p class="row-name">AgentKit</p>
+              <p class="row-meta">AI agents · Seed · San Francisco</p>
+            </div>
+            <span class="fit">92%</span>
+          </div>
+          <div class="inbox-row">
+            <div class="avatar sky">DS</div>
+            <div>
+              <p class="row-name">Ledgerline</p>
+              <p class="row-meta">Fintech infra · Pre-seed · New York</p>
+            </div>
+            <span class="fit">88%</span>
+          </div>
+          <div class="inbox-row">
+            <div class="avatar violet">MO</div>
+            <div>
+              <p class="row-name">Northwind</p>
+              <p class="row-meta">Climate · Seed · Berlin</p>
+            </div>
+            <span class="fit">81%</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="slide-footer">
+        <span class="meta" style="color: var(--olive);">apparent.social</span>
+        <span class="swipe-hint swipe-hint--dark">Swipe →</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================== -->
+  <!-- SLIDE 6 — THE MAP -->
+  <!-- ============================================================== -->
+  <span class="slide-tag">SLIDE 6 / 8 — THE MAP</span>
+  <div class="slide s6" data-slide="06-map">
+    <!-- background heatmap of blurred circles in heat colors -->
+    <svg class="heatmap" viewBox="0 0 1080 1350" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <radialGradient id="hg1"><stop offset="0%" stop-color="#d7301f" stop-opacity="0.9"/><stop offset="100%" stop-color="#d7301f" stop-opacity="0"/></radialGradient>
+        <radialGradient id="hg2"><stop offset="0%" stop-color="#fe9929" stop-opacity="0.8"/><stop offset="100%" stop-color="#fe9929" stop-opacity="0"/></radialGradient>
+        <radialGradient id="hg3"><stop offset="0%" stop-color="#fec44f" stop-opacity="0.7"/><stop offset="100%" stop-color="#fec44f" stop-opacity="0"/></radialGradient>
+        <radialGradient id="hg4"><stop offset="0%" stop-color="#fee391" stop-opacity="0.6"/><stop offset="100%" stop-color="#fee391" stop-opacity="0"/></radialGradient>
+      </defs>
+      <!-- SF -->
+      <circle cx="140" cy="780" r="220" fill="url(#hg1)"/>
+      <circle cx="140" cy="780" r="120" fill="url(#hg2)"/>
+      <!-- NY / East coast -->
+      <circle cx="340" cy="740" r="180" fill="url(#hg2)"/>
+      <circle cx="340" cy="740" r="90" fill="url(#hg3)"/>
+      <!-- London -->
+      <circle cx="600" cy="660" r="160" fill="url(#hg2)"/>
+      <circle cx="600" cy="660" r="80" fill="url(#hg3)"/>
+      <!-- Berlin / Paris -->
+      <circle cx="700" cy="700" r="120" fill="url(#hg3)"/>
+      <!-- Bangalore -->
+      <circle cx="820" cy="900" r="180" fill="url(#hg2)"/>
+      <circle cx="820" cy="900" r="90" fill="url(#hg3)"/>
+      <!-- Singapore / SEA -->
+      <circle cx="930" cy="950" r="140" fill="url(#hg3)"/>
+      <!-- LATAM -->
+      <circle cx="260" cy="1100" r="160" fill="url(#hg4)"/>
+      <circle cx="260" cy="1100" r="80" fill="url(#hg3)"/>
+      <!-- TLV -->
+      <circle cx="720" cy="780" r="110" fill="url(#hg3)"/>
+      <!-- Sydney -->
+      <circle cx="970" cy="1170" r="130" fill="url(#hg4)"/>
+    </svg>
+
+    <div class="slide-inner">
+      <div class="slide-header">
+        <div class="brand">
+          <svg class="logo" viewBox="0 0 256 256" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path d="M 128.005 191.173 C 128.448 156.208 156.93 128 192 128 L 192 64 L 128 64 C 128 99.346 99.346 128 64 128 L 64 192 L 128 192 Z M 192 256 L 64 256 C 28.654 256 0 227.346 0 192 L 0 64 L 64 64 L 64 0 L 192 0 C 227.346 0 256 28.654 256 64 L 256 192 L 192 192 Z" />
+          </svg>
+          <span class="brand-name">Apparent</span>
+        </div>
+        <span class="slide-num">06 / 08</span>
+      </div>
+
+      <div style="margin-top: 70px;">
+        <p class="eyebrow">The map</p>
+        <h2 class="display display-sm" style="margin-top: 22px;">Every fund. Every<br/>city. Live.</h2>
+        <p class="big-number">1,800<span class="plus">+</span></p>
+        <p class="sub">investors mapped — searchable by stage, sector, geography, and thesis. Free to explore.</p>
+
+        <div class="gradient-bar">
+          <span style="background: var(--heat-1);"></span>
+          <span style="background: var(--heat-2);"></span>
+          <span style="background: var(--heat-3);"></span>
+          <span style="background: var(--heat-4);"></span>
+          <span style="background: var(--heat-5);"></span>
+        </div>
+        <div class="gradient-labels"><span>Low density</span><span>High density</span></div>
+      </div>
+
+      <div class="slide-footer">
+        <span class="meta" style="color: var(--lime);">apparent.social/heat-map</span>
+        <span class="swipe-hint">Swipe →</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================== -->
+  <!-- SLIDE 7 — THE MATCH (solo big card) -->
+  <!-- ============================================================== -->
+  <span class="slide-tag">SLIDE 7 / 8 — THE MATCH</span>
+  <div class="slide s7" data-slide="07-match">
+    <div class="ambient"></div>
+    <div class="slide-inner">
+      <div class="slide-header">
+        <div class="brand">
+          <svg class="logo" viewBox="0 0 256 256" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path d="M 128.005 191.173 C 128.448 156.208 156.93 128 192 128 L 192 64 L 128 64 C 128 99.346 99.346 128 64 128 L 64 192 L 128 192 Z M 192 256 L 64 256 C 28.654 256 0 227.346 0 192 L 0 64 L 64 64 L 64 0 L 192 0 C 227.346 0 256 28.654 256 64 L 256 192 L 192 192 Z" />
+          </svg>
+          <span class="brand-name">Apparent</span>
+        </div>
+        <span class="slide-num">07 / 08</span>
+      </div>
+
+      <div style="margin-top: 96px;">
+        <p class="eyebrow">The match</p>
+        <h2 class="display display-md" style="margin-top: 22px;">Proof meets thesis.<br/>The intro writes itself.</h2>
+
+        <div class="stage">
+          <div class="party">
+            <div class="face">AK</div>
+            <div>
+              <p class="label">Founder</p>
+              <p class="name">Aria Kim · AgentKit</p>
+              <p class="desc">AI agents · 4.2k GitHub stars · 38 design partners</p>
+            </div>
+            <span class="tag">Seed</span>
+          </div>
+
+          <div class="connector">
+            <span class="pill">92% thesis match</span>
+          </div>
+
+          <div class="party">
+            <div class="tile">N</div>
+            <div>
+              <p class="label">Investor</p>
+              <p class="name">Northstar Ventures</p>
+              <p class="desc">Technical founders · pre-revenue · United States</p>
+            </div>
+            <span class="tag">Seed AI</span>
+          </div>
+        </div>
+
+        <div class="bar"><span></span></div>
+        <div class="readout">
+          <span class="l">Thesis fit, weighted</span>
+          <span class="r">No intro required.</span>
+        </div>
+      </div>
+
+      <div class="slide-footer">
+        <span class="meta" style="color: var(--lime);">apparent.social</span>
+        <span class="swipe-hint">Swipe →</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================== -->
+  <!-- SLIDE 8 — CTA -->
+  <!-- ============================================================== -->
+  <span class="slide-tag">SLIDE 8 / 8 — CTA</span>
+  <div class="slide s8" data-slide="08-cta">
+    <div class="slide-inner">
+      <div class="slide-header">
+        <div class="brand">
+          <svg class="logo" viewBox="0 0 256 256" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path d="M 128.005 191.173 C 128.448 156.208 156.93 128 192 128 L 192 64 L 128 64 C 128 99.346 99.346 128 64 128 L 64 192 L 128 192 Z M 192 256 L 64 256 C 28.654 256 0 227.346 0 192 L 0 64 L 64 64 L 64 0 L 192 0 C 227.346 0 256 28.654 256 64 L 256 192 L 192 192 Z" />
+          </svg>
+          <span class="brand-name">Apparent</span>
+        </div>
+        <span class="slide-num slide-num--dark">08 / 08</span>
+      </div>
+
+      <div style="margin-top: 180px;">
+        <p class="eyebrow">Join</p>
+        <h2 class="display display-lg" style="margin-top: 28px;">Join before<br/>the obvious round.</h2>
+        <p class="sub">
+          Create the profile, declare the thesis, and let Apparent turn proof into discovery.
+        </p>
+
+        <p class="url">apparent.social</p>
+
+        <div class="ctas">
+          <a class="cta lime" href="#">Create founder profile →</a>
+          <a class="cta olive" href="#">Create investor profile →</a>
+        </div>
+      </div>
+
+      <div class="slide-footer">
+        <span class="meta" style="color: var(--olive);">@apparent.social</span>
+        <span class="swipe-hint swipe-hint--dark">Made with proof, not intros.</span>
+      </div>
+    </div>
+  </div>
+
+</body>
+</html>
