@@ -8852,9 +8852,9 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
                       initial={{ opacity: 0, scale: 1.7, rotate: -12 }}
                       animate={{ opacity: 1, scale: 1, rotate: -12 }}
                       transition={{ type: 'spring', bounce: 0.4, duration: 0.55, delay: 0.2 }}
-                      className="rounded-2xl border-[5px] border-[#b3261e]/70 px-8 py-3 sm:border-[7px] sm:px-12 sm:py-5"
+                      className="rounded-2xl border-[5px] border-[#1e3a8a]/70 px-8 py-3 sm:border-[7px] sm:px-12 sm:py-5"
                     >
-                      <span className="block whitespace-nowrap text-4xl font-black uppercase tracking-[0.2em] text-[#b3261e]/70 sm:text-7xl">
+                      <span className="block whitespace-nowrap text-4xl font-black uppercase tracking-[0.2em] text-[#1e3a8a]/70 sm:text-7xl">
                         Coming Soon
                       </span>
                     </motion.div>
