@@ -176,7 +176,7 @@ export function ActionSearchBar({
                 <motion.li key={action.id} variants={item} layout>
                   <button
                     type="button"
-                    className="flex w-full items-center justify-between rounded-md px-3 py-2 text-left transition-colors hover:bg-[#fbf8f3]"
+                    className="flex w-full items-center justify-between rounded-md px-3 py-2 text-left transition-colors hover:bg-[#f6f3f1]"
                     onMouseDown={(event) => event.preventDefault()}
                     onClick={() => selectAction(action)}
                   >

@@ -7,7 +7,7 @@ import { GitHubIcon } from '../components/GitHubIcon';
 import { loadInvitableBuilders, saveBuilderDiscoveryState, saveMessage, saveVcInterest } from '../lib/dashboard-service';
 import type { AppUser, BuilderNode } from '../lib/apparent-types';
 
-const serif = { fontFamily: 'Georgia, "Times New Roman", serif' };
+const serif = { fontFamily: "'Source Serif 4', ui-serif, Georgia, 'Times New Roman', serif" };
 
 type Decision = 'pass' | 'like' | 'superlike';
 
@@ -80,11 +80,11 @@ const BuilderCard = ({ builder }: { builder: BuilderNode }) => {
   return (
     <div className="flex h-full flex-col overflow-hidden rounded-[28px] bg-[#1c1c1a] p-6 text-white sm:p-7">
       <div className="flex flex-wrap items-center gap-2">
-        <span className="rounded-full bg-[#dcefc7] px-3 py-1 text-xs font-semibold text-[#42520d]">
+        <span className="rounded-full bg-lavender px-3 py-1 text-xs font-semibold text-ink">
           {isIngested ? builder.sourceLabel || 'Public signal' : 'On Apparent'}
         </span>
         {raising && (
-          <span className="rounded-full bg-[#42520d] px-3 py-1 text-xs font-semibold text-white">
+          <span className="rounded-full bg-mint px-3 py-1 text-xs font-semibold text-ink">
             {builder.fundraisingStatus === 'raising'
               ? `Raising${builder.raisingRound ? ` ${builder.raisingRound}` : ''}${builder.raisingAmount ? ` · ${builder.raisingAmount}` : ''}`
               : 'Open to intros'}
@@ -98,7 +98,7 @@ const BuilderCard = ({ builder }: { builder: BuilderNode }) => {
       </div>
 
       <div className="mt-5 flex items-center gap-3">
-        <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-[#42520d] text-lg font-semibold text-white">
+        <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-lavender text-lg font-semibold text-ink">
           {initialsOf(builder.founderName || builder.company)}
         </div>
         <div className="min-w-0">
@@ -108,7 +108,7 @@ const BuilderCard = ({ builder }: { builder: BuilderNode }) => {
           {builder.founderName && <p className="truncate text-sm text-white/55">{builder.founderName}</p>}
         </div>
         {typeof builder.fitScore === 'number' && builder.fitScore > 0 && (
-          <span className="ml-auto rounded-full bg-[#dcefc7] px-3 py-1.5 text-sm font-semibold text-black">
+          <span className="ml-auto rounded-full bg-mint px-3 py-1.5 text-sm font-semibold text-black">
             {builder.fitScore}% fit
           </span>
         )}
@@ -211,11 +211,11 @@ const BuilderDetail = ({
           </button>
 
           <div className="flex flex-wrap items-center gap-2 pr-8">
-            <span className="rounded-full bg-[#dcefc7] px-3 py-1 text-xs font-semibold text-[#42520d]">
+            <span className="rounded-full bg-lavender px-3 py-1 text-xs font-semibold text-ink">
               {builder.origin === 'ingested' ? builder.sourceLabel || 'Public signal' : 'On Apparent'}
             </span>
             {raising && (
-              <span className="rounded-full bg-[#42520d] px-3 py-1 text-xs font-semibold text-white">
+              <span className="rounded-full bg-mint px-3 py-1 text-xs font-semibold text-ink">
                 {builder.fundraisingStatus === 'raising'
                   ? `Raising${builder.raisingRound ? ` ${builder.raisingRound}` : ''}${builder.raisingAmount ? ` · ${builder.raisingAmount}` : ''}`
                   : 'Open to intros'}
@@ -229,7 +229,7 @@ const BuilderDetail = ({
           </div>
 
           <div className="mt-5 flex items-center gap-4">
-            <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-[#42520d] text-2xl font-semibold text-white">
+            <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-lavender text-2xl font-semibold text-ink">
               {initialsOf(builder.founderName || builder.company)}
             </div>
             <div className="min-w-0">
@@ -333,7 +333,7 @@ const BuilderDetail = ({
             <button
               type="button"
               onClick={() => onDecide('like')}
-              className="flex h-12 w-12 items-center justify-center rounded-full bg-[#42520d] text-white transition hover:-translate-y-0.5"
+              className="flex h-12 w-12 items-center justify-center rounded-full bg-charcoal text-white transition hover:-translate-y-0.5"
             >
               <Star className="h-5 w-5" fill="currentColor" />
             </button>
@@ -521,7 +521,7 @@ export const DiscoverDeck = ({ user, builders }: { user: AppUser; builders: Buil
       <div className="relative mx-auto h-[clamp(460px,64vh,580px)] w-full">
         {!current ? (
           <div className="flex h-full flex-col items-center justify-center rounded-[28px] border border-dashed border-black/15 bg-white/60 p-8 text-center">
-            <Sparkles className="mb-4 h-7 w-7 text-[#42520d]" />
+            <Sparkles className="mb-4 h-7 w-7 text-ink" />
             <p className="text-lg font-semibold">No builders in your deck yet</p>
             <p className="mt-2 max-w-xs text-sm text-gray-500">
               New founders surface here as they ship and join. Set your thesis to sharpen the matches.
@@ -592,7 +592,7 @@ export const DiscoverDeck = ({ user, builders }: { user: AppUser; builders: Buil
               type="button"
               onClick={() => decide('like')}
               title="Like (→)"
-              className="flex h-14 w-14 items-center justify-center rounded-full bg-[#42520d] text-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+              className="flex h-14 w-14 items-center justify-center rounded-full bg-charcoal text-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
             >
               <Star className="h-6 w-6" fill="currentColor" />
             </button>
@@ -612,7 +612,7 @@ export const DiscoverDeck = ({ user, builders }: { user: AppUser; builders: Buil
       {invitable.length > 0 && (
         <div className="mt-8 rounded-[20px] border border-black/10 bg-white/70 p-5">
           <div className="flex items-center gap-2">
-            <Link2 className="h-4 w-4 text-[#42520d]" />
+            <Link2 className="h-4 w-4 text-ink" />
             <div>
               <p className="text-sm font-semibold">Invite builders you liked</p>
               <p className="mt-0.5 text-xs text-gray-500">
@@ -623,7 +623,7 @@ export const DiscoverDeck = ({ user, builders }: { user: AppUser; builders: Buil
           <div className="mt-4 space-y-2">
             {invitable.slice(0, 10).map((it) => (
               <div key={it.signalId} className="flex items-center gap-3 rounded-xl bg-[#fbfaf7] px-3 py-2.5">
-                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#42520d] text-xs font-semibold text-white">
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-charcoal text-xs font-semibold text-white">
                   {initialsOf(it.builderName || 'B')}
                 </div>
                 <div className="min-w-0">
@@ -633,7 +633,7 @@ export const DiscoverDeck = ({ user, builders }: { user: AppUser; builders: Buil
                 <button
                   type="button"
                   onClick={() => copyInvite(it)}
-                  className="ml-auto inline-flex shrink-0 items-center gap-1.5 rounded-full bg-[#42520d] px-3 py-1.5 text-xs font-semibold text-white transition hover:opacity-90"
+                  className="ml-auto inline-flex shrink-0 items-center gap-1.5 rounded-full bg-charcoal px-3 py-1.5 text-xs font-semibold text-white transition hover:opacity-90"
                 >
                   {copied === it.signalId ? <Check className="h-3.5 w-3.5" /> : <Link2 className="h-3.5 w-3.5" />}
                   {copied === it.signalId ? 'Copied!' : 'Copy invite link'}

@@ -176,7 +176,7 @@ export const FounderAgentChat = ({
     const badge = () => {
       switch (proposal.status) {
         case 'sent':
-          return <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-[#42520d]"><Check className="h-3 w-3" /> Sent</span>;
+          return <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-ink"><Check className="h-3 w-3" /> Sent</span>;
         case 'sending':
           return <span className="inline-flex items-center gap-1 text-[11px] text-gray-500"><Loader2 className="h-3 w-3 animate-spin" /> Sending…</span>;
         case 'skipped':
@@ -201,14 +201,14 @@ export const FounderAgentChat = ({
             <button
               type="button"
               onClick={() => sendIntro(messageIndex, proposalIndex, proposal)}
-              className="inline-flex items-center gap-1 rounded-lg bg-neutral-900 px-2.5 py-1 text-[11px] font-semibold text-white transition-colors hover:bg-black"
+              className="inline-flex items-center gap-1 rounded-lg bg-charcoal px-2.5 py-1 text-[11px] font-semibold text-white transition-colors hover:bg-black"
             >
               <Send className="h-3 w-3" /> Send intro
             </button>
             <button
               type="button"
               onClick={() => patchProposal(messageIndex, proposalIndex, { status: 'skipped', reason: 'Dismissed' })}
-              className="inline-flex items-center gap-1 rounded-lg px-2.5 py-1 text-[11px] text-gray-500 transition-colors hover:bg-[#fbf8f3] hover:text-black"
+              className="inline-flex items-center gap-1 rounded-lg px-2.5 py-1 text-[11px] text-gray-500 transition-colors hover:bg-[#f6f3f1] hover:text-black"
             >
               <X className="h-3 w-3" /> Dismiss
             </button>
@@ -224,13 +224,13 @@ export const FounderAgentChat = ({
         <div className="mb-3 overflow-hidden rounded-2xl border border-black/10 bg-white shadow-[0_10px_34px_rgba(0,0,0,0.04)]">
           <div className="flex items-center justify-between border-b border-black/5 px-4 py-2.5">
             <div className="flex items-center gap-2 text-sm font-semibold text-black">
-              <Sparkles className="h-4 w-4 text-[#42520d]" />
+              <Sparkles className="h-4 w-4 text-ink" />
               Your founder agent
             </div>
             <button
               type="button"
               onClick={clear}
-              className="flex items-center gap-1 rounded-md px-2 py-1 text-xs text-gray-500 transition-colors hover:bg-[#fbf8f3] hover:text-black"
+              className="flex items-center gap-1 rounded-md px-2 py-1 text-xs text-gray-500 transition-colors hover:bg-[#f6f3f1] hover:text-black"
             >
               <Trash2 className="h-3.5 w-3.5" />
               Clear
@@ -242,15 +242,15 @@ export const FounderAgentChat = ({
               <div key={index} className={message.role === 'user' ? 'flex justify-end' : 'flex flex-col items-start'}>
                 <div className={message.role === 'user' ? 'flex justify-end' : 'flex justify-start'}>
                   {message.role === 'assistant' && (
-                    <div className="mr-2 mt-1 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#dcefc7]">
-                      <LogoIcon className="h-3.5 w-3.5 text-[#42520d]" />
+                    <div className="mr-2 mt-1 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-lavender">
+                      <LogoIcon className="h-3.5 w-3.5 text-ink" />
                     </div>
                   )}
                   <div
                     className={
                       message.role === 'user'
-                        ? 'max-w-[80%] whitespace-pre-wrap rounded-2xl rounded-br-sm bg-neutral-900 px-3.5 py-2.5 text-sm leading-relaxed text-white'
-                        : 'max-w-[85%] whitespace-pre-wrap rounded-2xl rounded-bl-sm bg-[#fbf8f3] px-3.5 py-2.5 text-sm leading-relaxed text-gray-800'
+                        ? 'max-w-[80%] whitespace-pre-wrap rounded-2xl rounded-br-sm bg-charcoal px-3.5 py-2.5 text-sm leading-relaxed text-white'
+                        : 'max-w-[85%] whitespace-pre-wrap rounded-2xl rounded-bl-sm bg-[#f6f3f1] px-3.5 py-2.5 text-sm leading-relaxed text-gray-800'
                     }
                   >
                     {message.content}
@@ -265,7 +265,7 @@ export const FounderAgentChat = ({
 
                 {message.role === 'assistant' && message.amplified && (
                   <div className="ml-8 mt-2 w-[85%]">
-                    <div className="inline-flex items-center gap-2 rounded-xl border border-[#dcefc7] bg-[#f3f9ea] px-3 py-2 text-xs font-medium text-[#42520d]">
+                    <div className="inline-flex items-center gap-2 rounded-xl border border-lavender bg-[#eef2fb] px-3 py-2 text-xs font-medium text-ink">
                       <Megaphone className="h-3.5 w-3.5" />
                       {'count' in message.amplified
                         ? message.amplified.count > 0
@@ -280,10 +280,10 @@ export const FounderAgentChat = ({
 
             {isLoading && (
               <div className="flex justify-start">
-                <div className="mr-2 mt-1 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#dcefc7]">
-                  <LogoIcon className="h-3.5 w-3.5 text-[#42520d]" />
+                <div className="mr-2 mt-1 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-lavender">
+                  <LogoIcon className="h-3.5 w-3.5 text-ink" />
                 </div>
-                <div className="flex items-center gap-2 rounded-2xl rounded-bl-sm bg-[#fbf8f3] px-3.5 py-2.5 text-sm text-gray-500">
+                <div className="flex items-center gap-2 rounded-2xl rounded-bl-sm bg-[#f6f3f1] px-3.5 py-2.5 text-sm text-gray-500">
                   <Loader2 className="h-3.5 w-3.5 animate-spin" />
                   Working…
                 </div>

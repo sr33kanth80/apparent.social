@@ -375,14 +375,14 @@ const EmptyState = ({
   onCta?: () => void;
 }) => (
   <div className="flex flex-col items-center justify-center px-6 py-12 text-center">
-    <div className="mb-3 flex h-11 w-11 items-center justify-center rounded-full bg-[#f4f1eb] text-[#42520d]">{icon}</div>
+    <div className="mb-3 flex h-11 w-11 items-center justify-center rounded-full bg-[#f4f1eb] text-ink">{icon}</div>
     <p className="text-sm font-semibold">{title}</p>
     <p className="mt-1 max-w-sm text-xs leading-relaxed text-gray-500">{body}</p>
     {ctaLabel && onCta && (
       <button
         type="button"
         onClick={onCta}
-        className="mt-4 rounded-full bg-[#42520d] px-4 py-2 text-xs font-semibold text-white transition-opacity hover:opacity-90"
+        className="mt-4 rounded-full bg-charcoal px-4 py-2 text-xs font-semibold text-white transition-opacity hover:opacity-90"
       >
         {ctaLabel}
       </button>
@@ -1031,15 +1031,15 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
     }
   }, [dashboardBasePath, location.hash, location.pathname, navigate]);
 
-  const accentSurface = isInvestor ? 'bg-[#42520d]' : 'bg-[#dcefc7]';
+  const accentSurface = isInvestor ? 'bg-charcoal' : 'bg-lavender';
   const accentForeground = isInvestor ? 'text-white' : 'text-black';
   const accentSwitchForeground = isInvestor ? 'text-white fill-white' : 'text-black fill-black';
   const accentIconForeground = isInvestor ? 'text-white/90' : 'text-black/75';
-  const dmSurface = isInvestor ? 'bg-[#f7f3e4]' : 'bg-[#f2faec]';
-  const dmSelectedSurface = isInvestor ? 'bg-[#f3edd7]' : 'bg-[#edf8e5]';
-  const dmSoftSurface = isInvestor ? 'bg-[#faf7eb]' : 'bg-[#f8fdf4]';
-  const dmAccentBorder = isInvestor ? 'border-[#42520d]/25' : 'border-[#02A070]/25';
-  const dmFocusBorder = isInvestor ? 'focus:border-[#42520d]/60' : 'focus:border-[#02A070]/50';
+  const dmSurface = isInvestor ? 'bg-[#f7f3e4]' : 'bg-[#effbf4]';
+  const dmSelectedSurface = isInvestor ? 'bg-[#f3edd7]' : 'bg-[#e2f7ec]';
+  const dmSoftSurface = isInvestor ? 'bg-[#faf7eb]' : 'bg-[#f3fcf7]';
+  const dmAccentBorder = isInvestor ? 'border-ink/25' : 'border-[#37d28b]/25';
+  const dmFocusBorder = isInvestor ? 'focus:border-ink/60' : 'focus:border-[#37d28b]/50';
   const dmBubbleMeta = isInvestor ? 'bg-white/15 text-white/75' : 'bg-white/70 text-black/60';
   const feedItems = feedRows;
   const completedFieldCount = intakeFields.filter((field) => intakeValues[field.key].trim()).length;
@@ -2105,7 +2105,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
       {
         id: 'open-launches',
         label: 'Open product launcher',
-        icon: <Rocket className="h-4 w-4 text-[#02A070]" />,
+        icon: <Rocket className="h-4 w-4 text-[#37d28b]" />,
         description: 'Publish a product into Apparent',
         short: 'Products',
         end: 'Launch',
@@ -2113,7 +2113,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
       {
         id: 'open-deal-room',
         label: 'Open deal room',
-        icon: <FileText className="h-4 w-4 text-[#02A070]" />,
+        icon: <FileText className="h-4 w-4 text-[#37d28b]" />,
         description: 'Investor conversations and terms',
         short: 'Deals',
         end: 'Workspace',
@@ -2121,7 +2121,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
       {
         id: 'query-investors',
         label: 'Search investors',
-        icon: <Search className="h-4 w-4 text-[#02A070]" />,
+        icon: <Search className="h-4 w-4 text-[#37d28b]" />,
         description: 'Filter for investor matches and capital notes',
         short: 'Investors',
         end: 'Search',
@@ -3592,7 +3592,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
                 <div className="px-5 py-5">
                   <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                     <div className="flex items-center gap-4">
-                      <div className="flex h-24 w-24 shrink-0 items-center justify-center overflow-hidden rounded-[24px] bg-[#42520d] text-2xl font-semibold text-white shadow-sm">
+                      <div className="flex h-24 w-24 shrink-0 items-center justify-center overflow-hidden rounded-[24px] bg-charcoal text-2xl font-semibold text-white shadow-sm">
                         {getInitials(user.email.split('@')[0].replace(/[._-]+/g, ' '))}
                       </div>
                       <div className="pb-1">
@@ -3604,7 +3604,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
                           href={`/@${user.username ?? user.email.split('@')[0].toLowerCase().replace(/[^a-z0-9]/g, '')}`}
                           target="_blank"
                           rel="noreferrer"
-                          className="mt-2 inline-flex items-center gap-1 rounded-full bg-[#f4f1eb] px-3 py-1 text-xs font-medium text-gray-600 transition hover:bg-[#42520d] hover:text-white"
+                          className="mt-2 inline-flex items-center gap-1 rounded-full bg-[#f4f1eb] px-3 py-1 text-xs font-medium text-gray-600 transition hover:bg-charcoal hover:text-white"
                         >
                           <ArrowUpRight className="h-3 w-3" />
                           @{user.username ?? user.email.split('@')[0].toLowerCase().replace(/[^a-z0-9]/g, '')} · View public profile
@@ -3637,7 +3637,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
                         type="button"
                         onClick={() => setProfileSection(s.key)}
                         className={`w-full rounded-xl px-3 py-2.5 text-left text-sm font-medium transition-colors ${
-                          isActive ? `${accentSurface} ${accentForeground}` : 'text-gray-600 hover:bg-[#fbf8f3]'
+                          isActive ? `${accentSurface} ${accentForeground}` : 'text-gray-600 hover:bg-[#f6f3f1]'
                         }`}
                       >
                         {s.label}
@@ -3669,7 +3669,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
                           const field = investorIntakeFields.find((f) => f.key === key);
                           if (!field) return null;
                           return (
-                            <label key={field.key} className="grid gap-3 px-5 py-4 transition-colors hover:bg-[#fbf8f3] md:grid-cols-[220px_1fr]">
+                            <label key={field.key} className="grid gap-3 px-5 py-4 transition-colors hover:bg-[#f6f3f1] md:grid-cols-[220px_1fr]">
                               <div>
                                 <p className="text-sm font-medium">{field.label}</p>
                                 <p className="mt-1 text-xs text-gray-400">{intakeValues[field.key]?.trim() ? 'Captured' : 'Optional'}</p>
@@ -3694,7 +3694,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
                           const field = investorIntakeFields.find((f) => f.key === key);
                           if (!field) return null;
                           return (
-                            <label key={field.key} className="grid gap-3 px-5 py-4 transition-colors hover:bg-[#fbf8f3] md:grid-cols-[220px_1fr]">
+                            <label key={field.key} className="grid gap-3 px-5 py-4 transition-colors hover:bg-[#f6f3f1] md:grid-cols-[220px_1fr]">
                               <div>
                                 <p className="text-sm font-medium">{field.label}</p>
                                 <p className="mt-1 text-xs text-gray-400">{intakeValues[field.key]?.trim() ? 'Captured' : 'Optional'}</p>
@@ -3728,7 +3728,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
                           const field = investorIntakeFields.find((f) => f.key === 'portfolioExamples');
                           if (!field) return null;
                           return (
-                            <label className="grid gap-3 px-5 py-4 transition-colors hover:bg-[#fbf8f3] md:grid-cols-[220px_1fr]">
+                            <label className="grid gap-3 px-5 py-4 transition-colors hover:bg-[#f6f3f1] md:grid-cols-[220px_1fr]">
                               <div>
                                 <p className="text-sm font-medium">{field.label}</p>
                                 <p className="mt-1 text-xs text-gray-400">{intakeValues[field.key]?.trim() ? 'Captured' : 'Optional'}</p>
@@ -3752,14 +3752,14 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
                             href={`/@${user.username ?? user.email.split('@')[0].toLowerCase().replace(/[^a-z0-9]/g, '')}`}
                             target="_blank"
                             rel="noreferrer"
-                            className="font-medium text-[#42520d] underline underline-offset-2"
+                            className="font-medium text-ink underline underline-offset-2"
                           >
                             /@{user.username ?? user.email.split('@')[0].toLowerCase().replace(/[^a-z0-9]/g, '')}
                           </a>
                         </p>
                       </div>
                       <div className="space-y-3 px-5 py-4">
-                        <label className="flex items-center justify-between gap-3 rounded-xl bg-[#fbf8f3] px-4 py-3">
+                        <label className="flex items-center justify-between gap-3 rounded-xl bg-[#f6f3f1] px-4 py-3">
                           <span className="text-sm">
                             <span className="font-medium">
                               {intakeValues.publicProfileEnabled === 'true' ? 'Public profile on' : 'Private (platform only)'}
@@ -3775,7 +3775,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
                             role="switch"
                             aria-checked={intakeValues.publicProfileEnabled === 'true'}
                             onClick={() => handleIntakeChange('publicProfileEnabled', intakeValues.publicProfileEnabled === 'true' ? 'false' : 'true')}
-                            className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors ${intakeValues.publicProfileEnabled === 'true' ? 'bg-[#42520d]' : 'bg-gray-200'}`}
+                            className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors ${intakeValues.publicProfileEnabled === 'true' ? 'bg-charcoal' : 'bg-gray-200'}`}
                           >
                             <span className={`inline-block h-3.5 w-3.5 translate-x-0.5 rounded-full bg-white shadow transition-transform ${intakeValues.publicProfileEnabled === 'true' ? 'translate-x-[1.125rem]' : ''}`} />
                           </button>
@@ -3800,8 +3800,8 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
                             handleIntakeChange('publicFields', JSON.stringify(next));
                           };
                           return (
-                            <label key={key} className="flex cursor-pointer items-center gap-2 rounded-lg px-2 py-2 text-sm transition hover:bg-[#fbf8f3]">
-                              <input type="checkbox" checked={isChecked} onChange={toggleField} className="h-3.5 w-3.5 rounded accent-[#42520d]" />
+                            <label key={key} className="flex cursor-pointer items-center gap-2 rounded-lg px-2 py-2 text-sm transition hover:bg-[#f6f3f1]">
+                              <input type="checkbox" checked={isChecked} onChange={toggleField} className="h-3.5 w-3.5 rounded accent-ink" />
                               <span className="text-gray-700">{label}</span>
                             </label>
                           );
@@ -3834,7 +3834,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
                       {signalRows.slice(0, 5).map((signal) => (
                         <article key={signal.id} className="px-5 py-4">
                           <div className="flex items-start gap-3">
-                            <div className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-[14px] bg-[#f7f3e4] text-xs font-semibold text-[#42520d]">
+                            <div className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-[14px] bg-[#f7f3e4] text-xs font-semibold text-ink">
                               {signal.company.slice(0, 2).toUpperCase()}
                             </div>
                             <div className="min-w-0 flex-1">
@@ -3882,7 +3882,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
                 <div className="px-5 py-5">
                   <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                     <div className="flex items-center gap-4">
-                      <div className="flex h-24 w-24 shrink-0 items-center justify-center overflow-hidden rounded-[24px] bg-[#dcefc7] text-2xl font-semibold text-black shadow-sm">
+                      <div className="flex h-24 w-24 shrink-0 items-center justify-center overflow-hidden rounded-[24px] bg-lavender text-2xl font-semibold text-black shadow-sm">
                         {intakeValues.profilePhotoUrl ? (
                           <img src={intakeValues.profilePhotoUrl} alt="" className="h-full w-full object-cover" />
                         ) : (
@@ -3896,7 +3896,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
                           href={`/@${user.username ?? user.email.split('@')[0].toLowerCase().replace(/[^a-z0-9]/g, '')}`}
                           target="_blank"
                           rel="noreferrer"
-                          className="mt-2 inline-flex items-center gap-1 rounded-full bg-[#f4f1eb] px-3 py-1 text-xs font-medium text-gray-600 transition hover:bg-[#dcefc7] hover:text-black"
+                          className="mt-2 inline-flex items-center gap-1 rounded-full bg-[#f4f1eb] px-3 py-1 text-xs font-medium text-gray-600 transition hover:bg-lavender hover:text-black"
                         >
                           <ArrowUpRight className="h-3 w-3" />
                           @{user.username ?? user.email.split('@')[0].toLowerCase().replace(/[^a-z0-9]/g, '')} · View public profile
@@ -3911,7 +3911,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
                         <span
                           className={`rounded-full px-3 py-1.5 text-xs font-semibold ${
                             founderVcReady
-                              ? 'bg-[#dcefc7] text-[#42520d]'
+                              ? 'bg-lavender text-ink'
                               : 'bg-[#fde7c7] text-[#7a3d00]'
                           }`}
                           title={
@@ -3923,7 +3923,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
                           {founderVcReady ? `${profileStrength}% · VC-ready` : `${profileStrength}% · ${founderMissingRequired.length} required field${founderMissingRequired.length === 1 ? '' : 's'} missing`}
                         </span>
                       )}
-                      <label className="cursor-pointer rounded-full border border-black/10 px-3 py-1.5 text-xs font-semibold hover:bg-[#fbf8f3]">
+                      <label className="cursor-pointer rounded-full border border-black/10 px-3 py-1.5 text-xs font-semibold hover:bg-[#f6f3f1]">
                         <input type="file" accept="image/*" className="hidden" onChange={(event) => handleProfileAssetUpload(event.target.files?.[0])} />
                         Upload photo
                       </label>
@@ -3948,7 +3948,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
                         type="button"
                         onClick={() => setProfileSection(s.key)}
                         className={`w-full rounded-xl px-3 py-2.5 text-left text-sm font-medium transition-colors ${
-                          isActive ? `${accentSurface} ${accentForeground}` : 'text-gray-600 hover:bg-[#fbf8f3]'
+                          isActive ? `${accentSurface} ${accentForeground}` : 'text-gray-600 hover:bg-[#f6f3f1]'
                         }`}
                       >
                         {s.label}
@@ -3991,7 +3991,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
                                       key={option.value}
                                       type="button"
                                       onClick={() => handleIntakeChange('tractionType', active ? '' : option.value)}
-                                      className={`rounded-full px-3 py-1.5 text-xs font-semibold transition-colors ${active ? 'bg-[#42520d] text-white' : 'bg-[#f4f1eb] text-gray-600 hover:bg-[#dcefc7]'}`}
+                                      className={`rounded-full px-3 py-1.5 text-xs font-semibold transition-colors ${active ? 'bg-charcoal text-white' : 'bg-[#f4f1eb] text-gray-600 hover:bg-lavender'}`}
                                     >
                                       {option.label}
                                     </button>
@@ -4016,7 +4016,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
                             </div>
                           )}
                           {fields.map((field) => (
-                            <label key={field.key} className="grid gap-3 px-5 py-4 transition-colors hover:bg-[#fbf8f3] md:grid-cols-[220px_1fr]">
+                            <label key={field.key} className="grid gap-3 px-5 py-4 transition-colors hover:bg-[#f6f3f1] md:grid-cols-[220px_1fr]">
                               <div>
                                 <p className="text-sm font-medium">{field.label}</p>
                                 <p className="mt-1 text-xs text-gray-400">{intakeValues[field.key]?.trim() ? 'Captured' : 'Optional'}</p>
@@ -4056,7 +4056,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
                                 key={value}
                                 type="button"
                                 onClick={() => handleIntakeChange('fundraisingStatus', value)}
-                                className={`rounded-full px-4 py-2 text-xs font-semibold transition-colors ${active ? 'bg-[#42520d] text-white' : 'bg-[#f4f1eb] text-gray-600 hover:bg-[#dcefc7]'}`}
+                                className={`rounded-full px-4 py-2 text-xs font-semibold transition-colors ${active ? 'bg-charcoal text-white' : 'bg-[#f4f1eb] text-gray-600 hover:bg-lavender'}`}
                               >
                                 {label}
                               </button>
@@ -4087,7 +4087,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
                             </label>
                           </div>
                         )}
-                        <label className="flex items-center justify-between gap-3 rounded-xl bg-[#fbf8f3] px-4 py-3">
+                        <label className="flex items-center justify-between gap-3 rounded-xl bg-[#f6f3f1] px-4 py-3">
                           <span className="text-sm">
                             <span className="font-medium">Open to investor contact</span>
                             <span className="mt-0.5 block text-xs text-gray-500">Let thesis-fit investors reach out to you directly through Apparent.</span>
@@ -4097,7 +4097,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
                             role="switch"
                             aria-checked={(intakeValues.openToContact ?? 'true') !== 'false'}
                             onClick={() => handleIntakeChange('openToContact', (intakeValues.openToContact ?? 'true') !== 'false' ? 'false' : 'true')}
-                            className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors ${(intakeValues.openToContact ?? 'true') !== 'false' ? 'bg-[#42520d]' : 'bg-gray-200'}`}
+                            className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors ${(intakeValues.openToContact ?? 'true') !== 'false' ? 'bg-charcoal' : 'bg-gray-200'}`}
                           >
                             <span className={`inline-block h-3.5 w-3.5 translate-x-0.5 rounded-full bg-white shadow transition-transform ${(intakeValues.openToContact ?? 'true') !== 'false' ? 'translate-x-[1.125rem]' : ''}`} />
                           </button>
@@ -4118,14 +4118,14 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
                               href={`/@${user.username ?? user.email.split('@')[0].toLowerCase().replace(/[^a-z0-9]/g, '')}`}
                               target="_blank"
                               rel="noreferrer"
-                              className="font-medium text-[#42520d] underline underline-offset-2"
+                              className="font-medium text-ink underline underline-offset-2"
                             >
                               /@{user.username ?? user.email.split('@')[0].toLowerCase().replace(/[^a-z0-9]/g, '')}
                             </a>
                           </p>
                         </div>
                         <div className="space-y-3 px-5 py-4">
-                          <label className="flex items-center justify-between gap-3 rounded-xl bg-[#fbf8f3] px-4 py-3">
+                          <label className="flex items-center justify-between gap-3 rounded-xl bg-[#f6f3f1] px-4 py-3">
                             <span className="text-sm">
                               <span className="font-medium">
                                 {intakeValues.publicProfileEnabled === 'true' ? 'Public profile on' : 'Private (platform only)'}
@@ -4141,7 +4141,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
                               role="switch"
                               aria-checked={intakeValues.publicProfileEnabled === 'true'}
                               onClick={() => handleIntakeChange('publicProfileEnabled', intakeValues.publicProfileEnabled === 'true' ? 'false' : 'true')}
-                              className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors ${intakeValues.publicProfileEnabled === 'true' ? 'bg-[#42520d]' : 'bg-gray-200'}`}
+                              className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors ${intakeValues.publicProfileEnabled === 'true' ? 'bg-charcoal' : 'bg-gray-200'}`}
                             >
                               <span className={`inline-block h-3.5 w-3.5 translate-x-0.5 rounded-full bg-white shadow transition-transform ${intakeValues.publicProfileEnabled === 'true' ? 'translate-x-[1.125rem]' : ''}`} />
                             </button>
@@ -4161,7 +4161,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
                   <section className="rounded-[20px] border border-black/10 bg-white shadow-[0_10px_34px_rgba(0,0,0,0.04)]">
                     <div className="flex items-center justify-between gap-3 px-5 py-4">
                       <h3 className="text-sm font-semibold">Investor interest</h3>
-                      <span className="shrink-0 rounded-full bg-[#dcefc7] px-3 py-1 text-xs font-semibold text-[#42520d]">
+                      <span className="shrink-0 rounded-full bg-lavender px-3 py-1 text-xs font-semibold text-ink">
                         {founderInterest.saveCount} tracking
                       </span>
                     </div>
@@ -4176,17 +4176,17 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
                       ) : vcInterest.length === 0 ? (
                         <p className="text-xs leading-5 text-gray-500">
                           No investors tracking you yet. Set status to{' '}
-                          <span className="font-medium text-[#42520d]">Raising now</span> to surface.
+                          <span className="font-medium text-ink">Raising now</span> to surface.
                         </p>
                       ) : null}
                       {vcInterest.length > 0 && (
                         <div className="space-y-2 border-t border-black/5 pt-3">
-                          <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-[#42520d]">
+                          <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-ink">
                             Who liked you
                           </p>
                           {vcInterest.slice(0, 4).map((entry) => (
                             <div key={entry.id} className="flex items-center gap-2 rounded-xl bg-[#fbfaf7] px-2.5 py-2">
-                              <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#42520d] text-[10px] font-semibold text-white">
+                              <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-charcoal text-[10px] font-semibold text-white">
                                 {(entry.investorName || 'VC').slice(0, 2).toUpperCase()}
                               </div>
                               <div className="min-w-0 flex-1">
@@ -4199,7 +4199,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
                                 <button
                                   type="button"
                                   onClick={() => handleMessageInterestedVc(entry)}
-                                  className="shrink-0 rounded-full bg-[#42520d] px-2.5 py-1 text-[10px] font-semibold text-white hover:opacity-90"
+                                  className="shrink-0 rounded-full bg-charcoal px-2.5 py-1 text-[10px] font-semibold text-white hover:opacity-90"
                                 >
                                   Message
                                 </button>
@@ -4333,7 +4333,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
                   <button
                     type="button"
                     onClick={exitLaunchForm}
-                    className="inline-flex items-center gap-1.5 rounded-full border border-black/10 px-4 py-2 text-sm font-semibold hover:bg-[#fbf8f3]"
+                    className="inline-flex items-center gap-1.5 rounded-full border border-black/10 px-4 py-2 text-sm font-semibold hover:bg-[#f6f3f1]"
                   >
                     <ChevronLeft className="h-4 w-4" /> Back to launches
                   </button>
@@ -4349,7 +4349,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
               <button
                 type="button"
                 onClick={startNewLaunch}
-                className="flex h-full min-h-[220px] flex-col items-center justify-center gap-3 rounded-[20px] border-2 border-dashed border-black/15 bg-white p-6 text-center transition-colors hover:border-[#42520d]/40 hover:bg-[#fbf8f3]"
+                className="flex h-full min-h-[220px] flex-col items-center justify-center gap-3 rounded-[20px] border-2 border-dashed border-black/15 bg-white p-6 text-center transition-colors hover:border-ink/40 hover:bg-[#f6f3f1]"
               >
                 <span className={`flex h-12 w-12 items-center justify-center rounded-full ${accentSurface} ${accentForeground}`}>
                   <Plus className="h-6 w-6" />
@@ -4384,7 +4384,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
                         <div className="min-w-0 flex-1">
                           <div className="flex flex-wrap items-center gap-1.5">
                             <p className="truncate text-base font-semibold tracking-[-0.01em]">{launch.name}</p>
-                            <span className="rounded-full bg-[#dcefc7] px-2 py-0.5 text-[10px] font-semibold text-black">Live</span>
+                            <span className="rounded-full bg-lavender px-2 py-0.5 text-[10px] font-semibold text-black">Live</span>
                           </div>
                           <p className="mt-1 line-clamp-2 text-xs leading-5 text-gray-600">{launch.tagline}</p>
                         </div>
@@ -4425,7 +4425,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
 
               {productLaunches.length === 0 && (
                 <div className="col-span-full rounded-[20px] border border-black/10 bg-white p-10 text-center shadow-[0_10px_34px_rgba(0,0,0,0.04)]">
-                  <Rocket className="mx-auto h-8 w-8 text-[#42520d]" />
+                  <Rocket className="mx-auto h-8 w-8 text-ink" />
                   <h3 className="mt-3 text-base font-semibold">Launch your first product</h3>
                   <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-gray-600">
                     Publishing a product puts you on Builder Radar and in front of thesis-fit investors. The wizard walks you through it.
@@ -4457,14 +4457,14 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
                           type="button"
                           onClick={() => setWizardStep(idx)}
                           className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-semibold transition-colors ${
-                            isDone ? 'bg-[#42520d] text-white' : isActive ? `${accentSurface} ${accentForeground}` : 'bg-[#f4f1eb] text-gray-500'
+                            isDone ? 'bg-charcoal text-white' : isActive ? `${accentSurface} ${accentForeground}` : 'bg-[#f4f1eb] text-gray-500'
                           }`}
                           title={step.label}
                         >
                           {isDone ? <Check className="h-3.5 w-3.5" /> : idx + 1}
                         </button>
                         {idx < launchWizardSteps.length - 1 && (
-                          <div className={`h-px flex-1 ${idx < wizardStep ? 'bg-[#42520d]' : 'bg-black/10'}`} />
+                          <div className={`h-px flex-1 ${idx < wizardStep ? 'bg-charcoal' : 'bg-black/10'}`} />
                         )}
                       </div>
                     );
@@ -4520,7 +4520,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
                 {/* STEP 1: BRAND */}
                 {wizardStep === 1 && (
                   <div className="grid gap-4 sm:grid-cols-2">
-                    <label className="cursor-pointer rounded-[14px] border border-dashed border-black/15 p-4 transition-colors hover:bg-[#fbf8f3]">
+                    <label className="cursor-pointer rounded-[14px] border border-dashed border-black/15 p-4 transition-colors hover:bg-[#f6f3f1]">
                       <input type="file" accept="image/*" className="hidden" onChange={(e) => handleLaunchAssetUpload('logoUrl', e.target.files?.[0])} />
                       <div className="flex h-24 w-24 mx-auto items-center justify-center overflow-hidden rounded-xl bg-[#fbfaf7]">
                         {launchDraft.logoUrl ? <img src={launchDraft.logoUrl} alt="" className="h-full w-full object-cover" /> : <Image className="h-8 w-8 text-gray-400" />}
@@ -4528,7 +4528,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
                       <p className="mt-3 text-center text-sm font-semibold">Upload logo</p>
                       <p className="mt-1 text-center text-xs text-gray-500">Square mark, 512×512+</p>
                     </label>
-                    <label className="cursor-pointer rounded-[14px] border border-dashed border-black/15 p-4 transition-colors hover:bg-[#fbf8f3]">
+                    <label className="cursor-pointer rounded-[14px] border border-dashed border-black/15 p-4 transition-colors hover:bg-[#f6f3f1]">
                       <input type="file" accept="image/*" className="hidden" onChange={(e) => handleLaunchAssetUpload('bannerUrl', e.target.files?.[0])} />
                       <div className="aspect-[16/8] overflow-hidden rounded-xl bg-[#fbfaf7]">
                         {launchDraft.bannerUrl ? <img src={launchDraft.bannerUrl} alt="" className="h-full w-full object-cover" /> : <div className="flex h-full items-center justify-center"><Image className="h-8 w-8 text-gray-400" /></div>}
@@ -4546,7 +4546,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
                       <span className="text-sm font-medium">Intro</span>
                       <textarea className="min-h-32 rounded-lg border border-black/10 bg-white px-3 py-2 text-sm leading-relaxed outline-none focus:border-black/30" placeholder="What did you build, who is it for, and why does it matter now?" value={launchDraft.intro} onChange={(e) => setLaunchDraft((c) => ({ ...c, intro: e.target.value }))} />
                     </label>
-                    <label className="flex cursor-pointer items-center gap-3 rounded-[14px] border border-dashed border-black/15 p-4 transition-colors hover:bg-[#fbf8f3]">
+                    <label className="flex cursor-pointer items-center gap-3 rounded-[14px] border border-dashed border-black/15 p-4 transition-colors hover:bg-[#f6f3f1]">
                       <input type="file" accept="video/*" className="hidden" onChange={(e) => handleLaunchAssetUpload('demoVideoUrl', e.target.files?.[0])} />
                       <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#fbfaf7]"><Video className="h-6 w-6 text-gray-500" /></span>
                       <div>
@@ -4584,7 +4584,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
                 {wizardStep === 4 && (
                   <div className="grid gap-4">
                     <div className="grid gap-4 sm:grid-cols-2">
-                      <label className="cursor-pointer rounded-[14px] border border-dashed border-black/15 p-4 transition-colors hover:bg-[#fbf8f3]">
+                      <label className="cursor-pointer rounded-[14px] border border-dashed border-black/15 p-4 transition-colors hover:bg-[#f6f3f1]">
                         <input type="file" accept="video/*" className="hidden" onChange={(e) => handleLaunchAssetUpload('pitchVideoUrl', e.target.files?.[0])} />
                         <div className="flex items-center gap-3">
                           <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#fbfaf7]"><Video className="h-6 w-6 text-gray-500" /></span>
@@ -4594,7 +4594,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
                           </div>
                         </div>
                       </label>
-                      <label className="cursor-pointer rounded-[14px] border border-dashed border-black/15 p-4 transition-colors hover:bg-[#fbf8f3]">
+                      <label className="cursor-pointer rounded-[14px] border border-dashed border-black/15 p-4 transition-colors hover:bg-[#f6f3f1]">
                         <input type="file" accept=".pdf,.ppt,.pptx,application/pdf,application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.presentationml.presentation" className="hidden" onChange={(e) => handleLaunchAssetUpload('pitchDeckUrl', e.target.files?.[0])} />
                         <div className="flex items-center gap-3">
                           <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#fbfaf7]"><FileText className="h-6 w-6 text-gray-500" /></span>
@@ -4672,7 +4672,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
                         </div>
                       </div>
                     </div>
-                    <div className="rounded-[12px] border border-black/10 bg-[#fbf8f3] px-4 py-3 text-xs leading-5 text-gray-600">
+                    <div className="rounded-[12px] border border-black/10 bg-[#f6f3f1] px-4 py-3 text-xs leading-5 text-gray-600">
                       Launching here makes the product eligible for the Apparent front page, investor discovery, comments, and founder profile traffic.
                     </div>
                   </div>
@@ -4728,7 +4728,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
                 </div>
                 <button
                   type="button"
-                  className="rounded-full border border-black/10 px-3 py-1.5 text-xs font-semibold hover:bg-[#fbf8f3]"
+                  className="rounded-full border border-black/10 px-3 py-1.5 text-xs font-semibold hover:bg-[#f6f3f1]"
                   onClick={handleResetLaunchDraft}
                 >
                   Reset
@@ -5101,13 +5101,13 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
                   <button
                     type="button"
                     onClick={exitLaunchForm}
-                    className="rounded-full border border-black/10 px-4 py-2 text-sm font-semibold hover:bg-[#fbf8f3]"
+                    className="rounded-full border border-black/10 px-4 py-2 text-sm font-semibold hover:bg-[#f6f3f1]"
                   >
                     Cancel
                   </button>
                   <button
                     type="button"
-                    className={`inline-flex items-center justify-center gap-2 rounded-full ${accentSurface} px-5 py-2.5 text-sm font-semibold ${accentForeground} transition-colors hover:bg-[#cfe8b8] disabled:cursor-not-allowed disabled:opacity-60`}
+                    className={`inline-flex items-center justify-center gap-2 rounded-full ${accentSurface} px-5 py-2.5 text-sm font-semibold ${accentForeground} transition-colors hover:bg-[#bfcef2] disabled:cursor-not-allowed disabled:opacity-60`}
                     onClick={async () => {
                       await handleSaveProductLaunch();
                       setProductsMode('list');
@@ -5150,7 +5150,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
                         <p className="text-lg font-semibold tracking-[-0.02em]">
                           {launchDraft.name || 'Your product'}
                         </p>
-                        <span className="rounded-full bg-[#dcefc7] px-2.5 py-0.5 text-xs font-semibold text-black">
+                        <span className="rounded-full bg-lavender px-2.5 py-0.5 text-xs font-semibold text-black">
                           {launchDraft.stage}
                         </span>
                       </div>
@@ -5191,7 +5191,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
                           href={launchDraft.pitchDeckUrl}
                           target="_blank"
                           rel="noreferrer"
-                          className="mt-3 inline-flex items-center gap-1.5 text-xs font-semibold text-[#02A070]"
+                          className="mt-3 inline-flex items-center gap-1.5 text-xs font-semibold text-[#37d28b]"
                         >
                           <FileText className="h-3.5 w-3.5" />
                           Open pitch deck
@@ -5210,7 +5210,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
                   )}
                   <div className="mt-5 flex items-center gap-4 text-sm font-semibold text-black/60">
                     <span className="inline-flex items-center gap-1.5">
-                      <ChevronUp className="h-4 w-4 text-[#02A070]" />
+                      <ChevronUp className="h-4 w-4 text-[#37d28b]" />
                       0
                     </span>
                     <span className="inline-flex items-center gap-1.5 text-black/45">
@@ -5232,7 +5232,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
                   {launchChecklist.map((item) => (
                     <div key={item.label} className="flex items-center justify-between px-5 py-3 text-sm">
                       <span className={item.done ? 'text-black' : 'text-gray-500'}>{item.label}</span>
-                      <span className={`h-2.5 w-2.5 rounded-full ${item.done ? 'bg-[#dcefc7]' : 'bg-black/15'}`} />
+                      <span className={`h-2.5 w-2.5 rounded-full ${item.done ? 'bg-lavender' : 'bg-black/15'}`} />
                     </div>
                   ))}
                 </div>
@@ -5254,7 +5254,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
               {liveLaunch && (
                 <button
                   type="button"
-                  className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#02A070]"
+                  className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#37d28b]"
                   onClick={() => setSelectedLaunchId(liveLaunch.id)}
                 >
                   Latest selected <ArrowUpRight className="h-3.5 w-3.5" />
@@ -5289,7 +5289,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
                           <div className="min-w-0">
                             <div className="flex flex-wrap items-center gap-2">
                               <p className="text-lg font-semibold tracking-[-0.02em]">{launch.name}</p>
-                              <span className="rounded-full bg-[#dcefc7] px-2.5 py-0.5 text-xs font-semibold text-black">Live</span>
+                              <span className="rounded-full bg-lavender px-2.5 py-0.5 text-xs font-semibold text-black">Live</span>
                               {(launch.pitchVideoUrl || launch.pitchDeckUrl) && (
                                 <span className="rounded-full bg-[#f4f1eb] px-2.5 py-0.5 text-xs font-semibold text-black/60">Pitch Book</span>
                               )}
@@ -5307,7 +5307,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
                           <button
                             type="button"
                             className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold transition-colors ${
-                              engagement.upvoted ? 'bg-[#dcefc7] text-black' : 'bg-[#f4f1eb] text-black/70 hover:bg-[#ebe5da]'
+                              engagement.upvoted ? 'bg-lavender text-black' : 'bg-[#f4f1eb] text-black/70 hover:bg-[#ebe5da]'
                             }`}
                             onClick={() => handleToggleLaunchUpvote(launch)}
                           >
@@ -5392,7 +5392,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
                 <div className="flex flex-wrap gap-2">
                   {liveLaunch.launchUrl && (
                     <a
-                      className="inline-flex items-center gap-1.5 rounded-full bg-[#dcefc7] px-4 py-2 text-sm font-semibold text-black"
+                      className="inline-flex items-center gap-1.5 rounded-full bg-lavender px-4 py-2 text-sm font-semibold text-black"
                       href={liveLaunch.launchUrl}
                       target="_blank"
                       rel="noreferrer"
@@ -5402,7 +5402,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
                   )}
                   {liveLaunch.proofUrl && (
                     <a
-                      className="inline-flex items-center gap-1.5 rounded-full border border-black/10 px-4 py-2 text-sm font-semibold hover:bg-[#fbf8f3]"
+                      className="inline-flex items-center gap-1.5 rounded-full border border-black/10 px-4 py-2 text-sm font-semibold hover:bg-[#f6f3f1]"
                       href={liveLaunch.proofUrl}
                       target="_blank"
                       rel="noreferrer"
@@ -5439,7 +5439,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
                         href={liveLaunch.pitchDeckUrl}
                         target="_blank"
                         rel="noreferrer"
-                        className="inline-flex items-center gap-1.5 rounded-full bg-white px-3 py-1.5 text-xs font-semibold text-[#02A070]"
+                        className="inline-flex items-center gap-1.5 rounded-full bg-white px-3 py-1.5 text-xs font-semibold text-[#37d28b]"
                       >
                         <FileText className="h-3.5 w-3.5" />
                         Pitch deck
@@ -5469,7 +5469,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
           <h3 className="text-sm font-semibold">Recent product launches</h3>
         </div>
         <button
-          className="rounded-xl border border-black/10 p-1.5 hover:bg-[#fbf8f3]"
+          className="rounded-xl border border-black/10 p-1.5 hover:bg-[#f6f3f1]"
           onClick={() => {
             setActiveView('products');
             navigate('/dashboard/founder/products');
@@ -5507,8 +5507,8 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
                 <p className="mt-2 text-xs leading-relaxed text-gray-500">{launch.metrics}</p>
               </div>
               <div className="flex shrink-0 flex-wrap gap-2">
-                {launch.launchUrl && <a className="rounded-full border border-black/10 px-3 py-1.5 text-xs font-medium hover:bg-[#fbf8f3]" href={launch.launchUrl}>Launch</a>}
-                {launch.proofUrl && <a className="rounded-full border border-black/10 px-3 py-1.5 text-xs font-medium hover:bg-[#fbf8f3]" href={launch.proofUrl}>Proof</a>}
+                {launch.launchUrl && <a className="rounded-full border border-black/10 px-3 py-1.5 text-xs font-medium hover:bg-[#f6f3f1]" href={launch.launchUrl}>Launch</a>}
+                {launch.proofUrl && <a className="rounded-full border border-black/10 px-3 py-1.5 text-xs font-medium hover:bg-[#f6f3f1]" href={launch.proofUrl}>Proof</a>}
               </div>
             </div>
           </article>
@@ -5527,7 +5527,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
           <Calendar className="h-4 w-4 text-gray-500" />
           <h3 className="text-sm font-semibold">Meetups</h3>
         </div>
-        <button className="rounded-xl border border-black/10 p-1.5 hover:bg-[#fbf8f3]" onClick={() => setIsMeetupFormOpen((current) => !current)} aria-label="Create meetup">
+        <button className="rounded-xl border border-black/10 p-1.5 hover:bg-[#f6f3f1]" onClick={() => setIsMeetupFormOpen((current) => !current)} aria-label="Create meetup">
           <Plus className="h-4 w-4" />
         </button>
       </div>
@@ -5560,7 +5560,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
                 <p className="mt-1 text-xs leading-relaxed text-gray-500">{meetup.city} · {meetup.venue} · {toDatetimeLocalValue(meetup.startsAt).replace('T', ' ')}</p>
                 <p className="mt-2 text-xs leading-relaxed text-gray-600">{meetup.description}</p>
               </div>
-              <button className="shrink-0 rounded-full border border-black/10 px-3 py-1.5 text-xs font-medium hover:bg-[#fbf8f3]" onClick={() => handleToggleMeetupRsvp(meetup)}>
+              <button className="shrink-0 rounded-full border border-black/10 px-3 py-1.5 text-xs font-medium hover:bg-[#f6f3f1]" onClick={() => handleToggleMeetupRsvp(meetup)}>
                 {meetup.isJoined ? 'Joined' : 'RSVP'}
               </button>
             </div>
@@ -5637,7 +5637,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
           </div>
           <button
             onClick={dismissOnboarding}
-            className="shrink-0 rounded-full p-1.5 text-gray-400 transition-colors hover:bg-[#fbf8f3] hover:text-black"
+            className="shrink-0 rounded-full p-1.5 text-gray-400 transition-colors hover:bg-[#f6f3f1] hover:text-black"
             aria-label="Dismiss getting-started checklist"
           >
             <X className="h-4 w-4" />
@@ -5645,7 +5645,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
         </div>
         <div className="px-5">
           <div className="h-1.5 w-full overflow-hidden rounded-full bg-[#f4f1eb]">
-            <div className="h-full rounded-full bg-[#42520d] transition-all" style={{ width: `${(doneCount / steps.length) * 100}%` }} />
+            <div className="h-full rounded-full bg-charcoal transition-all" style={{ width: `${(doneCount / steps.length) * 100}%` }} />
           </div>
         </div>
         <div className="mt-3 divide-y divide-black/10">
@@ -5653,7 +5653,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
             <div key={step.label} className="flex items-center gap-3 px-5 py-3">
               <span
                 className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-semibold ${
-                  step.done ? 'bg-[#42520d] text-white' : 'border border-black/15 text-gray-400'
+                  step.done ? 'bg-charcoal text-white' : 'border border-black/15 text-gray-400'
                 }`}
               >
                 {step.done ? <Check className="h-3.5 w-3.5" /> : index + 1}
@@ -5665,7 +5665,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
               {!step.done && (
                 <button
                   onClick={step.onClick}
-                  className="shrink-0 rounded-full bg-[#42520d] px-3 py-1.5 text-xs font-semibold text-white transition-opacity hover:opacity-90"
+                  className="shrink-0 rounded-full bg-charcoal px-3 py-1.5 text-xs font-semibold text-white transition-opacity hover:opacity-90"
                 >
                   {step.cta}
                 </button>
@@ -5677,7 +5677,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
           <div className="px-5 py-3">
             <button
               onClick={() => setActiveView('vc-heatmap')}
-              className="inline-flex items-center gap-1 text-xs font-semibold text-[#42520d] hover:underline"
+              className="inline-flex items-center gap-1 text-xs font-semibold text-ink hover:underline"
             >
               Explore 1,800 thesis-fit VCs on the Heat Map <ArrowUpRight className="h-3 w-3" />
             </button>
@@ -5733,7 +5733,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
                     key={suggestion.id}
                     type="button"
                     className={`flex w-full items-center gap-3 px-3 py-2.5 text-left transition-colors ${
-                      index === activePlaceSuggestionIndex ? 'bg-[#fbf8f3]' : 'hover:bg-[#fbf8f3]'
+                      index === activePlaceSuggestionIndex ? 'bg-[#f6f3f1]' : 'hover:bg-[#f6f3f1]'
                     }`}
                     onMouseDown={(event) => {
                       event.preventDefault();
@@ -5823,7 +5823,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
             className={`h-9 flex-1 whitespace-nowrap rounded-full border px-3 text-xs font-medium transition-colors sm:flex-none ${
               networkFilters.matchOnly
                 ? `border-transparent ${accentSurface} ${accentForeground}`
-                : 'border-black/10 text-gray-600 hover:bg-[#fbf8f3]'
+                : 'border-black/10 text-gray-600 hover:bg-[#f6f3f1]'
             }`}
             onClick={() => setNetworkFilters((current) => ({ ...current, matchOnly: !current.matchOnly }))}
           >
@@ -5833,8 +5833,8 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
             type="button"
             className={`h-9 flex-1 whitespace-nowrap rounded-full border px-3 text-xs font-medium transition-colors sm:flex-none ${
               networkFilters.raisingOnly
-                ? 'border-transparent bg-[#42520d] text-white'
-                : 'border-black/10 text-gray-600 hover:bg-[#fbf8f3]'
+                ? 'border-transparent bg-charcoal text-white'
+                : 'border-black/10 text-gray-600 hover:bg-[#f6f3f1]'
             }`}
             onClick={() => setNetworkFilters((current) => ({ ...current, raisingOnly: !current.raisingOnly }))}
             title="Show only real Apparent founders who declared they're raising"
@@ -5846,7 +5846,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
               <select
                 value={networkFilters.raisingAmountMin ?? ''}
                 onChange={(event) => setNetworkFilters((current) => ({ ...current, raisingAmountMin: event.target.value }))}
-                className="h-9 flex-1 whitespace-nowrap rounded-full border border-black/10 bg-white px-3 text-xs font-medium text-gray-600 outline-none transition-colors hover:bg-[#fbf8f3] sm:flex-none"
+                className="h-9 flex-1 whitespace-nowrap rounded-full border border-black/10 bg-white px-3 text-xs font-medium text-gray-600 outline-none transition-colors hover:bg-[#f6f3f1] sm:flex-none"
                 title="Filter founders by minimum round size"
               >
                 <option value="">Any round size</option>
@@ -5859,7 +5859,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
               <select
                 value={String(networkFilters.minCompleteness ?? 40)}
                 onChange={(event) => setNetworkFilters((current) => ({ ...current, minCompleteness: Number(event.target.value) || 0 }))}
-                className="h-9 flex-1 whitespace-nowrap rounded-full border border-black/10 bg-white px-3 text-xs font-medium text-gray-600 outline-none transition-colors hover:bg-[#fbf8f3] sm:flex-none"
+                className="h-9 flex-1 whitespace-nowrap rounded-full border border-black/10 bg-white px-3 text-xs font-medium text-gray-600 outline-none transition-colors hover:bg-[#f6f3f1] sm:flex-none"
                 title="Hide founders whose profiles fall below this completeness score"
               >
                 <option value="0">All profiles</option>
@@ -5871,7 +5871,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
           )}
           <button
             type="button"
-            className="h-9 flex-1 whitespace-nowrap rounded-full border border-black/10 px-3 text-xs font-medium text-gray-600 hover:bg-[#fbf8f3] sm:flex-none"
+            className="h-9 flex-1 whitespace-nowrap rounded-full border border-black/10 px-3 text-xs font-medium text-gray-600 hover:bg-[#f6f3f1] sm:flex-none"
             onClick={handleClearNetworkFilters}
           >
             Reset
@@ -5888,7 +5888,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
         </div>
       </div>
       {(networkFilters.pin || placeLookupError) && (
-        <div className="mx-4 mt-3 flex flex-col gap-2 border-y border-black/10 bg-[#fbf8f3] px-4 py-3 text-xs text-gray-600 sm:flex-row sm:items-center sm:justify-between">
+        <div className="mx-4 mt-3 flex flex-col gap-2 border-y border-black/10 bg-[#f6f3f1] px-4 py-3 text-xs text-gray-600 sm:flex-row sm:items-center sm:justify-between">
           <span>
             {placeLookupError ||
               `Pin dropped at ${networkFilters.pin?.label}. Showing builders in the current map view. Pan or zoom to explore.`}
@@ -5948,8 +5948,8 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
                 return (
                   <button
                     key={builder.id}
-                    className={`w-full px-4 py-3 text-left transition-colors hover:bg-[#fbf8f3] ${
-                      selectedBuilder.id === builder.id ? 'bg-[#fbf8f3]' : ''
+                    className={`w-full px-4 py-3 text-left transition-colors hover:bg-[#f6f3f1] ${
+                      selectedBuilder.id === builder.id ? 'bg-[#f6f3f1]' : ''
                     }`}
                     onClick={() => setSelectedBuilderId(builder.id)}
                   >
@@ -5962,7 +5962,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
                           </span>
                           {state.saved && <span className="rounded-full bg-[#f4f1eb] px-2 py-0.5 text-xs text-gray-600">saved</span>}
                           {(builder.fundraisingStatus === 'raising' || builder.fundraisingStatus === 'open') && (
-                            <span className="rounded-full bg-[#42520d] px-2 py-0.5 text-xs font-semibold text-white">
+                            <span className="rounded-full bg-charcoal px-2 py-0.5 text-xs font-semibold text-white">
                               {builder.fundraisingStatus === 'raising' ? `Raising${builder.raisingRound ? ` · ${builder.raisingRound}` : ''}` : 'Open to intros'}
                             </span>
                           )}
@@ -5988,7 +5988,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
                   <h4 className="mt-1 text-base font-semibold">{selectedBuilder.company}</h4>
                   <p className="mt-1 text-xs text-gray-500">{selectedBuilder.founderName} | {selectedBuilder.location}</p>
                   {(selectedBuilder.fundraisingStatus === 'raising' || selectedBuilder.fundraisingStatus === 'open') && (
-                    <p className="mt-2 inline-flex items-center gap-1 rounded-lg bg-[#42520d] px-2.5 py-1.5 text-[11px] font-semibold leading-relaxed text-white">
+                    <p className="mt-2 inline-flex items-center gap-1 rounded-lg bg-charcoal px-2.5 py-1.5 text-[11px] font-semibold leading-relaxed text-white">
                       {selectedBuilder.fundraisingStatus === 'raising'
                         ? `Raising${selectedBuilder.raisingRound ? ` ${selectedBuilder.raisingRound}` : ''}${selectedBuilder.raisingAmount ? ` · ${selectedBuilder.raisingAmount}` : ''}`
                         : 'Open to investor intros'}
@@ -6013,7 +6013,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
                   <a
                     key={`${link.type}-${link.url}`}
                     href={link.url}
-                    className="rounded-full border border-black/10 px-3 py-1.5 text-xs font-medium hover:bg-[#fbf8f3]"
+                    className="rounded-full border border-black/10 px-3 py-1.5 text-xs font-medium hover:bg-[#f6f3f1]"
                     onClick={() => addActivity(`Opened ${link.label}: ${selectedBuilder.company}`)}
                   >
                     {link.label}
@@ -6021,7 +6021,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
                 ))}
                 <a
                   href={selectedBuilder.profileUrl}
-                  className="rounded-full border border-black/10 px-3 py-1.5 text-xs font-medium hover:bg-[#fbf8f3]"
+                  className="rounded-full border border-black/10 px-3 py-1.5 text-xs font-medium hover:bg-[#f6f3f1]"
                   onClick={() => addActivity(`Opened profile: ${selectedBuilder.company}`)}
                 >
                   Profile
@@ -6030,20 +6030,20 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
 
               {isInvestor && (
                 <div className="mt-4 flex flex-wrap gap-2">
-                  <button className="rounded-full border border-black/10 px-3 py-1.5 text-xs font-medium hover:bg-[#fbf8f3]" onClick={() => handleSaveBuilder(selectedBuilder)}>
+                  <button className="rounded-full border border-black/10 px-3 py-1.5 text-xs font-medium hover:bg-[#f6f3f1]" onClick={() => handleSaveBuilder(selectedBuilder)}>
                     {selectedState?.saved ? 'Saved' : 'Save builder'}
                   </button>
                   <button className={`rounded-full ${accentSurface} px-3 py-1.5 text-xs font-medium ${accentForeground}`} onClick={() => handleAddBuilderToDealFlow(selectedBuilder)}>
                     Add to deal-flow
                   </button>
                   <button
-                    className="rounded-full border border-black/10 px-3 py-1.5 text-xs font-medium hover:bg-[#fbf8f3] disabled:opacity-50"
+                    className="rounded-full border border-black/10 px-3 py-1.5 text-xs font-medium hover:bg-[#f6f3f1] disabled:opacity-50"
                     disabled={savingWorkflow === 'message'}
                     onClick={() => handleMessageBuilder(selectedBuilder)}
                   >
                     {savingWorkflow === 'message' ? 'Sending…' : 'Send DM'}
                   </button>
-                  <button className="rounded-full border border-black/10 px-3 py-1.5 text-xs font-medium hover:bg-[#fbf8f3]" onClick={() => handleHideBuilder(selectedBuilder)}>
+                  <button className="rounded-full border border-black/10 px-3 py-1.5 text-xs font-medium hover:bg-[#f6f3f1]" onClick={() => handleHideBuilder(selectedBuilder)}>
                     Hide
                   </button>
                 </div>
@@ -6051,14 +6051,14 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
 
               {!isInvestor && !selectedBuilder.isCurrentUser && (
                 <div className="mt-4 flex flex-wrap gap-2">
-                  <button className="rounded-full border border-black/10 px-3 py-1.5 text-xs font-medium hover:bg-[#fbf8f3]" onClick={() => handleSaveBuilder(selectedBuilder)}>
+                  <button className="rounded-full border border-black/10 px-3 py-1.5 text-xs font-medium hover:bg-[#f6f3f1]" onClick={() => handleSaveBuilder(selectedBuilder)}>
                     {selectedState?.saved ? 'Saved peer' : 'Save peer'}
                   </button>
                   <button className={`rounded-full ${accentSurface} px-3 py-1.5 text-xs font-medium ${accentForeground}`} onClick={() => handleMessageBuilder(selectedBuilder)}>
                     Message builder
                   </button>
                   <button
-                    className="rounded-full border border-black/10 px-3 py-1.5 text-xs font-medium hover:bg-[#fbf8f3]"
+                    className="rounded-full border border-black/10 px-3 py-1.5 text-xs font-medium hover:bg-[#f6f3f1]"
                     onClick={() => {
                       setSelectedClusterCity(selectedBuilder.location);
                       scrollToSection('meetups');
@@ -6152,7 +6152,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
             </div>
             <div className="flex flex-wrap gap-2 text-xs text-gray-500">
               <span className="rounded-full bg-[#f4f1eb] px-3 py-1.5">{outreachEntries.length} total</span>
-              <span className="rounded-full bg-[#dcefc7] px-3 py-1.5 text-black">
+              <span className="rounded-full bg-lavender px-3 py-1.5 text-black">
                 {outreachByStage.Sent.length + outreachByStage.Replied.length + outreachByStage.Meeting.length} active
               </span>
             </div>
@@ -6218,7 +6218,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
                             <select
                               value={entry.stage}
                               onChange={(event) => void moveOutreachStage(entry, event.target.value as VcOutreachStage)}
-                              className="rounded-full border border-black/10 bg-white px-2 py-1 text-[11px] font-semibold text-black/70 outline-none focus:border-[#42520d]"
+                              className="rounded-full border border-black/10 bg-white px-2 py-1 text-[11px] font-semibold text-black/70 outline-none focus:border-ink"
                               aria-label={`Move outreach for ${entry.investorName || entry.toEmail}`}
                             >
                               {OUTREACH_STAGES.map((option) => (
@@ -6414,7 +6414,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
             {agentActions.length > 0 && (
               <div className="mt-3 rounded-2xl border border-black/10 bg-white p-4 shadow-[0_10px_34px_rgba(0,0,0,0.04)]">
                 <div className="mb-2 flex items-center gap-2 text-sm font-semibold text-black">
-                  <History className="h-4 w-4 text-[#42520d]" />
+                  <History className="h-4 w-4 text-ink" />
                   Agent activity
                 </div>
                 <ul className="space-y-1.5">
@@ -6436,7 +6436,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
               <div className="px-5 py-5 sm:px-6">
                 <div className="flex flex-wrap items-start justify-between gap-4">
                   <div>
-                    <div className="inline-flex items-center gap-2 rounded-full bg-[#dcefc7] px-3 py-1.5 text-xs font-semibold text-[#42520d]">
+                    <div className="inline-flex items-center gap-2 rounded-full bg-lavender px-3 py-1.5 text-xs font-semibold text-ink">
                       <Target className="h-3.5 w-3.5" />
                       Morning sourcing desk
                     </div>
@@ -6481,18 +6481,18 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
                           }}
                         >
                           <div className="flex items-start gap-3">
-                            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[14px] bg-[#f4f1eb] text-xs font-semibold text-[#42520d]">
+                            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[14px] bg-[#f4f1eb] text-xs font-semibold text-ink">
                               {String(index + 1).padStart(2, '0')}
                             </div>
                             <div className="min-w-0 flex-1">
                               <div className="flex flex-wrap items-center gap-2">
                                 <p className="text-sm font-semibold">{builder.company}</p>
                                 <span className="text-xs text-black/40">by {builder.founderName}</span>
-                                <span className="rounded-full bg-[#dcefc7] px-2 py-0.5 text-xs font-semibold text-[#42520d]">
+                                <span className="rounded-full bg-lavender px-2 py-0.5 text-xs font-semibold text-ink">
                                   {builder.fitScore}% fit
                                 </span>
                                 {(builder.fundraisingStatus === 'raising' || builder.fundraisingStatus === 'open') && (
-                                  <span className="rounded-full border border-[#42520d]/20 px-2 py-0.5 text-xs font-medium text-[#42520d]">
+                                  <span className="rounded-full border border-ink/20 px-2 py-0.5 text-xs font-medium text-ink">
                                     {builder.fundraisingStatus === 'raising' ? 'Raising now' : 'Open to intros'}
                                   </span>
                                 )}
@@ -6517,21 +6517,21 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
                         <div className="flex flex-wrap items-start gap-2 lg:justify-end">
                           <button
                             type="button"
-                            className="rounded-full border border-black/10 px-3 py-1.5 text-xs font-medium hover:bg-[#fbf8f3]"
+                            className="rounded-full border border-black/10 px-3 py-1.5 text-xs font-medium hover:bg-[#f6f3f1]"
                             onClick={() => void handleSaveBuilder(builder)}
                           >
                             {state.saved ? 'Saved' : 'Save'}
                           </button>
                           <button
                             type="button"
-                            className="rounded-full border border-black/10 px-3 py-1.5 text-xs font-medium hover:bg-[#fbf8f3]"
+                            className="rounded-full border border-black/10 px-3 py-1.5 text-xs font-medium hover:bg-[#f6f3f1]"
                             onClick={() => void handleAddBuilderToDealFlow(builder)}
                           >
                             Add to flow
                           </button>
                           <button
                             type="button"
-                            className="rounded-full bg-[#42520d] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#34420a]"
+                            className="rounded-full bg-charcoal px-3 py-1.5 text-xs font-semibold text-white hover:bg-ink"
                             onClick={() => void handleMessageBuilder(builder)}
                           >
                             Draft outreach
@@ -6560,7 +6560,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
                   </div>
                   <button
                     type="button"
-                    className="rounded-full border border-black/10 bg-white px-3 py-2 text-xs font-semibold hover:bg-[#fbf8f3]"
+                    className="rounded-full border border-black/10 bg-white px-3 py-2 text-xs font-semibold hover:bg-[#f6f3f1]"
                     onClick={() => handleDashboardViewChange('profile')}
                   >
                     Tune
@@ -6570,7 +6570,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
                   {thesisFields.map((field) => (
                     <div key={field.label} className="flex items-center justify-between rounded-[12px] bg-white px-3 py-2 text-sm">
                       <span className="text-black/65">{field.label}</span>
-                      <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${field.done ? 'bg-[#dcefc7] text-[#42520d]' : 'bg-[#f4f1eb] text-black/40'}`}>
+                      <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${field.done ? 'bg-lavender text-ink' : 'bg-[#f4f1eb] text-black/40'}`}>
                         {field.done ? 'Set' : 'Missing'}
                       </span>
                     </div>
@@ -6614,13 +6614,13 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
                     <Sunrise className="h-4 w-4 text-gray-500" />
                     <h3 className="text-sm font-semibold">Daily launch radar</h3>
                   </div>
-                  <button type="button" className="text-xs font-semibold text-[#42520d]" onClick={() => handleDashboardViewChange('daily')}>
+                  <button type="button" className="text-xs font-semibold text-ink" onClick={() => handleDashboardViewChange('daily')}>
                     View daily
                   </button>
                 </div>
                 <div className="mt-4 divide-y divide-black/10 border-y border-black/10">
                   {dailyLaunches.map((launch) => (
-                    <a key={launch.id} href={launch.sourceUrl || launch.launchUrl || undefined} target="_blank" rel="noreferrer" className="block py-3 hover:bg-[#fbf8f3]">
+                    <a key={launch.id} href={launch.sourceUrl || launch.launchUrl || undefined} target="_blank" rel="noreferrer" className="block py-3 hover:bg-[#f6f3f1]">
                       <div className="flex items-start justify-between gap-3">
                         <div className="min-w-0">
                           <p className="truncate text-sm font-semibold">{launch.name}</p>
@@ -6642,7 +6642,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
                     <FileText className="h-4 w-4 text-gray-500" />
                     <h3 className="text-sm font-semibold">Pipeline snapshot</h3>
                   </div>
-                  <button type="button" className="text-xs font-semibold text-[#42520d]" onClick={() => handleDashboardViewChange('deals')}>
+                  <button type="button" className="text-xs font-semibold text-ink" onClick={() => handleDashboardViewChange('deals')}>
                     Open board
                   </button>
                 </div>
@@ -6651,11 +6651,11 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
                     <button
                       key={column.stage}
                       type="button"
-                      className="flex items-center justify-between rounded-[12px] border border-black/10 px-3 py-2 text-left hover:bg-[#fbf8f3]"
+                      className="flex items-center justify-between rounded-[12px] border border-black/10 px-3 py-2 text-left hover:bg-[#f6f3f1]"
                       onClick={() => handleDashboardViewChange('deals')}
                     >
                       <span className="text-sm text-black/65">{column.stage}</span>
-                      <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${column.items.length ? 'bg-[#dcefc7] text-[#42520d]' : 'bg-[#f4f1eb] text-black/40'}`}>
+                      <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${column.items.length ? 'bg-lavender text-ink' : 'bg-[#f4f1eb] text-black/40'}`}>
                         {column.items.length}
                       </span>
                     </button>
@@ -6682,7 +6682,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
                     <button
                       key={action.label}
                       type="button"
-                      className="block w-full rounded-[14px] border border-black/10 px-3 py-3 text-left transition hover:bg-[#fbf8f3]"
+                      className="block w-full rounded-[14px] border border-black/10 px-3 py-3 text-left transition hover:bg-[#f6f3f1]"
                       onClick={action.onClick}
                     >
                       <div className="flex items-start justify-between gap-3">
@@ -6692,7 +6692,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
                         </div>
                         <ArrowUpRight className="mt-0.5 h-4 w-4 shrink-0 text-black/35" />
                       </div>
-                      <p className="mt-3 text-xs font-semibold text-[#42520d]">{action.cta}</p>
+                      <p className="mt-3 text-xs font-semibold text-ink">{action.cta}</p>
                     </button>
                   ))}
                 </div>
@@ -6704,11 +6704,11 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
                   <span className="text-xs text-black/40">{termReviews.length + meetups.length} items</span>
                 </div>
                 <div className="mt-4 grid gap-2">
-                  <button type="button" className="rounded-[14px] border border-black/10 px-3 py-3 text-left hover:bg-[#fbf8f3]" onClick={() => handleDashboardViewChange('terms')}>
+                  <button type="button" className="rounded-[14px] border border-black/10 px-3 py-3 text-left hover:bg-[#f6f3f1]" onClick={() => handleDashboardViewChange('terms')}>
                     <p className="text-sm font-semibold">{termReviews.length} term notes</p>
                     <p className="mt-1 text-xs text-black/50">Keep valuation, rights, and diligence notes attached to company context.</p>
                   </button>
-                  <button type="button" className="rounded-[14px] border border-black/10 px-3 py-3 text-left hover:bg-[#fbf8f3]" onClick={() => scrollToSection('meetups')}>
+                  <button type="button" className="rounded-[14px] border border-black/10 px-3 py-3 text-left hover:bg-[#f6f3f1]" onClick={() => scrollToSection('meetups')}>
                     <p className="text-sm font-semibold">{meetups.length} rooms and meetups</p>
                     <p className="mt-1 text-xs text-black/50">Founder rooms can become warm sourcing moments around your thesis.</p>
                   </button>
@@ -6732,7 +6732,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
           <FileText className="h-4 w-4 text-gray-500" />
           <h3 className="text-sm font-semibold">Terms review</h3>
         </div>
-        <button className="rounded-xl border border-black/10 p-1.5 hover:bg-[#fbf8f3]" onClick={() => setIsTermFormOpen((current) => !current)} aria-label="Add terms review">
+        <button className="rounded-xl border border-black/10 p-1.5 hover:bg-[#f6f3f1]" onClick={() => setIsTermFormOpen((current) => !current)} aria-label="Add terms review">
           <Plus className="h-4 w-4" />
         </button>
       </div>
@@ -6968,7 +6968,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
                   <button
                     type="button"
                     onClick={() => handleDashboardViewChange(step.cta!.view)}
-                    className="shrink-0 self-start rounded-full border border-black/10 px-4 py-2 text-xs font-semibold hover:bg-[#fbf8f3] sm:ml-4"
+                    className="shrink-0 self-start rounded-full border border-black/10 px-4 py-2 text-xs font-semibold hover:bg-[#f6f3f1] sm:ml-4"
                   >
                     {step.cta.label}
                   </button>
@@ -6980,7 +6980,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
           <section className="rounded-[20px] border border-black/10 bg-[#fbfaf7] px-5 py-4">
             <p className="text-sm text-gray-600">
               Stuck or something feels off?{' '}
-              <button type="button" onClick={() => handleDashboardViewChange('feedback')} className="font-semibold text-[#42520d] hover:underline">
+              <button type="button" onClick={() => handleDashboardViewChange('feedback')} className="font-semibold text-ink hover:underline">
                 Send us feedback
               </button>{' '}
               — we read every note.
@@ -6994,7 +6994,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
   const renderSettingsPage = () => {
     const username = user.username ?? user.email.split('@')[0].toLowerCase().replace(/[^a-z0-9]/g, '');
     const toggleClass = (on: boolean) =>
-      `relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors ${on ? 'bg-[#42520d]' : 'bg-gray-200'}`;
+      `relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors ${on ? 'bg-charcoal' : 'bg-gray-200'}`;
     const knobClass = (on: boolean) =>
       `inline-block h-3.5 w-3.5 translate-x-0.5 rounded-full bg-white shadow transition-transform ${on ? 'translate-x-[1.125rem]' : ''}`;
 
@@ -7036,7 +7036,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
                   href={`/@${username}`}
                   target="_blank"
                   rel="noreferrer"
-                  className="inline-flex items-center gap-1 rounded-full border border-black/10 px-3 py-1.5 text-xs font-semibold hover:bg-[#fbf8f3]"
+                  className="inline-flex items-center gap-1 rounded-full border border-black/10 px-3 py-1.5 text-xs font-semibold hover:bg-[#f6f3f1]"
                 >
                   <ArrowUpRight className="h-3.5 w-3.5" /> View public profile
                 </a>
@@ -7049,7 +7049,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
                 <button
                   type="button"
                   onClick={() => handleDashboardViewChange('profile')}
-                  className="rounded-full border border-black/10 px-3 py-1.5 text-xs font-semibold hover:bg-[#fbf8f3]"
+                  className="rounded-full border border-black/10 px-3 py-1.5 text-xs font-semibold hover:bg-[#f6f3f1]"
                 >
                   {isInvestor ? 'Edit thesis' : 'Edit profile'}
                 </button>
@@ -7115,7 +7115,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
                 href={`/@${username}`}
                 target="_blank"
                 rel="noreferrer"
-                className="inline-flex items-center gap-1.5 rounded-full bg-[#42520d] px-4 py-2 text-xs font-semibold text-white transition-opacity hover:opacity-90"
+                className="inline-flex items-center gap-1.5 rounded-full bg-charcoal px-4 py-2 text-xs font-semibold text-white transition-opacity hover:opacity-90"
               >
                 <ArrowUpRight className="h-3.5 w-3.5" /> View &amp; share my profile
               </a>
@@ -7257,8 +7257,8 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
             <div className="rounded-[20px] border border-black/10 bg-white px-6 py-5 shadow-[0_10px_34px_rgba(0,0,0,0.04)]">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div className="flex items-center gap-3">
-                  <div className="flex h-11 w-11 items-center justify-center rounded-[14px] bg-[#dcefc7]">
-                    <Sunrise className="h-5 w-5 text-[#42520d]" />
+                  <div className="flex h-11 w-11 items-center justify-center rounded-[14px] bg-lavender">
+                    <Sunrise className="h-5 w-5 text-ink" />
                   </div>
                   <div>
                     <h2 className="text-xl font-semibold tracking-[-0.02em]">Today&apos;s deal flow</h2>
@@ -7323,7 +7323,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
                 <button
                   type="button"
                   onClick={() => setDailyFilters({ query: '', sector: '', stage: '', location: '' })}
-                  className="mt-3 text-xs font-semibold text-[#42520d] hover:underline"
+                  className="mt-3 text-xs font-semibold text-ink hover:underline"
                 >
                   Clear filters
                 </button>
@@ -7355,7 +7355,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
                         </div>
                         <div className="flex items-center gap-2">
                           {launch.source && (
-                            <span className="inline-flex items-center gap-1 rounded-full border border-black/10 bg-[#fbf8f3] px-2 py-0.5 text-[10px] font-semibold text-black/55">
+                            <span className="inline-flex items-center gap-1 rounded-full border border-black/10 bg-[#f6f3f1] px-2 py-0.5 text-[10px] font-semibold text-black/55">
                               <Globe className="h-3 w-3" /> {launch.source}
                             </span>
                           )}
@@ -7375,23 +7375,23 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
                       {/* Compact meta chips: category / stage / location / metric */}
                       <div className="mt-4 flex flex-wrap gap-1.5">
                         {launch.category && (
-                          <span className="rounded-full bg-[#fbf8f3] px-2 py-0.5 text-[10px] font-semibold text-black/60">
+                          <span className="rounded-full bg-[#f6f3f1] px-2 py-0.5 text-[10px] font-semibold text-black/60">
                             {launch.category}
                           </span>
                         )}
                         {launch.stage && (
-                          <span className="rounded-full bg-[#fbf8f3] px-2 py-0.5 text-[10px] font-semibold text-black/60">
+                          <span className="rounded-full bg-[#f6f3f1] px-2 py-0.5 text-[10px] font-semibold text-black/60">
                             {launch.stage}
                           </span>
                         )}
                         {launch.location && (
-                          <span className="inline-flex items-center gap-0.5 rounded-full bg-[#fbf8f3] px-2 py-0.5 text-[10px] font-semibold text-black/60">
+                          <span className="inline-flex items-center gap-0.5 rounded-full bg-[#f6f3f1] px-2 py-0.5 text-[10px] font-semibold text-black/60">
                             <MapPin className="h-2.5 w-2.5" />
                             {launch.location}
                           </span>
                         )}
                         {launch.metrics && (
-                          <span className="rounded-full bg-[#dcefc7] px-2 py-0.5 text-[10px] font-semibold text-[#42520d]">
+                          <span className="rounded-full bg-lavender px-2 py-0.5 text-[10px] font-semibold text-ink">
                             {launch.metrics}
                           </span>
                         )}
@@ -7402,7 +7402,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
                         <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-black/35">
                           View launch
                         </span>
-                        <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-[#f4f1eb] text-black/60 transition-colors group-hover:bg-[#42520d] group-hover:text-white">
+                        <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-[#f4f1eb] text-black/60 transition-colors group-hover:bg-charcoal group-hover:text-white">
                           <ArrowUpRight className="h-3.5 w-3.5" />
                         </span>
                       </div>
@@ -7527,7 +7527,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
                           type="button"
                           onClick={() => setSelectedForYouLaunchId((current) => (current === launch.id ? '' : launch.id))}
                           aria-expanded={isExpanded}
-                          className="group grid w-full gap-4 px-5 py-4 text-left transition-colors hover:bg-[#fbf8f3] md:grid-cols-[3.25rem_1fr_auto] md:items-center"
+                          className="group grid w-full gap-4 px-5 py-4 text-left transition-colors hover:bg-[#f6f3f1] md:grid-cols-[3.25rem_1fr_auto] md:items-center"
                         >
                           <div className="flex items-center gap-3 md:block">
                             <div className="flex h-12 w-12 items-center justify-center rounded-[16px] bg-[#fbfaf7]">
@@ -7545,11 +7545,11 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
                           <div>
                             <div className="flex flex-wrap items-center gap-2">
                               <h3 className="text-xl font-semibold tracking-[-0.02em]">{launch.name}</h3>
-                              <span className="rounded-full bg-[#dcefc7] px-2.5 py-0.5 text-xs font-semibold text-black">
+                              <span className="rounded-full bg-lavender px-2.5 py-0.5 text-xs font-semibold text-black">
                                 {launch.fit}% thesis fit
                               </span>
                               {launch.origin === 'external' && (
-                                <span className="inline-flex items-center gap-1 rounded-full border border-black/10 bg-[#fbf8f3] px-2.5 py-0.5 text-xs font-semibold text-black/55">
+                                <span className="inline-flex items-center gap-1 rounded-full border border-black/10 bg-[#f6f3f1] px-2.5 py-0.5 text-xs font-semibold text-black/55">
                                   <Globe className="h-3 w-3" /> via {launch.source || 'External'}
                                 </span>
                               )}
@@ -7571,7 +7571,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
 
                           <div className="flex items-center gap-4 text-sm font-semibold text-black/60 md:w-44 md:justify-end">
                             <span className="inline-flex items-center gap-1.5">
-                              <ChevronUp className="h-4 w-4 text-[#42520d]" />
+                              <ChevronUp className="h-4 w-4 text-ink" />
                               {launch.saves}
                             </span>
                             <span className="inline-flex items-center gap-1.5 text-black/45">
@@ -7579,7 +7579,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
                               {launch.comments}
                             </span>
                             <span className={`ml-auto rounded-full px-3.5 py-2 text-xs font-semibold transition-colors md:ml-0 ${
-                              isExpanded ? 'bg-[#42520d] text-white' : 'bg-[#f4f1eb] text-black/70 group-hover:bg-[#42520d] group-hover:text-white'
+                              isExpanded ? 'bg-charcoal text-white' : 'bg-[#f4f1eb] text-black/70 group-hover:bg-charcoal group-hover:text-white'
                             }`}>
                               {isExpanded ? 'Hide' : 'View'}
                             </span>
@@ -7637,11 +7637,11 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
 
                                   {launch.proof.length > 0 && (
                                     <div className="mt-5">
-                                      <p className="mb-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-[#42520d]">Proof signals</p>
+                                      <p className="mb-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-ink">Proof signals</p>
                                       <div className="grid gap-1.5">
                                         {launch.proof.map((signal) => (
                                           <div key={signal} className="flex items-start gap-2 text-xs leading-5 text-black/60">
-                                            <Star className="mt-0.5 h-3 w-3 shrink-0 text-[#42520d]" />
+                                            <Star className="mt-0.5 h-3 w-3 shrink-0 text-ink" />
                                             <span>{signal}</span>
                                           </div>
                                         ))}
@@ -7653,7 +7653,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
                                 {/* Founder card + open-in-new-tab CTA */}
                                 <aside className="space-y-4">
                                   <div className="rounded-[16px] border border-black/10 bg-white p-4">
-                                    <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#42520d]">Launched by</p>
+                                    <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-ink">Launched by</p>
                                     {(() => {
                                       // founderProfilePath is either `/@username` or `/profile/<uuid>`.
                                       // Show the @-handle as the secondary line whenever we have one.
@@ -7704,7 +7704,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
                                       href={projectHref}
                                       target="_blank"
                                       rel="noreferrer"
-                                      className="inline-flex items-center justify-center gap-1.5 rounded-full bg-[#42520d] px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#34420a]"
+                                      className="inline-flex items-center justify-center gap-1.5 rounded-full bg-charcoal px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-ink"
                                     >
                                       Open project <ArrowUpRight className="h-4 w-4" />
                                     </a>
@@ -7728,7 +7728,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
               <aside className="lg:sticky lg:top-6 lg:self-start">
                 <div className="mb-6 rounded-[20px] border border-black bg-white p-4 shadow-[0_10px_34px_rgba(0,0,0,0.045)]">
                   <div className="flex items-center justify-between">
-                    <p className="text-sm font-semibold text-[#42520d]">Top launch</p>
+                    <p className="text-sm font-semibold text-ink">Top launch</p>
                     <Flame className="launch-flame h-4 w-4 text-[#f97316]" />
                   </div>
                   <div className="mt-4 flex items-center gap-3">
@@ -7777,7 +7777,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
       </div>
       <div className="divide-y divide-black/10">
         {filteredInvestorSignals.map((signal) => (
-          <article key={signalStorageId(signal)} className="px-5 py-4 transition-colors hover:bg-[#fbf8f3]">
+          <article key={signalStorageId(signal)} className="px-5 py-4 transition-colors hover:bg-[#f6f3f1]">
             <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_220px]">
               <button className="min-w-0 text-left" onClick={() => openInvestorSignal(signal)}>
                 <div className="flex flex-wrap items-center gap-2">
@@ -7857,7 +7857,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
             <div className="flex items-center gap-1">
               <button
                 type="button"
-                className="rounded-xl border border-black/10 p-2 text-gray-500 transition-colors hover:bg-[#fbf8f3] hover:text-black"
+                className="rounded-xl border border-black/10 p-2 text-gray-500 transition-colors hover:bg-[#f6f3f1] hover:text-black"
                 onClick={handleStartNewMessage}
                 aria-label="New message"
                 title="New message"
@@ -7871,7 +7871,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
                 <select
                   value={messageStatusFilter}
                   onChange={(event) => setMessageStatusFilter(event.target.value as MessageStatusFilter)}
-                  className="h-9 cursor-pointer appearance-none rounded-xl border border-black/10 bg-white pl-8 pr-7 text-xs font-medium text-gray-700 outline-none transition-colors hover:bg-[#fbf8f3] focus:border-[#42520d]"
+                  className="h-9 cursor-pointer appearance-none rounded-xl border border-black/10 bg-white pl-8 pr-7 text-xs font-medium text-gray-700 outline-none transition-colors hover:bg-[#f6f3f1] focus:border-ink"
                   aria-label="Filter messages by status"
                 >
                   <option value="all">All</option>
@@ -7912,7 +7912,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
                   key={thread.id}
                   type="button"
                   className={`w-full border-b border-black/10 px-4 py-3 text-left transition-colors ${
-                    isActive ? dmSelectedSurface : 'hover:bg-[#fbf8f3]'
+                    isActive ? dmSelectedSurface : 'hover:bg-[#f6f3f1]'
                   }`}
                   onClick={() => handleSelectMessageThread(thread)}
                 >
@@ -8043,10 +8043,10 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
 
           <form className="shrink-0 border-t border-black/10 bg-white" onSubmit={handleMessageSubmit}>
             <div className="flex items-center gap-2 px-3 py-3">
-              <button type="button" className="rounded-xl p-2 text-gray-500 transition-colors hover:bg-[#fbf8f3] hover:text-black" aria-label="Emoji">
+              <button type="button" className="rounded-xl p-2 text-gray-500 transition-colors hover:bg-[#f6f3f1] hover:text-black" aria-label="Emoji">
                 <Smile className="h-4 w-4" />
               </button>
-              <button type="button" className="rounded-xl p-2 text-gray-500 transition-colors hover:bg-[#fbf8f3] hover:text-black" aria-label="Attach">
+              <button type="button" className="rounded-xl p-2 text-gray-500 transition-colors hover:bg-[#f6f3f1] hover:text-black" aria-label="Attach">
                 <Paperclip className="h-4 w-4" />
               </button>
               <input
@@ -8057,7 +8057,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
               />
               <button
                 type="button"
-                className="hidden rounded-full border border-black/10 px-4 py-2 text-sm font-medium hover:bg-[#fbf8f3] disabled:cursor-not-allowed disabled:opacity-60 sm:inline-flex"
+                className="hidden rounded-full border border-black/10 px-4 py-2 text-sm font-medium hover:bg-[#f6f3f1] disabled:cursor-not-allowed disabled:opacity-60 sm:inline-flex"
                 onClick={() => handleSaveMessage('draft')}
                 disabled={savingWorkflow === 'message'}
               >
@@ -8186,7 +8186,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
                       <button
                         key={builder.id}
                         type="button"
-                        className="w-full px-4 py-3 text-left transition-colors hover:bg-[#fbf8f3]"
+                        className="w-full px-4 py-3 text-left transition-colors hover:bg-[#f6f3f1]"
                         onClick={() => {
                           setSelectedBuilderId(builder.id);
                           setSelectedClusterCity(builder.location);
@@ -8218,7 +8218,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
                 <div className="mt-3 space-y-2 px-4">
                   <button
                     type="button"
-                    className="w-full rounded-full border border-black/10 px-4 py-2 text-sm font-medium hover:bg-[#fbf8f3]"
+                    className="w-full rounded-full border border-black/10 px-4 py-2 text-sm font-medium hover:bg-[#f6f3f1]"
                     onClick={() => {
                       setQuery('devtools');
                       scrollToSection('signal-inbox');
@@ -8228,7 +8228,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
                   </button>
                   <button
                     type="button"
-                    className="w-full rounded-full border border-black/10 px-4 py-2 text-sm font-medium hover:bg-[#fbf8f3]"
+                    className="w-full rounded-full border border-black/10 px-4 py-2 text-sm font-medium hover:bg-[#f6f3f1]"
                     onClick={() => {
                       setNetworkFilters((current) => ({ ...current, matchOnly: true }));
                       scrollToSection('map');
@@ -8311,7 +8311,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
                 const isSaved = savedInvestorMatchSet.has(match.name);
 
                 return (
-                  <article key={match.name} className="px-5 py-5 transition-colors hover:bg-[#fbf8f3]">
+                  <article key={match.name} className="px-5 py-5 transition-colors hover:bg-[#f6f3f1]">
                     <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_180px_220px]">
                       <button className="min-w-0 text-left" onClick={() => setSelectedMatch(match)}>
                         <div className="flex flex-wrap items-center gap-2">
@@ -8453,7 +8453,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
                   <button
                     key={match.name}
                     type="button"
-                    className="w-full px-5 py-3 text-left transition-colors hover:bg-[#fbf8f3]"
+                    className="w-full px-5 py-3 text-left transition-colors hover:bg-[#f6f3f1]"
                     onClick={() => setSelectedMatch(match)}
                   >
                     <p className="text-sm font-medium">{match.name}</p>
@@ -8528,7 +8528,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
 
   if (isOnboarding && currentOnboardingStep) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[#fbf8f3] px-4">
+      <div className="monad-app flex min-h-screen items-center justify-center bg-parchment px-4">
         <div className="w-full max-w-lg">
           <div className="mb-8 flex items-center gap-2">
             <LogoIcon className="h-6 w-6 text-black" />
@@ -8539,7 +8539,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
             {onboardingSteps.map((_, i) => (
               <div
                 key={i}
-                className={`h-1 flex-1 rounded-full transition-colors ${i <= onboardingStep ? (isInvestor ? 'bg-green-700' : 'bg-[#02A070]') : 'bg-black/10'}`}
+                className={`h-1 flex-1 rounded-full transition-colors ${i <= onboardingStep ? (isInvestor ? 'bg-green-700' : 'bg-[#37d28b]') : 'bg-black/10'}`}
               />
             ))}
           </div>
@@ -8649,7 +8649,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
               <div
                 key={notification.id}
                 className={`rounded-xl border p-3 text-sm ${
-                  notification.readAt ? 'border-transparent bg-gray-50 text-gray-700' : 'border-[#dcefc7] bg-[#f3f9ea] text-gray-800'
+                  notification.readAt ? 'border-transparent bg-gray-50 text-gray-700' : 'border-lavender bg-[#eef2fb] text-gray-800'
                 }`}
               >
                 <p className="font-semibold leading-snug">{notification.title}</p>
@@ -8674,7 +8674,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
   );
 
   return (
-    <div className="min-h-screen bg-[#fbf8f3] text-black">
+    <div className="monad-app min-h-screen bg-parchment text-ink">
       <SessionNavBar role={role} user={user} activated={profileSaved} unreadMessages={totalUnreadMessages} />
 
       <main className="min-h-screen pl-[15rem]">
@@ -8959,7 +8959,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
 
                     <div className="divide-y divide-black/10">
                       {filteredFeed.map((item) => (
-                        <article key={item.title} className="px-5 py-5 transition-colors hover:bg-[#fbf8f3]">
+                        <article key={item.title} className="px-5 py-5 transition-colors hover:bg-[#f6f3f1]">
                           <button
                             className="w-full text-left"
                             onClick={() => addActivity(`Opened feed item: ${item.title}`)}
@@ -9037,7 +9037,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
                         {feedItems.filter((item) => item.source === 'Front page').slice(0, 3).map((item) => (
                           <button
                             key={item.title}
-                            className="w-full px-4 py-3 text-left transition-colors hover:bg-[#fbf8f3]"
+                            className="w-full px-4 py-3 text-left transition-colors hover:bg-[#f6f3f1]"
                             onClick={() => addActivity(`Opened trend: ${item.title}`)}
                           >
                             <p className="text-sm font-medium leading-snug">{item.tag}</p>
@@ -9055,7 +9055,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
                         {filteredMatches.slice(0, 3).map((match) => (
                           <button
                             key={match.name}
-                            className="w-full px-4 py-3 text-left transition-colors hover:bg-[#fbf8f3]"
+                            className="w-full px-4 py-3 text-left transition-colors hover:bg-[#f6f3f1]"
                             onClick={() => {
                               setSelectedMatch(match);
                               addActivity(`Opened ${match.name}`);
@@ -9075,7 +9075,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
                       </div>
                       {!profileSaved && (
                         <button
-                          className="mx-4 mt-3 rounded-full border border-black/10 px-4 py-2 text-sm font-medium hover:bg-[#fbf8f3]"
+                          className="mx-4 mt-3 rounded-full border border-black/10 px-4 py-2 text-sm font-medium hover:bg-[#f6f3f1]"
                           onClick={() => handleDashboardViewChange('overview')}
                         >
                           Personalize feed

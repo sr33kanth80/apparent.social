@@ -121,7 +121,7 @@ export const GithubVerifyCard = ({ user, github }: { user: AppUser; github: stri
           <h3 className="text-sm font-semibold">GitHub</h3>
         </div>
         {verified ? (
-          <span className="inline-flex items-center gap-1 rounded-full bg-[#42520d] px-2.5 py-1 text-[11px] font-semibold text-white">
+          <span className="inline-flex items-center gap-1 rounded-full bg-charcoal px-2.5 py-1 text-[11px] font-semibold text-white">
             <BadgeCheck className="h-3.5 w-3.5" /> Verified
           </span>
         ) : (
@@ -139,7 +139,7 @@ export const GithubVerifyCard = ({ user, github }: { user: AppUser; github: stri
               href={`https://github.com/${displayLogin}`}
               target="_blank"
               rel="noreferrer"
-              className="font-semibold text-[#42520d] hover:underline"
+              className="font-semibold text-ink hover:underline"
             >
               @{displayLogin}
             </a>
@@ -150,7 +150,7 @@ export const GithubVerifyCard = ({ user, github }: { user: AppUser; github: stri
               type="button"
               onClick={handleDisconnect}
               disabled={status !== 'idle'}
-              className="rounded-full border border-black/10 px-3 py-1.5 text-xs font-medium text-black/60 transition-colors hover:bg-[#fbf8f3] disabled:opacity-60"
+              className="rounded-full border border-black/10 px-3 py-1.5 text-xs font-medium text-black/60 transition-colors hover:bg-[#f6f3f1] disabled:opacity-60"
             >
               {status === 'disconnecting' ? 'Disconnecting…' : 'Disconnect GitHub'}
             </button>
@@ -191,7 +191,7 @@ export const GithubVerifyCard = ({ user, github }: { user: AppUser; github: stri
       {message && (
         <p
           className={`mt-3 text-xs leading-5 ${
-            messageTone === 'error' ? 'text-red-700' : 'text-[#42520d]'
+            messageTone === 'error' ? 'text-red-700' : 'text-ink'
           }`}
         >
           {message}

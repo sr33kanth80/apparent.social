@@ -100,9 +100,9 @@ export const FounderDossierCard = ({ user }: FounderDossierCardProps) => {
     <div className="rounded-2xl border border-black/10 bg-white p-5 shadow-[0_10px_34px_rgba(0,0,0,0.04)]">
       <div className="mb-3 flex items-center justify-between gap-2">
         <div className="flex items-center gap-2 text-sm font-semibold text-black">
-          <Sparkles className="h-4 w-4 text-[#42520d]" />
+          <Sparkles className="h-4 w-4 text-ink" />
           Your investor dossier
-          <span className="inline-flex items-center gap-1 rounded-full bg-[#fbf8f3] px-2 py-0.5 text-[10px] font-medium text-gray-500">
+          <span className="inline-flex items-center gap-1 rounded-full bg-[#f6f3f1] px-2 py-0.5 text-[10px] font-medium text-gray-500">
             <GitHubIcon className="h-3 w-3" /> GitHub-enriched
           </span>
         </div>
@@ -110,7 +110,7 @@ export const FounderDossierCard = ({ user }: FounderDossierCardProps) => {
           <button
             type="button"
             onClick={() => enrich(true)}
-            className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs text-gray-500 transition-colors hover:bg-[#fbf8f3] hover:text-black"
+            className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs text-gray-500 transition-colors hover:bg-[#f6f3f1] hover:text-black"
           >
             <RefreshCw className="h-3.5 w-3.5" /> Refresh
           </button>
@@ -123,7 +123,7 @@ export const FounderDossierCard = ({ user }: FounderDossierCardProps) => {
       </p>
 
       {state === 'loading' && (
-        <div className="flex items-center gap-2 rounded-xl bg-[#fbf8f3] px-3.5 py-3 text-sm text-gray-500">
+        <div className="flex items-center gap-2 rounded-xl bg-[#f6f3f1] px-3.5 py-3 text-sm text-gray-500">
           <Loader2 className="h-4 w-4 animate-spin" />
           Building your dossier from GitHub…
         </div>

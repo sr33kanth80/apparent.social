@@ -129,8 +129,8 @@ const roleConfig = {
     account: 'Founder Account',
     email: 'founder@apparent.test',
     initials: 'F',
-    accent: 'text-[#02A070]',
-    active: 'bg-[#dcefc7] text-black',
+    accent: 'text-[#37d28b]',
+    active: 'bg-lavender text-black',
     basePath: '/dashboard/founder',
     groups: [
       [

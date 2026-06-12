@@ -59,7 +59,7 @@ const EmailDraftCard = ({ draft }: { draft: EmailDraft }) => {
           {draft.founderName || 'Founder'}
           {draft.company ? ` · ${draft.company}` : ''}
         </p>
-        <span className="inline-flex items-center gap-1 rounded-full bg-[#fbf8f3] px-2 py-0.5 text-[10px] font-medium text-gray-500">
+        <span className="inline-flex items-center gap-1 rounded-full bg-[#f6f3f1] px-2 py-0.5 text-[10px] font-medium text-gray-500">
           <Mail className="h-3 w-3" /> Off-platform
         </span>
       </div>
@@ -70,7 +70,7 @@ const EmailDraftCard = ({ draft }: { draft: EmailDraft }) => {
         {draft.toEmail && (
           <a
             href={mailtoHref}
-            className="inline-flex items-center gap-1 rounded-lg bg-neutral-900 px-2.5 py-1 text-[11px] font-semibold text-white transition-colors hover:bg-black"
+            className="inline-flex items-center gap-1 rounded-lg bg-charcoal px-2.5 py-1 text-[11px] font-semibold text-white transition-colors hover:bg-black"
           >
             <Mail className="h-3 w-3" /> Open email
           </a>
@@ -293,7 +293,7 @@ export const InvestorAgentChat = ({
     const statusBadge = () => {
       switch (proposal.status) {
         case 'sent':
-          return <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-[#42520d]"><Check className="h-3 w-3" /> Sent</span>;
+          return <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-ink"><Check className="h-3 w-3" /> Sent</span>;
         case 'sending':
           return <span className="inline-flex items-center gap-1 text-[11px] text-gray-500"><Loader2 className="h-3 w-3 animate-spin" /> Sending…</span>;
         case 'skipped':
@@ -318,14 +318,14 @@ export const InvestorAgentChat = ({
             <button
               type="button"
               onClick={() => executeProposal(messageIndex, proposalIndex, proposal)}
-              className="inline-flex items-center gap-1 rounded-lg bg-neutral-900 px-2.5 py-1 text-[11px] font-semibold text-white transition-colors hover:bg-black"
+              className="inline-flex items-center gap-1 rounded-lg bg-charcoal px-2.5 py-1 text-[11px] font-semibold text-white transition-colors hover:bg-black"
             >
               <Send className="h-3 w-3" /> Send DM
             </button>
             <button
               type="button"
               onClick={() => patchProposal(messageIndex, proposalIndex, { status: 'skipped', reason: 'Dismissed' })}
-              className="inline-flex items-center gap-1 rounded-lg px-2.5 py-1 text-[11px] text-gray-500 transition-colors hover:bg-[#fbf8f3] hover:text-black"
+              className="inline-flex items-center gap-1 rounded-lg px-2.5 py-1 text-[11px] text-gray-500 transition-colors hover:bg-[#f6f3f1] hover:text-black"
             >
               <X className="h-3 w-3" /> Dismiss
             </button>
@@ -379,7 +379,7 @@ export const InvestorAgentChat = ({
   // background in fullscreen — swap surfaces so they stay visible in both.
   const assistantBubbleClass = expanded
     ? 'max-w-[85%] whitespace-pre-wrap rounded-2xl rounded-bl-sm border border-black/5 bg-white px-3.5 py-2.5 text-sm leading-relaxed text-gray-800 shadow-[0_4px_16px_rgba(0,0,0,0.03)]'
-    : 'max-w-[85%] whitespace-pre-wrap rounded-2xl rounded-bl-sm bg-[#fbf8f3] px-3.5 py-2.5 text-sm leading-relaxed text-gray-800';
+    : 'max-w-[85%] whitespace-pre-wrap rounded-2xl rounded-bl-sm bg-[#f6f3f1] px-3.5 py-2.5 text-sm leading-relaxed text-gray-800';
 
   const transcript = (
     <>
@@ -393,14 +393,14 @@ export const InvestorAgentChat = ({
         >
           <div className={message.role === 'user' ? 'flex justify-end' : 'flex justify-start'}>
             {message.role === 'assistant' && (
-              <div className="mr-2 mt-1 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#dcefc7]">
-                <LogoIcon className="h-3.5 w-3.5 text-[#42520d]" />
+              <div className="mr-2 mt-1 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-lavender">
+                <LogoIcon className="h-3.5 w-3.5 text-ink" />
               </div>
             )}
             <div
               className={
                 message.role === 'user'
-                  ? 'max-w-[80%] whitespace-pre-wrap rounded-2xl rounded-br-sm bg-neutral-900 px-3.5 py-2.5 text-sm leading-relaxed text-white'
+                  ? 'max-w-[80%] whitespace-pre-wrap rounded-2xl rounded-br-sm bg-charcoal px-3.5 py-2.5 text-sm leading-relaxed text-white'
                   : assistantBubbleClass
               }
             >
@@ -431,12 +431,12 @@ export const InvestorAgentChat = ({
           transition={{ duration: 0.25, ease: 'easeOut' }}
           className="flex justify-start"
         >
-          <div className="mr-2 mt-1 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#dcefc7]">
-            <LogoIcon className="h-3.5 w-3.5 text-[#42520d]" />
+          <div className="mr-2 mt-1 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-lavender">
+            <LogoIcon className="h-3.5 w-3.5 text-ink" />
           </div>
           <div
             className={`flex items-center gap-2 rounded-2xl rounded-bl-sm px-3.5 py-2.5 text-sm text-gray-500 ${
-              expanded ? 'border border-black/5 bg-white' : 'bg-[#fbf8f3]'
+              expanded ? 'border border-black/5 bg-white' : 'bg-[#f6f3f1]'
             }`}
           >
             <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -472,14 +472,14 @@ export const InvestorAgentChat = ({
             <div className="mb-3 overflow-hidden rounded-2xl border border-black/10 bg-white shadow-[0_10px_34px_rgba(0,0,0,0.04)]">
               <div className="flex items-center justify-between border-b border-black/5 px-4 py-2.5">
                 <div className="flex items-center gap-2 text-sm font-semibold text-black">
-                  <LogoIcon className="h-4 w-4 text-[#42520d]" />
+                  <LogoIcon className="h-4 w-4 text-ink" />
                   Apparent agent
                 </div>
                 <div className="flex items-center gap-1">
                   <button
                     type="button"
                     onClick={() => setExpanded(true)}
-                    className="flex items-center gap-1 rounded-md px-2 py-1 text-xs text-gray-500 transition-colors hover:bg-[#fbf8f3] hover:text-black"
+                    className="flex items-center gap-1 rounded-md px-2 py-1 text-xs text-gray-500 transition-colors hover:bg-[#f6f3f1] hover:text-black"
                   >
                     <Maximize2 className="h-3.5 w-3.5" />
                     Expand
@@ -487,7 +487,7 @@ export const InvestorAgentChat = ({
                   <button
                     type="button"
                     onClick={clear}
-                    className="flex items-center gap-1 rounded-md px-2 py-1 text-xs text-gray-500 transition-colors hover:bg-[#fbf8f3] hover:text-black"
+                    className="flex items-center gap-1 rounded-md px-2 py-1 text-xs text-gray-500 transition-colors hover:bg-[#f6f3f1] hover:text-black"
                   >
                     <Trash2 className="h-3.5 w-3.5" />
                     Clear
@@ -516,7 +516,7 @@ export const InvestorAgentChat = ({
         {expanded && (
           <motion.div
             key="agent-chat-overlay"
-            className="fixed inset-0 z-[120] flex flex-col bg-[#fbf8f3]"
+            className="monad-app fixed inset-0 z-[120] flex flex-col bg-parchment"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -524,7 +524,7 @@ export const InvestorAgentChat = ({
           >
             <div className="flex flex-wrap items-center justify-between gap-3 border-b border-black/5 bg-white/80 px-4 py-3 backdrop-blur sm:px-6">
               <div className="flex items-center gap-2 text-sm font-semibold text-black">
-                <LogoIcon className="h-4 w-4 text-[#42520d]" />
+                <LogoIcon className="h-4 w-4 text-ink" />
                 Apparent agent
               </div>
               <div className="flex flex-wrap items-center gap-3">
@@ -554,8 +554,8 @@ export const InvestorAgentChat = ({
               <div className="mx-auto w-full max-w-3xl space-y-4 px-4 py-6 sm:px-6">
                 {!hasConversation && !isLoading && (
                   <div className="flex flex-col items-center gap-4 pt-20 text-center">
-                    <div className="flex h-11 w-11 items-center justify-center rounded-full bg-[#dcefc7]">
-                      <LogoIcon className="h-5 w-5 text-[#42520d]" />
+                    <div className="flex h-11 w-11 items-center justify-center rounded-full bg-lavender">
+                      <LogoIcon className="h-5 w-5 text-ink" />
                     </div>
                     <p className="text-sm text-gray-500">Ask the agent to source founders, rank them against your thesis, or draft outreach.</p>
                     {suggestionChips(true)}

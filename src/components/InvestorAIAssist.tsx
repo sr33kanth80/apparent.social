@@ -97,7 +97,7 @@ export const InvestorAIPrompt = ({
 
   return (
     <div className={cn('w-full py-4 text-white', className)}>
-      <div className="rounded-2xl bg-neutral-950 p-1.5 pt-4 shadow-[0_18px_60px_rgba(0,0,0,0.24)]">
+      <div className="rounded-2xl bg-charcoal p-1.5 pt-4 shadow-[0_18px_60px_rgba(0,0,0,0.24)]">
         <div className="mx-2 mb-2.5 flex items-center">
           <LogoIcon className="h-3.5 w-3.5 text-white/90" />
         </div>
