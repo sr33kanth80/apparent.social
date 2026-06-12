@@ -63,7 +63,7 @@ export const Resources = () => {
           <button
             type="button"
             onClick={() => navigate('/login')}
-            className="w-full rounded-full bg-[#242424] px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-[#000000] sm:w-auto"
+            className="w-full rounded-full bg-[#cfdaf5] px-6 py-3 text-sm font-semibold text-black transition-colors hover:bg-[#bcc8ef] sm:w-auto"
           >
             Start learning <ArrowUpRight className="ml-1 inline h-3.5 w-3.5 align-[-2px]" />
           </button>
@@ -181,7 +181,7 @@ export const Resources = () => {
             <button
               type="button"
               onClick={() => navigate('/login?role=investor')}
-              className="flex-1 rounded-full bg-[#242424] px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-[#000000]"
+              className="flex-1 rounded-full bg-[#cfdaf5] px-6 py-3 text-sm font-semibold text-black transition-colors hover:bg-[#bcc8ef]"
             >
               Create investor profile <ArrowUpRight className="ml-1 inline h-3.5 w-3.5 align-[-2px]" />
             </button>

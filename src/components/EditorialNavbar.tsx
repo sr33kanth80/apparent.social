@@ -48,7 +48,7 @@ export const EditorialNavbar = () => {
           <button
             type="button"
             onClick={() => navigate('/login')}
-            className="monad-cta inline-flex items-center gap-1.5 bg-charcoal px-5 py-2.5 font-mono text-[14px] text-parchment"
+            className="monad-cta inline-flex items-center gap-1.5 bg-[#cfdaf5] px-5 py-2.5 font-mono text-[14px] text-ink hover:bg-[#bcc8ef]"
           >
             Get started
             <ArrowUpRight className="h-3.5 w-3.5" />

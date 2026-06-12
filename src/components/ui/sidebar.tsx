@@ -218,7 +218,7 @@ const NavLinkItem = ({
             <p className="text-sm font-medium">{item.label}</p>
             {item.badge && (
               <Badge
-                className="flex h-fit w-fit items-center rounded border-none bg-black px-1.5 text-[10px] text-white"
+                className="flex h-fit w-fit items-center rounded border-none bg-gradient-to-r from-[#ff7a52] via-[#7e9bf0] to-[#37d28b] px-1.5 text-[10px] font-semibold text-ink"
                 variant="outline"
               >
                 {item.badge}

@@ -427,7 +427,7 @@ export const OurThesis = () => {
             <button
               type="button"
               onClick={() => navigate('/login?role=investor')}
-              className="w-full rounded-full bg-[#242424] px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-[#000000] sm:w-auto"
+              className="w-full rounded-full bg-[#cfdaf5] px-6 py-3 text-sm font-semibold text-black transition-colors hover:bg-[#bcc8ef] sm:w-auto"
             >
               Create investor profile <ArrowUpRight className="ml-1 inline h-3.5 w-3.5 align-[-2px]" />
             </button>
@@ -551,7 +551,7 @@ export const OurThesis = () => {
                 href={selectedLandingBuilder.profileUrl}
                 target="_blank"
                 rel="noreferrer"
-                className="mt-6 inline-flex rounded-full bg-[#242424] px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-[#000000]"
+                className="mt-6 inline-flex rounded-full bg-[#cfdaf5] px-4 py-2 text-sm font-semibold text-black transition-colors hover:bg-[#bcc8ef]"
               >
                 Open startup <ArrowUpRight className="ml-1.5 h-4 w-4" />
               </a>
@@ -726,7 +726,7 @@ export const OurThesis = () => {
             <button
               type="button"
               onClick={() => navigate('/login')}
-              className="inline-flex w-fit items-center gap-3 rounded-full bg-black px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-[#242424]"
+              className="inline-flex w-fit items-center gap-3 rounded-full bg-[#cfdaf5] px-6 py-3 text-sm font-semibold text-black transition-colors hover:bg-[#bcc8ef]"
             >
               Enter Apparent <MoveRight className="h-4 w-4" />
             </button>
@@ -763,7 +763,7 @@ export const OurThesis = () => {
             <button
               type="button"
               onClick={() => navigate('/login?role=investor')}
-              className="flex-1 rounded-full bg-[#242424] px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-[#000000]"
+              className="flex-1 rounded-full bg-[#cfdaf5] px-6 py-3 text-sm font-semibold text-black transition-colors hover:bg-[#bcc8ef]"
             >
               Create investor profile <ArrowUpRight className="ml-1 inline h-3.5 w-3.5 align-[-2px]" />
             </button>

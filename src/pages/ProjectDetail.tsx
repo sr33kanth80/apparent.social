@@ -182,7 +182,7 @@ export const ProjectDetail = () => {
             </Link>
             <div className="mt-5 grid gap-3">
               {launch.launchUrl && (
-                <a href={launch.launchUrl} target="_blank" rel="noreferrer" className="inline-flex justify-center rounded-full bg-[#242424] px-5 py-3 text-sm font-semibold text-white hover:bg-[#000000]">
+                <a href={launch.launchUrl} target="_blank" rel="noreferrer" className="inline-flex justify-center rounded-full bg-[#cfdaf5] px-5 py-3 text-sm font-semibold text-black hover:bg-[#bcc8ef]">
                   Visit website <ArrowUpRight className="ml-2 h-4 w-4" />
                 </a>
               )}
@@ -208,7 +208,7 @@ export const ProjectDetail = () => {
                       type="button"
                       onClick={handleSendOutreach}
                       disabled={outreachStatus === 'sending'}
-                      className="inline-flex items-center justify-center gap-2 rounded-full bg-black px-5 py-3 text-sm font-semibold text-white hover:bg-black/85 disabled:cursor-not-allowed disabled:opacity-60"
+                      className="inline-flex items-center justify-center gap-2 rounded-full bg-[#cfdaf5] px-5 py-3 text-sm font-semibold text-black hover:bg-[#bcc8ef] disabled:cursor-not-allowed disabled:opacity-60"
                     >
                       <MessageCircle className="h-4 w-4" />
                       {outreachStatus === 'sending' ? 'Sending…' : 'Send outreach DM'}

@@ -98,7 +98,7 @@ export const Home = () => {
           <button
             type="button"
             onClick={() => navigate('/login?role=founder')}
-            className="monad-cta inline-flex items-center gap-2 bg-charcoal px-6 py-3 text-[14px] text-parchment"
+            className="monad-cta inline-flex items-center gap-2 bg-[#cfdaf5] px-6 py-3 text-[14px] text-ink hover:bg-[#bcc8ef]"
           >
             I&apos;m a founder <ArrowUpRight className="h-4 w-4" />
           </button>
@@ -256,7 +256,7 @@ export const Home = () => {
           <button
             type="button"
             onClick={() => navigate('/login?role=founder')}
-            className="monad-cta inline-flex items-center gap-2 bg-charcoal px-6 py-3 text-[14px] text-parchment"
+            className="monad-cta inline-flex items-center gap-2 bg-[#cfdaf5] px-6 py-3 text-[14px] text-ink hover:bg-[#bcc8ef]"
           >
             Create founder profile <ArrowUpRight className="h-4 w-4" />
           </button>

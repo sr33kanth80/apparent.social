@@ -69,7 +69,7 @@ const firstNameOf = (name: string) => name.split(/\s+/)[0] || 'them';
 // Primary "Message" button for the hero. DM is gated to logged-in viewers.
 const MessageButton = ({ viewer, name, onMessage }: { viewer: AppUser | null; name: string; onMessage: () => void }) => {
   const cls =
-    'inline-flex items-center gap-1.5 rounded-full bg-[#242424] px-5 py-2.5 text-sm font-semibold text-white transition hover:opacity-90';
+    'inline-flex items-center gap-1.5 rounded-full bg-[#cfdaf5] px-5 py-2.5 text-sm font-semibold text-black transition hover:bg-[#bcc8ef]';
   return viewer ? (
     <button type="button" onClick={onMessage} className={cls}>
       <MessageSquare className="h-4 w-4" /> Message {firstNameOf(name)}
@@ -192,7 +192,7 @@ const ConnectSection = ({
   const primary =
     tone === 'dark'
       ? 'bg-white text-[#242424] hover:bg-[#cfdaf5]'
-      : 'bg-[#242424] text-white hover:opacity-90';
+      : 'bg-[#cfdaf5] text-black hover:bg-[#bcc8ef]';
   const secondary =
     tone === 'dark' ? 'border-white/30 text-white hover:bg-white/10' : 'border-black/20 text-black hover:bg-black/5';
 
@@ -275,7 +275,7 @@ const ProfileMessageModal = ({
           <div className="py-6 text-center">
             <p className="text-lg font-semibold" style={serif}>Message sent</p>
             <p className="mt-2 text-sm text-black/60">Your message to {target.name} is on its way.</p>
-            <button type="button" onClick={onClose} className="mt-6 rounded-full bg-[#242424] px-6 py-2.5 text-sm font-semibold text-white">
+            <button type="button" onClick={onClose} className="mt-6 rounded-full bg-[#cfdaf5] px-6 py-2.5 text-sm font-semibold text-black transition hover:bg-[#bcc8ef]">
               Done
             </button>
           </div>
@@ -307,7 +307,7 @@ const ProfileMessageModal = ({
                 type="button"
                 onClick={send}
                 disabled={status === 'sending' || !body.trim()}
-                className="inline-flex items-center gap-1.5 rounded-full bg-[#242424] px-5 py-2 text-sm font-semibold text-white disabled:opacity-50"
+                className="inline-flex items-center gap-1.5 rounded-full bg-[#cfdaf5] px-5 py-2 text-sm font-semibold text-black transition hover:bg-[#bcc8ef] disabled:opacity-50"
               >
                 <Send className="h-3.5 w-3.5" /> {status === 'sending' ? 'Sending…' : 'Send'}
               </button>
@@ -1019,7 +1019,7 @@ const InvestorRestrictedPage = ({ username }: { username: string }) => (
       <div className="mt-10 flex flex-wrap gap-3">
         <Link
           to="/login?role=founder"
-          className="rounded-full bg-[#242424] px-6 py-3 text-sm font-semibold text-white transition hover:opacity-90"
+          className="rounded-full bg-[#cfdaf5] px-6 py-3 text-sm font-semibold text-black transition hover:bg-[#bcc8ef]"
         >
           Sign in as founder
         </Link>

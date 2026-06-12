@@ -101,7 +101,7 @@ export const ClaimProfile = () => {
         <div className="mt-10 flex flex-wrap items-center gap-3">
           <Link
             to={`/login?role=founder${signalId ? `&claim=${encodeURIComponent(signalId)}` : ''}`}
-            className="inline-flex items-center gap-2 rounded-full bg-[#242424] px-6 py-3 text-sm font-semibold text-white transition hover:bg-[#000000]"
+            className="inline-flex items-center gap-2 rounded-full bg-[#cfdaf5] px-6 py-3 text-sm font-semibold text-black transition hover:bg-[#bcc8ef]"
           >
             Claim my profile <ArrowUpRight className="h-4 w-4" />
           </Link>
