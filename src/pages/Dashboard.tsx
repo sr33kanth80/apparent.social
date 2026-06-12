@@ -8842,7 +8842,24 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
                 exit={{ opacity: 0, y: -8, filter: 'blur(2px)' }}
                 transition={{ duration: 0.22, ease: 'easeOut' }}
               >
-                <DiscoverDeck user={user} builders={builderNodes} />
+                {/* Discover ships soon — deck is a view-only preview behind the stamp. */}
+                <div className="relative">
+                  <div className="pointer-events-none select-none opacity-60 saturate-[0.6]">
+                    <DiscoverDeck user={user} builders={builderNodes} />
+                  </div>
+                  <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center overflow-hidden">
+                    <motion.div
+                      initial={{ opacity: 0, scale: 1.7, rotate: -12 }}
+                      animate={{ opacity: 1, scale: 1, rotate: -12 }}
+                      transition={{ type: 'spring', bounce: 0.4, duration: 0.55, delay: 0.2 }}
+                      className="rounded-2xl border-[5px] border-[#b3261e]/70 px-8 py-3 sm:border-[7px] sm:px-12 sm:py-5"
+                    >
+                      <span className="block whitespace-nowrap text-4xl font-black uppercase tracking-[0.2em] text-[#b3261e]/70 sm:text-7xl">
+                        Coming Soon
+                      </span>
+                    </motion.div>
+                  </div>
+                </div>
               </motion.div>
             ) : activeView === 'messages' ? (
               renderMessagesPage()
