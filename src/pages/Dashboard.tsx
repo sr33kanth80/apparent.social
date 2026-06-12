@@ -6401,7 +6401,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
       >
         {renderOnboardingChecklist()}
         <div id="overview" className="mx-auto max-w-[1292px] scroll-mt-24 space-y-6">
-          <div className="max-w-4xl">
+          <div className="mx-auto max-w-4xl">
             <InvestorAgentChat
               user={user}
               criteria={intakeValues}
@@ -8891,7 +8891,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
                   {renderOnboardingChecklist()}
                   {!isInvestor && (
                     <div className="mx-auto mt-6 max-w-[1292px] space-y-4">
-                      <div className="max-w-4xl">
+                      <div className="mx-auto max-w-4xl">
                         <FounderAgentChat
                           user={user}
                           founder={founderAgentContext}
