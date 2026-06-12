@@ -31,7 +31,7 @@ export const Footer = () => {
       <svg
         aria-hidden="true"
         className="pointer-events-none absolute inset-0 h-full w-full text-ink"
-        style={{ opacity: 0.5 }}
+        style={{ opacity: 0.1 }}
       >
         <defs>
           <pattern
