@@ -37,6 +37,93 @@ const sbSelect = async (table, query) => {
 
 const str = (v) => (v == null ? '' : String(v));
 
+const INVESTOR_PROFILE_FIELDS = new Set([
+  'thesis',
+  'sectors',
+  'stage',
+  'checkSize',
+  'geography',
+  'founderSignals',
+  'passSignals',
+  'portfolioExamples',
+  'publicProfileEnabled',
+  'publicFields',
+  'shareable',
+]);
+
+const arr = (v) => (Array.isArray(v) ? v.map(str).filter(Boolean) : []);
+const confidence = (v) => (v === 'low' || v === 'high' ? v : 'medium');
+
+const formatMemories = (memories) => {
+  const rows = Array.isArray(memories) ? memories.slice(0, 30) : [];
+  if (rows.length === 0) return '- None yet.';
+  return rows
+    .map((memory) => {
+      const source = str(memory?.sourceUrl);
+      const confidenceLabel = str(memory?.confidence) || 'medium';
+      return `- ${str(memory?.scope) || 'profile'}:${str(memory?.key)} = ${str(memory?.value)} (${confidenceLabel}${source ? `, source: ${source}` : ''})`;
+    })
+    .join('\n');
+};
+
+const extractUrls = (text) =>
+  Array.from(str(text).matchAll(/https?:\/\/[^\s)>"']+/gi)).map((match) =>
+    match[0].replace(/[.,;!?]+$/, ''),
+  );
+
+const analyzeSourceIngestion = (text) => {
+  const urls = Array.from(new Set(extractUrls(text)));
+  const likelyLimited = urls.filter((url) => /(^https?:\/\/)?([^/]+\.)?(linkedin\.com|x\.com|twitter\.com)\//i.test(url));
+  const hasPastedText = str(text).replace(/https?:\/\/[^\s)>"']+/gi, '').trim().length >= 240;
+  const asksProfileSetup = /\b(set\s*up|setup|fill|import|complete|update|edit|build)\b/i.test(text)
+    && /\b(profile|criteria|thesis|bio|about me|firm page|team page|linkedin|links?)\b/i.test(text);
+
+  const brief = !urls.length && !hasPastedText && !asksProfileSetup
+    ? '- No explicit source-ingestion request detected in the latest user message.'
+    : [
+        asksProfileSetup
+          ? '- Latest user message appears to ask for profile setup/update from external context.'
+          : '- Latest user message includes possible source material.',
+        urls.length ? `- URLs supplied: ${urls.join(', ')}` : '- URLs supplied: none.',
+        likelyLimited.length
+          ? `- Potentially limited/blocked sources: ${likelyLimited.join(', ')}. Try them if useful, but do not rely on them; if unreadable, say so and ask for another source or pasted text.`
+          : '- No obviously limited source domains detected.',
+        hasPastedText
+          ? '- The message includes substantial pasted text; use it as a first-class source even if URLs fail.'
+          : '- No substantial pasted text detected.',
+      ].join('\n');
+
+  return { urls, likelyLimited, hasPastedText, asksProfileSetup, brief };
+};
+
+const buildInvestorProfilePatch = (input, current) => {
+  const fields = Array.isArray(input?.fields) ? input.fields : [];
+  const patchFields = fields
+    .map((field) => {
+      const key = str(field?.field);
+      const newValue = str(field?.newValue).trim();
+      if (!INVESTOR_PROFILE_FIELDS.has(key) || !newValue) return null;
+      return {
+        field: key,
+        label: str(field?.label),
+        oldValue: str(current?.[key]),
+        newValue,
+        reason: str(field?.reason) || 'Inferred from the provided source material.',
+        sourceUrl: str(field?.sourceUrl),
+        confidence: confidence(field?.confidence),
+      };
+    })
+    .filter(Boolean);
+
+  return {
+    role: 'investor',
+    summary: str(input?.summary) || 'I drafted updates to your investor profile from the available source material.',
+    sourceUrls: arr(input?.sourceUrls),
+    unavailableSources: arr(input?.unavailableSources),
+    fields: patchFields,
+  };
+};
+
 // ---------- Tool: search_apparent_founders ----------
 
 const searchApparentFounders = async (input) => {
@@ -192,6 +279,39 @@ const TOOLS = [
     },
   },
   {
+    name: 'propose_investor_profile_update',
+    description:
+      "Draft a structured, reviewable patch to the investor's Apparent profile/criteria from URLs, public-source findings, or pasted text. Use this when the investor asks you to set up, fill, import, update, or complete their profile from sources like a firm page, team bio, personal site, LinkedIn, blogs, podcasts, or pasted text. If a URL cannot be read (LinkedIn often cannot), include it in unavailableSources, use whatever other sources or pasted text are available, and say plainly what could not be accessed. Never invent unsupported facts.",
+    input_schema: {
+      type: 'object',
+      properties: {
+        summary: { type: 'string', description: 'One-sentence summary of what this patch updates and what sources were usable.' },
+        sourceUrls: { type: 'array', items: { type: 'string' }, description: 'URLs that supported the proposed fields.' },
+        unavailableSources: { type: 'array', items: { type: 'string' }, description: 'URLs the agent could not read directly.' },
+        fields: {
+          type: 'array',
+          description: 'Profile fields to update. Only include supported, source-backed fields.',
+          items: {
+            type: 'object',
+            properties: {
+              field: {
+                type: 'string',
+                enum: ['thesis', 'sectors', 'stage', 'checkSize', 'geography', 'founderSignals', 'passSignals', 'portfolioExamples', 'publicProfileEnabled', 'publicFields', 'shareable'],
+              },
+              label: { type: 'string' },
+              newValue: { type: 'string' },
+              reason: { type: 'string' },
+              sourceUrl: { type: 'string' },
+              confidence: { type: 'string', enum: ['low', 'medium', 'high'] },
+            },
+            required: ['field', 'newValue', 'reason'],
+          },
+        },
+      },
+      required: ['fields'],
+    },
+  },
+  {
     name: 'propose_outreach',
     description:
       "Draft a personalized first-touch outreach message to ONE on-platform founder and queue it for the investor. Call this once per founder when the investor asks to reach out to / contact / message / DM founders. Only propose outreach to founders returned by search_apparent_founders who are open to contact and have NOT already been contacted by this investor. Write the message in the investor's voice, grounded in the founder's real proof and the investor's thesis. Depending on the investor's autonomy setting, the message is either sent automatically as an in-app DM or shown to the investor to approve first.",
@@ -254,7 +374,7 @@ const autonomyGuidance = (autonomy) => {
   return 'Auto-send is OFF (draft & approve): outreach you propose is shown to the investor to review and send. Tell the investor you have drafted messages for their approval.';
 };
 
-const buildSystemPrompt = (criteria, autonomy, contactedIds) => {
+const buildSystemPrompt = (criteria, autonomy, contactedIds, memories, sourceBrief) => {
   const c = criteria || {};
   const contacted = Array.isArray(contactedIds) ? contactedIds.filter(Boolean) : [];
   const lines = [
@@ -269,6 +389,12 @@ const buildSystemPrompt = (criteria, autonomy, contactedIds) => {
     `- Stage: ${str(c.stage) || '(not set)'}`,
     `- Geography: ${str(c.geography) || '(not set)'}`,
     `- Founder signals they value: ${str(c.founderSignals) || '(not set)'}`,
+    '',
+    'Durable agent memory for this investor:',
+    formatMemories(memories),
+    '',
+    'Latest source-ingestion brief:',
+    sourceBrief,
     '',
     'Outreach mode:',
     `- ${autonomyGuidance(autonomy)}`,
@@ -286,6 +412,7 @@ const buildSystemPrompt = (criteria, autonomy, contactedIds) => {
     '- To reach out, call prepare_mailto. OFF-PLATFORM outreach is ALWAYS a draft the investor sends from their own inbox — it is NEVER auto-sent, regardless of the autonomy setting. If you only found a social handle, leave to_email empty and put the handle in the body.',
     '',
     'General rules:',
+    '- When the investor asks you to set up, import, complete, or update their Apparent profile from links or pasted text, use web_fetch/web_search where helpful, then call propose_investor_profile_update with a structured patch. Do not claim LinkedIn or any source was read if it was not; list inaccessible URLs as unavailable sources and ask for alternate links or pasted text when needed.',
     "- Some on-platform founders have a `dossier` field — a GitHub-grounded profile written by the founder's own agent. When present, treat it as high-signal and lean on it (and `github_summary` / `github_verified`) when explaining fit and writing outreach.",
     '- Default to on-platform founders first; reach to the web when the investor asks to go broader or for founders not yet on Apparent.',
     '- When ranking, explain fit against thesis/sectors/stage/geography and real proof (traction, launches, GitHub, raising intent).',
@@ -324,6 +451,7 @@ export default async function handler(req, res) {
   const body = await readJsonBody(req);
   const incoming = Array.isArray(body.messages) ? body.messages : [];
   const criteria = body.criteria || {};
+  const memories = Array.isArray(body.memories) ? body.memories : [];
   const autonomy = body.autonomy === 'auto_onplatform' || body.autonomy === 'autonomous' ? body.autonomy : 'manual';
   const contactedIds = Array.isArray(body.contacted) ? body.contacted.map(String).slice(0, 200) : [];
 
@@ -338,9 +466,11 @@ export default async function handler(req, res) {
   }
 
   const client = new Anthropic();
-  const system = buildSystemPrompt(criteria, autonomy, contactedIds);
+  const sourceAnalysis = analyzeSourceIngestion(messages[messages.length - 1]?.content || '');
+  const system = buildSystemPrompt(criteria, autonomy, contactedIds, memories, sourceAnalysis.brief);
   const proposals = []; // on-platform DM proposals
   const emailDrafts = []; // off-platform mailto drafts
+  const profilePatches = []; // reviewable profile edits
   const seenProposalFounders = new Set();
   const seenEmailKeys = new Set();
 
@@ -378,7 +508,15 @@ export default async function handler(req, res) {
         if (block.type !== 'tool_use') continue; // skip server_tool_use (web_search/web_fetch)
 
         let result;
-        if (block.name === 'propose_outreach') {
+        if (block.name === 'propose_investor_profile_update') {
+          const patch = buildInvestorProfilePatch(block.input, criteria);
+          if (patch.fields.length > 0) {
+            profilePatches.push(patch);
+            result = { status: 'drafted', fields: patch.fields.map((field) => field.field) };
+          } else {
+            result = { status: 'skipped', reason: 'No supported profile fields were proposed.' };
+          }
+        } else if (block.name === 'propose_outreach') {
           // On-platform DM — side-effect-free; the client performs the RLS-safe send.
           const founderId = str(block.input?.founder_id);
           const founderName = str(block.input?.founder_name);
@@ -433,16 +571,24 @@ export default async function handler(req, res) {
       response = await callModel();
     }
 
-    const reply = response.content
+    let reply = response.content
       .filter((b) => b.type === 'text')
       .map((b) => b.text)
       .join('\n')
       .trim();
 
+    if (sourceAnalysis.asksProfileSetup && profilePatches.length === 0) {
+      const sourceNote = sourceAnalysis.likelyLimited.length
+        ? `I could not turn those sources into a profile draft yet. Some supplied sources may be hard to read directly (${sourceAnalysis.likelyLimited.join(', ')}). Send another public firm/team page or paste the relevant bio/thesis text here, and I can use that instead.`
+        : 'I could not turn the supplied context into a profile draft yet. Send another public source or paste the relevant bio/thesis text here, and I can use that instead.';
+      if (!reply.includes(sourceNote)) reply = `${reply ? `${reply}\n\n` : ''}${sourceNote}`;
+    }
+
     return res.status(200).json({
       reply: reply || "I couldn't find anything to say about that — try rephrasing your question.",
       proposals,
       emailDrafts,
+      profilePatches,
     });
   } catch (err) {
     if (err instanceof Anthropic.APIError) {

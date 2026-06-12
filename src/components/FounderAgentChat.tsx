@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
 import { Check, Loader2, Megaphone, Send, Sparkles, Trash2, X } from 'lucide-react';
 
+import { AgentProfilePatchCard } from '@/components/AgentProfilePatchCard';
 import { InvestorAIPrompt } from '@/components/InvestorAIAssist';
 import { LogoIcon } from '@/components/LogoIcon';
-import type { AppUser } from '@/lib/apparent-types';
+import type { AgentMemory, AgentProfilePatch, AppUser } from '@/lib/apparent-types';
 
 export type IntroProposal = {
   investorId: string;
@@ -21,6 +22,7 @@ type ChatMessage = {
   role: 'user' | 'assistant';
   content: string;
   proposals?: ProposalState[];
+  profilePatches?: AgentProfilePatch[];
   amplified?: { count: number } | { error: string };
 };
 
@@ -28,18 +30,22 @@ interface FounderAgentChatProps {
   user: AppUser;
   /** Founder context (profile fields + dossier summary) for thesis-aware matching. */
   founder: Record<string, string>;
+  memories: AgentMemory[];
   /** Investor ids already messaged — the agent won't re-propose them. */
   contactedInvestorIds: string[];
   /** Send an intro DM to an on-platform investor (RLS-safe, runs as the founder). */
   onSendIntro: (proposal: IntroProposal) => Promise<IntroResult>;
   /** Push the founder to thesis-matched investors. Returns how many were notified. */
   onAmplify: () => Promise<number>;
+  onApplyProfilePatch: (patch: AgentProfilePatch, fields: string[]) => Promise<IntroResult>;
+  onRememberConversation: (userMessage: string, assistantReply: string) => Promise<void>;
   className?: string;
 }
 
 const STORAGE_PREFIX = 'apparent:founder-agent-chat:';
 
 const SUGGESTIONS = [
+  'Set up my founder profile from my links and pasted text',
   'Which investors on Apparent fit my thesis?',
   'Draft intros to the top 3 investors for me',
   'Put me in front of investors who match',
@@ -48,9 +54,12 @@ const SUGGESTIONS = [
 export const FounderAgentChat = ({
   user,
   founder,
+  memories,
   contactedInvestorIds,
   onSendIntro,
   onAmplify,
+  onApplyProfilePatch,
+  onRememberConversation,
   className,
 }: FounderAgentChatProps) => {
   const storageKey = `${STORAGE_PREFIX}${user.id}`;
@@ -119,13 +128,16 @@ export const FounderAgentChat = ({
         body: JSON.stringify({
           messages: conversation.map((m) => ({ role: m.role, content: m.content })),
           founder,
+          memories,
           contacted: contactedInvestorIds,
         }),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok || data?.error) throw new Error(data?.error || `Request failed (${res.status})`);
 
+      const assistantReply = String(data.reply ?? '');
       const rawProposals: IntroProposal[] = Array.isArray(data.proposals) ? data.proposals : [];
+      const profilePatches: AgentProfilePatch[] = Array.isArray(data.profilePatches) ? data.profilePatches : [];
       const proposalStates: ProposalState[] = rawProposals.map((p) => ({ ...p, status: 'pending' }));
 
       let assistantIndex = -1;
@@ -133,7 +145,12 @@ export const FounderAgentChat = ({
         assistantIndex = current.length;
         return [
           ...current,
-          { role: 'assistant', content: String(data.reply ?? ''), proposals: proposalStates.length ? proposalStates : undefined },
+          {
+            role: 'assistant',
+            content: assistantReply,
+            proposals: proposalStates.length ? proposalStates : undefined,
+            profilePatches: profilePatches.length ? profilePatches : undefined,
+          },
         ];
       });
 
@@ -152,6 +169,8 @@ export const FounderAgentChat = ({
           );
         }
       }
+
+      void onRememberConversation(trimmed, assistantReply);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'The agent is unavailable right now.');
     } finally {
@@ -260,6 +279,18 @@ export const FounderAgentChat = ({
                 {message.role === 'assistant' && message.proposals && message.proposals.length > 0 && (
                   <div className="ml-8 mt-2 w-[85%] space-y-2">
                     {message.proposals.map((proposal, pi) => renderProposal(index, proposal, pi))}
+                  </div>
+                )}
+
+                {message.role === 'assistant' && message.profilePatches && message.profilePatches.length > 0 && (
+                  <div className="ml-8 mt-2 w-[85%] space-y-2">
+                    {message.profilePatches.map((patch, pi) => (
+                      <AgentProfilePatchCard
+                        key={`${patch.role}-${pi}-${patch.fields.map((field) => field.field).join('-')}`}
+                        onApply={onApplyProfilePatch}
+                        patch={patch}
+                      />
+                    ))}
                   </div>
                 )}
 

@@ -3,11 +3,12 @@ import { createPortal } from 'react-dom';
 import { Check, Copy, ExternalLink, Loader2, Mail, Maximize2, Minimize2, Send, Trash2, X } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 
+import { AgentProfilePatchCard } from '@/components/AgentProfilePatchCard';
 import { InvestorAIPrompt } from '@/components/InvestorAIAssist';
 import { LogoIcon } from '@/components/LogoIcon';
 import { Switch } from '@/components/ui/switch';
 import { Tooltip } from '@/components/ui/tooltip';
-import type { AgentAutonomy, AppUser } from '@/lib/apparent-types';
+import type { AgentAutonomy, AgentMemory, AgentProfilePatch, AppUser } from '@/lib/apparent-types';
 
 export type OutreachProposal = {
   founderId: string;
@@ -36,6 +37,7 @@ type ChatMessage = {
   content: string;
   proposals?: ProposalState[];
   emailDrafts?: EmailDraft[];
+  profilePatches?: AgentProfilePatch[];
 };
 
 const EmailDraftCard = ({ draft }: { draft: EmailDraft }) => {
@@ -101,18 +103,22 @@ interface InvestorAgentChatProps {
   user: AppUser;
   /** The investor's saved criteria (intakeValues) — passed to the agent for thesis-aware sourcing. */
   criteria: Record<string, string>;
+  memories: AgentMemory[];
   autonomy: AgentAutonomy;
   onAutonomyChange: (next: AgentAutonomy) => void;
   /** Founder ids the investor has already messaged — the agent avoids re-proposing them. */
   contactedFounderIds: string[];
   /** Performs the actual RLS-authenticated send (and guardrail enforcement). */
   onSendOutreach: (proposal: OutreachProposal) => Promise<OutreachResult>;
+  onApplyProfilePatch: (patch: AgentProfilePatch, fields: string[]) => Promise<OutreachResult>;
+  onRememberConversation: (userMessage: string, assistantReply: string) => Promise<void>;
   className?: string;
 }
 
 const STORAGE_PREFIX = 'apparent:agent-chat:';
 
 const SUGGESTIONS = [
+  'Set up my investor profile from links I paste',
   'Show me founders raising now that fit my thesis',
   'Find developer-tools founders on Apparent and draft intros to the top 3',
   'Find founders NOT on Apparent that fit my thesis and prep intros',
@@ -132,10 +138,13 @@ const DOCK_TRANSITION = { type: 'spring', bounce: 0.18, duration: 0.55 } as cons
 export const InvestorAgentChat = ({
   user,
   criteria,
+  memories,
   autonomy,
   onAutonomyChange,
   contactedFounderIds,
   onSendOutreach,
+  onApplyProfilePatch,
+  onRememberConversation,
   className,
 }: InvestorAgentChatProps) => {
   const storageKey = `${STORAGE_PREFIX}${user.id}`;
@@ -231,6 +240,7 @@ export const InvestorAgentChat = ({
         body: JSON.stringify({
           messages: conversation.map((m) => ({ role: m.role, content: m.content })),
           criteria,
+          memories,
           autonomy,
           contacted: contactedFounderIds,
         }),
@@ -240,8 +250,10 @@ export const InvestorAgentChat = ({
         throw new Error(data?.error || `Request failed (${res.status})`);
       }
 
+      const assistantReply = String(data.reply ?? '');
       const rawProposals: OutreachProposal[] = Array.isArray(data.proposals) ? data.proposals : [];
       const emailDrafts: EmailDraft[] = Array.isArray(data.emailDrafts) ? data.emailDrafts : [];
+      const profilePatches: AgentProfilePatch[] = Array.isArray(data.profilePatches) ? data.profilePatches : [];
       const auto = isAutoMode(autonomy);
       const proposalStates: ProposalState[] = rawProposals.map((proposal) => ({
         ...proposal,
@@ -255,9 +267,10 @@ export const InvestorAgentChat = ({
           ...current,
           {
             role: 'assistant',
-            content: String(data.reply ?? ''),
+            content: assistantReply,
             proposals: proposalStates.length ? proposalStates : undefined,
             emailDrafts: emailDrafts.length ? emailDrafts : undefined,
+            profilePatches: profilePatches.length ? profilePatches : undefined,
           },
         ];
       });
@@ -265,10 +278,11 @@ export const InvestorAgentChat = ({
       // Auto modes send immediately; manual mode waits for the investor to approve.
       if (auto && proposalStates.length && assistantIndex >= 0) {
         for (let i = 0; i < proposalStates.length; i += 1) {
-          // eslint-disable-next-line no-await-in-loop
           await executeProposal(assistantIndex, i, proposalStates[i]);
         }
       }
+
+      void onRememberConversation(trimmed, assistantReply);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'The agent is unavailable right now.');
     } finally {
@@ -418,6 +432,18 @@ export const InvestorAgentChat = ({
             <div className="ml-8 mt-2 w-[85%] space-y-2">
               {message.emailDrafts.map((draft, di) => (
                 <EmailDraftCard key={`${draft.toEmail || draft.founderName}-${di}`} draft={draft} />
+              ))}
+            </div>
+          )}
+
+          {message.role === 'assistant' && message.profilePatches && message.profilePatches.length > 0 && (
+            <div className="ml-8 mt-2 w-[85%] space-y-2">
+              {message.profilePatches.map((patch, pi) => (
+                <AgentProfilePatchCard
+                  key={`${patch.role}-${pi}-${patch.fields.map((field) => field.field).join('-')}`}
+                  onApply={onApplyProfilePatch}
+                  patch={patch}
+                />
               ))}
             </div>
           )}

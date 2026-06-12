@@ -63,6 +63,8 @@ import { PENDING_CLAIM_KEY } from '@/pages/ClaimBuild';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import type {
   AgentAutonomy,
+  AgentMemory,
+  AgentProfilePatch,
   AppUser,
   BuilderDiscoveryState,
   BuilderMapCluster,
@@ -91,6 +93,7 @@ import {
   loadApparentInvestors,
   loadDashboardData,
   loadFounderInterest,
+  loadAgentMemories,
   loadFounderVCContacts,
   loadLaunchAuthors,
   loadPublicProductLaunches,
@@ -98,9 +101,12 @@ import {
   setVcOutreachStage,
   deleteVcOutreach,
   saveBuilderDiscoveryState,
+  saveAgentConversationMemory,
+  saveAgentActionMemory,
   saveFeedAction,
   saveInvestorMatchBookmark,
   saveIntakeValues,
+  saveAgentProfilePatchMemory,
   saveLaunchComment,
   saveMeetup,
   saveMessage,
@@ -887,6 +893,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
   const [slackAlertsEnabled, setSlackAlertsEnabled] = useState(true);
   const [dailyDigestEnabled, setDailyDigestEnabled] = useState(true);
   const [agentAutonomy, setAgentAutonomy] = useState<AgentAutonomy>('manual');
+  const [agentMemories, setAgentMemories] = useState<AgentMemory[]>([]);
   const [draggedSignalCompany, setDraggedSignalCompany] = useState<string | null>(null);
   const [dragOverStage, setDragOverStage] = useState<InvestorDealStage | null>(null);
   const [pointerDrag, setPointerDrag] = useState<{ company: string; label: string; x: number; y: number } | null>(null);
@@ -1518,6 +1525,20 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
       unsubscribe();
     };
   }, [isInvestor, labelByKey, role, user]);
+
+  useEffect(() => {
+    let cancelled = false;
+    loadAgentMemories(user, role)
+      .then((rows) => {
+        if (!cancelled) setAgentMemories(rows);
+      })
+      .catch(() => {
+        if (!cancelled) setAgentMemories([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [role, user]);
 
   // Founder side: load the VCs who liked/superliked this founder (Discover deck).
   useEffect(() => {
@@ -2842,6 +2863,76 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
     [messages, user.id],
   );
 
+  const contactedInvestorIds = useMemo(
+    () =>
+      Array.from(
+        new Set(
+          messages
+            .filter((message) => message.ownerId === user.id && message.recipientId && message.context === 'founder-intro')
+            .map((message) => message.recipientId as string),
+        ),
+      ),
+    [messages, user.id],
+  );
+
+  const handleApplyAgentProfilePatch = async (
+    patch: AgentProfilePatch,
+    fields: string[],
+  ): Promise<{ ok: boolean; reason?: string }> => {
+    if (patch.role !== role) {
+      return { ok: false, reason: 'This draft is for a different workspace role.' };
+    }
+
+    const requested = new Set(fields);
+    const applicable = patch.fields.filter(
+      (field) => requested.has(field.field) && Object.prototype.hasOwnProperty.call(intakeValues, field.field),
+    );
+    if (applicable.length === 0) return { ok: false, reason: 'No supported fields selected.' };
+
+    const nextValues: Record<string, string> = { ...intakeValues };
+    applicable.forEach((field) => {
+      nextValues[field.field] = field.newValue;
+    });
+
+    try {
+      await saveIntakeValues(user, role, nextValues);
+      setIntakeValues(nextValues);
+      setProfileSaved(true);
+      await saveAgentProfilePatchMemory(user, patch, applicable.map((field) => field.field));
+      const stampedAt = new Date().toISOString();
+      setAgentMemories((current) => [
+        ...applicable.map((field) => ({
+          role,
+          scope: 'profile' as const,
+          key: field.field,
+          value: field.newValue,
+          sourceUrl: field.sourceUrl,
+          confidence: field.confidence ?? 'medium',
+          updatedAt: stampedAt,
+        })),
+        ...current.filter((memory) => !applicable.some((field) => memory.scope === 'profile' && memory.key === field.field)),
+      ].slice(0, 40));
+      addActivity(`Agent applied ${formatCount(applicable.length, 'profile field', 'profile fields')}`);
+      return { ok: true };
+    } catch (error) {
+      const reason = error instanceof Error ? error.message : 'Unable to apply profile update.';
+      setDashboardError(reason);
+      return { ok: false, reason };
+    }
+  };
+
+  const handleRememberAgentConversation = async (userMessage: string, assistantReply: string): Promise<void> => {
+    const memory = await saveAgentConversationMemory(user, role, userMessage, assistantReply);
+    if (!memory) return;
+    setAgentMemories((current) => [memory, ...current].slice(0, 40));
+  };
+
+  const rememberAgentAction = async (key: string, value: string): Promise<void> => {
+    const memory = await saveAgentActionMemory(user, role, key, value);
+    if (!memory) return;
+    setAgentMemories((current) => [memory, ...current].slice(0, 40));
+  };
+
   // Auto-advance a founder's deal-flow stage from agent activity. Only moves
   // forward through '' → New → Reached Out → Reviewing; never overrides a manual
   // 'Meeting' or 'Watchlist'.
@@ -2920,6 +3011,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
       });
       setMessages((current) => [savedMessage, ...current.filter((message) => message.id !== savedMessage.id)]);
       addActivity(`Agent reached out to ${proposal.founderName || 'a founder'}`);
+      void rememberAgentAction('outreach', `Sent agent outreach to ${proposal.founderName || proposal.founderId}: ${proposal.subject || 'No subject'}`);
       void applyDealStage(proposal.founderId, 'Reached Out');
       return { ok: true };
     } catch (error) {
@@ -2932,6 +3024,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
   const founderAgentContext = useMemo(
     () => ({
       name: intakeValues.profileName ?? '',
+      profileName: intakeValues.profileName ?? '',
       headline: intakeValues.headline ?? '',
       bio: intakeValues.bio ?? '',
       currentBuild: intakeValues.currentBuild ?? '',
@@ -2939,9 +3032,22 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
       stage: intakeValues.stage ?? '',
       location: intakeValues.location ?? '',
       traction: intakeValues.traction || intakeValues.tractionValue || intakeValues.mrr || '',
+      lookingFor: intakeValues.lookingFor ?? '',
+      website: intakeValues.website ?? '',
+      github: intakeValues.github ?? '',
+      linkedin: intakeValues.linkedin ?? '',
+      xProfile: intakeValues.xProfile ?? '',
+      pastProducts: intakeValues.pastProducts ?? '',
+      tractionType: intakeValues.tractionType ?? '',
+      tractionValue: intakeValues.tractionValue ?? '',
+      teamSize: intakeValues.teamSize ?? '',
+      priorRaiseAmount: intakeValues.priorRaiseAmount ?? '',
+      targetCloseDate: intakeValues.targetCloseDate ?? '',
       fundraisingStatus: intakeValues.fundraisingStatus ?? '',
       raisingRound: intakeValues.raisingRound ?? '',
       raisingAmount: intakeValues.raisingAmount ?? '',
+      raisingAsk: intakeValues.raisingAsk ?? '',
+      openToContact: intakeValues.openToContact ?? '',
     }),
     [intakeValues],
   );
@@ -2954,7 +3060,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
     body: string;
   }): Promise<{ ok: boolean; reason?: string }> => {
     if (!proposal.investorId || !proposal.body.trim()) return { ok: false, reason: 'Incomplete draft' };
-    if (contactedFounderIds.includes(proposal.investorId)) return { ok: false, reason: 'Already messaged' };
+    if (contactedInvestorIds.includes(proposal.investorId)) return { ok: false, reason: 'Already messaged' };
 
     const startOfDay = new Date();
     startOfDay.setHours(0, 0, 0, 0);
@@ -2978,6 +3084,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
       });
       setMessages((current) => [savedMessage, ...current.filter((message) => message.id !== savedMessage.id)]);
       addActivity(`Sent an intro to ${proposal.investorName || 'an investor'}`);
+      void rememberAgentAction('founder_intro', `Sent founder intro to ${proposal.investorName || proposal.investorId}: ${proposal.subject || 'No subject'}`);
       return { ok: true };
     } catch (error) {
       return { ok: false, reason: error instanceof Error ? error.message : 'Send failed' };
@@ -2987,6 +3094,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
   const handleFounderAmplify = async (): Promise<number> => {
     const count = await notifyInvestorsOfFounder(user);
     if (count > 0) addActivity(`Amplified to ${formatCount(count, 'matched investor', 'matched investors')}`);
+    if (count > 0) void rememberAgentAction('amplify', `Amplified founder profile to ${formatCount(count, 'matched investor', 'matched investors')}.`);
     return count;
   };
 
@@ -3082,6 +3190,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
         });
         setMessages((current) => [saved, ...current.filter((message) => message.id !== saved.id)]);
         addActivity(`Agent followed up with ${displayName}`);
+        void rememberAgentAction('followup', `Sent one follow-up to ${displayName}.`);
         sentToday += 1;
       } catch {
         /* non-fatal */
@@ -6405,9 +6514,12 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
             <InvestorAgentChat
               user={user}
               criteria={intakeValues}
+              memories={agentMemories}
               autonomy={agentAutonomy}
               onAutonomyChange={handleAgentAutonomyChange}
               contactedFounderIds={contactedFounderIds}
+              onApplyProfilePatch={handleApplyAgentProfilePatch}
+              onRememberConversation={handleRememberAgentConversation}
               onSendOutreach={handleAgentOutreach}
             />
 
@@ -8912,7 +9024,10 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
                         <FounderAgentChat
                           user={user}
                           founder={founderAgentContext}
-                          contactedInvestorIds={contactedFounderIds}
+                          memories={agentMemories}
+                          contactedInvestorIds={contactedInvestorIds}
+                          onApplyProfilePatch={handleApplyAgentProfilePatch}
+                          onRememberConversation={handleRememberAgentConversation}
                           onSendIntro={handleFounderIntro}
                           onAmplify={handleFounderAmplify}
                         />

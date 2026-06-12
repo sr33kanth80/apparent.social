@@ -99,6 +99,35 @@ export interface InvestorSignal {
  */
 export type AgentAutonomy = 'manual' | 'auto_onplatform' | 'autonomous';
 
+export type AgentProfilePatchField = {
+  field: string;
+  label?: string;
+  oldValue: string;
+  newValue: string;
+  reason: string;
+  sourceUrl?: string;
+  confidence?: 'low' | 'medium' | 'high';
+};
+
+export type AgentProfilePatch = {
+  role: DashboardRole;
+  summary: string;
+  sourceUrls: string[];
+  unavailableSources?: string[];
+  fields: AgentProfilePatchField[];
+};
+
+export type AgentMemory = {
+  id?: string;
+  role: DashboardRole;
+  scope: 'profile' | 'preference' | 'source' | 'action' | 'conversation_summary';
+  key: string;
+  value: string;
+  sourceUrl?: string;
+  confidence?: 'low' | 'medium' | 'high';
+  updatedAt?: string;
+};
+
 export interface UserSettings {
   dailyDigestEnabled: boolean;
   slackAlertsEnabled: boolean;

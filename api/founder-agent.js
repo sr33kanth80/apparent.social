@@ -25,6 +25,109 @@ const SUPABASE_ANON_KEY = process.env.VITE_SUPABASE_ANON_KEY || process.env.SUPA
 
 const str = (v) => (v == null ? '' : String(v));
 
+const FOUNDER_PROFILE_FIELDS = new Set([
+  'profileName',
+  'headline',
+  'bio',
+  'currentBuild',
+  'category',
+  'stage',
+  'github',
+  'traction',
+  'lookingFor',
+  'location',
+  'press',
+  'website',
+  'linkedin',
+  'xProfile',
+  'pastProducts',
+  'mrr',
+  'tractionType',
+  'tractionValue',
+  'teamSize',
+  'priorRaiseAmount',
+  'targetCloseDate',
+  'fundraisingStatus',
+  'raisingRound',
+  'raisingAmount',
+  'raisingAsk',
+  'openToContact',
+  'shareable',
+]);
+
+const arr = (v) => (Array.isArray(v) ? v.map(str).filter(Boolean) : []);
+const confidence = (v) => (v === 'low' || v === 'high' ? v : 'medium');
+
+const formatMemories = (memories) => {
+  const rows = Array.isArray(memories) ? memories.slice(0, 30) : [];
+  if (rows.length === 0) return '- None yet.';
+  return rows
+    .map((memory) => {
+      const source = str(memory?.sourceUrl);
+      const confidenceLabel = str(memory?.confidence) || 'medium';
+      return `- ${str(memory?.scope) || 'profile'}:${str(memory?.key)} = ${str(memory?.value)} (${confidenceLabel}${source ? `, source: ${source}` : ''})`;
+    })
+    .join('\n');
+};
+
+const extractUrls = (text) =>
+  Array.from(str(text).matchAll(/https?:\/\/[^\s)>"']+/gi)).map((match) =>
+    match[0].replace(/[.,;!?]+$/, ''),
+  );
+
+const analyzeSourceIngestion = (text) => {
+  const urls = Array.from(new Set(extractUrls(text)));
+  const likelyLimited = urls.filter((url) => /(^https?:\/\/)?([^/]+\.)?(linkedin\.com|x\.com|twitter\.com)\//i.test(url));
+  const hasPastedText = str(text).replace(/https?:\/\/[^\s)>"']+/gi, '').trim().length >= 240;
+  const asksProfileSetup = /\b(set\s*up|setup|fill|import|complete|update|edit|build)\b/i.test(text)
+    && /\b(profile|bio|about me|github|product|launch|website|linkedin|links?|deck|traction)\b/i.test(text);
+
+  const brief = !urls.length && !hasPastedText && !asksProfileSetup
+    ? '- No explicit source-ingestion request detected in the latest user message.'
+    : [
+        asksProfileSetup
+          ? '- Latest user message appears to ask for founder profile setup/update from external context.'
+          : '- Latest user message includes possible source material.',
+        urls.length ? `- URLs supplied: ${urls.join(', ')}` : '- URLs supplied: none.',
+        likelyLimited.length
+          ? `- Potentially limited/blocked sources: ${likelyLimited.join(', ')}. Try them if useful, but do not rely on them; if unreadable, say so and ask for another source or pasted text.`
+          : '- No obviously limited source domains detected.',
+        hasPastedText
+          ? '- The message includes substantial pasted text; use it as a first-class source even if URLs fail.'
+          : '- No substantial pasted text detected.',
+      ].join('\n');
+
+  return { urls, likelyLimited, hasPastedText, asksProfileSetup, brief };
+};
+
+const buildFounderProfilePatch = (input, current) => {
+  const fields = Array.isArray(input?.fields) ? input.fields : [];
+  const patchFields = fields
+    .map((field) => {
+      const key = str(field?.field);
+      const newValue = str(field?.newValue).trim();
+      if (!FOUNDER_PROFILE_FIELDS.has(key) || !newValue) return null;
+      return {
+        field: key,
+        label: str(field?.label),
+        oldValue: str(current?.[key]),
+        newValue,
+        reason: str(field?.reason) || 'Inferred from the provided source material.',
+        sourceUrl: str(field?.sourceUrl),
+        confidence: confidence(field?.confidence),
+      };
+    })
+    .filter(Boolean);
+
+  return {
+    role: 'founder',
+    summary: str(input?.summary) || 'I drafted updates to your founder profile from the available source material.',
+    sourceUrls: arr(input?.sourceUrls),
+    unavailableSources: arr(input?.unavailableSources),
+    fields: patchFields,
+  };
+};
+
 const sbSelect = async (table, query) => {
   if (!SUPABASE_URL || !SUPABASE_ANON_KEY) return [];
   const res = await fetch(`${SUPABASE_URL}/rest/v1/${table}?${query}`, {
@@ -108,6 +211,10 @@ const findMatchingInvestors = async (input, founder) => {
 };
 
 const TOOLS = [
+  // Server-side tools are only for reading the founder's own supplied/public
+  // sources during profile setup. Investor targeting stays on-platform.
+  { type: 'web_search_20260209', name: 'web_search' },
+  { type: 'web_fetch_20260209', name: 'web_fetch' },
   {
     name: 'find_matching_investors',
     description:
@@ -120,6 +227,39 @@ const TOOLS = [
         limit: { type: 'number', description: 'Max investors to return (1-20, default 12).' },
       },
       required: [],
+    },
+  },
+  {
+    name: 'propose_founder_profile_update',
+    description:
+      "Draft a structured, reviewable patch to the founder's Apparent profile from URLs, public-source findings, or pasted text. Use this when the founder asks you to set up, fill, import, update, or complete their profile from sources like GitHub, a product site, personal site, LinkedIn, launch page, deck text, blogs, or pasted text. If a URL cannot be read, include it in unavailableSources, use whatever other sources or pasted text are available, and say plainly what could not be accessed. Never invent unsupported facts.",
+    input_schema: {
+      type: 'object',
+      properties: {
+        summary: { type: 'string', description: 'One-sentence summary of what this patch updates and what sources were usable.' },
+        sourceUrls: { type: 'array', items: { type: 'string' }, description: 'URLs that supported the proposed fields.' },
+        unavailableSources: { type: 'array', items: { type: 'string' }, description: 'URLs the agent could not read directly.' },
+        fields: {
+          type: 'array',
+          description: 'Profile fields to update. Only include supported, source-backed fields.',
+          items: {
+            type: 'object',
+            properties: {
+              field: {
+                type: 'string',
+                enum: ['profileName', 'headline', 'bio', 'currentBuild', 'category', 'stage', 'github', 'traction', 'lookingFor', 'location', 'press', 'website', 'linkedin', 'xProfile', 'pastProducts', 'mrr', 'tractionType', 'tractionValue', 'teamSize', 'priorRaiseAmount', 'targetCloseDate', 'fundraisingStatus', 'raisingRound', 'raisingAmount', 'raisingAsk', 'openToContact', 'shareable'],
+              },
+              label: { type: 'string' },
+              newValue: { type: 'string' },
+              reason: { type: 'string' },
+              sourceUrl: { type: 'string' },
+              confidence: { type: 'string', enum: ['low', 'medium', 'high'] },
+            },
+            required: ['field', 'newValue', 'reason'],
+          },
+        },
+      },
+      required: ['fields'],
     },
   },
   {
@@ -145,12 +285,13 @@ const TOOLS = [
   },
 ];
 
-const buildSystemPrompt = (founder, contactedIds) => {
+const buildSystemPrompt = (founder, contactedIds, memories, sourceBrief) => {
   const f = founder || {};
   const contacted = Array.isArray(contactedIds) ? contactedIds.filter(Boolean) : [];
   return [
     "You are Apparent's agent that works FOR a founder. Your single mission: make this founder \"Apparent\" to the venture investors who are ALREADY on Apparent.",
-    'You never search the open web or hunt for investors outside Apparent. You work the on-platform investor base: find the ones whose thesis fits, draft intros, and amplify the founder to matched investors.',
+    'You never use the open web to hunt for investors outside Apparent. You work the on-platform investor base: find the ones whose thesis fits, draft intros, and amplify the founder to matched investors.',
+    'You may use web_fetch/web_search only when the founder asks you to set up, import, complete, or update their own Apparent profile from supplied links, public sources, or pasted text. If LinkedIn or any source cannot be read, say so plainly, list it as unavailable in the patch, and ask for another link or pasted text.',
     '',
     "The founder's profile:",
     `- Name: ${str(f.name) || '(not set)'}`,
@@ -162,11 +303,18 @@ const buildSystemPrompt = (founder, contactedIds) => {
     `- Fundraising: ${str(f.fundraisingStatus) || 'not specified'}${f.raisingRound ? ` (${str(f.raisingRound)} ${str(f.raisingAmount)})` : ''}`,
     f.dossier ? `- GitHub dossier: ${str(f.dossier)}` : '- GitHub dossier: (not built yet — suggest connecting GitHub for a stronger profile)',
     '',
+    'Durable agent memory for this founder:',
+    formatMemories(memories),
+    '',
+    'Latest source-ingestion brief:',
+    sourceBrief,
+    '',
     contacted.length
       ? `- The founder has already messaged these investor ids — don't draft intros to them again: ${contacted.join(', ')}.`
       : '- The founder has not messaged any investors yet.',
     '',
     'Rules:',
+    '- For profile setup or profile edits from links/pasted text, call propose_founder_profile_update with source-backed fields. Do not claim any URL was read if it was not.',
     '- To discuss or target investors, ALWAYS call find_matching_investors and ground every claim in its results. Never invent investors, theses, or contact info.',
     "- Rank by real thesis/sector/stage/geography fit and explain WHY each investor fits this founder's work.",
     '- Call draft_intro (once per investor) only when the founder wants to reach out; skip investors already messaged.',
@@ -201,6 +349,7 @@ export default async function handler(req, res) {
   const body = await readJsonBody(req);
   const incoming = Array.isArray(body.messages) ? body.messages : [];
   const founder = body.founder || {};
+  const memories = Array.isArray(body.memories) ? body.memories : [];
   const contactedIds = Array.isArray(body.contacted) ? body.contacted.map(String).slice(0, 200) : [];
 
   const messages = incoming
@@ -213,8 +362,10 @@ export default async function handler(req, res) {
   }
 
   const client = new Anthropic();
-  const system = buildSystemPrompt(founder, contactedIds);
+  const sourceAnalysis = analyzeSourceIngestion(messages[messages.length - 1]?.content || '');
+  const system = buildSystemPrompt(founder, contactedIds, memories, sourceAnalysis.brief);
   const proposals = [];
+  const profilePatches = [];
   const seenInvestors = new Set();
   let amplifyRequested = false;
 
@@ -233,9 +384,14 @@ export default async function handler(req, res) {
     let response = await callModel();
     let steps = 0;
 
-    while (steps < MAX_AGENT_STEPS && response.stop_reason === 'tool_use') {
+    while (steps < MAX_AGENT_STEPS && (response.stop_reason === 'tool_use' || response.stop_reason === 'pause_turn')) {
       steps += 1;
       messages.push({ role: 'assistant', content: response.content });
+
+      if (response.stop_reason === 'pause_turn') {
+        response = await callModel();
+        continue;
+      }
 
       const toolResults = [];
       for (const block of response.content) {
@@ -247,6 +403,14 @@ export default async function handler(req, res) {
             result = await findMatchingInvestors(block.input, founder);
           } catch (err) {
             result = { error: `lookup_failed: ${err?.message ?? 'unknown'}` };
+          }
+        } else if (block.name === 'propose_founder_profile_update') {
+          const patch = buildFounderProfilePatch(block.input, founder);
+          if (patch.fields.length > 0) {
+            profilePatches.push(patch);
+            result = { status: 'drafted', fields: patch.fields.map((field) => field.field) };
+          } else {
+            result = { status: 'skipped', reason: 'No supported profile fields were proposed.' };
           }
         } else if (block.name === 'draft_intro') {
           const investorId = str(block.input?.investor_id);
@@ -275,15 +439,23 @@ export default async function handler(req, res) {
       response = await callModel();
     }
 
-    const reply = response.content
+    let reply = response.content
       .filter((b) => b.type === 'text')
       .map((b) => b.text)
       .join('\n')
       .trim();
 
+    if (sourceAnalysis.asksProfileSetup && profilePatches.length === 0) {
+      const sourceNote = sourceAnalysis.likelyLimited.length
+        ? `I could not turn those sources into a profile draft yet. Some supplied sources may be hard to read directly (${sourceAnalysis.likelyLimited.join(', ')}). Send another public product/GitHub/site link or paste the relevant founder bio, traction, or product text here, and I can use that instead.`
+        : 'I could not turn the supplied context into a profile draft yet. Send another public source or paste the relevant founder bio, traction, or product text here, and I can use that instead.';
+      if (!reply.includes(sourceNote)) reply = `${reply ? `${reply}\n\n` : ''}${sourceNote}`;
+    }
+
     return res.status(200).json({
       reply: reply || "I couldn't find anything to say about that — try rephrasing.",
       proposals,
+      profilePatches,
       amplify: amplifyRequested,
     });
   } catch (err) {

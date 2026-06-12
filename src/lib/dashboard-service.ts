@@ -9,6 +9,8 @@ import {
 } from '@/lib/app-defaults';
 import type {
   AppUser,
+  AgentProfilePatch,
+  AgentMemory,
   BuilderDiscoveryState,
   BuilderMapCluster,
   BuilderNode,
@@ -3022,6 +3024,201 @@ export const notifyInvestorsOfFounder = async (user: AppUser): Promise<number> =
     return Number(data ?? 0);
   } catch {
     return 0;
+  }
+};
+
+export const saveAgentProfilePatchMemory = async (
+  user: AppUser,
+  patch: AgentProfilePatch,
+  appliedFields: string[],
+): Promise<void> => {
+  const applied = new Set(appliedFields);
+  const selectedFields = patch.fields.filter((field) => applied.has(field.field));
+  if (selectedFields.length === 0) return;
+
+  if (!isSupabaseConfigured || !supabase || user.isDev) {
+    const memoryKey = storageKey(user, 'agent-memories');
+    const current = readLocal<Record<string, unknown>[]>(memoryKey, []);
+    const rows = selectedFields.map((field) => ({
+      role: patch.role,
+      scope: 'profile',
+      key: field.field,
+      value: field.newValue,
+      sourceUrl: field.sourceUrl ?? '',
+      confidence: field.confidence ?? 'medium',
+      updatedAt: nowIso(),
+    }));
+    writeLocal(memoryKey, [...rows, ...current].slice(0, 200));
+    return;
+  }
+
+  const sourceRows = [
+    ...patch.sourceUrls.map((sourceUrl) => ({
+      user_id: user.id,
+      role: patch.role,
+      source_type: 'url',
+      source_url: sourceUrl,
+      status: 'used',
+      note: patch.summary,
+    })),
+    ...(patch.unavailableSources ?? []).map((sourceUrl) => ({
+      user_id: user.id,
+      role: patch.role,
+      source_type: 'url',
+      source_url: sourceUrl,
+      status: 'unavailable',
+      note: 'The agent could not read this source directly.',
+    })),
+  ];
+
+  const memoryRows = selectedFields.map((field) => ({
+    user_id: user.id,
+    role: patch.role,
+    scope: 'profile',
+    key: field.field,
+    value: field.newValue,
+    source_url: field.sourceUrl ?? '',
+    confidence: field.confidence ?? 'medium',
+    updated_at: nowIso(),
+  }));
+
+  try {
+    if (sourceRows.length > 0) {
+      await supabase.from('agent_source_records').insert(sourceRows);
+    }
+    await supabase
+      .from('agent_memories')
+      .upsert(memoryRows, { onConflict: 'user_id,role,scope,key' });
+  } catch {
+    // Memory is trust/provenance metadata; profile save success should not be
+    // rolled back if the migration is not deployed yet.
+  }
+};
+
+export const loadAgentMemories = async (
+  user: AppUser,
+  role: DashboardRole,
+): Promise<AgentMemory[]> => {
+  if (!isSupabaseConfigured || !supabase || user.isDev) {
+    return readLocal<AgentMemory[]>(storageKey(user, 'agent-memories'), []).filter((memory) => memory.role === role);
+  }
+
+  try {
+    const { data, error } = await supabase
+      .from('agent_memories')
+      .select('id,role,scope,key,value,source_url,confidence,updated_at')
+      .eq('user_id', user.id)
+      .eq('role', role)
+      .order('updated_at', { ascending: false })
+      .limit(40);
+    if (error || !data) return [];
+    return data.map((row) => ({
+      id: String(row.id ?? ''),
+      role: role,
+      scope: String(row.scope ?? 'profile') as AgentMemory['scope'],
+      key: String(row.key ?? ''),
+      value: String(row.value ?? ''),
+      sourceUrl: String(row.source_url ?? ''),
+      confidence: (row.confidence === 'low' || row.confidence === 'high' ? row.confidence : 'medium') as AgentMemory['confidence'],
+      updatedAt: String(row.updated_at ?? ''),
+    }));
+  } catch {
+    return [];
+  }
+};
+
+const compactMemoryValue = (value: string, max = 900): string => {
+  const normalized = value.replace(/\s+/g, ' ').trim();
+  return normalized.length <= max ? normalized : `${normalized.slice(0, max - 3)}...`;
+};
+
+export const saveAgentConversationMemory = async (
+  user: AppUser,
+  role: DashboardRole,
+  userMessage: string,
+  assistantReply: string,
+): Promise<AgentMemory | null> => {
+  const value = compactMemoryValue(`User asked: ${userMessage}\nAgent replied: ${assistantReply}`);
+  if (!value) return null;
+
+  const memory: AgentMemory = {
+    role,
+    scope: 'conversation_summary',
+    key: `chat:${Date.now()}`,
+    value,
+    confidence: 'medium',
+    updatedAt: nowIso(),
+  };
+
+  if (!isSupabaseConfigured || !supabase || user.isDev) {
+    const memoryKey = storageKey(user, 'agent-memories');
+    const current = readLocal<AgentMemory[]>(memoryKey, []);
+    writeLocal(memoryKey, [memory, ...current].slice(0, 200));
+    return memory;
+  }
+
+  try {
+    const { data, error } = await supabase
+      .from('agent_memories')
+      .insert({
+        user_id: user.id,
+        role,
+        scope: memory.scope,
+        key: memory.key,
+        value: memory.value,
+        confidence: memory.confidence,
+        updated_at: memory.updatedAt,
+      })
+      .select('id')
+      .single();
+    if (error) return null;
+    return { ...memory, id: String(data?.id ?? '') };
+  } catch {
+    return null;
+  }
+};
+
+export const saveAgentActionMemory = async (
+  user: AppUser,
+  role: DashboardRole,
+  key: string,
+  value: string,
+): Promise<AgentMemory | null> => {
+  const memory: AgentMemory = {
+    role,
+    scope: 'action',
+    key: `${key}:${Date.now()}`,
+    value: compactMemoryValue(value, 500),
+    confidence: 'high',
+    updatedAt: nowIso(),
+  };
+  if (!memory.value) return null;
+
+  if (!isSupabaseConfigured || !supabase || user.isDev) {
+    const memoryKey = storageKey(user, 'agent-memories');
+    const current = readLocal<AgentMemory[]>(memoryKey, []);
+    writeLocal(memoryKey, [memory, ...current].slice(0, 200));
+    return memory;
+  }
+
+  try {
+    const { data, error } = await supabase
+      .from('agent_memories')
+      .insert({
+        user_id: user.id,
+        role,
+        scope: memory.scope,
+        key: memory.key,
+        value: memory.value,
+        confidence: memory.confidence,
+        updated_at: memory.updatedAt,
+      })
+      .select('id')
+      .single();
+    if (error) return null;
+    return { ...memory, id: String(data?.id ?? '') };
+  } catch {
+    return null;
   }
 };
 
