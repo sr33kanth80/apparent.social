@@ -26,8 +26,33 @@ const footerColumns = [
 
 export const Footer = () => {
   return (
-    <footer className="monad border-t border-ink bg-parchment text-ink">
-      <div className="mx-auto max-w-[1200px] px-6 py-20">
+    <footer className="monad relative overflow-hidden border-t border-ink bg-parchment text-ink">
+      {/* Tiled, outline-only Apparent logo as a faint background watermark. */}
+      <svg
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0 h-full w-full text-ink"
+        style={{ opacity: 0.5 }}
+      >
+        <defs>
+          <pattern
+            id="apparent-logo-pattern"
+            width="104"
+            height="104"
+            patternUnits="userSpaceOnUse"
+          >
+            <path
+              d="M 128.005 191.173 C 128.448 156.208 156.93 128 192 128 L 192 64 L 128 64 C 128 99.346 99.346 128 64 128 L 64 192 L 128 192 Z M 192 256 L 64 256 C 28.654 256 0 227.346 0 192 L 0 64 L 64 64 L 64 0 L 192 0 C 227.346 0 256 28.654 256 64 L 256 192 L 192 192 Z"
+              transform="translate(22 22) scale(0.234375)"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="9"
+            />
+          </pattern>
+        </defs>
+        <rect width="100%" height="100%" fill="url(#apparent-logo-pattern)" />
+      </svg>
+
+      <div className="relative z-10 mx-auto max-w-[1200px] px-6 py-20">
         <div className="grid grid-cols-1 gap-12 md:grid-cols-[1.6fr_1fr_1fr]">
           <div>
             <div className="mb-5 flex items-center gap-2.5">
