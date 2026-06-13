@@ -400,19 +400,209 @@
    every curve — peach inbound, mint outbound — so data visibly flows through
    the node. The node aura breathes and the agent-stage dots pulse in sequence.
    All scoped to .monad and disabled under reduced-motion. */
-.monad .flow-line {
+.monad-flow-stage {
+  background:
+    radial-gradient(70% 58% at 15% 18%, rgba(255, 148, 115, 0.14), transparent 58%),
+    radial-gradient(72% 58% at 84% 18%, rgba(167, 252, 205, 0.18), transparent 60%),
+    linear-gradient(145deg, rgba(246, 243, 241, 0.92), rgba(207, 218, 245, 0.22)),
+    var(--color-parchment);
+  box-shadow: 0 20px 70px rgba(0, 0, 0, 0.055);
+}
+
+.monad-flow-grid {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-image:
+    linear-gradient(rgba(0, 0, 0, 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 0, 0, 0.035) 1px, transparent 1px);
+  background-size: 44px 44px;
+  mask-image: radial-gradient(circle at 50% 45%, #000 0%, transparent 72%);
+  opacity: 0.7;
+}
+
+.monad-flow-chip {
+  position: relative;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 0.7rem;
+  width: min(100%, 15.5rem);
+  min-height: 4.4rem;
+  border: 1px solid rgba(0, 0, 0, 0.13);
+  border-radius: 1.35rem;
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.58), rgba(246, 243, 241, 0.82)),
+    var(--color-parchment);
+  padding: 0.78rem 0.9rem;
+  box-shadow: 0 16px 46px rgba(0, 0, 0, 0.045);
+  transition:
+    transform 320ms cubic-bezier(0.22, 1, 0.36, 1),
+    border-color 220ms ease,
+    box-shadow 220ms ease;
+}
+
+.monad-flow-chip:hover {
+  border-color: rgba(0, 0, 0, 0.28);
+  box-shadow: 0 18px 54px rgba(0, 0, 0, 0.08);
+  transform: translateY(-2px);
+}
+
+.monad-flow-chip--left::after,
+.monad-flow-chip--right::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  height: 0.5rem;
+  width: 0.5rem;
+  transform: translateY(-50%);
+  border-radius: 999px;
+  background: var(--color-ink);
+  box-shadow: 0 0 0 5px rgba(0, 0, 0, 0.05);
+}
+
+.monad-flow-chip--left::after {
+  right: -0.28rem;
+}
+
+.monad-flow-chip--right::after {
+  left: -0.28rem;
+}
+
+.monad-flow-chip__mark {
+  display: grid;
+  height: 2.2rem;
+  width: 2.2rem;
+  place-items: center;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  border-radius: 0.8rem;
+  background: rgba(207, 218, 245, 0.72);
+  color: var(--color-ink);
+}
+
+.monad-flow-core {
+  position: relative;
+  display: grid;
+  min-height: 16.5rem;
+  width: 100%;
+  place-items: center;
+  overflow: hidden;
+  border: 1px solid rgba(0, 0, 0, 0.16);
+  border-radius: 2rem;
+  background:
+    radial-gradient(68% 64% at 50% 0%, rgba(167, 252, 205, 0.3), transparent 62%),
+    radial-gradient(70% 60% at 50% 100%, rgba(255, 148, 115, 0.18), transparent 62%),
+    linear-gradient(180deg, rgba(246, 243, 241, 0.92), rgba(207, 218, 245, 0.52)),
+    var(--color-lavender);
+  padding: 2rem;
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.1);
+}
+
+.monad-flow-core__scan {
+  position: absolute;
+  inset: -35% -20%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.44), transparent);
+  transform: rotate(18deg) translateX(-70%);
+  animation: flowScan 4.8s cubic-bezier(0.22, 1, 0.36, 1) infinite;
+}
+
+.monad-flow-core__logo {
+  position: relative;
+  display: grid;
+  height: 4.9rem;
+  width: 4.9rem;
+  place-items: center;
+  border: 1px solid rgba(0, 0, 0, 0.16);
+  border-radius: 1.35rem;
+  background: rgba(246, 243, 241, 0.8);
+  box-shadow: 0 16px 44px rgba(0, 0, 0, 0.08);
+}
+
+.monad-flow-orbit {
+  position: absolute;
+  inset: 1.05rem;
+  border: 1px solid rgba(0, 0, 0, 0.14);
+  border-radius: 2.4rem;
+  pointer-events: none;
+  animation: flowOrbit 7s linear infinite;
+}
+
+.monad-flow-orbit::before,
+.monad-flow-orbit::after {
+  content: '';
+  position: absolute;
+  height: 0.55rem;
+  width: 0.55rem;
+  border-radius: 999px;
+  background: var(--color-mint);
+  box-shadow: 0 0 10px rgba(95, 207, 142, 0.72);
+}
+
+.monad-flow-orbit::before {
+  left: 18%;
+  top: -0.3rem;
+}
+
+.monad-flow-orbit::after {
+  bottom: -0.3rem;
+  right: 18%;
+  background: var(--color-peach);
+  box-shadow: 0 0 10px rgba(255, 148, 115, 0.65);
+}
+
+.monad-flow-stage-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  border: 1px solid rgba(0, 0, 0, 0.13);
+  border-radius: 999px;
+  background: rgba(246, 243, 241, 0.72);
+  padding: 0.52rem 0.65rem;
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  color: var(--color-graphite);
+}
+
+.monad .flow-path {
   fill: none;
-  stroke-dasharray: 0.16 0.84;
-  animation: dashFlow 2.9s linear infinite;
 }
-.monad .flow-line--in {
-  stroke: #ff9473;
-  filter: drop-shadow(0 0 2px rgba(255, 148, 115, 0.55));
+
+.monad .flow-path--base {
+  stroke: rgba(0, 0, 0, 0.11);
+  stroke-width: 1;
 }
-.monad .flow-line--out {
-  stroke: #5fcf8e;
-  filter: drop-shadow(0 0 2px rgba(95, 207, 142, 0.55));
+
+.monad .flow-path--in,
+.monad .flow-path--out {
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-dasharray: 0.08 0.92;
+  path-length: 1;
+  animation: dashFlow 3.1s linear infinite;
 }
+
+.monad .flow-path--in {
+  stroke: rgba(255, 148, 115, 0.78);
+  filter: drop-shadow(0 0 2px rgba(255, 148, 115, 0.42));
+}
+
+.monad .flow-path--out {
+  stroke: rgba(95, 207, 142, 0.8);
+  filter: drop-shadow(0 0 2px rgba(95, 207, 142, 0.42));
+}
+
+.monad .flow-packet--in {
+  fill: var(--color-peach);
+  filter: drop-shadow(0 0 4px rgba(255, 148, 115, 0.72));
+}
+
+.monad .flow-packet--out {
+  fill: #5fcf8e;
+  filter: drop-shadow(0 0 4px rgba(95, 207, 142, 0.72));
+}
+
 @keyframes dashFlow {
   from {
     stroke-dashoffset: 1;
@@ -422,24 +612,32 @@
   }
 }
 
-.monad .flow-aura {
-  animation: flowAura 3.6s ease-in-out infinite;
-}
-@keyframes flowAura {
+@keyframes flowScan {
   0%,
-  100% {
-    transform: translate(-50%, -50%) scale(0.95);
-    opacity: 0.7;
+  24% {
+    transform: rotate(18deg) translateX(-70%);
+    opacity: 0;
   }
-  50% {
-    transform: translate(-50%, -50%) scale(1.08);
+  38% {
     opacity: 1;
+  }
+  62%,
+  100% {
+    transform: rotate(18deg) translateX(70%);
+    opacity: 0;
+  }
+}
+
+@keyframes flowOrbit {
+  to {
+    transform: rotate(360deg);
   }
 }
 
 .monad .flow-dot {
   animation: flowDot 2.4s ease-in-out infinite;
 }
+
 @keyframes flowDot {
   0%,
   100% {
@@ -454,18 +652,45 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .monad .flow-line {
-    animation: none;
-    opacity: 0;
-  }
-  .monad .flow-aura,
+  .monad .flow-path--in,
+  .monad .flow-path--out,
+  .monad-flow-core__scan,
+  .monad-flow-orbit,
   .monad .flow-dot {
     animation: none;
-    transform: translate(-50%, -50%);
-    opacity: 1;
   }
-  .monad .flow-dot {
-    transform: none;
+
+  .monad .flow-packet {
+    display: none;
+  }
+}
+
+@media (max-width: 767px) {
+  .monad-flow-chip {
+    min-height: 4rem;
+    width: 100%;
+    grid-template-columns: 1fr;
+    gap: 0.55rem;
+    padding: 0.72rem;
+  }
+
+  .monad-flow-chip--left::after,
+  .monad-flow-chip--right::after {
+    display: none;
+  }
+
+  .monad-flow-chip__mark {
+    height: 2rem;
+    width: 2rem;
+  }
+
+  .monad-flow-core {
+    min-height: 13.75rem;
+    border-radius: 1.65rem;
+  }
+
+  .monad-flow-orbit {
+    inset: 0.8rem;
   }
 }
 
