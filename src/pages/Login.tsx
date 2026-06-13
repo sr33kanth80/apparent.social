@@ -125,7 +125,7 @@ export const Login = () => {
   };
 
   return (
-    <main className="monadoverflow-x-hidden bg-[#f6f3f1] text-black">
+    <main className="monad monad-page overflow-x-hidden bg-[#f6f3f1] text-black">
       <section className="mx-auto max-w-[92rem] px-5 py-14 sm:px-8 md:py-20">
         <div className="grid items-start gap-10 lg:grid-cols-[minmax(0,1fr)_440px] xl:gap-16">
           <section className="hidden py-4 lg:block">

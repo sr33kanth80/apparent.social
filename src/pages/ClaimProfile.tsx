@@ -44,7 +44,7 @@ export const ClaimProfile = () => {
   const label = company || 'your work';
 
   return (
-    <main className="monadmin-h-screen bg-[#f6f3f1] px-5 py-16 text-black sm:px-8">
+    <main className="monad monad-page min-h-screen bg-[#f6f3f1] px-5 py-16 text-black sm:px-8">
       <div className="mx-auto max-w-2xl">
         <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-black/10 bg-white/70 px-3 py-1.5 text-xs font-semibold text-[#242424]">
           <Sparkles className="h-3.5 w-3.5" /> Apparent · investor interest

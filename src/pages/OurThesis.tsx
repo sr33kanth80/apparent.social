@@ -375,7 +375,7 @@ export const OurThesis = () => {
   };
 
   return (
-    <main className="monadmin-h-screen overflow-x-hidden bg-[#f6f3f1] text-black">
+    <main className="monad monad-page min-h-screen overflow-x-hidden bg-[#f6f3f1] text-black">
       <EditorialNavbar />
 
       <section className="mx-auto max-w-[92rem] px-5 pb-16 pt-14 sm:px-8 md:pt-20">
@@ -505,7 +505,7 @@ export const OurThesis = () => {
                   {visibleLandingBuilderIds.length || landingStartupNodes.length} visible
                 </span>
               </div>
-              <div className="max-h-[250px] overflow-auto px-2 pb-2">
+              <div className="px-2 pb-2">
                 {selectedLandingBuilders.map((builder) => (
                   <button
                     key={builder.id}

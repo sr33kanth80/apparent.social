@@ -102,7 +102,7 @@ export const ProjectDetail = () => {
 
   if (isLoading) {
     return (
-      <main className="monadmin-h-screen bg-[#f6f3f1] px-5 py-20 text-black sm:px-8">
+      <main className="monad monad-page min-h-screen bg-[#f6f3f1] px-5 py-20 text-black sm:px-8">
         <p className="text-sm font-semibold text-[#242424]">Loading project profile...</p>
       </main>
     );
@@ -110,7 +110,7 @@ export const ProjectDetail = () => {
 
   if (!detail) {
     return (
-      <main className="monadmin-h-screen bg-[#f6f3f1]">
+      <main className="monad monad-page min-h-screen bg-[#f6f3f1]">
         <NotFound4042
           title="Project not found"
           message="That launch is unavailable or does not exist on Apparent yet."
@@ -125,7 +125,7 @@ export const ProjectDetail = () => {
   const founderName = founder?.profileName || 'Founder on Apparent';
 
   return (
-    <main className="monadoverflow-x-hidden bg-[#f6f3f1] text-black">
+    <main className="monad monad-page overflow-x-hidden bg-[#f6f3f1] text-black">
       <section className="mx-auto max-w-[92rem] px-5 pb-14 pt-14 sm:px-8 md:pt-20">
         <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_22rem] lg:items-end">
           <div>
@@ -346,4 +346,3 @@ export const ProjectDetail = () => {
     </main>
   );
 };
-

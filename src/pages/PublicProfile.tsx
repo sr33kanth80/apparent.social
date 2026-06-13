@@ -740,7 +740,7 @@ const FounderProfilePage = ({
   const isProfileComplete = completedCount === totalCount;
 
   return (
-    <main className="monadoverflow-x-hidden bg-[#f6f3f1] text-black">
+    <main className="monad monad-page overflow-x-hidden bg-[#f6f3f1] text-black">
       {/* ── Completion banner (own profile, incomplete) ── */}
       {isOwnProfile && !isProfileComplete && (
         <div className="border-b border-black/10 bg-[#f6f3f1] px-5 py-3 sm:px-8">
@@ -926,7 +926,7 @@ const InvestorProfilePage = ({
     : [];
 
   return (
-    <main className="monadoverflow-x-hidden bg-[#f6f3f1] text-black">
+    <main className="monad monad-page overflow-x-hidden bg-[#f6f3f1] text-black">
       {/* ── Hero — open editorial layout, mirrors FounderHero ── */}
       <section className="mx-auto max-w-[64rem] px-5 pt-12 sm:px-8 md:pt-16">
         {/* Action bar */}
@@ -1007,7 +1007,7 @@ const InvestorProfilePage = ({
 // ─── restricted investor gate ─────────────────────────────────────────────────
 
 const InvestorRestrictedPage = ({ username }: { username: string }) => (
-  <main className="monadmin-h-screen overflow-x-hidden bg-[#f6f3f1] text-black">
+  <main className="monad monad-page min-h-screen overflow-x-hidden bg-[#f6f3f1] text-black">
     <section className="mx-auto flex min-h-[70vh] max-w-[92rem] flex-col items-start justify-center px-5 sm:px-8">
       <p className="mb-6 text-sm font-semibold uppercase tracking-[0.12em] text-[#242424]">Apparent investor</p>
       <h1 className="max-w-3xl text-5xl font-normal leading-none tracking-[-0.045em] md:text-7xl" style={serif}>
@@ -1096,7 +1096,7 @@ export const PublicProfile = () => {
 
   if (isLoading) {
     return (
-      <main className="monadflex min-h-screen items-center justify-center bg-[#f6f3f1]">
+      <main className="monad monad-page flex min-h-screen items-center justify-center bg-[#f6f3f1]">
         <div className="flex flex-col items-center gap-4">
           <LogoIcon className="h-8 w-8 animate-pulse text-[#242424]" />
           <p className="text-sm text-black/40">Loading profile…</p>
@@ -1107,7 +1107,7 @@ export const PublicProfile = () => {
 
   if (!result || result.kind === 'not_found') {
     return (
-      <main className="monadmin-h-screen overflow-x-hidden bg-[#f6f3f1]">
+      <main className="monad monad-page min-h-screen overflow-x-hidden bg-[#f6f3f1]">
         <NotFound4042
           title="Profile not found"
           message={`@${handle || 'that profile'} does not exist on Apparent yet.`}

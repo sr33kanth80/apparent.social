@@ -887,7 +887,7 @@ const postMeta = (article: BlogArticle) => `${article.author} / ${article.date} 
 
 export const Blog = () => {
   return (
-    <main className="monadrelative isolate overflow-x-hidden bg-[#f6f3f1] text-black">
+    <main className="monad monad-page relative isolate overflow-x-hidden bg-[#f6f3f1] text-black">
       <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden bg-[linear-gradient(180deg,#f6f3f1_0%,#f6f3f1_48%,#f6f3f1_100%)]">
         <PixelSnow
           color="#4e4d4d"
@@ -968,7 +968,7 @@ export const BlogPost = () => {
   const nextArticle = articles[(articleIndex + 1) % articles.length];
 
   return (
-    <main className="monadoverflow-x-hidden bg-[#f6f3f1] text-black">
+    <main className="monad monad-page overflow-x-hidden bg-[#f6f3f1] text-black">
       <article className="mx-auto max-w-[44rem] px-5 py-20 sm:px-8 md:py-24">
         <button
           type="button"

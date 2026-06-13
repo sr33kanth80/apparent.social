@@ -362,7 +362,7 @@ export const AboutUs = () => {
   useReveal();
 
   return (
-    <main className="monadoverflow-x-hidden bg-[#f6f3f1] text-black">
+    <main className="monad monad-page overflow-x-hidden bg-[#f6f3f1] text-black">
       <section data-reveal className="reveal mx-auto max-w-[92rem] px-5 pb-14 pt-14 sm:px-8 md:pt-20">
         <h1
           className="max-w-[84rem] text-[3.65rem] font-normal leading-[0.88] tracking-[-0.055em] sm:text-[7rem] md:text-[8.5rem] lg:text-[10rem]"

@@ -66,7 +66,7 @@ export const ClaimBuild = () => {
   }, [code]);
 
   return (
-    <div className="monad flex min-h-[70vh] items-center justify-center bg-[#f6f3f1] px-6 py-16">
+    <div className="monad monad-page flex min-h-[70vh] items-center justify-center bg-[#f6f3f1] px-6 py-16">
       <div className="w-full max-w-md rounded-2xl border border-black/10 bg-white p-8 shadow-[0_10px_34px_rgba(0,0,0,0.05)]">
         <div className="mb-4 flex items-center gap-2 text-sm font-semibold text-[#242424]">
           <Terminal className="h-4 w-4" />
