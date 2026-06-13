@@ -13,6 +13,7 @@
 // Env: ANTHROPIC_API_KEY (required), VITE_SUPABASE_URL + VITE_SUPABASE_ANON_KEY.
 
 import Anthropic from '@anthropic-ai/sdk';
+import { requireAgentAccess, sendAgentAccessError } from './_agent-guard.js';
 
 // Sonnet 4.6 is the right-sized default for chat + thesis-fit reasoning
 // (cheaper/faster than Opus, same 1M context). Override with FOUNDER_AGENT_MODEL.
@@ -345,6 +346,9 @@ export default async function handler(req, res) {
       reply: "Your agent isn't switched on yet — an ANTHROPIC_API_KEY needs to be set. Once it is, I can find the investors who fit you and help you reach them.",
     });
   }
+
+  const access = await requireAgentAccess(req, 'founder', 'founder-agent');
+  if (!access.ok) return sendAgentAccessError(res, access);
 
   const body = await readJsonBody(req);
   const incoming = Array.isArray(body.messages) ? body.messages : [];

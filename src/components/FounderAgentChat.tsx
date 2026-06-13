@@ -5,6 +5,7 @@ import { AgentProfilePatchCard } from '@/components/AgentProfilePatchCard';
 import { InvestorAIPrompt } from '@/components/InvestorAIAssist';
 import { LogoIcon } from '@/components/LogoIcon';
 import type { AgentChatHistoryMessage, AgentMemory, AgentProfilePatch, AppUser } from '@/lib/apparent-types';
+import { isSupabaseConfigured, supabase } from '@/lib/supabase';
 
 export type IntroProposal = {
   investorId: string;
@@ -47,6 +48,13 @@ interface FounderAgentChatProps {
 }
 
 const STORAGE_PREFIX = 'apparent:founder-agent-chat:';
+
+const authHeaders = async (): Promise<Record<string, string>> => {
+  if (!isSupabaseConfigured || !supabase) return {};
+  const { data } = await supabase.auth.getSession();
+  const token = data.session?.access_token;
+  return token ? { Authorization: `Bearer ${token}` } : {};
+};
 
 const SUGGESTIONS = [
   'Set up my founder profile from my links and pasted text',
@@ -171,7 +179,7 @@ export const FounderAgentChat = ({
     try {
       const res = await fetch('/api/founder-agent', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...(await authHeaders()) },
         body: JSON.stringify({
           messages: conversation.map((m) => ({ role: m.role, content: m.content })),
           founder,

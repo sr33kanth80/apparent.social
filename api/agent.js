@@ -12,6 +12,7 @@
 // (or SUPABASE_URL / SUPABASE_ANON_KEY) for the founder search tool.
 
 import Anthropic from '@anthropic-ai/sdk';
+import { requireAgentAccess, sendAgentAccessError } from './_agent-guard.js';
 
 // Sonnet 4.6 is the right-sized default for chat + web search + thesis-fit
 // reasoning (cheaper/faster than Opus, same 1M context). Override with AGENT_MODEL.
@@ -447,6 +448,9 @@ export default async function handler(req, res) {
         "The agent isn't switched on yet — an ANTHROPIC_API_KEY needs to be set in the deployment environment. Once that's added, I can start sourcing founders against your thesis.",
     });
   }
+
+  const access = await requireAgentAccess(req, 'investor', 'investor-agent');
+  if (!access.ok) return sendAgentAccessError(res, access);
 
   const body = await readJsonBody(req);
   const incoming = Array.isArray(body.messages) ? body.messages : [];
