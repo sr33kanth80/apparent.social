@@ -146,11 +146,16 @@
      ================================================================ */
 
   /* S1 Cover */
-  .s1 .cover-content { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: 32px; position: relative; z-index: 2; }
-  .s1 .logo-row { display: flex; align-items: center; gap: 20px; }
-  .s1 .logo-icon-big { width: 88px; height: 88px; fill: var(--fg); }
-  .s1 .logo-name { font-size: 72px; font-weight: 800; letter-spacing: -0.04em; color: var(--fg); }
+  .s1 .cover-content { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: 28px; position: relative; z-index: 2; }
+  .s1 .logo-row { display: flex; align-items: center; gap: 28px; }
+  .s1 .logo-icon-big { width: 128px; height: 128px; fill: var(--fg); }
+  .s1 .logo-name { font-size: 104px; font-weight: 800; letter-spacing: -0.04em; color: var(--fg); }
+  .s1 .vb--hero { width: 128px; height: 128px; }
+  .s1 .hero-line { font-size: 56px; font-weight: 800; letter-spacing: -0.035em; line-height: 1.08; color: var(--fg); max-width: 1100px; margin-top: 8px; }
   .s1 .oneliner { font-size: 26px; color: var(--muted-fg); max-width: 900px; line-height: 1.45; font-weight: 400; }
+  .s1 .site-link { display: inline-flex; align-items: center; gap: 9px; font-size: 17px; font-weight: 600; color: var(--olive); letter-spacing: 0.01em; text-decoration: none; margin-top: 4px; }
+  .s1 .site-link:hover { text-decoration: underline; text-underline-offset: 4px; }
+  .s1 .site-link .lk { width: 18px; height: 18px; flex: 0 0 auto; }
 
   /* S2 Problem */
   .s2 .content { margin-top: 36px; flex: 1; display: grid; grid-template-columns: 1.2fr 1fr; gap: 56px; align-items: center; }
@@ -219,8 +224,13 @@
         <span class="logo-name">Apparent</span>
         <svg class="vb vb--hero" viewBox="0 0 22 22"><path fill="#1D9BF0" d="M20.396 11c-.018-.646-.215-1.275-.57-1.816-.354-.54-.852-.972-1.438-1.246.223-.607.27-1.264.14-1.897-.131-.634-.437-1.218-.882-1.687-.47-.445-1.053-.75-1.687-.882-.633-.13-1.29-.083-1.897.14-.273-.587-.704-1.086-1.245-1.44S11.647 1.62 11 1.604c-.646.017-1.273.213-1.813.568s-.969.854-1.24 1.44c-.608-.223-1.267-.272-1.902-.14-.635.13-1.22.436-1.69.882-.445.47-.749 1.055-.878 1.69-.13.635-.08 1.293.144 1.896-.587.274-1.087.705-1.443 1.245-.356.54-.555 1.17-.574 1.817.02.647.218 1.276.574 1.817.356.54.856.972 1.443 1.245-.224.604-.274 1.26-.144 1.896.13.636.433 1.221.878 1.69.47.446 1.055.752 1.69.883.635.13 1.294.083 1.902-.141.27.587.7 1.086 1.24 1.44s1.167.551 1.813.568c.647-.016 1.276-.213 1.817-.567s.972-.854 1.245-1.44c.604.224 1.26.272 1.895.141.636-.13 1.22-.436 1.69-.883.445-.468.749-1.053.882-1.688.13-.634.085-1.29-.138-1.896.587-.274 1.084-.705 1.438-1.246.354-.54.551-1.17.569-1.816zM9.662 14.85l-3.429-3.428 1.293-1.302 2.072 2.072 4.4-4.794 1.347 1.246z"/></svg>
       </div>
+      <h2 class="hero-line">Get funded for what you build, not who you know.</h2>
       <p class="oneliner">Proof of work is the new warm intro.</p>
-      <span style="font-size:15px; font-weight:500; color:var(--muted-fg); letter-spacing:0.02em;">www.apparent.social</span>
+      <a class="site-link" href="https://www.apparent.social" target="_blank" rel="noopener">
+        <svg class="lk" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+        https://www.apparent.social
+        <svg class="lk" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+      </a>
     </div>
   </div>
 </section>
