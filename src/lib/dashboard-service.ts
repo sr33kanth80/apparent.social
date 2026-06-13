@@ -11,6 +11,7 @@ import type {
   AppUser,
   AgentProfilePatch,
   AgentMemory,
+  AgentChatHistoryMessage,
   BuilderDiscoveryState,
   BuilderMapCluster,
   BuilderNode,
@@ -3219,6 +3220,87 @@ export const saveAgentActionMemory = async (
     return { ...memory, id: String(data?.id ?? '') };
   } catch {
     return null;
+  }
+};
+
+const agentChatStorageKey = (user: AppUser, role: DashboardRole) =>
+  storageKey(user, role === 'investor' ? 'agent-chat-history' : 'founder-agent-chat-history');
+
+export const loadAgentChatMessages = async (
+  user: AppUser,
+  role: DashboardRole,
+): Promise<AgentChatHistoryMessage[]> => {
+  if (!isSupabaseConfigured || !supabase || user.isDev) {
+    return readLocal<AgentChatHistoryMessage[]>(agentChatStorageKey(user, role), []);
+  }
+
+  try {
+    const { data, error } = await supabase
+      .from('agent_chat_messages')
+      .select('id,message_role,content,payload,created_at')
+      .eq('user_id', user.id)
+      .eq('role', role)
+      .order('created_at', { ascending: true })
+      .limit(80);
+    if (error || !data) return [];
+    return data.map((row) => ({
+      id: String(row.id ?? ''),
+      role: row.message_role === 'assistant' ? 'assistant' : 'user',
+      content: String(row.content ?? ''),
+      payload: row.payload && typeof row.payload === 'object' && !Array.isArray(row.payload)
+        ? (row.payload as Record<string, unknown>)
+        : {},
+      createdAt: String(row.created_at ?? ''),
+    }));
+  } catch {
+    return [];
+  }
+};
+
+export const saveAgentChatMessages = async (
+  user: AppUser,
+  role: DashboardRole,
+  messages: AgentChatHistoryMessage[],
+): Promise<void> => {
+  const trimmed = messages
+    .filter((message) => (message.role === 'user' || message.role === 'assistant') && message.content.trim())
+    .slice(-80);
+
+  if (!isSupabaseConfigured || !supabase || user.isDev) {
+    writeLocal(agentChatStorageKey(user, role), trimmed);
+    return;
+  }
+
+  try {
+    await supabase.from('agent_chat_messages').delete().eq('user_id', user.id).eq('role', role);
+    if (trimmed.length === 0) return;
+    await supabase.from('agent_chat_messages').insert(
+      trimmed.map((message, index) => ({
+        user_id: user.id,
+        role,
+        message_role: message.role,
+        content: message.content,
+        payload: message.payload ?? {},
+        created_at: message.createdAt || new Date(Date.now() + index).toISOString(),
+      })),
+    );
+  } catch {
+    // Transcript persistence should never break the live agent interaction.
+  }
+};
+
+export const clearAgentChatMessages = async (
+  user: AppUser,
+  role: DashboardRole,
+): Promise<void> => {
+  if (!isSupabaseConfigured || !supabase || user.isDev) {
+    writeLocal(agentChatStorageKey(user, role), []);
+    return;
+  }
+  try {
+    await supabase.from('agent_chat_messages').delete().eq('user_id', user.id).eq('role', role);
+  } catch {
+    /* non-fatal */
   }
 };
 

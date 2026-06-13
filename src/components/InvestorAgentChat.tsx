@@ -8,7 +8,7 @@ import { InvestorAIPrompt } from '@/components/InvestorAIAssist';
 import { LogoIcon } from '@/components/LogoIcon';
 import { Switch } from '@/components/ui/switch';
 import { Tooltip } from '@/components/ui/tooltip';
-import type { AgentAutonomy, AgentMemory, AgentProfilePatch, AppUser } from '@/lib/apparent-types';
+import type { AgentAutonomy, AgentChatHistoryMessage, AgentMemory, AgentProfilePatch, AppUser } from '@/lib/apparent-types';
 
 export type OutreachProposal = {
   founderId: string;
@@ -104,6 +104,8 @@ interface InvestorAgentChatProps {
   /** The investor's saved criteria (intakeValues) — passed to the agent for thesis-aware sourcing. */
   criteria: Record<string, string>;
   memories: AgentMemory[];
+  persistedMessages: AgentChatHistoryMessage[];
+  persistedMessagesLoaded: boolean;
   autonomy: AgentAutonomy;
   onAutonomyChange: (next: AgentAutonomy) => void;
   /** Founder ids the investor has already messaged — the agent avoids re-proposing them. */
@@ -111,6 +113,8 @@ interface InvestorAgentChatProps {
   /** Performs the actual RLS-authenticated send (and guardrail enforcement). */
   onSendOutreach: (proposal: OutreachProposal) => Promise<OutreachResult>;
   onApplyProfilePatch: (patch: AgentProfilePatch, fields: string[]) => Promise<OutreachResult>;
+  onPersistMessages: (messages: AgentChatHistoryMessage[]) => Promise<void>;
+  onClearPersistedMessages: () => Promise<void>;
   onRememberConversation: (userMessage: string, assistantReply: string) => Promise<void>;
   className?: string;
 }
@@ -139,11 +143,15 @@ export const InvestorAgentChat = ({
   user,
   criteria,
   memories,
+  persistedMessages,
+  persistedMessagesLoaded,
   autonomy,
   onAutonomyChange,
   contactedFounderIds,
   onSendOutreach,
   onApplyProfilePatch,
+  onPersistMessages,
+  onClearPersistedMessages,
   onRememberConversation,
   className,
 }: InvestorAgentChatProps) => {
@@ -163,6 +171,42 @@ export const InvestorAgentChat = ({
   const [expanded, setExpanded] = useState(false);
   const transcriptRef = useRef<HTMLDivElement>(null);
   const loadingRef = useRef(false);
+  const hasHydratedPersistedRef = useRef(false);
+
+  const toHistoryMessages = (items: ChatMessage[]): AgentChatHistoryMessage[] =>
+    items.map((item) => ({
+      role: item.role,
+      content: item.content,
+      payload: {
+        proposals: item.proposals,
+        emailDrafts: item.emailDrafts,
+        profilePatches: item.profilePatches,
+      },
+    }));
+
+  const fromHistoryMessages = (items: AgentChatHistoryMessage[]): ChatMessage[] =>
+    items.map((item) => ({
+      role: item.role,
+      content: item.content,
+      proposals: Array.isArray(item.payload?.proposals) ? (item.payload.proposals as ProposalState[]) : undefined,
+      emailDrafts: Array.isArray(item.payload?.emailDrafts) ? (item.payload.emailDrafts as EmailDraft[]) : undefined,
+      profilePatches: Array.isArray(item.payload?.profilePatches) ? (item.payload.profilePatches as AgentProfilePatch[]) : undefined,
+    }));
+
+  const persistTranscript = (nextMessages: ChatMessage[]) => {
+    void onPersistMessages(toHistoryMessages(nextMessages));
+  };
+
+  useEffect(() => {
+    if (!persistedMessagesLoaded) return;
+    if (persistedMessages.length > 0) {
+      hasHydratedPersistedRef.current = true;
+      setMessages(fromHistoryMessages(persistedMessages));
+      return;
+    }
+    hasHydratedPersistedRef.current = true;
+    setMessages([]);
+  }, [persistedMessages, persistedMessagesLoaded]);
 
   useEffect(() => {
     try {
@@ -193,8 +237,8 @@ export const InvestorAgentChat = ({
 
   // Patch a single proposal's status inside a specific assistant message.
   const patchProposal = (messageIndex: number, proposalIndex: number, patch: Partial<ProposalState>) => {
-    setMessages((current) =>
-      current.map((message, mi) => {
+    setMessages((current) => {
+      const next = current.map((message, mi) => {
         if (mi !== messageIndex || !message.proposals) return message;
         return {
           ...message,
@@ -202,8 +246,10 @@ export const InvestorAgentChat = ({
             pi === proposalIndex ? { ...proposal, ...patch } : proposal,
           ),
         };
-      }),
-    );
+      });
+      persistTranscript(next);
+      return next;
+    });
   };
 
   const executeProposal = async (messageIndex: number, proposalIndex: number, proposal: ProposalState) => {
@@ -231,6 +277,7 @@ export const InvestorAgentChat = ({
     setError('');
     const conversation: ChatMessage[] = [...messages, { role: 'user', content: trimmed }];
     setMessages(conversation);
+    persistTranscript(conversation);
     setIsLoading(true);
 
     try {
@@ -261,9 +308,10 @@ export const InvestorAgentChat = ({
       }));
 
       let assistantIndex = -1;
+      let nextConversation: ChatMessage[] = [];
       setMessages((current) => {
         assistantIndex = current.length;
-        return [
+        nextConversation = [
           ...current,
           {
             role: 'assistant',
@@ -273,7 +321,9 @@ export const InvestorAgentChat = ({
             profilePatches: profilePatches.length ? profilePatches : undefined,
           },
         ];
+        return nextConversation;
       });
+      persistTranscript(nextConversation);
 
       // Auto modes send immediately; manual mode waits for the investor to approve.
       if (auto && proposalStates.length && assistantIndex >= 0) {
@@ -294,6 +344,7 @@ export const InvestorAgentChat = ({
   const clear = () => {
     setMessages([]);
     setError('');
+    void onClearPersistedMessages();
     try {
       window.localStorage.removeItem(storageKey);
     } catch {

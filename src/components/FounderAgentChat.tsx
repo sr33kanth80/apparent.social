@@ -4,7 +4,7 @@ import { Check, Loader2, Megaphone, Send, Sparkles, Trash2, X } from 'lucide-rea
 import { AgentProfilePatchCard } from '@/components/AgentProfilePatchCard';
 import { InvestorAIPrompt } from '@/components/InvestorAIAssist';
 import { LogoIcon } from '@/components/LogoIcon';
-import type { AgentMemory, AgentProfilePatch, AppUser } from '@/lib/apparent-types';
+import type { AgentChatHistoryMessage, AgentMemory, AgentProfilePatch, AppUser } from '@/lib/apparent-types';
 
 export type IntroProposal = {
   investorId: string;
@@ -31,6 +31,8 @@ interface FounderAgentChatProps {
   /** Founder context (profile fields + dossier summary) for thesis-aware matching. */
   founder: Record<string, string>;
   memories: AgentMemory[];
+  persistedMessages: AgentChatHistoryMessage[];
+  persistedMessagesLoaded: boolean;
   /** Investor ids already messaged — the agent won't re-propose them. */
   contactedInvestorIds: string[];
   /** Send an intro DM to an on-platform investor (RLS-safe, runs as the founder). */
@@ -38,6 +40,8 @@ interface FounderAgentChatProps {
   /** Push the founder to thesis-matched investors. Returns how many were notified. */
   onAmplify: () => Promise<number>;
   onApplyProfilePatch: (patch: AgentProfilePatch, fields: string[]) => Promise<IntroResult>;
+  onPersistMessages: (messages: AgentChatHistoryMessage[]) => Promise<void>;
+  onClearPersistedMessages: () => Promise<void>;
   onRememberConversation: (userMessage: string, assistantReply: string) => Promise<void>;
   className?: string;
 }
@@ -55,10 +59,14 @@ export const FounderAgentChat = ({
   user,
   founder,
   memories,
+  persistedMessages,
+  persistedMessagesLoaded,
   contactedInvestorIds,
   onSendIntro,
   onAmplify,
   onApplyProfilePatch,
+  onPersistMessages,
+  onClearPersistedMessages,
   onRememberConversation,
   className,
 }: FounderAgentChatProps) => {
@@ -76,6 +84,42 @@ export const FounderAgentChat = ({
   const [error, setError] = useState('');
   const transcriptRef = useRef<HTMLDivElement>(null);
   const loadingRef = useRef(false);
+  const hasHydratedPersistedRef = useRef(false);
+
+  const toHistoryMessages = (items: ChatMessage[]): AgentChatHistoryMessage[] =>
+    items.map((item) => ({
+      role: item.role,
+      content: item.content,
+      payload: {
+        proposals: item.proposals,
+        profilePatches: item.profilePatches,
+        amplified: item.amplified,
+      },
+    }));
+
+  const fromHistoryMessages = (items: AgentChatHistoryMessage[]): ChatMessage[] =>
+    items.map((item) => ({
+      role: item.role,
+      content: item.content,
+      proposals: Array.isArray(item.payload?.proposals) ? (item.payload.proposals as ProposalState[]) : undefined,
+      profilePatches: Array.isArray(item.payload?.profilePatches) ? (item.payload.profilePatches as AgentProfilePatch[]) : undefined,
+      amplified: item.payload?.amplified as ChatMessage['amplified'],
+    }));
+
+  const persistTranscript = (nextMessages: ChatMessage[]) => {
+    void onPersistMessages(toHistoryMessages(nextMessages));
+  };
+
+  useEffect(() => {
+    if (!persistedMessagesLoaded) return;
+    if (persistedMessages.length > 0) {
+      hasHydratedPersistedRef.current = true;
+      setMessages(fromHistoryMessages(persistedMessages));
+      return;
+    }
+    hasHydratedPersistedRef.current = true;
+    setMessages([]);
+  }, [persistedMessages, persistedMessagesLoaded]);
 
   useEffect(() => {
     try {
@@ -90,15 +134,17 @@ export const FounderAgentChat = ({
   }, [messages, isLoading]);
 
   const patchProposal = (messageIndex: number, proposalIndex: number, patch: Partial<ProposalState>) => {
-    setMessages((current) =>
-      current.map((message, mi) => {
+    setMessages((current) => {
+      const next = current.map((message, mi) => {
         if (mi !== messageIndex || !message.proposals) return message;
         return {
           ...message,
           proposals: message.proposals.map((proposal, pi) => (pi === proposalIndex ? { ...proposal, ...patch } : proposal)),
         };
-      }),
-    );
+      });
+      persistTranscript(next);
+      return next;
+    });
   };
 
   const sendIntro = async (messageIndex: number, proposalIndex: number, proposal: ProposalState) => {
@@ -119,6 +165,7 @@ export const FounderAgentChat = ({
     setError('');
     const conversation: ChatMessage[] = [...messages, { role: 'user', content: trimmed }];
     setMessages(conversation);
+    persistTranscript(conversation);
     setIsLoading(true);
 
     try {
@@ -141,9 +188,10 @@ export const FounderAgentChat = ({
       const proposalStates: ProposalState[] = rawProposals.map((p) => ({ ...p, status: 'pending' }));
 
       let assistantIndex = -1;
+      let nextConversation: ChatMessage[] = [];
       setMessages((current) => {
         assistantIndex = current.length;
-        return [
+        nextConversation = [
           ...current,
           {
             role: 'assistant',
@@ -152,21 +200,27 @@ export const FounderAgentChat = ({
             profilePatches: profilePatches.length ? profilePatches : undefined,
           },
         ];
+        return nextConversation;
       });
+      persistTranscript(nextConversation);
 
       // The agent requested amplification — run it and record the outcome.
       if (data.amplify && assistantIndex >= 0) {
         try {
           const count = await onAmplify();
-          setMessages((current) =>
-            current.map((m, i) => (i === assistantIndex ? { ...m, amplified: { count } } : m)),
-          );
+          setMessages((current) => {
+            const next = current.map((m, i) => (i === assistantIndex ? { ...m, amplified: { count } } : m));
+            persistTranscript(next);
+            return next;
+          });
         } catch (err) {
-          setMessages((current) =>
-            current.map((m, i) =>
+          setMessages((current) => {
+            const next = current.map((m, i) =>
               i === assistantIndex ? { ...m, amplified: { error: err instanceof Error ? err.message : 'Amplify failed' } } : m,
-            ),
-          );
+            );
+            persistTranscript(next);
+            return next;
+          });
         }
       }
 
@@ -182,6 +236,7 @@ export const FounderAgentChat = ({
   const clear = () => {
     setMessages([]);
     setError('');
+    void onClearPersistedMessages();
     try {
       window.localStorage.removeItem(storageKey);
     } catch {

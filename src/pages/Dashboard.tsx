@@ -64,6 +64,7 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import type {
   AgentAutonomy,
   AgentMemory,
+  AgentChatHistoryMessage,
   AgentProfilePatch,
   AppUser,
   BuilderDiscoveryState,
@@ -94,6 +95,7 @@ import {
   loadDashboardData,
   loadFounderInterest,
   loadAgentMemories,
+  loadAgentChatMessages,
   loadFounderVCContacts,
   loadLaunchAuthors,
   loadPublicProductLaunches,
@@ -103,6 +105,8 @@ import {
   saveBuilderDiscoveryState,
   saveAgentConversationMemory,
   saveAgentActionMemory,
+  saveAgentChatMessages,
+  clearAgentChatMessages,
   saveFeedAction,
   saveInvestorMatchBookmark,
   saveIntakeValues,
@@ -894,6 +898,8 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
   const [dailyDigestEnabled, setDailyDigestEnabled] = useState(true);
   const [agentAutonomy, setAgentAutonomy] = useState<AgentAutonomy>('manual');
   const [agentMemories, setAgentMemories] = useState<AgentMemory[]>([]);
+  const [agentChatMessages, setAgentChatMessages] = useState<AgentChatHistoryMessage[]>([]);
+  const [agentChatLoaded, setAgentChatLoaded] = useState(false);
   const [draggedSignalCompany, setDraggedSignalCompany] = useState<string | null>(null);
   const [dragOverStage, setDragOverStage] = useState<InvestorDealStage | null>(null);
   const [pointerDrag, setPointerDrag] = useState<{ company: string; label: string; x: number; y: number } | null>(null);
@@ -1528,12 +1534,21 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
 
   useEffect(() => {
     let cancelled = false;
-    loadAgentMemories(user, role)
-      .then((rows) => {
-        if (!cancelled) setAgentMemories(rows);
+    setAgentChatLoaded(false);
+    Promise.all([loadAgentMemories(user, role), loadAgentChatMessages(user, role)])
+      .then(([memoryRows, chatRows]) => {
+        if (!cancelled) {
+          setAgentMemories(memoryRows);
+          setAgentChatMessages(chatRows);
+          setAgentChatLoaded(true);
+        }
       })
       .catch(() => {
-        if (!cancelled) setAgentMemories([]);
+        if (!cancelled) {
+          setAgentMemories([]);
+          setAgentChatMessages([]);
+          setAgentChatLoaded(true);
+        }
       });
     return () => {
       cancelled = true;
@@ -2925,6 +2940,16 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
     const memory = await saveAgentConversationMemory(user, role, userMessage, assistantReply);
     if (!memory) return;
     setAgentMemories((current) => [memory, ...current].slice(0, 40));
+  };
+
+  const handlePersistAgentChat = async (nextMessages: AgentChatHistoryMessage[]): Promise<void> => {
+    setAgentChatMessages(nextMessages);
+    await saveAgentChatMessages(user, role, nextMessages);
+  };
+
+  const handleClearAgentChat = async (): Promise<void> => {
+    setAgentChatMessages([]);
+    await clearAgentChatMessages(user, role);
   };
 
   const rememberAgentAction = async (key: string, value: string): Promise<void> => {
@@ -6515,10 +6540,14 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
               user={user}
               criteria={intakeValues}
               memories={agentMemories}
+              persistedMessages={agentChatMessages}
+              persistedMessagesLoaded={agentChatLoaded}
               autonomy={agentAutonomy}
               onAutonomyChange={handleAgentAutonomyChange}
               contactedFounderIds={contactedFounderIds}
               onApplyProfilePatch={handleApplyAgentProfilePatch}
+              onPersistMessages={handlePersistAgentChat}
+              onClearPersistedMessages={handleClearAgentChat}
               onRememberConversation={handleRememberAgentConversation}
               onSendOutreach={handleAgentOutreach}
             />
@@ -9025,8 +9054,12 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
                           user={user}
                           founder={founderAgentContext}
                           memories={agentMemories}
+                          persistedMessages={agentChatMessages}
+                          persistedMessagesLoaded={agentChatLoaded}
                           contactedInvestorIds={contactedInvestorIds}
                           onApplyProfilePatch={handleApplyAgentProfilePatch}
+                          onPersistMessages={handlePersistAgentChat}
+                          onClearPersistedMessages={handleClearAgentChat}
                           onRememberConversation={handleRememberAgentConversation}
                           onSendIntro={handleFounderIntro}
                           onAmplify={handleFounderAmplify}

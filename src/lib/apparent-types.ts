@@ -128,6 +128,14 @@ export type AgentMemory = {
   updatedAt?: string;
 };
 
+export type AgentChatHistoryMessage = {
+  id?: string;
+  role: 'user' | 'assistant';
+  content: string;
+  payload?: Record<string, unknown>;
+  createdAt?: string;
+};
+
 export interface UserSettings {
   dailyDigestEnabled: boolean;
   slackAlertsEnabled: boolean;
