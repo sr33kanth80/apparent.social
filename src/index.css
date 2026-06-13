@@ -142,6 +142,18 @@
   background: rgba(207, 218, 245, 0.42);
 }
 
+.monad-nav .monad-cta {
+  transition:
+    background-color 220ms ease,
+    color 220ms ease,
+    border-color 220ms ease,
+    box-shadow 220ms ease;
+}
+
+.monad-nav .monad-cta:hover {
+  transform: none;
+}
+
 .monad-trust-pill,
 .monad-map-frame,
 .monad-feature-card,
