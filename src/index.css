@@ -70,7 +70,7 @@
   color: var(--color-ink);
   font-family: var(--font-mono);
   font-size: 16px;
-  letter-spacing: -0.02em;
+  letter-spacing: 0;
   -webkit-font-smoothing: antialiased;
 }
 .monad h1,
@@ -79,7 +79,7 @@
 .monad h4 {
   font-family: var(--font-serif);
   font-weight: 400;
-  letter-spacing: -0.02em;
+  letter-spacing: 0;
   line-height: 1.2;
   /* Balance headline line lengths so a single word never strands on its own
      line (the "orphan" / widow the redline flagged on the hero). */
@@ -94,9 +94,14 @@
 .monad .monad-cta {
   font-family: var(--font-mono);
   font-weight: 500;
-  letter-spacing: -0.02em;
+  letter-spacing: 0;
   border-radius: 100px;
-  transition: transform 200ms ease, background-color 200ms ease, color 200ms ease, border-color 200ms ease;
+  transition:
+    transform 260ms cubic-bezier(0.22, 1, 0.36, 1),
+    background-color 220ms ease,
+    color 220ms ease,
+    border-color 220ms ease,
+    box-shadow 220ms ease;
 }
 .monad .monad-cta:hover {
   transform: translateY(-2px);
@@ -104,6 +109,142 @@
 /* Hairline divider used between sections and accordion rows. */
 .monad .monad-hr {
   border-color: rgba(0, 0, 0, 0.12);
+}
+
+.monad-landing {
+  background:
+    linear-gradient(180deg, rgba(246, 243, 241, 0.98), rgba(246, 243, 241, 1)),
+    var(--color-parchment);
+}
+
+.monad-announcement {
+  border-bottom: 1px solid var(--color-ink);
+}
+
+.monad-nav {
+  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.06);
+}
+
+.monad-nav__brand,
+.monad-nav__link {
+  transition:
+    opacity 180ms ease,
+    border-color 180ms ease,
+    background-color 180ms ease,
+    color 180ms ease;
+}
+
+.monad-nav__brand:hover {
+  opacity: 0.72;
+}
+
+.monad-nav__link:hover {
+  background: rgba(207, 218, 245, 0.42);
+}
+
+.monad-trust-pill,
+.monad-map-frame,
+.monad-feature-card,
+.monad-micro-card,
+.monad-step-card,
+.monad-final-cta {
+  box-shadow: var(--shadow-md);
+}
+
+.monad-trust-pill {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.42), rgba(246, 243, 241, 0.92)),
+    var(--color-parchment);
+}
+
+.monad-map-frame {
+  background:
+    linear-gradient(135deg, rgba(207, 218, 245, 0.34), rgba(246, 243, 241, 0.5)),
+    #e8e5dc;
+}
+
+.monad-feature-card,
+.monad-micro-card,
+.monad-step-card,
+.monad-final-cta {
+  position: relative;
+  isolation: isolate;
+  transition:
+    transform 360ms cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 260ms ease,
+    border-color 260ms ease;
+}
+
+.monad-feature-card::before,
+.monad-micro-card::before,
+.monad-step-card::before,
+.monad-final-cta::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+}
+
+.monad-feature-card:hover,
+.monad-micro-card:hover,
+.monad-step-card:hover {
+  border-color: rgba(0, 0, 0, 0.28);
+  box-shadow: rgba(0, 0, 0, 0.12) 0 0 14px 0;
+  transform: translateY(-3px);
+}
+
+.monad-feature-card--founder {
+  background:
+    linear-gradient(135deg, rgba(207, 218, 245, 0.96), rgba(207, 218, 245, 0.68)),
+    var(--color-lavender);
+}
+
+.monad-feature-card--founder::before {
+  background:
+    radial-gradient(circle at 82% 12%, rgba(167, 252, 205, 0.5), transparent 32%),
+    radial-gradient(circle at 14% 90%, rgba(255, 148, 115, 0.3), transparent 34%);
+}
+
+.monad-feature-card--investor {
+  background:
+    linear-gradient(135deg, rgba(246, 243, 241, 0.84), rgba(207, 218, 245, 0.82)),
+    var(--color-lavender) !important;
+  color: var(--color-ink);
+}
+
+.monad-feature-card--investor::before {
+  background:
+    radial-gradient(circle at 82% 10%, rgba(167, 252, 205, 0.42), transparent 34%),
+    radial-gradient(circle at 8% 86%, rgba(160, 181, 235, 0.34), transparent 36%);
+}
+
+.monad-micro-card {
+  overflow: hidden;
+  background:
+    linear-gradient(135deg, rgba(246, 243, 241, 0.96), rgba(246, 243, 241, 0.82)),
+    var(--color-parchment);
+}
+
+.monad-micro-card--wash {
+  background:
+    linear-gradient(135deg, rgba(207, 218, 245, 0.82), rgba(167, 252, 205, 0.2)),
+    var(--color-lavender);
+}
+
+.monad-step-card {
+  background:
+    linear-gradient(145deg, rgba(246, 243, 241, 0.94), rgba(207, 218, 245, 0.22)),
+    var(--color-parchment);
+}
+
+.monad-final-cta {
+  overflow: hidden;
+  background:
+    radial-gradient(75% 55% at 50% 112%, rgba(255, 148, 115, 0.34), transparent 58%),
+    radial-gradient(54% 38% at 72% 100%, rgba(167, 252, 205, 0.22), transparent 62%),
+    radial-gradient(60% 42% at 50% 0%, rgba(226, 193, 97, 0.2), transparent 56%),
+    var(--color-parchment);
 }
 
 /* ── Monad in the app ────────────────────────────────────────────────────────
@@ -969,18 +1110,23 @@ a.rounded-full:hover {
   bottom: -11px;
 }
 
-/* Reveal utility for the useReveal hook. No transform, so it cannot affect
-   layout or scroll size. */
+/* Reveal utility for the useReveal hook. Transform is paint-only, so it does
+   not affect layout or scroll size. */
 .reveal {
   opacity: 0;
-  transition: opacity 0.6s ease;
+  transform: translateY(14px);
+  transition:
+    opacity 0.7s ease,
+    transform 0.7s cubic-bezier(0.22, 1, 0.36, 1);
 }
 .reveal-in {
   opacity: 1;
+  transform: translateY(0);
 }
 @media (prefers-reduced-motion: reduce) {
   .reveal {
     opacity: 1;
+    transform: none;
     transition: none;
   }
 }

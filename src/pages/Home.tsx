@@ -39,14 +39,14 @@ export const Home = () => {
   useReveal();
 
   return (
-    <div className="monad min-h-screen bg-parchment text-ink">
+    <div className="monad monad-landing min-h-screen bg-parchment text-ink">
       {/* ANNOUNCEMENT BAR */}
-      <div className="w-full bg-ink">
+      <div className="monad-announcement w-full bg-ink">
         <div className="mx-auto flex max-w-[1200px] flex-wrap items-center justify-center gap-x-3 gap-y-1 px-6 py-2.5 text-center">
           <span className="font-mono text-[13px] text-parchment">Proof of work is the new warm intro.</span>
           <Link
             to="/our-thesis"
-            className="font-mono text-[13px] text-parchment underline decoration-parchment/40 underline-offset-4 transition hover:decoration-parchment"
+            className="rounded-full bg-parchment px-3 py-1 font-mono text-[12px] text-ink transition hover:bg-[#e7e1dc]"
           >
             Read the thesis ↗
           </Link>
@@ -56,19 +56,9 @@ export const Home = () => {
       <EditorialNavbar />
 
       {/* HERO */}
-      <section className="relative isolate mx-auto max-w-[1200px] px-6 pb-12 pt-16 text-center md:pt-20">
-        {/* Colour wash — peach · periwinkle · mint, the brand's three accents,
-            blurred into a soft cloud behind the headline */}
-        <div
-          aria-hidden
-          className="pointer-events-none absolute left-1/2 top-[-2rem] -z-10 h-[460px] w-[900px] max-w-[96vw] -translate-x-1/2 rounded-full opacity-80 blur-3xl"
-          style={{
-            background:
-              'radial-gradient(42% 55% at 28% 38%, rgba(255,148,115,0.55), transparent 70%), radial-gradient(40% 52% at 74% 32%, rgba(160,181,235,0.55), transparent 72%), radial-gradient(44% 58% at 54% 82%, rgba(167,252,205,0.5), transparent 72%)',
-          }}
-        />
+      <section className="relative isolate mx-auto max-w-[1200px] px-6 pb-10 pt-16 text-center md:pt-20">
         <div className="mb-8 flex justify-center">
-          <div className="inline-flex items-center gap-2.5 rounded-full border border-ink bg-parchment px-3 py-1.5">
+          <div className="monad-trust-pill inline-flex items-center gap-2.5 rounded-full border border-ink bg-parchment px-3 py-1.5">
             <div className="flex items-center">
               {heroInvestors.map((investor, index) => (
                 <img
@@ -84,9 +74,9 @@ export const Home = () => {
           </div>
         </div>
 
-        <h1 className="mx-auto whitespace-nowrap font-serif text-[clamp(1.3rem,5.6vw,4.5rem)] leading-[1.05] tracking-[-0.02em] text-ink">
+        <h1 className="mx-auto max-w-[920px] font-serif text-[clamp(2.7rem,6vw,4.7rem)] leading-[1.03] tracking-[-0.02em] text-ink">
           Founders and funds that{' '}
-          <span className="bg-gradient-to-r from-[#ff7a52] via-[#7e9bf0] to-[#37d28b] bg-clip-text text-transparent">
+          <span className="text-graphite">
             fit.
           </span>
         </h1>
@@ -98,7 +88,7 @@ export const Home = () => {
           <button
             type="button"
             onClick={() => navigate('/login?role=founder')}
-            className="monad-cta inline-flex items-center gap-2 bg-[#cfdaf5] px-6 py-3 text-[14px] text-ink hover:bg-[#bcc8ef]"
+            className="monad-cta inline-flex items-center gap-2 bg-charcoal px-6 py-3 text-[14px] text-parchment hover:bg-ink"
           >
             I&apos;m a founder <ArrowUpRight className="h-4 w-4" />
           </button>
@@ -129,7 +119,7 @@ export const Home = () => {
             Open the full map <ArrowUpRight className="h-4 w-4" />
           </Link>
         </div>
-        <div className="relative flex h-[clamp(360px,56vh,560px)] overflow-hidden rounded-[40px] border border-ink bg-[#e8e5dc]">
+        <div className="monad-map-frame relative flex h-[clamp(360px,56vh,560px)] overflow-hidden rounded-[40px] border border-ink bg-[#e8e5dc]">
           <HeatMap includeVCContacts vcOnly fullBleed fillParent lockContacts />
         </div>
       </section>
@@ -138,7 +128,7 @@ export const Home = () => {
       <section data-reveal className="reveal mx-auto max-w-[1200px] border-t border-ink/12 px-6 py-20">
         <div className="grid gap-6 md:grid-cols-2">
           {/* Founders */}
-          <div className="relative isolate flex flex-col overflow-hidden rounded-[40px] bg-lavender p-10 shadow-[0_0_10px_rgba(0,0,0,0.1)]">
+          <div className="monad-feature-card monad-feature-card--founder relative isolate flex flex-col overflow-hidden rounded-[40px] bg-lavender p-10 shadow-[0_0_10px_rgba(0,0,0,0.1)]">
             {/* Peach → periwinkle wash, contained within the card radius */}
             <div
               aria-hidden
@@ -165,19 +155,19 @@ export const Home = () => {
           </div>
 
           {/* Investors */}
-          <div className="relative isolate flex flex-col overflow-hidden rounded-[40px] bg-charcoal p-10 text-parchment shadow-[0_0_10px_rgba(0,0,0,0.1)]">
+          <div className="monad-feature-card monad-feature-card--investor relative isolate flex flex-col overflow-hidden rounded-[40px] bg-charcoal p-10 text-parchment shadow-[0_0_10px_rgba(0,0,0,0.1)]">
             {/* Mint → periwinkle glow, reads as a soft aura on the dark surface */}
             <div
               aria-hidden
               className="pointer-events-none absolute -right-20 -top-20 -z-10 h-64 w-64 rounded-full blur-2xl"
               style={{ background: 'linear-gradient(150deg, rgba(167,252,205,0.5), rgba(160,181,235,0.45))' }}
             />
-            <LogoIcon className="h-6 w-6 text-parchment" />
-            <h3 className="mt-6 font-serif text-[28px] leading-[1.15] text-parchment">Meet the founders who fit your thesis.</h3>
-            <ul className="mt-6 grid gap-3.5 font-mono text-[14px] leading-[1.55] text-parchment/70">
+            <LogoIcon className="h-6 w-6 text-ink" />
+            <h3 className="mt-6 font-serif text-[28px] leading-[1.15] text-ink">Meet the founders who fit your thesis.</h3>
+            <ul className="mt-6 grid gap-3.5 font-mono text-[14px] leading-[1.55] text-graphite">
               {investorBullets.map((item) => (
                 <li key={item} className="flex items-start gap-2.5">
-                  <Check className="mt-0.5 h-4 w-4 shrink-0 text-[#a7fccd]" />
+                  <Check className="mt-0.5 h-4 w-4 shrink-0 text-ink" />
                   <span>{item}</span>
                 </li>
               ))}
@@ -185,7 +175,7 @@ export const Home = () => {
             <button
               type="button"
               onClick={() => navigate('/login?role=investor')}
-              className="monad-cta mt-8 inline-flex w-fit items-center gap-2 bg-parchment px-5 py-2.5 font-mono text-[14px] text-ink"
+              className="monad-cta mt-8 inline-flex w-fit items-center gap-2 border border-ink bg-parchment px-5 py-2.5 font-mono text-[14px] text-ink hover:bg-ink hover:text-parchment"
             >
               Create investor profile <ArrowUpRight className="h-4 w-4" />
             </button>
@@ -206,13 +196,13 @@ export const Home = () => {
             </p>
           </div>
           <div className="grid gap-3">
-            <div className="rounded-[24px] border border-ink/15 bg-parchment p-6">
+            <div className="monad-micro-card rounded-[24px] border border-ink/15 bg-parchment p-6">
               <p className="font-mono text-[11px] uppercase tracking-[0.12em] text-stone">The old way</p>
               <p className="mt-2 font-mono text-[14px] leading-[1.55] text-graphite">
                 Work a list of thousands. Guess at fit. Hope something sticks.
               </p>
             </div>
-            <div className="rounded-[24px] bg-lavender p-6">
+            <div className="monad-micro-card monad-micro-card--wash rounded-[24px] bg-lavender p-6">
               <p className="font-mono text-[11px] uppercase tracking-[0.12em] text-ink">On Apparent</p>
               <p className="mt-2 font-mono text-[14px] leading-[1.55] text-ink/80">
                 Match on thesis and stage. Talk to the few who fit. Skip the rest.
@@ -234,7 +224,7 @@ export const Home = () => {
                 key={item.title}
                 data-reveal
                 style={{ transitionDelay: `${i * 90}ms` }}
-                className="reveal border-t border-ink/15 pt-4"
+                className="monad-step-card reveal rounded-[28px] border border-ink/15 bg-parchment p-6"
               >
                 <span className="font-mono text-[20px] tabular-nums text-ink">0{i + 1}</span>
                 <h3 className="mt-4 font-serif text-[20px] leading-[1.2] text-ink">{item.title}</h3>
@@ -247,26 +237,28 @@ export const Home = () => {
 
       {/* FINAL CTA */}
       <section data-reveal className="reveal mx-auto max-w-[1200px] border-t border-ink/12 px-6 py-24 text-center">
-        <h2 className="mx-auto max-w-2xl font-serif text-[clamp(2.2rem,5vw,3.5rem)] leading-[1.08] text-ink">Find your fit.</h2>
-        <p className="mx-auto mt-5 max-w-xl font-mono text-[14px] leading-[1.6] text-graphite">
-          Founders find the investors who fit their raise. Investors find the founders who fit their thesis. Pick your side
-          and start in under a minute.
-        </p>
-        <div className="mt-9 flex flex-wrap items-center justify-center gap-3">
-          <button
-            type="button"
-            onClick={() => navigate('/login?role=founder')}
-            className="monad-cta inline-flex items-center gap-2 bg-[#cfdaf5] px-6 py-3 text-[14px] text-ink hover:bg-[#bcc8ef]"
-          >
-            Create founder profile <ArrowUpRight className="h-4 w-4" />
-          </button>
-          <button
-            type="button"
-            onClick={() => navigate('/login?role=investor')}
-            className="monad-cta inline-flex items-center gap-2 border border-ink px-6 py-3 text-[14px] text-ink hover:bg-ink hover:text-parchment"
-          >
-            Create investor profile
-          </button>
+        <div className="monad-final-cta rounded-[40px] border border-ink px-6 py-14">
+          <h2 className="mx-auto max-w-2xl font-serif text-[clamp(2.2rem,5vw,3.5rem)] leading-[1.08] text-ink">Find your fit.</h2>
+          <p className="mx-auto mt-5 max-w-xl font-mono text-[14px] leading-[1.6] text-graphite">
+            Founders find the investors who fit their raise. Investors find the founders who fit their thesis. Pick your side
+            and start in under a minute.
+          </p>
+          <div className="mt-9 flex flex-wrap items-center justify-center gap-3">
+            <button
+              type="button"
+              onClick={() => navigate('/login?role=founder')}
+              className="monad-cta inline-flex items-center gap-2 bg-charcoal px-6 py-3 text-[14px] text-parchment hover:bg-ink"
+            >
+              Create founder profile <ArrowUpRight className="h-4 w-4" />
+            </button>
+            <button
+              type="button"
+              onClick={() => navigate('/login?role=investor')}
+              className="monad-cta inline-flex items-center gap-2 border border-ink px-6 py-3 text-[14px] text-ink hover:bg-ink hover:text-parchment"
+            >
+              Create investor profile
+            </button>
+          </div>
         </div>
       </section>
     </div>

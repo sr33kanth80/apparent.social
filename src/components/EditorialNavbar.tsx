@@ -39,21 +39,21 @@ export const EditorialNavbar = () => {
   }, []);
 
   return (
-    <header className="monad sticky top-0 z-50 border-b border-ink bg-parchment">
+    <header className="monad monad-nav sticky top-0 z-50 border-b border-ink bg-parchment">
       <nav className="mx-auto flex max-w-[1200px] items-center justify-between gap-4 px-6 py-4">
-        <Link to="/" className="flex items-center gap-2.5" aria-label="Apparent home">
+        <Link to="/" className="monad-nav__brand flex items-center gap-2.5" aria-label="Apparent home">
           <LogoIcon className="h-6 w-6 text-ink" />
           <span className="font-serif text-[22px] leading-none text-ink">Apparent</span>
         </Link>
 
-        <div className="hidden items-center gap-7 md:flex">
+        <div className="hidden items-center gap-2 rounded-full border border-ink/10 bg-parchment/65 px-2 py-1 md:flex">
           {navLinks.map((link) => (
             <NavLink
               key={link.to}
               to={link.to}
               className={({ isActive }) =>
-                `font-mono text-[14px] tracking-[-0.02em] transition-colors ${
-                  isActive ? 'text-ink' : 'text-graphite hover:text-ink'
+                `monad-nav__link rounded-full px-3 py-2 font-mono text-[13px] transition-colors ${
+                  isActive ? 'border border-ink/20 text-ink' : 'border border-transparent text-graphite hover:text-ink'
                 }`
               }
             >
@@ -77,14 +77,14 @@ export const EditorialNavbar = () => {
               <button
                 type="button"
                 onClick={() => navigate('/login')}
-                className="monad-cta hidden border border-ink px-5 py-2.5 font-mono text-[14px] text-ink hover:bg-ink hover:text-parchment sm:inline-flex"
+                className="monad-cta hidden border border-ink bg-parchment px-5 py-2.5 font-mono text-[13px] text-ink hover:bg-ink hover:text-parchment sm:inline-flex"
               >
                 Log in
               </button>
               <button
                 type="button"
                 onClick={() => navigate('/login')}
-                className="monad-cta inline-flex items-center gap-1.5 bg-[#cfdaf5] px-5 py-2.5 font-mono text-[14px] text-ink hover:bg-[#bcc8ef]"
+                className="monad-cta inline-flex items-center gap-1.5 bg-charcoal px-5 py-2.5 font-mono text-[13px] text-parchment hover:bg-ink"
               >
                 Get started
                 <ArrowUpRight className="h-3.5 w-3.5" />
