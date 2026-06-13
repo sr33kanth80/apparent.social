@@ -1,212 +1,214 @@
-import { useLayoutEffect, useRef, useState } from 'react';
-import { ArrowRight, Braces, GitBranch, Radar, Sparkles } from 'lucide-react';
+import {
+  ArrowUpRight,
+  BadgeCheck,
+  BellRing,
+  Bot,
+  Check,
+  GitBranch,
+  MapPin,
+  MessageSquareText,
+  Radar,
+  Send,
+  Sparkles,
+} from 'lucide-react';
 import { LogoIcon } from './LogoIcon';
 
-const founderSources = [
-  { label: 'Proof of work', meta: 'commits, demos', icon: GitBranch },
-  { label: 'Traction', meta: 'usage, revenue', icon: Sparkles },
-  { label: 'Launches', meta: 'products shipped', icon: Braces },
-  { label: 'Signal', meta: 'fresh context', icon: Radar },
+const proofSignals = [
+  { label: 'GitHub verified', value: '218 commits', icon: GitBranch },
+  { label: 'Launch shipped', value: '3 products', icon: Sparkles },
+  { label: 'Founder location', value: 'Seattle', icon: MapPin },
 ];
 
-const investorCriteria = [
-  { label: 'Thesis fit', meta: 'what they back' },
-  { label: 'Stage', meta: 'round and timing' },
-  { label: 'Sector', meta: 'market taste' },
-  { label: 'Warm path', meta: 'right next step' },
+const investorMatches = [
+  { name: 'Northstar Ventures', thesis: 'AI workflow tools', fit: '96%' },
+  { name: 'Pioneer Fund', thesis: 'Developer infrastructure', fit: '91%' },
+  { name: 'Gradient Capital', thesis: 'Seed, technical teams', fit: '87%' },
 ];
-
-const agentStages = ['Verify', 'Score', 'Rank', 'Draft'];
-
-type Conn = { id: string; d: string; dir: 'in' | 'out'; delay: number; duration: number };
-
-const FlowChip = ({
-  label,
-  meta,
-  align,
-  index,
-  chipRef,
-  Icon,
-}: {
-  label: string;
-  meta: string;
-  align: 'left' | 'right';
-  index: number;
-  chipRef: (el: HTMLDivElement | null) => void;
-  Icon?: typeof GitBranch;
-}) => (
-  <div
-    ref={chipRef}
-    data-reveal
-    style={{ transitionDelay: `${index * 80}ms` }}
-    className={`monad-flow-chip reveal ${align === 'right' ? 'monad-flow-chip--left' : 'monad-flow-chip--right'}`}
-  >
-    <span className="monad-flow-chip__mark">
-      {Icon ? <Icon className="h-3.5 w-3.5" /> : <ArrowRight className="h-3.5 w-3.5" />}
-    </span>
-    <span className="min-w-0">
-      <span className="block truncate font-mono text-[12px] font-semibold text-ink">{label}</span>
-      <span className="mt-0.5 block truncate font-mono text-[10px] text-stone">{meta}</span>
-    </span>
-  </div>
-);
 
 export const DataFlowDiagram = () => {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const nodeRef = useRef<HTMLDivElement>(null);
-  const leftRefs = useRef<Array<HTMLDivElement | null>>([]);
-  const rightRefs = useRef<Array<HTMLDivElement | null>>([]);
-  const [conns, setConns] = useState<Conn[]>([]);
-  const [size, setSize] = useState({ w: 0, h: 0 });
-
-  useLayoutEffect(() => {
-    const container = containerRef.current;
-    const node = nodeRef.current;
-    if (!container || !node) return;
-
-    const compute = () => {
-      const cRect = container.getBoundingClientRect();
-      setSize({ w: cRect.width, h: cRect.height });
-
-      if (!window.matchMedia('(min-width: 768px)').matches) {
-        setConns([]);
-        return;
-      }
-
-      const nRect = node.getBoundingClientRect();
-      const nLeftX = nRect.left - cRect.left + 10;
-      const nRightX = nRect.right - cRect.left - 10;
-      const nY = nRect.top - cRect.top + nRect.height / 2;
-
-      const next: Conn[] = [];
-      leftRefs.current.forEach((el, i) => {
-        if (!el) return;
-        const r = el.getBoundingClientRect();
-        const sx = r.right - cRect.left;
-        const sy = r.top - cRect.top + r.height / 2;
-        const bend = sx + (nLeftX - sx) * 0.48;
-        next.push({
-          id: `in-${i}`,
-          dir: 'in',
-          delay: i * 0.34,
-          duration: 2.7 + i * 0.14,
-          d: `M${sx},${sy} C${bend},${sy} ${bend},${nY} ${nLeftX},${nY}`,
-        });
-      });
-
-      rightRefs.current.forEach((el, i) => {
-        if (!el) return;
-        const r = el.getBoundingClientRect();
-        const dx = r.left - cRect.left;
-        const dy = r.top - cRect.top + r.height / 2;
-        const bend = nRightX + (dx - nRightX) * 0.5;
-        next.push({
-          id: `out-${i}`,
-          dir: 'out',
-          delay: i * 0.38,
-          duration: 2.9 + i * 0.12,
-          d: `M${nRightX},${nY} C${bend},${nY} ${bend},${dy} ${dx},${dy}`,
-        });
-      });
-
-      setConns(next);
-    };
-
-    compute();
-    const ro = new ResizeObserver(compute);
-    ro.observe(container);
-    window.addEventListener('resize', compute);
-    const fonts = (document as Document & { fonts?: { ready: Promise<unknown> } }).fonts;
-    fonts?.ready.then(compute).catch(() => {});
-
-    return () => {
-      ro.disconnect();
-      window.removeEventListener('resize', compute);
-    };
-  }, []);
-
   return (
     <section className="mx-auto max-w-[1200px] px-6 pb-20">
-      <div ref={containerRef} className="monad-flow-stage relative isolate overflow-hidden rounded-[44px] border border-ink/12 px-5 py-8 md:px-8 md:py-10">
-        <div className="monad-flow-grid" aria-hidden />
-        <svg
-          aria-hidden
-          className="pointer-events-none absolute inset-0 z-0 hidden md:block"
-          viewBox={`0 0 ${size.w || 1} ${size.h || 1}`}
-          preserveAspectRatio="none"
-          fill="none"
-        >
-          {conns.map((c) => (
-            <g key={c.id}>
-              <path d={c.d} className="flow-path flow-path--base" />
-              <path d={c.d} pathLength={1} className={`flow-path ${c.dir === 'in' ? 'flow-path--in' : 'flow-path--out'}`} />
-              <circle r="3.4" className={`flow-packet ${c.dir === 'in' ? 'flow-packet--in' : 'flow-packet--out'}`}>
-                <animateMotion dur={`${c.duration}s`} begin={`${c.delay}s`} repeatCount="indefinite" path={c.d} />
-              </circle>
-            </g>
-          ))}
-        </svg>
+      <div className="apparent-hero-app relative isolate overflow-hidden rounded-[44px] border border-ink/12">
+        <div className="apparent-hero-app__grid" aria-hidden />
+        <div className="apparent-hero-app__orb apparent-hero-app__orb--peach" aria-hidden />
+        <div className="apparent-hero-app__orb apparent-hero-app__orb--mint" aria-hidden />
 
-        <div className="relative z-10 grid items-center gap-8 md:grid-cols-[minmax(0,1fr)_18rem_minmax(0,1fr)] md:gap-8">
-          <div className="grid grid-cols-2 gap-3 md:grid-cols-1 md:justify-items-end">
-            <span className="col-span-2 font-mono text-[11px] uppercase tracking-[0.14em] text-stone md:col-span-1">Founder proof</span>
-            {founderSources.map((item, i) => (
-              <FlowChip
-                key={item.label}
-                label={item.label}
-                meta={item.meta}
-                align="right"
-                index={i}
-                Icon={item.icon}
-                chipRef={(el) => {
-                  leftRefs.current[i] = el;
-                }}
-              />
-            ))}
-          </div>
-
-          <div className="relative flex flex-col items-center">
-            <div className="monad-flow-orbit" aria-hidden />
-            <div ref={nodeRef} className="monad-flow-core">
-              <div className="monad-flow-core__scan" aria-hidden />
-              <div className="monad-flow-core__logo">
-                <LogoIcon className="h-8 w-8 text-ink" />
+        <div className="relative z-10 border-b border-ink/10 px-5 py-3 sm:px-6">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <div className="flex gap-1.5" aria-hidden>
+                <span className="h-2.5 w-2.5 rounded-full bg-[#ff9473]" />
+                <span className="h-2.5 w-2.5 rounded-full bg-[#e2c161]" />
+                <span className="h-2.5 w-2.5 rounded-full bg-[#5fcf8e]" />
               </div>
-              <div className="mt-5 text-center">
-                <p className="font-serif text-[26px] leading-none text-ink">Fit engine</p>
-                <p className="mt-2 font-mono text-[10px] uppercase tracking-[0.16em] text-stone">proof graph</p>
+              <div className="flex items-center gap-2 rounded-full border border-ink/12 bg-parchment/70 px-3 py-1.5">
+                <LogoIcon className="h-4 w-4 text-ink" />
+                <span className="font-mono text-[11px] font-semibold text-ink">Apparent workspace</span>
               </div>
             </div>
-            <div className="mt-4 grid w-full grid-cols-2 gap-2">
-              {agentStages.map((stage, i) => (
-                <span key={stage} className="monad-flow-stage-pill">
-                  <span className="flow-dot h-1.5 w-1.5 rounded-full bg-[#5fcf8e]" style={{ animationDelay: `${i * 0.45}s` }} />
-                  {stage}
-                </span>
-              ))}
+            <div className="flex items-center gap-2 rounded-full border border-ink/12 bg-white/55 px-3 py-1.5 font-mono text-[10px] uppercase tracking-[0.14em] text-graphite">
+              <span className="apparent-hero-live-dot h-1.5 w-1.5 rounded-full bg-[#5fcf8e]" />
+              Live matching
             </div>
           </div>
+        </div>
 
-          <div className="grid grid-cols-2 gap-3 md:grid-cols-1 md:justify-items-start">
-            <span className="col-span-2 font-mono text-[11px] uppercase tracking-[0.14em] text-stone md:col-span-1">Investor thesis</span>
-            {investorCriteria.map((item, i) => (
-              <FlowChip
-                key={item.label}
-                label={item.label}
-                meta={item.meta}
-                align="left"
-                index={i}
-                chipRef={(el) => {
-                  rightRefs.current[i] = el;
-                }}
-              />
+        <div className="relative z-10 grid gap-4 p-4 sm:p-5 lg:grid-cols-[12rem_minmax(0,1fr)_22rem] lg:p-6">
+          <aside className="hidden rounded-[28px] border border-ink/10 bg-parchment/62 p-4 lg:block">
+            <div className="mb-6 flex items-center gap-2">
+              <div className="grid h-9 w-9 place-items-center rounded-2xl bg-ink text-parchment">
+                <LogoIcon className="h-4 w-4" />
+              </div>
+              <div>
+                <p className="font-mono text-[11px] font-semibold text-ink">Apparent</p>
+                <p className="font-mono text-[10px] text-stone">founder view</p>
+              </div>
+            </div>
+            {['Proof profile', 'Investor matches', 'Agent outreach'].map((item, index) => (
+              <div
+                key={item}
+                className={`mb-2 rounded-2xl px-3 py-2.5 font-mono text-[11px] ${
+                  index === 0 ? 'bg-ink text-parchment' : 'text-graphite'
+                }`}
+              >
+                {item}
+              </div>
             ))}
+            <div className="mt-8 rounded-3xl border border-ink/10 bg-white/48 p-3">
+              <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-stone">Agent status</p>
+              <div className="mt-3 flex items-center gap-2">
+                <Bot className="h-4 w-4 text-ink" />
+                <p className="font-mono text-[11px] text-graphite">Drafting warm paths</p>
+              </div>
+            </div>
+          </aside>
+
+          <main className="grid gap-4">
+            <section className="apparent-hero-panel relative overflow-hidden rounded-[32px] border border-ink/10 p-5 sm:p-6">
+              <div className="apparent-hero-scan" aria-hidden />
+              <div className="flex flex-wrap items-start justify-between gap-4">
+                <div>
+                  <div className="mb-4 flex flex-wrap gap-2">
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-[#cfdaf5] px-3 py-1 font-mono text-[10px] font-semibold text-ink">
+                      <BadgeCheck className="h-3 w-3" />
+                      Verified proof
+                    </span>
+                    <span className="rounded-full border border-ink/12 px-3 py-1 font-mono text-[10px] text-graphite">Seed</span>
+                    <span className="rounded-full border border-ink/12 px-3 py-1 font-mono text-[10px] text-graphite">AI devtools</span>
+                  </div>
+                  <h2 className="max-w-xl font-serif text-[clamp(2rem,4vw,3.6rem)] leading-[0.96] text-ink">
+                    Founder profile that proves the work.
+                  </h2>
+                  <p className="mt-4 max-w-lg font-mono text-[13px] leading-6 text-graphite">
+                    Apparent turns shipped products, public code, traction, and raise context into one investor-ready profile.
+                  </p>
+                </div>
+                <div className="apparent-hero-score rounded-[28px] border border-ink/12 bg-parchment/78 p-4 text-center">
+                  <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-stone">Profile strength</p>
+                  <p className="mt-2 font-serif text-5xl leading-none text-ink">94</p>
+                  <p className="mt-1 font-mono text-[10px] text-graphite">ready to match</p>
+                </div>
+              </div>
+            </section>
+
+            <section className="grid gap-4 sm:grid-cols-3">
+              {proofSignals.map((signal, index) => {
+                const Icon = signal.icon;
+                return (
+                  <article
+                    key={signal.label}
+                    className="apparent-hero-proof-card rounded-[26px] border border-ink/10 bg-white/58 p-4"
+                    style={{ animationDelay: `${index * 180}ms` }}
+                  >
+                    <Icon className="h-4 w-4 text-ink" />
+                    <p className="mt-4 font-mono text-[10px] uppercase tracking-[0.14em] text-stone">{signal.label}</p>
+                    <p className="mt-1 font-mono text-[13px] font-semibold text-ink">{signal.value}</p>
+                  </article>
+                );
+              })}
+            </section>
+
+            <section className="apparent-hero-agent rounded-[30px] border border-ink/10 bg-parchment/62 p-4 sm:p-5">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <div className="grid h-10 w-10 place-items-center rounded-2xl bg-ink text-parchment">
+                    <Bot className="h-4 w-4" />
+                  </div>
+                  <div>
+                    <p className="font-mono text-[12px] font-semibold text-ink">Founder agent</p>
+                    <p className="font-mono text-[11px] text-stone">Finding the right investors now</p>
+                  </div>
+                </div>
+                <div className="inline-flex items-center gap-2 rounded-full bg-[#a7fccd]/42 px-3 py-1.5 font-mono text-[10px] font-semibold text-ink">
+                  <Check className="h-3 w-3" />
+                  12 warm paths found
+                </div>
+              </div>
+            </section>
+          </main>
+
+          <aside className="grid gap-4">
+            <section className="apparent-hero-panel rounded-[32px] border border-ink/10 p-4 sm:p-5">
+              <div className="mb-4 flex items-center justify-between gap-3">
+                <div>
+                  <p className="font-serif text-[25px] leading-tight text-ink">Investor matches</p>
+                  <p className="mt-1 font-mono text-[11px] text-stone">Ranked by thesis fit</p>
+                </div>
+                <Radar className="h-5 w-5 text-ink" />
+              </div>
+              <div className="grid gap-3">
+                {investorMatches.map((match, index) => (
+                  <article
+                    key={match.name}
+                    className="apparent-hero-match-row rounded-[22px] border border-ink/10 bg-white/58 p-3"
+                    style={{ animationDelay: `${index * 220}ms` }}
+                  >
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="truncate font-mono text-[12px] font-semibold text-ink">{match.name}</p>
+                        <p className="mt-1 truncate font-mono text-[10px] text-stone">{match.thesis}</p>
+                      </div>
+                      <span className="rounded-full bg-[#cfdaf5] px-2.5 py-1 font-mono text-[11px] font-semibold text-ink">
+                        {match.fit}
+                      </span>
+                    </div>
+                  </article>
+                ))}
+              </div>
+            </section>
+
+            <section className="apparent-hero-draft rounded-[32px] border border-ink/10 p-4 sm:p-5">
+              <div className="mb-4 flex items-center gap-2">
+                <MessageSquareText className="h-4 w-4 text-ink" />
+                <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.14em] text-ink">Agent draft</p>
+              </div>
+              <div className="grid gap-2">
+                <span className="apparent-hero-type-line apparent-hero-type-line--wide" />
+                <span className="apparent-hero-type-line" />
+                <span className="apparent-hero-type-line apparent-hero-type-line--short" />
+              </div>
+              <button
+                type="button"
+                className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-full bg-ink px-4 py-3 font-mono text-[12px] font-semibold text-parchment"
+              >
+                Send intro <Send className="h-3.5 w-3.5" />
+              </button>
+            </section>
+          </aside>
+        </div>
+
+        <div className="relative z-10 border-t border-ink/10 px-5 py-3 sm:px-6">
+          <div className="flex flex-wrap items-center justify-between gap-3 font-mono text-[11px] text-stone">
+            <span className="inline-flex items-center gap-2">
+              <BellRing className="h-3.5 w-3.5 text-ink" />
+              Apparent found a thesis-fit investor who backs devtools at seed.
+            </span>
+            <span className="inline-flex items-center gap-1 text-ink">
+              View match <ArrowUpRight className="h-3.5 w-3.5" />
+            </span>
           </div>
         </div>
       </div>
-      <p className="mt-6 text-center font-mono text-[13px] tracking-[-0.02em] text-stone">
-        Founder evidence becomes a ranked, thesis-fit path to the right side of the table.
-      </p>
     </section>
   );
 };
