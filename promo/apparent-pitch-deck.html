@@ -210,15 +210,29 @@
   .s7 .term-cap { font-size: 13px; line-height: 1.45; color: var(--muted-fg); padding: 0 2px; }
 
   /* S8 Team + Ask */
-  .s8 .content { margin-top: 24px; flex: 1; display: grid; grid-template-columns: 1fr 1.1fr; gap: 44px; align-items: center; }
-  .s8 .team-col { display: flex; flex-direction: column; gap: 18px; }
-  .s8 .founder-head { display: flex; gap: 18px; align-items: flex-start; }
-  .s8 .founder-photo { width: 150px; height: auto; border-radius: 16px; border: 1px solid var(--border); box-shadow: 0 10px 26px rgba(17,17,17,0.16); flex: 0 0 auto; display: block; }
-  .s8 .cred { padding: 13px 18px; display: flex; align-items: center; gap: 14px; }
-  .s8 .cred .ic { width: 38px; height: 38px; border-radius: 10px; display: flex; align-items: center; justify-content: center; flex: 0 0 38px; }
-  .s8 .cred .ct { font-size: 15px; font-weight: 700; color: var(--fg); line-height: 1.25; }
-  .s8 .raise-card { background: var(--olive); border-radius: var(--r-xl); padding: 36px 40px; display: flex; flex-direction: column; gap: 18px; }
-  .s8 .raise-amt { font-size: 80px; font-weight: 800; color: #fff; line-height: 1; letter-spacing: -0.04em; }
+  .s8 .content { margin-top: 22px; flex: 1; display: grid; grid-template-columns: 1.3fr 1fr 1.02fr; gap: 26px; align-items: stretch; min-height: 0; }
+  /* Large founder photo (first section) */
+  .s8 .photo-card { position: relative; border-radius: var(--r-xl); overflow: hidden; border: 1px solid var(--border); box-shadow: 0 16px 40px rgba(17,17,17,0.22); min-height: 0; }
+  .s8 .photo-card img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 56% 26%; }
+  .s8 .photo-overlay { position: absolute; left: 0; right: 0; bottom: 0; padding: 28px 28px 26px; background: linear-gradient(to top, rgba(12,12,12,0.94) 0%, rgba(12,12,12,0.6) 42%, rgba(12,12,12,0) 100%); }
+  .s8 .photo-overlay .nm { font-size: 34px; font-weight: 800; color: #fff; display: flex; align-items: center; gap: 10px; letter-spacing: -0.03em; line-height: 1.04; }
+  .s8 .photo-overlay .rl { margin-top: 7px; font-size: 13px; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase; color: rgba(255,255,255,0.65); }
+  .s8 .photo-overlay .bio { margin-top: 12px; font-size: 14px; line-height: 1.5; color: rgba(255,255,255,0.82); max-width: 420px; }
+  /* Track record — numbers forward */
+  .s8 .ach-col { display: flex; flex-direction: column; gap: 12px; min-height: 0; justify-content: center; }
+  .s8 .ach-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .s8 .ach { padding: 18px 20px; border-radius: 16px; display: flex; flex-direction: column; gap: 6px; }
+  .s8 .ach .n { font-size: 42px; font-weight: 800; letter-spacing: -0.04em; line-height: 1; }
+  .s8 .ach .l { font-size: 12.5px; font-weight: 600; line-height: 1.32; }
+  .s8 .ach--olive { background: var(--olive); }
+  .s8 .ach--olive .n { color: #fff; }  .s8 .ach--olive .l { color: rgba(255,255,255,0.72); }
+  .s8 .ach--green { background: var(--green); }
+  .s8 .ach--green .n { color: var(--olive); }  .s8 .ach--green .l { color: var(--olive); }
+  .s8 .ach--plain { background: var(--card); border: 1px solid var(--border); }
+  .s8 .ach--plain .n { color: var(--fg); }  .s8 .ach--plain .l { color: var(--muted-fg); }
+  .s8 .ach-foot { font-size: 12.5px; line-height: 1.45; color: var(--muted-fg); padding: 0 2px; }
+  .s8 .raise-card { background: var(--olive); border-radius: var(--r-xl); padding: 30px 32px; display: flex; flex-direction: column; gap: 13px; }
+  .s8 .raise-amt { font-size: 72px; font-weight: 800; color: #fff; line-height: 1; letter-spacing: -0.04em; }
 
   /* Deck order: Team & Ask moved up, right after The Solution */
   .slide[data-slide="01-cover"]    { order: 1; }
@@ -954,53 +968,37 @@
     <div class="wordmark"><svg class="li" viewBox="0 0 256 256"><path d="M128.005 191.173C128.448 156.208 156.93 128 192 128V64H128C128 99.346 99.346 128 64 128V192H128ZM192 256H64C28.654 256 0 227.346 0 192V64H64V0H192C227.346 0 256 28.654 256 64V192H192Z"/></svg> Apparent</div>
     <h2 class="h-lg" style="margin-top: 28px;">Built by a builder. Ready to scale.</h2>
     <div class="content">
-      <div class="team-col">
-        <h3 class="h-sm">Founder</h3>
-        <div class="founder-head">
-          <img class="founder-photo" src="founder-sree.png" alt="Sree Katavil" />
-          <div>
-            <div style="font-size:24px; font-weight:800; color:var(--fg); display:flex; align-items:center; gap:8px; letter-spacing:-0.02em;">Sree Katavil <svg class="vb vb--lg" viewBox="0 0 22 22"><path fill="#1D9BF0" d="M20.396 11c-.018-.646-.215-1.275-.57-1.816-.354-.54-.852-.972-1.438-1.246.223-.607.27-1.264.14-1.897-.131-.634-.437-1.218-.882-1.687-.47-.445-1.053-.75-1.687-.882-.633-.13-1.29-.083-1.897.14-.273-.587-.704-1.086-1.245-1.44S11.647 1.62 11 1.604c-.646.017-1.273.213-1.813.568s-.969.854-1.24 1.44c-.608-.223-1.267-.272-1.902-.14-.635.13-1.22.436-1.69.882-.445.47-.749 1.055-.878 1.69-.13.635-.08 1.293.144 1.896-.587.274-1.087.705-1.443 1.245-.356.54-.555 1.17-.574 1.817.02.647.218 1.276.574 1.817.356.54.856.972 1.443 1.245-.224.604-.274 1.26-.144 1.896.13.636.433 1.221.878 1.69.47.446 1.055.752 1.69.883.635.13 1.294.083 1.902-.141.27.587.7 1.086 1.24 1.44s1.167.551 1.813.568c.647-.016 1.276-.213 1.817-.567s.972-.854 1.245-1.44c.604.224 1.26.272 1.895.141.636-.13 1.22-.436 1.69-.883.445-.468.749-1.053.882-1.688.13-.634.085-1.29-.138-1.896.587-.274 1.084-.705 1.438-1.246.354-.54.551-1.17.569-1.816zM9.662 14.85l-3.429-3.428 1.293-1.302 2.072 2.072 4.4-4.794 1.347 1.246z"/></svg></div>
-            <div class="meta" style="margin-top:5px;">Founder &amp; CEO</div>
-            <p class="body" style="margin-top:10px; max-width:360px;">AI product builder and engineer with 10+ years shipping: multi-agent AI systems, profitable SaaS, and a marketplace exit. MS in Computational Fluid Dynamics, UT&nbsp;Dallas.</p>
+      <!-- 1: Founder photo, large (first section) -->
+      <div class="photo-card">
+        <img src="founder-sree.png" alt="Sree Katavil" />
+        <div class="photo-overlay">
+          <div class="nm">Sree Katavil <svg class="vb vb--lg" viewBox="0 0 22 22"><path fill="#1D9BF0" d="M20.396 11c-.018-.646-.215-1.275-.57-1.816-.354-.54-.852-.972-1.438-1.246.223-.607.27-1.264.14-1.897-.131-.634-.437-1.218-.882-1.687-.47-.445-1.053-.75-1.687-.882-.633-.13-1.29-.083-1.897.14-.273-.587-.704-1.086-1.245-1.44S11.647 1.62 11 1.604c-.646.017-1.273.213-1.813.568s-.969.854-1.24 1.44c-.608-.223-1.267-.272-1.902-.14-.635.13-1.22.436-1.69.882-.445.47-.749 1.055-.878 1.69-.13.635-.08 1.293.144 1.896-.587.274-1.087.705-1.443 1.245-.356.54-.555 1.17-.574 1.817.02.647.218 1.276.574 1.817.356.54.856.972 1.443 1.245-.224.604-.274 1.26-.144 1.896.13.636.433 1.221.878 1.69.47.446 1.055.752 1.69.883.635.13 1.294.083 1.902-.141.27.587.7 1.086 1.24 1.44s1.167.551 1.813.568c.647-.016 1.276-.213 1.817-.567s.972-.854 1.245-1.44c.604.224 1.26.272 1.895.141.636-.13 1.22-.436 1.69-.883.445-.468.749-1.053.882-1.688.13-.634.085-1.29-.138-1.896.587-.274 1.084-.705 1.438-1.246.354-.54.551-1.17.569-1.816zM9.662 14.85l-3.429-3.428 1.293-1.302 2.072 2.072 4.4-4.794 1.347 1.246z"/></svg></div>
+          <div class="rl">Founder &amp; CEO</div>
+          <p class="bio">AI product builder and engineer. 10+ years shipping multi-agent AI systems, profitable SaaS, and a marketplace exit. MS, Computational Fluid Dynamics, UT&nbsp;Dallas.</p>
+        </div>
+      </div>
+      <!-- 2: Track record, numbers forward -->
+      <div class="ach-col">
+        <div class="meta">Track record</div>
+        <div class="ach-grid">
+          <div class="ach ach--olive">
+            <div class="n">$780K</div>
+            <div class="l">Exit &middot; sold &ldquo;Esp for All&rdquo; as founder</div>
+          </div>
+          <div class="ach ach--green">
+            <div class="n">$2.9M</div>
+            <div class="l">Lifetime marketplace volume processed</div>
+          </div>
+          <div class="ach ach--plain">
+            <div class="n">1.4M</div>
+            <div class="l">&ldquo;Huddl&rdquo; app downloads, iOS + Android</div>
+          </div>
+          <div class="ach ach--plain">
+            <div class="n">$27.2K</div>
+            <div class="l">SwiftApply AI MRR &middot; AI browser agent</div>
           </div>
         </div>
-        <!-- Credentials -->
-        <div style="display:flex; flex-direction:column; gap:10px;">
-          <div class="card card--green cred">
-            <div class="ic" style="background:var(--olive);">
-              <svg viewBox="0 0 24 24" width="20" height="20" fill="none"><path d="M13 2 L5 14 H11 L10 22 L19 9 H13 Z" fill="#fff"/></svg>
-            </div>
-            <div>
-              <div class="ct">SwiftApply AI &middot; 40K downloads, $27.2K MRR</div>
-              <div class="body-sm" style="color:var(--olive);">AI browser agent &middot; 1,800+ paying users &middot; zero ad spend</div>
-            </div>
-          </div>
-          <div class="card cred">
-            <div class="ic" style="background:var(--muted);"><span style="font-size:17px; font-weight:800; color:var(--olive);">$</span></div>
-            <div>
-              <div class="ct">Sold &ldquo;Esp for All&rdquo; for $780,000</div>
-              <div class="body-sm">Marketplace built &amp; exited as founder &middot; $2.9M lifetime volume</div>
-            </div>
-          </div>
-          <div class="card cred">
-            <div class="ic" style="background:var(--green);">
-              <svg viewBox="0 0 24 24" width="20" height="20" fill="none"><rect x="3" y="5" width="18" height="14" rx="3" fill="#42520d" opacity="0.2"/><circle cx="12" cy="12" r="4" fill="#42520d" opacity="0.3"/></svg>
-            </div>
-            <div>
-              <div class="ct">Built &ldquo;Huddl&rdquo; to 1.4M downloads</div>
-              <div class="body-sm">Podcast &amp; social app, iOS + Android</div>
-            </div>
-          </div>
-          <div class="card cred">
-            <div class="ic" style="background:var(--muted);">
-              <svg viewBox="0 0 40 40" width="28" height="28" fill="none"><text x="20" y="16" font-family="Inter" font-size="7" font-weight="800" fill="#42520d" text-anchor="middle" letter-spacing="0.02em">SYNOPSYS</text><rect x="4" y="22" width="32" height="2" rx="1" fill="#42520d" opacity="0.3"/><rect x="8" y="28" width="24" height="2" rx="1" fill="#42520d" opacity="0.2"/></svg>
-            </div>
-            <div>
-              <div class="ct">Ex Product Manager, Synopsys</div>
-              <div class="body-sm">Enterprise EDA &amp; semiconductor design tools</div>
-            </div>
-          </div>
-        </div>
+        <div class="ach-foot">Also: 40K downloads &amp; 1,800+ paying users on SwiftApply, zero ad spend &middot; Ex Product Manager, Synopsys.</div>
       </div>
       <!-- Right: The Ask + 12-month projection -->
       <div class="raise-card">
