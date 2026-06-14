@@ -142,6 +142,13 @@
   background: rgba(207, 218, 245, 0.42);
 }
 
+/* Nav links are rounded-full anchors, so the global `a.rounded-full:hover`
+   lift applies to them and makes them jump on hover. Cancel it here (scoped to
+   the nav) so the lift stays everywhere else but the navbar links sit still. */
+.monad-nav .monad-nav__link:hover {
+  transform: none;
+}
+
 .monad-nav .monad-cta {
   transition:
     background-color 220ms ease,
