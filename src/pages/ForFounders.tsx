@@ -45,29 +45,31 @@ export const ForFounders = () => {
   return (
     <main className="monad monad-page overflow-x-hidden bg-[#f6f3f1] text-black">
       <section data-reveal className="reveal mx-auto max-w-[92rem] px-5 pb-14 pt-14 sm:px-8 md:pt-20">
-        <h1
-          className="max-w-[86rem] text-[3.35rem] font-normal leading-[0.88] tracking-[-0.055em] sm:text-[7rem] md:text-[8.5rem] lg:text-[10rem]"
-          style={serifDisplay}
-        >
-          Let your <span className="block sm:inline">work</span>
-          <br />
-          find its fit.
-        </h1>
-        <div className="mt-12 grid gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,34rem)] lg:items-center">
-          <div className="flex flex-col items-start gap-8">
-            <p className="max-w-2xl text-lg leading-8 text-black/65 md:text-xl">
-              Run <span className="font-mono text-[0.9em] text-[#242424]">npx apparent</span> and what you&apos;ve shipped becomes a verified proof profile. Then your AI agent matches and reaches the investors whose thesis, stage, and sector actually fit your raise. No warm intro required.
-            </p>
-            <button
-              type="button"
-              onClick={() => navigate('/login?role=founder')}
-              className="w-full rounded-full bg-[#cfdaf5] px-6 py-3 text-sm font-semibold text-black hover:bg-[#bcc8ef] sm:w-auto"
+        <div className="grid gap-10 xl:grid-cols-[minmax(0,1fr)_minmax(0,34rem)] xl:items-center xl:gap-12">
+          <div>
+            <h1
+              className="max-w-[86rem] text-[3.35rem] font-normal leading-[0.88] tracking-[-0.055em] sm:text-[7rem] md:text-[8.5rem] lg:text-[10rem] xl:text-[5rem] 2xl:text-[6.5rem]"
+              style={serifDisplay}
             >
-              Create founder profile <ArrowUpRight className="ml-1 inline h-3.5 w-3.5 align-[-2px]" />
-            </button>
+              Let your <span className="block sm:inline">work</span>
+              <br />
+              find its fit.
+            </h1>
+            <div className="mt-10 flex flex-col items-start gap-8">
+              <p className="max-w-2xl text-lg leading-8 text-black/65 md:text-xl">
+                Run <span className="font-mono text-[0.9em] text-[#242424]">npx apparent</span> and what you&apos;ve shipped becomes a verified proof profile. Then your AI agent matches and reaches the investors whose thesis, stage, and sector actually fit your raise. No warm intro required.
+              </p>
+              <button
+                type="button"
+                onClick={() => navigate('/login?role=founder')}
+                className="w-full rounded-full bg-[#cfdaf5] px-6 py-3 text-sm font-semibold text-black hover:bg-[#bcc8ef] sm:w-auto"
+              >
+                Create founder profile <ArrowUpRight className="ml-1 inline h-3.5 w-3.5 align-[-2px]" />
+              </button>
+            </div>
           </div>
           <div
-            className="cli-card w-full"
+            className="cli-card w-full max-w-[34rem] xl:max-w-none"
             role="img"
             aria-label="The npx apparent build card: a verified founder profile rendered in the terminal from local git activity."
           >
