@@ -59,7 +59,7 @@ const legalContent: Record<'privacy' | 'terms' | 'cookies', LegalContent> = {
       {
         title: 'Your privacy rights',
         body:
-          'Depending on where you live, you may have rights to know, access, correct, delete, restrict, object to, port, or opt out of certain processing of personal information. You may also have the right to appeal a decision or withdraw consent. We will not discriminate against you for exercising privacy rights. To make a request, contact us at privacy@apparent.dev and we may verify your identity before responding.',
+          'Depending on where you live, you may have rights to know, access, correct, delete, restrict, object to, port, or opt out of certain processing of personal information. You may also have the right to appeal a decision or withdraw consent. We will not discriminate against you for exercising privacy rights. To make a request, contact us at privacy@apparent.social and we may verify your identity before responding.',
       },
       {
         title: 'Children, international use, and updates',

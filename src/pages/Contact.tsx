@@ -7,7 +7,7 @@ const serifDisplay = {
   fontFamily: "'Source Serif 4', ui-serif, Georgia, 'Times New Roman', serif",
 };
 
-const CONTACT_EMAIL = 'hello@apparent.dev';
+const CONTACT_EMAIL = 'hello@apparent.social';
 
 type ContactFormValues = {
   name: string;
