@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import {
   ArrowUpRight,
   Bell,
+  Crosshair,
   FileText,
   MapPin,
   MessageSquare,
@@ -12,14 +13,24 @@ import {
   Search,
   Sparkles,
   Target,
+  Terminal,
 } from 'lucide-react';
 import { BuilderRadarMap } from '../components/BuilderRadarMap';
 import { EditorialNavbar } from '../components/EditorialNavbar';
+import { CLI_CARD_HTML } from '../components/cliCardHtml';
+import { useReveal } from '../lib/useReveal';
 import type { BuilderMapCluster, BuilderNode } from '../lib/apparent-types';
 
 const serifDisplay = {
   fontFamily: "'Source Serif 4', ui-serif, Georgia, 'Times New Roman', serif",
 };
+
+const heroStats = [
+  ['312', 'builders mapped'],
+  ['86%', 'avg thesis fit'],
+  ['42', 'new launches'],
+  ['18', 'meetups live'],
+];
 
 const marketRows = [
   ['01', 'Founder proof', 'Products, GitHub, press, traction, launches, location, and capital goals become one searchable profile.'],
@@ -34,10 +45,18 @@ const signalRows = [
   { company: 'Mistral AI', founder: 'Arthur Mensch', fit: '88%', detail: 'Open-weight model strategy and European AI infrastructure momentum.', source: 'AI models' },
 ];
 
+// Founder side: what the proof profile is made of (rendered by `npx apparent`).
 const proofSignals = [
   ['GitHub proof', 'Recent commits, repositories, collaborators, and technical depth.'],
   ['Launch history', 'Past products, current builds, customer signals, and public proof.'],
   ['Place and timing', 'Where builders are active and what changed most recently.'],
+];
+
+// Investor side: the taste that turns into a private sourcing desk.
+const thesisCriteria = [
+  ['Thesis and sector', 'The categories and theses you actually write checks against.'],
+  ['Stage and check size', 'Where you enter a round and how much you deploy per deal.'],
+  ['Geography and signals', 'The places, founder signals, and pass signals that fit your fund.'],
 ];
 
 const productSurfaces = [
@@ -65,14 +84,17 @@ const productSurfaces = [
 
 const workflowItems = [
   {
+    icon: Terminal,
     title: 'Builders make proof profiles',
     text: 'The founder side starts with work: products, GitHub, launch history, traction, press, location, and capital goals.',
   },
   {
+    icon: Crosshair,
     title: 'Investors declare taste',
     text: 'The VC side turns thesis, stage, geography, check size, pass signals, and founder taste into a private sourcing desk.',
   },
   {
+    icon: Sparkles,
     title: 'Apparent creates motion',
     text: 'The product turns proof and taste into Builder Radar, ranked inboxes, outreach drafts, deal flow, DMs, meetups, and terms.',
   },
@@ -333,6 +355,7 @@ const buildLandingClusters = (builders: BuilderNode[]): BuilderMapCluster[] => {
 
 export const OurThesis = () => {
   const navigate = useNavigate();
+  useReveal();
   const landingClusters = useMemo(() => buildLandingClusters(landingStartupNodes), []);
   const [selectedLandingCity, setSelectedLandingCity] = useState('San Francisco');
   const [selectedLandingBuilderId, setSelectedLandingBuilderId] = useState(landingStartupNodes[0].id);
@@ -378,64 +401,145 @@ export const OurThesis = () => {
     <main className="monad monad-page min-h-screen overflow-x-hidden bg-[#f6f3f1] text-black">
       <EditorialNavbar />
 
-      <section className="mx-auto max-w-[92rem] px-5 pb-16 pt-14 sm:px-8 md:pt-20">
-        <div className="grid gap-10 lg:grid-cols-[1fr_24rem] lg:items-end">
-          <h1
-            className="max-w-[70rem] text-[2.65rem] font-normal leading-[0.92] tracking-[-0.055em] sm:text-[4.6rem] sm:leading-[0.9] md:text-[5.4rem] lg:text-[6.1rem] xl:text-[6.7rem]"
-            style={serifDisplay}
-          >
-            Where proof
-            <br />
-            meets thesis.
-          </h1>
+      {/* Hero — the headline next to real proof: the npx apparent build card. */}
+      <section data-reveal className="reveal mx-auto max-w-[92rem] px-5 pb-14 pt-14 sm:px-8 md:pt-20">
+        <div className="grid gap-12 lg:grid-cols-[minmax(0,1fr)_minmax(0,33rem)] lg:items-center lg:gap-16">
+          <div>
+            <span className="inline-flex items-center gap-2 rounded-full border border-black/10 bg-white/60 px-3.5 py-1.5 text-[0.7rem] font-semibold uppercase tracking-[0.18em] text-black/55">
+              <Sparkles className="h-3.5 w-3.5" /> Our thesis
+            </span>
+            <h1
+              className="mt-7 max-w-[70rem] text-[2.65rem] font-normal leading-[0.92] tracking-[-0.055em] sm:text-[4.6rem] sm:leading-[0.9] md:text-[5.4rem] lg:text-[5.6rem] xl:text-[6.3rem]"
+              style={serifDisplay}
+            >
+              Where proof
+              <br />
+              meets thesis.
+            </h1>
+            <p className="mt-8 max-w-2xl text-lg leading-8 text-black/65 md:text-xl">
+              Founders show real proof of what they&apos;ve built. Investors find builders who match what they&apos;re looking for. Apparent is where those two meet.
+            </p>
+            <div className="mt-9 flex flex-col gap-3 sm:flex-row">
+              <button
+                type="button"
+                onClick={() => navigate('/login?role=founder')}
+                className="w-full rounded-full bg-[#cfdaf5] px-6 py-3 text-sm font-semibold text-black transition-colors hover:bg-[#bcc8ef] sm:w-auto"
+              >
+                Create founder profile
+              </button>
+              <button
+                type="button"
+                onClick={() => navigate('/login?role=investor')}
+                className="inline-flex w-full items-center justify-center rounded-full border border-black/15 bg-white/60 px-6 py-3 text-sm font-semibold text-black transition-colors hover:bg-white sm:w-auto"
+              >
+                Create investor profile <ArrowUpRight className="ml-1 inline h-3.5 w-3.5 align-[-2px]" />
+              </button>
+            </div>
+          </div>
 
-          <div className="hidden bg-white/65 px-6 py-6 lg:block">
-            <div className="flex items-center justify-between pb-4">
-              <p className="text-sm font-semibold text-[#242424]">Live market pulse</p>
-              <Sparkles className="h-4 w-4 text-[#000000]" />
+          <div className="w-full">
+            <div
+              className="cli-card w-full"
+              role="img"
+              aria-label="The npx apparent build card: a verified founder profile rendered in the terminal from local git activity."
+            >
+              <div className="cli-card__bar" aria-hidden="true">
+                <i style={{ background: '#ff5f57' }} />
+                <i style={{ background: '#febc2e' }} />
+                <i style={{ background: '#28c840' }} />
+                <span className="t">founder@local: ~/medai</span>
+              </div>
+              <pre dangerouslySetInnerHTML={{ __html: CLI_CARD_HTML }} />
             </div>
-            <div className="grid grid-cols-2 gap-x-6 gap-y-5">
-              {[
-                ['312', 'builders mapped'],
-                ['86%', 'avg thesis fit'],
-                ['42', 'new launches'],
-                ['18', 'meetups live'],
-              ].map(([value, label]) => (
-                <div key={label} className="py-1">
-                  <p className="text-3xl font-normal tracking-[-0.04em]" style={serifDisplay}>
-                    {value}
-                  </p>
-                  <p className="mt-1 text-xs font-semibold uppercase tracking-[0.16em] text-black/45">{label}</p>
-                </div>
-              ))}
-            </div>
+            <p className="mt-4 flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.14em] text-black/40">
+              <Terminal className="h-3.5 w-3.5" /> Proof, rendered from real work — not a pitch deck
+            </p>
           </div>
         </div>
 
-        <div className="mt-10 grid gap-6 md:grid-cols-[minmax(0,1fr)_auto] md:items-end">
-          <p className="max-w-3xl text-lg leading-8 text-black/65 md:text-xl">
-            Founders show real proof of what they've built. Investors find builders who match what they're looking for.
-          </p>
-          <div className="flex flex-col gap-3 sm:flex-row">
-            <button
-              type="button"
-              onClick={() => navigate('/login?role=founder')}
-              className="w-full rounded-full bg-[#cfdaf5] px-6 py-3 text-sm font-semibold text-black hover:bg-[#bcc8ef] sm:w-auto"
-            >
-              Create founder profile
-            </button>
-            <button
-              type="button"
-              onClick={() => navigate('/login?role=investor')}
-              className="w-full rounded-full bg-[#cfdaf5] px-6 py-3 text-sm font-semibold text-black transition-colors hover:bg-[#bcc8ef] sm:w-auto"
-            >
-              Create investor profile <ArrowUpRight className="ml-1 inline h-3.5 w-3.5 align-[-2px]" />
-            </button>
-          </div>
+        {/* Live market pulse, as a clean stat strip. */}
+        <div className="mt-16 grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4">
+          {heroStats.map(([value, label]) => (
+            <div key={label} className="rounded-[24px] border border-black/5 bg-white/65 px-6 py-7">
+              <p className="text-4xl font-normal tracking-[-0.04em]" style={serifDisplay}>
+                {value}
+              </p>
+              <p className="mt-2 text-xs font-semibold uppercase tracking-[0.16em] text-black/45">{label}</p>
+            </div>
+          ))}
         </div>
       </section>
 
-      <section className="mx-auto grid max-w-[92rem] gap-8 border-t border-black/10 px-5 py-14 sm:px-8 lg:grid-cols-[0.95fr_1.05fr] lg:items-stretch">
+      {/* Two inputs: founder proof + investor thesis, as a diptych of better cards. */}
+      <section data-reveal className="reveal mx-auto max-w-[92rem] border-t border-black/10 px-5 py-16 sm:px-8">
+        <div className="flex flex-col justify-between gap-6 md:flex-row md:items-end">
+          <h2 className="max-w-3xl text-4xl font-normal leading-[1.02] tracking-[-0.045em] md:text-6xl" style={serifDisplay}>
+            Two inputs the network actually trusts.
+          </h2>
+          <p className="max-w-md text-base leading-7 text-black/55">
+            One side is evidence. The other is taste. Apparent turns both into a single, searchable signal.
+          </p>
+        </div>
+
+        <div className="mt-12 grid gap-5 lg:grid-cols-2">
+          {/* Founder proof — light card */}
+          <article className="flex flex-col rounded-[36px] border border-black/5 bg-white/75 p-8 transition-shadow duration-300 hover:shadow-[0_22px_60px_rgba(0,0,0,0.07)] md:p-10">
+            <div className="flex items-center justify-between">
+              <div className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-[#cfdaf5] text-[#242424]">
+                <Terminal className="h-5 w-5" />
+              </div>
+              <span className="text-xs font-semibold uppercase tracking-[0.16em] text-black/40">The founder side</span>
+            </div>
+            <h3 className="mt-8 text-3xl font-normal tracking-[-0.035em] md:text-4xl" style={serifDisplay}>
+              Proof, not a pitch.
+            </h3>
+            <p className="mt-4 text-sm leading-7 text-black/55">
+              Run <span className="font-mono text-[0.9em] text-[#242424]">npx apparent</span> and shipped work — code, launches, traction, place — becomes a verified profile investors can actually trust.
+            </p>
+            <div className="mt-8 grid gap-px overflow-hidden rounded-[22px] border border-black/5 bg-black/5">
+              {proofSignals.map(([label, text]) => (
+                <div key={label} className="bg-[#f6f3f1] px-5 py-4">
+                  <p className="text-sm font-semibold">{label}</p>
+                  <p className="mt-1 text-sm leading-6 text-black/55">{text}</p>
+                </div>
+              ))}
+            </div>
+            <span className="mt-7 inline-flex w-fit items-center gap-2 rounded-full bg-[#242424] px-3.5 py-1.5 font-mono text-xs text-white/85">
+              <span className="text-[#9cff9c]">$</span> npx apparent
+            </span>
+          </article>
+
+          {/* Investor thesis — dark card */}
+          <article className="flex flex-col rounded-[36px] bg-[#242424] p-8 text-white transition-shadow duration-300 hover:shadow-[0_22px_60px_rgba(0,0,0,0.18)] md:p-10">
+            <div className="flex items-center justify-between">
+              <div className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-[#cfdaf5] text-[#242424]">
+                <Crosshair className="h-5 w-5" />
+              </div>
+              <span className="text-xs font-semibold uppercase tracking-[0.16em] text-white/40">The investor side</span>
+            </div>
+            <h3 className="mt-8 text-3xl font-normal tracking-[-0.035em] md:text-4xl" style={serifDisplay}>
+              Thesis, made searchable.
+            </h3>
+            <p className="mt-4 text-sm leading-7 text-white/55">
+              Sector, stage, geography, check size, and founder signals become reusable sourcing criteria — a private desk that finds builders for you.
+            </p>
+            <div className="mt-8 grid gap-px overflow-hidden rounded-[22px] bg-white/10">
+              {thesisCriteria.map(([label, text]) => (
+                <div key={label} className="bg-[#242424] px-5 py-4">
+                  <p className="text-sm font-semibold">{label}</p>
+                  <p className="mt-1 text-sm leading-6 text-white/55">{text}</p>
+                </div>
+              ))}
+            </div>
+            <span className="mt-7 inline-flex w-fit items-center gap-2 rounded-full bg-[#cfdaf5] px-3.5 py-1.5 text-xs font-semibold text-[#242424]">
+              <Sparkles className="h-3.5 w-3.5" /> Private sourcing desk
+            </span>
+          </article>
+        </div>
+      </section>
+
+      {/* Discovery + Builder Radar map. */}
+      <section data-reveal className="reveal mx-auto grid max-w-[92rem] gap-8 border-t border-black/10 px-5 py-14 sm:px-8 lg:grid-cols-[0.95fr_1.05fr] lg:items-stretch">
         <div className="py-4 lg:py-8">
           <h2 className="text-5xl font-normal leading-none tracking-[-0.045em] md:text-7xl" style={serifDisplay}>
             Discovery should start with evidence.
@@ -443,10 +547,10 @@ export const OurThesis = () => {
           <p className="mt-8 max-w-2xl text-base leading-8 text-black/60">
             Warm intros are a weak database. Apparent makes the useful parts visible: what builders shipped, what investors want, where momentum is forming, and what should happen next.
           </p>
-          <div className="mt-10 grid gap-5">
+          <div className="mt-10 grid gap-3">
             {marketRows.map(([number, title, text]) => (
-              <div key={number} className="grid gap-4 sm:grid-cols-[3rem_1fr]">
-                <span className="text-sm font-semibold text-black/45">{number}</span>
+              <div key={number} className="group grid gap-4 rounded-[22px] border border-black/5 bg-white/55 px-5 py-5 transition-colors hover:bg-white/85 sm:grid-cols-[2.5rem_1fr]">
+                <span className="text-sm font-semibold text-black/35">{number}</span>
                 <p className="text-sm leading-6 text-black/65">
                   <span className="font-semibold text-black">{title}:</span> {text}
                 </p>
@@ -462,7 +566,7 @@ export const OurThesis = () => {
           </button>
         </div>
 
-        <div className="overflow-hidden rounded-[40px] bg-white/80 shadow-[0_18px_60px_rgba(0,0,0,0.06)]">
+        <div className="overflow-hidden rounded-[40px] border border-black/5 bg-white/80 shadow-[0_18px_60px_rgba(0,0,0,0.06)]">
           <div className="flex flex-wrap gap-2 bg-[#f6f3f1]/92 px-5 py-4 backdrop-blur">
             {landingClusters.map((cluster) => (
               <button
@@ -560,7 +664,7 @@ export const OurThesis = () => {
         </div>
       </section>
 
-      <section className="mx-auto max-w-[92rem] px-5 py-10 sm:px-8">
+      <section data-reveal className="reveal mx-auto max-w-[92rem] px-5 py-10 sm:px-8">
         <div className="flex min-h-[300px] items-center overflow-hidden rounded-[40px] bg-[#242424] px-8 py-14 text-white md:min-h-[360px] md:px-16">
           <div>
             <h2 className="max-w-4xl text-4xl font-normal leading-[1.05] tracking-[-0.04em] md:text-6xl" style={serifDisplay}>
@@ -573,38 +677,50 @@ export const OurThesis = () => {
         </div>
       </section>
 
-      <section className="mx-auto max-w-[92rem] border-t border-black/10 px-5 py-16 sm:px-8">
+      <section data-reveal className="reveal mx-auto max-w-[92rem] border-t border-black/10 px-5 py-16 sm:px-8">
         <div className="pt-2">
           <h2 className="max-w-4xl text-5xl font-normal leading-none tracking-[-0.045em] md:text-7xl" style={serifDisplay}>
             The network is only useful when the context travels.
           </h2>
-          <div className="mt-24 grid gap-10 md:grid-cols-4">
-            {productSurfaces.map((surface) => (
-              <article key={surface.title} className="pt-1">
-                <surface.icon className="mb-8 h-5 w-5 text-black" />
+          <div className="mt-16 grid gap-5 md:grid-cols-2 lg:grid-cols-4">
+            {productSurfaces.map((surface, i) => (
+              <article
+                key={surface.title}
+                data-reveal
+                style={{ transitionDelay: `${i * 90}ms` }}
+                className="reveal group flex flex-col rounded-[28px] border border-black/5 bg-white/70 p-7 transition-all duration-300 hover:-translate-y-1 hover:bg-white hover:shadow-[0_22px_55px_rgba(0,0,0,0.08)]"
+              >
+                <div className="mb-7 inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-[#cfdaf5] text-[#242424] transition-transform duration-300 group-hover:scale-105">
+                  <surface.icon className="h-5 w-5" />
+                </div>
                 <h3 className="text-xl font-normal tracking-[-0.025em]" style={serifDisplay}>
                   {surface.title}
                 </h3>
-                <p className="mt-5 text-sm leading-6 text-black/55">{surface.text}</p>
+                <p className="mt-4 text-sm leading-6 text-black/55">{surface.text}</p>
+                <span className="mt-6 inline-flex items-center gap-1 text-xs font-semibold uppercase tracking-[0.14em] text-black/35 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
+                  Inside Apparent <ArrowUpRight className="h-3 w-3" />
+                </span>
               </article>
             ))}
           </div>
         </div>
       </section>
 
-      <section id="signals" className="mx-auto max-w-[92rem] border-t border-black/10 px-5 py-16 sm:px-8">
-        <div className="grid overflow-hidden rounded-[40px] bg-white/80 shadow-[0_18px_60px_rgba(0,0,0,0.06)] lg:grid-cols-[0.82fr_1.18fr]">
+      <section id="signals" data-reveal className="reveal mx-auto max-w-[92rem] border-t border-black/10 px-5 py-16 sm:px-8">
+        <div className="grid overflow-hidden rounded-[40px] border border-black/5 bg-white/80 shadow-[0_18px_60px_rgba(0,0,0,0.06)] lg:grid-cols-[0.82fr_1.18fr]">
           <div className="p-6 sm:p-8">
-            <Target className="mb-10 h-6 w-6 text-[#000000]" />
-            <h2 className="max-w-xl text-5xl font-normal leading-none tracking-[-0.045em] md:text-7xl" style={serifDisplay}>
+            <div className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-[#cfdaf5] text-[#242424]">
+              <Target className="h-5 w-5" />
+            </div>
+            <h2 className="mt-10 max-w-xl text-5xl font-normal leading-none tracking-[-0.045em] md:text-7xl" style={serifDisplay}>
               Signals become sourceable.
             </h2>
             <p className="mt-6 max-w-lg text-base leading-7 text-black/60">
               Investors see ranked proof. Founders see who matches their build. Everyone gets direct paths into profiles, DMs, meetups, and next steps.
             </p>
-            <div className="mt-10 grid gap-5">
+            <div className="mt-10 grid gap-3">
               {proofSignals.map(([label, value]) => (
-                <div key={label} className="grid gap-2 sm:grid-cols-[8rem_1fr]">
+                <div key={label} className="grid gap-2 rounded-[18px] border border-black/5 bg-[#f6f3f1] px-5 py-4 sm:grid-cols-[8rem_1fr]">
                   <p className="text-sm font-semibold">{label}</p>
                   <p className="text-sm leading-6 text-black/55">{value}</p>
                 </div>
@@ -620,47 +736,40 @@ export const OurThesis = () => {
               </div>
               <span className="rounded-full bg-[#cfdaf5] px-3 py-1 text-xs font-semibold text-black">Avg fit 90%</span>
             </div>
-            {signalRows.map((row) => (
-              <div key={row.company} className="grid gap-4 px-6 py-6 sm:grid-cols-[1fr_auto] sm:items-center sm:px-8">
-                <div>
-                  <div className="flex flex-wrap items-center gap-2">
-                    <h3 className="text-xl font-semibold">{row.company}</h3>
-                    <span className="text-sm text-black/45">by {row.founder}</span>
+            <div className="space-y-3 px-4 pb-4 sm:px-5 sm:pb-5">
+              {signalRows.map((row) => (
+                <div key={row.company} className="grid gap-4 rounded-[22px] border border-black/5 bg-white/75 px-5 py-5 transition-colors hover:bg-white sm:grid-cols-[1fr_auto] sm:items-center sm:px-6">
+                  <div>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <h3 className="text-xl font-semibold">{row.company}</h3>
+                      <span className="text-sm text-black/45">by {row.founder}</span>
+                    </div>
+                    <p className="mt-2 text-sm leading-6 text-black/60">{row.detail}</p>
+                    <p className="mt-3 text-xs font-semibold uppercase tracking-[0.14em] text-[#242424]">{row.source}</p>
                   </div>
-                  <p className="mt-2 text-sm leading-6 text-black/60">{row.detail}</p>
-                  <p className="mt-3 text-xs font-semibold uppercase tracking-[0.14em] text-[#242424]">{row.source}</p>
+                  <div className="flex items-center gap-2">
+                    <span className="rounded-full bg-[#cfdaf5] px-3 py-1.5 text-sm font-semibold text-black">{row.fit}</span>
+                    <button type="button" className="rounded-full border border-black/10 bg-white/80 px-3 py-1.5 text-sm font-semibold transition-colors hover:bg-white">
+                      Open
+                    </button>
+                  </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <span className="rounded-full bg-[#cfdaf5] px-3 py-1.5 text-sm font-semibold text-black">{row.fit}</span>
-                  <button type="button" className="rounded-full bg-white/80 px-3 py-1.5 text-sm font-semibold hover:bg-white">
-                    Open
-                  </button>
-                </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         </div>
       </section>
 
-      <section className="mx-auto grid max-w-[92rem] gap-8 border-t border-black/10 px-5 py-16 sm:px-8 lg:grid-cols-[0.95fr_1.05fr] lg:items-start">
-        <div className="overflow-hidden rounded-[40px] bg-white/80 shadow-[0_18px_60px_rgba(0,0,0,0.06)] lg:rounded-r-none">
+      <section data-reveal className="reveal mx-auto grid max-w-[92rem] gap-8 border-t border-black/10 px-5 py-16 sm:px-8 lg:grid-cols-[1.05fr_0.95fr] lg:items-start">
+        <div className="overflow-hidden rounded-[40px] border border-black/5 bg-white/80 shadow-[0_18px_60px_rgba(0,0,0,0.06)]">
           <div className="flex items-start justify-between gap-4 px-6 py-6 sm:px-8">
             <div>
               <p className="text-sm font-semibold">Deal-flow board</p>
               <p className="mt-1 text-sm text-black/45">Saved builders move with their source, proof, and outreach context attached.</p>
             </div>
-            <Route className="mt-1 h-5 w-5 shrink-0 text-[#242424]" />
-          </div>
-
-          <div className="grid gap-3 px-6 pb-3 sm:grid-cols-3 sm:px-8">
-            {dealFlowPreview.map((column) => (
-              <div key={column.stage} className="rounded-[22px] bg-[#f6f3f1] px-5 py-4">
-                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-black/45">{column.stage}</p>
-                <p className="mt-2 text-4xl font-normal leading-none tracking-[-0.045em]" style={serifDisplay}>
-                  {column.count}
-                </p>
-              </div>
-            ))}
+            <div className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#cfdaf5] text-[#242424]">
+              <Route className="h-5 w-5" />
+            </div>
           </div>
 
           <div className="grid gap-4 p-4 lg:grid-cols-3">
@@ -671,12 +780,10 @@ export const OurThesis = () => {
                   <span className="rounded-full bg-[#cfdaf5] px-2.5 py-1 text-xs font-semibold text-black">{column.count}</span>
                 </div>
                 <div className="space-y-3">
-                  {column.items.map(([company, fit, note], index) => (
+                  {column.items.map(([company, fit, note]) => (
                     <div
                       key={company}
-                      className={`bg-white/75 p-4 transition-colors hover:bg-white ${
-                        index === 0 ? 'rounded-[20px]' : 'rounded-[16px]'
-                      }`}
+                      className="rounded-[18px] border border-black/5 bg-white/80 p-4 transition-colors hover:bg-white"
                     >
                       <div className="flex items-center justify-between gap-3">
                         <h3 className="font-semibold tracking-[-0.02em]">{company}</h3>
@@ -696,19 +803,19 @@ export const OurThesis = () => {
           </div>
         </div>
 
-        <div className="px-0 py-10 lg:px-14 lg:py-16">
-          <div className="rounded-[28px] bg-[#242424] p-8 text-white md:p-10">
+        <div className="lg:py-4">
+          <div className="rounded-[36px] bg-[#242424] p-8 text-white md:p-10">
             <blockquote className="text-3xl font-normal leading-tight tracking-[-0.03em] md:text-4xl" style={serifDisplay}>
-              “The best early companies are visible before they are famous. Apparent is designed for that exact window.”
+              &ldquo;The best early companies are visible before they are famous. Apparent is designed for that exact window.&rdquo;
             </blockquote>
           </div>
-          <div className="mt-10 grid gap-6">
+          <div className="mt-8 grid gap-4">
             {[
               ['For founders', 'Your shipped work becomes the discovery surface.'],
               ['For investors', 'Your thesis becomes a repeatable sourcing system.'],
               ['For the network', 'Place, proof, message, meetup, and terms stay connected.'],
             ].map(([title, text]) => (
-              <div key={title}>
+              <div key={title} className="rounded-[22px] border border-black/5 bg-white/55 px-6 py-5">
                 <h3 className="text-base font-semibold">{title}</h3>
                 <p className="mt-2 text-sm leading-6 text-black/55">{text}</p>
               </div>
@@ -717,9 +824,9 @@ export const OurThesis = () => {
         </div>
       </section>
 
-      <section id="how-to" className="mx-auto max-w-[92rem] border-t border-black/10 px-5 py-16 sm:px-8">
+      <section id="how-to" data-reveal className="reveal mx-auto max-w-[92rem] border-t border-black/10 px-5 py-16 sm:px-8">
         <div className="py-2">
-          <div className="mb-12 flex flex-col justify-between gap-6 md:flex-row md:items-end">
+          <div className="mb-14 flex flex-col justify-between gap-6 md:flex-row md:items-end">
             <h2 className="max-w-4xl text-5xl font-normal leading-none tracking-[-0.045em] md:text-8xl" style={serifDisplay}>
               A network that starts with proof.
             </h2>
@@ -731,11 +838,23 @@ export const OurThesis = () => {
               Enter Apparent <MoveRight className="h-4 w-4" />
             </button>
           </div>
-          <div className="grid gap-10 lg:grid-cols-3">
+          <div className="grid gap-5 lg:grid-cols-3">
             {workflowItems.map((item, index) => (
-              <div key={item.title} className="py-3 lg:px-7 lg:first:pl-0">
-                <p className="mb-8 text-sm font-semibold text-black/45">0{index + 1}</p>
-                <h3 className="text-xl font-semibold">{item.title}</h3>
+              <div
+                key={item.title}
+                data-reveal
+                style={{ transitionDelay: `${index * 90}ms` }}
+                className="reveal group rounded-[28px] border border-black/5 bg-white/70 p-8 transition-all duration-300 hover:-translate-y-1 hover:bg-white hover:shadow-[0_22px_55px_rgba(0,0,0,0.08)]"
+              >
+                <div className="flex items-center justify-between">
+                  <span className="text-5xl font-normal leading-none tracking-[-0.05em] text-black/15" style={serifDisplay}>
+                    0{index + 1}
+                  </span>
+                  <div className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-[#cfdaf5] text-[#242424]">
+                    <item.icon className="h-5 w-5" />
+                  </div>
+                </div>
+                <h3 className="mt-8 text-xl font-semibold">{item.title}</h3>
                 <p className="mt-3 max-w-sm text-sm leading-6 text-black/60">{item.text}</p>
               </div>
             ))}
@@ -743,7 +862,7 @@ export const OurThesis = () => {
         </div>
       </section>
 
-      <section className="mx-auto max-w-[92rem] border-t border-black/10 px-5 py-20 sm:px-8">
+      <section data-reveal className="reveal mx-auto max-w-[92rem] border-t border-black/10 px-5 py-20 sm:px-8">
         <div className="py-10 text-center">
           <Bell className="mx-auto mb-10 h-6 w-6 text-[#000000]" />
           <h2 className="mx-auto max-w-4xl text-5xl font-normal leading-none tracking-[-0.045em] md:text-7xl" style={serifDisplay}>
