@@ -161,6 +161,77 @@
   transform: none;
 }
 
+/* npx apparent build card — terminal mock for the for-founders hero. */
+.cli-card {
+  background: #15170d;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.18);
+}
+.cli-card__bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  background: #20240f;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+.cli-card__bar i {
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  display: inline-block;
+}
+.cli-card__bar .t {
+  margin-left: 8px;
+  font-family: ui-monospace, "SF Mono", "Cascadia Mono", Menlo, Consolas, monospace;
+  font-size: 12px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.42);
+}
+.cli-card pre {
+  margin: 0;
+  padding: 16px 20px 18px;
+  font-family: ui-monospace, "SF Mono", "Cascadia Mono", Menlo, Consolas, monospace;
+  font-size: 13px;
+  line-height: 1.34;
+  color: #d2d0c5;
+  white-space: pre;
+  overflow-x: auto;
+  letter-spacing: 0;
+}
+@media (max-width: 600px) {
+  .cli-card pre {
+    font-size: 2.2vw;
+  }
+}
+.cli-card .g {
+  color: #9bbb16;
+}
+.cli-card .bg {
+  color: #9cff9c;
+}
+.cli-card .cy {
+  color: #3fdede;
+}
+.cli-card .yl {
+  color: #ffb02e;
+}
+.cli-card .w {
+  color: #efece3;
+}
+.cli-card .bw {
+  color: #ffffff;
+  font-weight: 700;
+}
+.cli-card .d {
+  color: rgba(255, 255, 255, 0.4);
+}
+.cli-card .fr {
+  color: #6f9a6f;
+}
+
 .monad-trust-pill,
 .monad-map-frame,
 .monad-feature-card,

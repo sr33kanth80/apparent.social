@@ -2,6 +2,7 @@ import { ArrowUpRight, CheckCircle2, FileText, Map, MapPin, Play, Rocket, Search
 import { useNavigate } from 'react-router-dom';
 import { GitHubIcon } from '../components/GitHubIcon';
 import { useReveal } from '../lib/useReveal';
+import { CLI_CARD_HTML } from '../components/cliCardHtml';
 
 const serifDisplay = {
   fontFamily: "'Source Serif 4', ui-serif, Georgia, 'Times New Roman', serif",
@@ -52,17 +53,32 @@ export const ForFounders = () => {
           <br />
           find its fit.
         </h1>
-        <div className="mt-10 grid gap-6 md:grid-cols-[minmax(0,1fr)_auto] md:items-end">
-          <p className="max-w-2xl text-lg leading-8 text-black/65 md:text-xl">
-            Run <span className="font-mono text-[0.9em] text-[#242424]">npx apparent</span> and what you&apos;ve shipped becomes a verified proof profile. Then your AI agent matches and reaches the investors whose thesis, stage, and sector actually fit your raise. No warm intro required.
-          </p>
-          <button
-            type="button"
-            onClick={() => navigate('/login?role=founder')}
-            className="w-full rounded-full bg-[#cfdaf5] px-6 py-3 text-sm font-semibold text-black hover:bg-[#bcc8ef] sm:w-auto"
+        <div className="mt-12 grid gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,34rem)] lg:items-center">
+          <div className="flex flex-col items-start gap-8">
+            <p className="max-w-2xl text-lg leading-8 text-black/65 md:text-xl">
+              Run <span className="font-mono text-[0.9em] text-[#242424]">npx apparent</span> and what you&apos;ve shipped becomes a verified proof profile. Then your AI agent matches and reaches the investors whose thesis, stage, and sector actually fit your raise. No warm intro required.
+            </p>
+            <button
+              type="button"
+              onClick={() => navigate('/login?role=founder')}
+              className="w-full rounded-full bg-[#cfdaf5] px-6 py-3 text-sm font-semibold text-black hover:bg-[#bcc8ef] sm:w-auto"
+            >
+              Create founder profile <ArrowUpRight className="ml-1 inline h-3.5 w-3.5 align-[-2px]" />
+            </button>
+          </div>
+          <div
+            className="cli-card w-full"
+            role="img"
+            aria-label="The npx apparent build card: a verified founder profile rendered in the terminal from local git activity."
           >
-            Create founder profile <ArrowUpRight className="ml-1 inline h-3.5 w-3.5 align-[-2px]" />
-          </button>
+            <div className="cli-card__bar" aria-hidden="true">
+              <i style={{ background: '#ff5f57' }} />
+              <i style={{ background: '#febc2e' }} />
+              <i style={{ background: '#28c840' }} />
+              <span className="t">founder@local: ~/medai</span>
+            </div>
+            <pre dangerouslySetInnerHTML={{ __html: CLI_CARD_HTML }} />
+          </div>
         </div>
       </section>
 
