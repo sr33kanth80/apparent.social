@@ -100,17 +100,29 @@ try {
   console.warn(`⚠ could not inline Inter (${err.message}); rendering with live font load`);
 }
 
-// Only the real <section class="slide" data-slide="…"> elements, in DOM order.
+// The real <section class="slide" data-slide="…"> elements, in DOM order.
 // (data-slide also appears on a thumbnail/index block, so scope to sections.)
-const slideNames = [...html.matchAll(/<section\b[^>]*>/g)]
+const domOrder = [...html.matchAll(/<section\b[^>]*>/g)]
   .map((m) => m[0])
   .filter((tag) => /\bclass="slide(\s|")/.test(tag))
   .map((tag) => (tag.match(/data-slide="([^"]+)"/) || [])[1])
   .filter(Boolean);
-if (slideNames.length === 0) {
+if (domOrder.length === 0) {
   console.error('No .slide[data-slide] elements found.');
   process.exit(1);
 }
+
+// The deck arranges slides visually with CSS flex `order`, which overrides DOM
+// order (e.g. Team & Ask is moved up right after The Solution). Honor that so
+// the PDF matches the on-screen presentation order. Slides without an explicit
+// order rule keep their DOM position.
+const orderMap = new Map(
+  [...html.matchAll(/\.slide\[data-slide="([^"]+)"\]\s*\{\s*order:\s*(\d+)/g)].map((m) => [m[1], Number(m[2])]),
+);
+const slideNames = domOrder
+  .map((name, i) => ({ name, rank: orderMap.has(name) ? orderMap.get(name) : 1000 + i }))
+  .sort((a, b) => a.rank - b.rank)
+  .map((s) => s.name);
 console.log(`Found ${slideNames.length} slides. Capturing at ${W * SCALE}x${H * SCALE}…`);
 
 // 1) Screenshot each slide alone, at native size, with Inter baked in.
