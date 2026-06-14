@@ -5,17 +5,47 @@ import {
   Bot,
   Check,
   GitBranch,
+  GraduationCap,
+  Layout,
+  LayoutDashboard,
+  Map,
   MapPin,
   MessageSquareText,
+  MessagesSquare,
   Radar,
+  Rocket,
+  Search,
   Send,
+  Settings,
   Sparkles,
+  UserCircle,
 } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 import { LogoIcon } from './LogoIcon';
+
+// Mirrors the real founder sidebar (src/components/ui/sidebar.tsx) so the
+// landing-page hero depicts the actual dashboard navigation, not a generic mock.
+type NavItem = { label: string; icon: LucideIcon; badge?: string; active?: boolean };
+const navGroups: NavItem[][] = [
+  [
+    { label: 'Overview', icon: LayoutDashboard, active: true },
+    { label: 'Your Profile', icon: UserCircle },
+    { label: 'Products', icon: Rocket },
+    { label: 'Investor Matches', icon: Search, badge: 'AI' },
+    { label: 'VC heatmap', icon: Map, badge: 'VC' },
+    { label: 'Cold Outreach', icon: Send, badge: 'New' },
+    { label: 'Messages', icon: MessagesSquare },
+  ],
+  [{ label: 'Fundraise Tracker', icon: Layout }],
+  [
+    { label: 'How to Use Apparent?', icon: GraduationCap },
+    { label: 'Feedback', icon: MessageSquareText },
+  ],
+];
 
 const proofSignals = [
   { label: 'GitHub verified', value: '218 commits', icon: GitBranch },
-  { label: 'Launch shipped', value: '3 products', icon: Sparkles },
+  { label: 'Products shipped', value: '3 launches', icon: Sparkles },
   { label: 'Founder location', value: 'Seattle', icon: MapPin },
 ];
 
@@ -24,6 +54,9 @@ const investorMatches = [
   { name: 'Pioneer Fund', thesis: 'Developer infrastructure', fit: '91%' },
   { name: 'Gradient Capital', thesis: 'Seed, technical teams', fit: '87%' },
 ];
+
+const badgeClass =
+  'rounded bg-gradient-to-r from-[#ff7a52] via-[#7e9bf0] to-[#37d28b] px-1.5 py-px text-[9px] font-semibold text-ink';
 
 export const DataFlowDiagram = () => {
   return (
@@ -43,7 +76,7 @@ export const DataFlowDiagram = () => {
               </div>
               <div className="flex items-center gap-2 rounded-full border border-ink/12 bg-parchment/70 px-3 py-1.5">
                 <LogoIcon className="h-4 w-4 text-ink" />
-                <span className="font-mono text-[11px] font-semibold text-ink">Apparent workspace</span>
+                <span className="font-mono text-[11px] font-semibold text-ink">Founder Workspace</span>
               </div>
             </div>
             <div className="flex items-center gap-2 rounded-full border border-ink/12 bg-white/55 px-3 py-1.5 font-mono text-[10px] uppercase tracking-[0.14em] text-graphite">
@@ -53,42 +86,68 @@ export const DataFlowDiagram = () => {
           </div>
         </div>
 
-        <div className="relative z-10 grid gap-4 p-4 sm:p-5 lg:grid-cols-[12rem_minmax(0,1fr)_22rem] lg:p-6">
-          <aside className="hidden rounded-[28px] border border-ink/10 bg-parchment/62 p-4 lg:block">
-            <div className="mb-6 flex items-center gap-2">
-              <div className="grid h-9 w-9 place-items-center rounded-2xl bg-ink text-parchment">
-                <LogoIcon className="h-4 w-4" />
-              </div>
-              <div>
-                <p className="font-mono text-[11px] font-semibold text-ink">Apparent</p>
-                <p className="font-mono text-[10px] text-stone">founder view</p>
-              </div>
+        <div className="relative z-10 grid gap-4 p-4 sm:p-5 lg:grid-cols-[14rem_minmax(0,1fr)_20rem] lg:p-6">
+          {/* Sidebar — the real founder navigation. */}
+          <aside className="hidden flex-col rounded-[24px] border border-ink/10 bg-white/85 p-3 lg:flex">
+            <div className="mb-4 flex items-center gap-2 px-1 pt-1">
+              <LogoIcon className="h-6 w-6 text-ink" />
+              <img src="/apparent-wordmark.png" alt="Apparent" className="h-5 w-auto object-contain" />
             </div>
-            {['Proof profile', 'Investor matches', 'Agent outreach'].map((item, index) => (
-              <div
-                key={item}
-                className={`mb-2 rounded-2xl px-3 py-2.5 font-mono text-[11px] ${
-                  index === 0 ? 'bg-ink text-parchment' : 'text-graphite'
-                }`}
-              >
-                {item}
+            <nav className="flex flex-col gap-1">
+              {navGroups.map((group, groupIndex) => (
+                <div key={groupIndex} className="flex flex-col gap-1">
+                  {groupIndex > 0 && <div className="my-1.5 h-px w-full bg-ink/10" />}
+                  {group.map((item) => {
+                    const Icon = item.icon;
+                    return (
+                      <div
+                        key={item.label}
+                        className={`flex h-8 items-center gap-2 rounded-md px-2 font-mono text-[11px] ${
+                          item.active ? 'bg-[#cfdaf5] text-ink' : 'text-graphite'
+                        }`}
+                      >
+                        <Icon className="h-3.5 w-3.5 shrink-0" />
+                        <span className="truncate">{item.label}</span>
+                        {item.badge && <span className={`ml-auto ${badgeClass}`}>{item.badge}</span>}
+                      </div>
+                    );
+                  })}
+                </div>
+              ))}
+            </nav>
+            <div className="mt-auto flex flex-col gap-1 pt-3">
+              <div className="flex h-8 items-center gap-2 rounded-md px-2 font-mono text-[11px] text-graphite">
+                <Settings className="h-3.5 w-3.5 shrink-0" />
+                <span>Settings</span>
               </div>
-            ))}
-            <div className="mt-8 rounded-3xl border border-ink/10 bg-white/48 p-3">
-              <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-stone">Agent status</p>
-              <div className="mt-3 flex items-center gap-2">
-                <Bot className="h-4 w-4 text-ink" />
-                <p className="font-mono text-[11px] text-graphite">Drafting warm paths</p>
+              <div className="flex h-8 items-center gap-2 rounded-md px-2 font-mono text-[11px] text-graphite">
+                <span className="grid h-5 w-5 shrink-0 place-items-center rounded-full bg-ink text-[9px] font-semibold text-parchment">
+                  RP
+                </span>
+                <span>Account</span>
               </div>
             </div>
           </aside>
 
           <main className="grid gap-4">
-            <section className="apparent-hero-panel relative overflow-hidden rounded-[32px] border border-ink/10 p-5 sm:p-6">
+            {/* Founder profile header + strength score. */}
+            <section className="apparent-hero-panel relative overflow-hidden rounded-[28px] border border-ink/10 p-5 sm:p-6">
               <div className="apparent-hero-scan" aria-hidden />
               <div className="flex flex-wrap items-start justify-between gap-4">
-                <div>
-                  <div className="mb-4 flex flex-wrap gap-2">
+                <div className="min-w-0">
+                  <div className="flex items-center gap-3">
+                    <div className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-ink font-mono text-sm font-semibold text-parchment">
+                      RP
+                    </div>
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-1.5">
+                        <p className="font-serif text-[26px] leading-none text-ink">Raj Patel</p>
+                        <BadgeCheck className="h-5 w-5 text-[#7e9bf0]" />
+                      </div>
+                      <p className="mt-1.5 font-mono text-[11px] text-stone">@rajpatel · Founder · Seattle</p>
+                    </div>
+                  </div>
+                  <div className="mt-4 flex flex-wrap gap-2">
                     <span className="inline-flex items-center gap-1.5 rounded-full bg-[#cfdaf5] px-3 py-1 font-mono text-[10px] font-semibold text-ink">
                       <BadgeCheck className="h-3 w-3" />
                       Verified proof
@@ -96,14 +155,8 @@ export const DataFlowDiagram = () => {
                     <span className="rounded-full border border-ink/12 px-3 py-1 font-mono text-[10px] text-graphite">Seed</span>
                     <span className="rounded-full border border-ink/12 px-3 py-1 font-mono text-[10px] text-graphite">AI devtools</span>
                   </div>
-                  <h2 className="max-w-xl font-serif text-[clamp(2rem,4vw,3.6rem)] leading-[0.96] text-ink">
-                    Founder profile that proves the work.
-                  </h2>
-                  <p className="mt-4 max-w-lg font-mono text-[13px] leading-6 text-graphite">
-                    Apparent turns shipped products, public code, traction, and raise context into one investor-ready profile.
-                  </p>
                 </div>
-                <div className="apparent-hero-score rounded-[28px] border border-ink/12 bg-parchment/78 p-4 text-center">
+                <div className="apparent-hero-score rounded-[24px] border border-ink/12 bg-parchment/78 p-4 text-center">
                   <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-stone">Profile strength</p>
                   <p className="mt-2 font-serif text-5xl leading-none text-ink">94</p>
                   <p className="mt-1 font-mono text-[10px] text-graphite">ready to match</p>
@@ -128,7 +181,7 @@ export const DataFlowDiagram = () => {
               })}
             </section>
 
-            <section className="apparent-hero-agent rounded-[30px] border border-ink/10 bg-parchment/62 p-4 sm:p-5">
+            <section className="apparent-hero-agent rounded-[28px] border border-ink/10 bg-parchment/62 p-4 sm:p-5">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div className="flex items-center gap-3">
                   <div className="grid h-10 w-10 place-items-center rounded-2xl bg-ink text-parchment">
@@ -148,10 +201,13 @@ export const DataFlowDiagram = () => {
           </main>
 
           <aside className="grid gap-4">
-            <section className="apparent-hero-panel rounded-[32px] border border-ink/10 p-4 sm:p-5">
+            <section className="apparent-hero-panel rounded-[28px] border border-ink/10 p-4 sm:p-5">
               <div className="mb-4 flex items-center justify-between gap-3">
                 <div>
-                  <p className="font-serif text-[25px] leading-tight text-ink">Investor matches</p>
+                  <div className="flex items-center gap-2">
+                    <p className="font-serif text-[22px] leading-tight text-ink">Investor matches</p>
+                    <span className={badgeClass}>AI</span>
+                  </div>
                   <p className="mt-1 font-mono text-[11px] text-stone">Ranked by thesis fit</p>
                 </div>
                 <Radar className="h-5 w-5 text-ink" />
@@ -177,11 +233,12 @@ export const DataFlowDiagram = () => {
               </div>
             </section>
 
-            <section className="apparent-hero-draft rounded-[32px] border border-ink/10 p-4 sm:p-5">
-              <div className="mb-4 flex items-center gap-2">
+            <section className="apparent-hero-draft rounded-[28px] border border-ink/10 p-4 sm:p-5">
+              <div className="mb-3 flex items-center gap-2">
                 <MessageSquareText className="h-4 w-4 text-ink" />
-                <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.14em] text-ink">Agent draft</p>
+                <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.14em] text-ink">Cold outreach</p>
               </div>
+              <p className="mb-3 font-mono text-[10px] text-stone">Agent drafted an intro to Northstar Ventures</p>
               <div className="grid gap-2">
                 <span className="apparent-hero-type-line apparent-hero-type-line--wide" />
                 <span className="apparent-hero-type-line" />
