@@ -53,7 +53,7 @@ const getDevSession = (): AppUser | null => {
 const createDevSession = (role: DashboardRole): AppUser => {
   const user: AppUser = {
     id: `dev-${role}`,
-    email: role === 'investor' ? 'partner@apparent.dev' : 'founder@apparent.dev',
+    email: role === 'investor' ? 'partner@apparent.social' : 'founder@apparent.social',
     role,
     isDev: true,
   };

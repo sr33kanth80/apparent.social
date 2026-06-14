@@ -676,7 +676,7 @@ const dashboardLaunchDomain = (url: string) => {
   try {
     return new URL(url).hostname.replace('www.', '');
   } catch {
-    return 'apparent.dev';
+    return 'apparent.social';
   }
 };
 
@@ -702,7 +702,7 @@ const productLaunchToDashboardRow = (
   saves: Math.max(18, launch.name.length * 5),
   comments: Math.max(3, launch.category.length || 3),
   momentum: launch.metrics || 'Fresh founder launch',
-  website: launch.launchUrl || launch.proofUrl || launch.sourceUrl || 'https://apparent.dev/',
+  website: launch.launchUrl || launch.proofUrl || launch.sourceUrl || 'https://apparent.social/',
   // External launches have no Apparent project page or founder profile — the
   // card links straight out to the original listing instead.
   projectPath: isExternal ? undefined : `/projects/${launch.slug || launch.id}`,
