@@ -20,6 +20,9 @@ import { spawnSync } from 'node:child_process';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const SRC = resolve(__dirname, 'apparent-pitch-deck.html');
+// So relative assets in the deck (e.g. founder-sree.png) resolve against the
+// promo/ folder even though the per-slide temp HTML lives in a subdirectory.
+const BASE_HREF = `file:///${__dirname.split('\\').join('/')}/`;
 const WORK = resolve(__dirname, '_pdf-build');
 const OUT = resolve(__dirname, 'apparent-pitch-deck.pdf');
 
@@ -118,7 +121,7 @@ slideNames.forEach((name, i) => {
     .slide { display:none !important; }
     .slide[data-slide="${name}"] { display:block !important; margin:0 !important; }
   </style>`;
-  const perSlide = html.replace('</head>', `${solo}\n</head>`);
+  const perSlide = html.replace('</head>', `<base href="${BASE_HREF}">\n${solo}\n</head>`);
   const htmlPath = resolve(WORK, `slide-${i}.html`);
   const pngPath = resolve(WORK, `slide-${i}.png`);
   writeFileSync(htmlPath, perSlide);
