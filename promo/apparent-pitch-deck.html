@@ -861,63 +861,68 @@
           <p class="body-sm" style="margin-top:12px; color:var(--green); font-weight:600;">Think LinkedIn: free to be found, paid to find. We monetize the demand side.</p>
         </div>
       </div>
-      <!-- Right: Visual illustration of the flywheel -->
+      <!-- Right: money-flow diagram. Founders feed free supply in; investors send cash in; Apparent keeps the subscription revenue. -->
       <svg viewBox="0 0 700 840" fill="none" xmlns="http://www.w3.org/2000/svg" style="width:100%; max-width:680px; justify-self:center;">
-        <text x="350" y="30" font-family="Inter" font-size="13" font-weight="700" fill="#6b665f" text-anchor="middle" letter-spacing="0.1em">HOW THE MONEY FLOWS</text>
-        <!-- Founders side (top) -->
-        <rect x="40" y="60" width="620" height="160" rx="20" fill="#dcefc7" stroke="#42520d" stroke-width="1.5"/>
-        <text x="100" y="100" font-family="Inter" font-size="12" font-weight="700" fill="#42520d" letter-spacing="0.1em">FOUNDERS (FREE)</text>
-        <!-- Flow steps -->
-        <rect x="80" y="115" width="140" height="70" rx="12" fill="#fff" opacity="0.7"/>
-        <text x="150" y="146" font-family="Inter" font-size="13" font-weight="700" fill="#42520d" text-anchor="middle">Sign up</text>
-        <text x="150" y="164" font-family="Inter" font-size="11" font-weight="500" fill="#6b665f" text-anchor="middle">Create profile</text>
-        <text x="237" y="150" font-family="Inter" font-size="18" font-weight="800" fill="#42520d">&rarr;</text>
-        <rect x="260" y="115" width="140" height="70" rx="12" fill="#fff" opacity="0.7"/>
-        <text x="330" y="146" font-family="Inter" font-size="13" font-weight="700" fill="#42520d" text-anchor="middle">Get verified</text>
-        <text x="330" y="164" font-family="Inter" font-size="11" font-weight="500" fill="#6b665f" text-anchor="middle">Code + traction</text>
-        <text x="417" y="150" font-family="Inter" font-size="18" font-weight="800" fill="#42520d">&rarr;</text>
-        <rect x="440" y="115" width="180" height="70" rx="12" fill="#fff" opacity="0.7"/>
-        <text x="530" y="146" font-family="Inter" font-size="13" font-weight="700" fill="#42520d" text-anchor="middle">Get discovered</text>
-        <text x="530" y="164" font-family="Inter" font-size="11" font-weight="500" fill="#6b665f" text-anchor="middle">Investors find you</text>
-        <!-- Arrow connecting founders to apparent -->
-        <line x1="350" y1="230" x2="350" y2="290" stroke="#42520d" stroke-width="2"/>
-        <polygon points="342,280 350,298 358,280" fill="#42520d"/>
-        <!-- Apparent hub -->
-        <rect x="200" y="300" width="300" height="100" rx="20" fill="#42520d"/>
-        <g transform="translate(230, 334) scale(0.125)"><path d="M128.005 191.173C128.448 156.208 156.93 128 192 128V64H128C128 99.346 99.346 128 64 128V192H128ZM192 256H64C28.654 256 0 227.346 0 192V64H64V0H192C227.346 0 256 28.654 256 64V192H192Z" fill="#dcefc7"/></g>
-        <text x="280" y="348" font-family="Inter" font-size="20" font-weight="800" fill="#fff">Apparent</text>
-        <text x="280" y="372" font-family="Inter" font-size="12" font-weight="500" fill="rgba(255,255,255,0.6)">Verifies, matches, connects</text>
-        <g transform="translate(426, 330)"><svg viewBox="0 0 22 22" width="28" height="28"><path fill="#1D9BF0" d="M20.396 11c-.018-.646-.215-1.275-.57-1.816-.354-.54-.852-.972-1.438-1.246.223-.607.27-1.264.14-1.897-.131-.634-.437-1.218-.882-1.687-.47-.445-1.053-.75-1.687-.882-.633-.13-1.29-.083-1.897.14-.273-.587-.704-1.086-1.245-1.44S11.647 1.62 11 1.604c-.646.017-1.273.213-1.813.568s-.969.854-1.24 1.44c-.608-.223-1.267-.272-1.902-.14-.635.13-1.22.436-1.69.882-.445.47-.749 1.055-.878 1.69-.13.635-.08 1.293.144 1.896-.587.274-1.087.705-1.443 1.245-.356.54-.555 1.17-.574 1.817.02.647.218 1.276.574 1.817.356.54.856.972 1.443 1.245-.224.604-.274 1.26-.144 1.896.13.636.433 1.221.878 1.69.47.446 1.055.752 1.69.883.635.13 1.294.083 1.902-.141.27.587.7 1.086 1.24 1.44s1.167.551 1.813.568c.647-.016 1.276-.213 1.817-.567s.972-.854 1.245-1.44c.604.224 1.26.272 1.895.141.636-.13 1.22-.436 1.69-.883.445-.468.749-1.053.882-1.688.13-.634.085-1.29-.138-1.896.587-.274 1.084-.705 1.438-1.246.354-.54.551-1.17.569-1.816zM9.662 14.85l-3.429-3.428 1.293-1.302 2.072 2.072 4.4-4.794 1.347 1.246z"/></svg></g>
-        <!-- Arrow from apparent to investors -->
-        <line x1="350" y1="410" x2="350" y2="470" stroke="#42520d" stroke-width="2"/>
-        <polygon points="342,460 350,478 358,460" fill="#42520d"/>
-        <!-- Dollar sign on arrow -->
-        <rect x="320" y="430" width="60" height="24" rx="12" fill="#dcefc7"/>
-        <text x="350" y="447" font-family="Inter" font-size="12" font-weight="700" fill="#42520d" text-anchor="middle">$ PAYS</text>
-        <!-- Investors side (bottom) -->
-        <rect x="40" y="480" width="620" height="160" rx="20" fill="#f4f1eb" stroke="#e4ded4" stroke-width="1.5"/>
-        <text x="100" y="520" font-family="Inter" font-size="12" font-weight="700" fill="#42520d" letter-spacing="0.1em">INVESTORS (PAID)</text>
-        <!-- Flow steps -->
-        <rect x="80" y="535" width="140" height="70" rx="12" fill="#fff" stroke="#e4ded4" stroke-width="1"/>
-        <text x="150" y="566" font-family="Inter" font-size="13" font-weight="700" fill="#111" text-anchor="middle">Subscribe</text>
-        <text x="150" y="584" font-family="Inter" font-size="11" font-weight="500" fill="#6b665f" text-anchor="middle">Pick a plan</text>
-        <text x="237" y="570" font-family="Inter" font-size="18" font-weight="800" fill="#42520d">&rarr;</text>
-        <rect x="260" y="535" width="140" height="70" rx="12" fill="#fff" stroke="#e4ded4" stroke-width="1"/>
-        <text x="330" y="566" font-family="Inter" font-size="13" font-weight="700" fill="#111" text-anchor="middle">Browse verified</text>
-        <text x="330" y="584" font-family="Inter" font-size="11" font-weight="500" fill="#6b665f" text-anchor="middle">Filter + rank</text>
-        <text x="417" y="570" font-family="Inter" font-size="18" font-weight="800" fill="#42520d">&rarr;</text>
-        <rect x="440" y="535" width="180" height="70" rx="12" fill="#fff" stroke="#e4ded4" stroke-width="1"/>
-        <text x="530" y="566" font-family="Inter" font-size="13" font-weight="700" fill="#111" text-anchor="middle">AI finds deals</text>
-        <text x="530" y="584" font-family="Inter" font-size="11" font-weight="500" fill="#6b665f" text-anchor="middle">24/7 sourcing</text>
-        <!-- Flywheel label -->
-        <rect x="140" y="680" width="420" height="60" rx="16" fill="#42520d"/>
-        <text x="350" y="708" font-family="Inter" font-size="13" font-weight="700" fill="#dcefc7" text-anchor="middle">More founders &rarr; better deals &rarr; more investors &rarr; more revenue</text>
-        <text x="350" y="728" font-family="Inter" font-size="12" font-weight="600" fill="rgba(255,255,255,0.5)" text-anchor="middle">Network effect flywheel</text>
-        <!-- Flywheel arrows -->
-        <path d="M 560 690 C 610 690 620 650 620 600 L 620 480" stroke="#42520d" stroke-width="1.5" stroke-dasharray="5 4" fill="none"/>
-        <path d="M 140 690 C 90 690 80 650 80 600 L 80 480" stroke="#42520d" stroke-width="1.5" stroke-dasharray="5 4" fill="none"/>
-        <path d="M 80 480 L 80 260 C 80 230 100 220 120 220 L 200 220" stroke="#42520d" stroke-width="1.5" stroke-dasharray="5 4" fill="none"/>
-        <path d="M 620 480 L 620 260 C 620 230 600 220 580 220 L 500 220" stroke="#42520d" stroke-width="1.5" stroke-dasharray="5 4" fill="none"/>
+        <defs>
+          <linearGradient id="moneyUp" x1="0" y1="1" x2="0" y2="0">
+            <stop offset="0" stop-color="#c79a2b"/>
+            <stop offset="1" stop-color="#efce63"/>
+          </linearGradient>
+        </defs>
+        <text x="350" y="26" font-family="Inter" font-size="13" font-weight="700" fill="#6b665f" text-anchor="middle" letter-spacing="0.1em">HOW THE MONEY FLOWS</text>
+
+        <!-- FOUNDERS: the free supply side -->
+        <rect x="50" y="48" width="600" height="150" rx="20" fill="#dcefc7" stroke="#42520d" stroke-width="1.5"/>
+        <text x="82" y="86" font-family="Inter" font-size="13" font-weight="700" fill="#42520d" letter-spacing="0.1em">FOUNDERS &middot; THE SUPPLY</text>
+        <rect x="486" y="62" width="128" height="30" rx="15" fill="#42520d"/>
+        <text x="550" y="82" font-family="Inter" font-size="13" font-weight="800" fill="#dcefc7" text-anchor="middle">PAY $0 &middot; FREE</text>
+        <text x="82" y="126" font-family="Inter" font-size="17" font-weight="700" fill="#111">Sign up &rarr; get verified &rarr; get discovered</text>
+        <text x="82" y="152" font-family="Inter" font-size="13" font-weight="500" fill="#6b665f">They stock the shelves: verified, fundable startups.</text>
+        <text x="82" y="178" font-family="Inter" font-size="13" font-weight="700" fill="#42520d">Apparent charges them nothing &mdash; ever.</text>
+
+        <!-- Free supply flows down into Apparent (no money, just inventory) -->
+        <line x1="350" y1="198" x2="350" y2="252" stroke="#9aa06f" stroke-width="2.5"/>
+        <polygon points="342,244 350,256 358,244" fill="#9aa06f"/>
+        <rect x="284" y="210" width="132" height="26" rx="13" fill="#f4f1eb" stroke="#e4ded4"/>
+        <text x="350" y="227" font-family="Inter" font-size="11" font-weight="700" fill="#6b665f" text-anchor="middle" letter-spacing="0.06em">FREE DEAL FLOW IN</text>
+
+        <!-- APPARENT: the marketplace where revenue lands -->
+        <rect x="110" y="256" width="480" height="140" rx="20" fill="#42520d"/>
+        <g transform="translate(150, 300) scale(0.14)"><path d="M128.005 191.173C128.448 156.208 156.93 128 192 128V64H128C128 99.346 99.346 128 64 128V192H128ZM192 256H64C28.654 256 0 227.346 0 192V64H64V0H192C227.346 0 256 28.654 256 64V192H192Z" fill="#dcefc7"/></g>
+        <text x="200" y="326" font-family="Inter" font-size="24" font-weight="800" fill="#fff">Apparent</text>
+        <text x="200" y="350" font-family="Inter" font-size="13" font-weight="600" fill="#dcefc7">Verified deal-flow marketplace</text>
+        <g transform="translate(520, 300)"><svg viewBox="0 0 22 22" width="34" height="34"><path fill="#1D9BF0" d="M20.396 11c-.018-.646-.215-1.275-.57-1.816-.354-.54-.852-.972-1.438-1.246.223-.607.27-1.264.14-1.897-.131-.634-.437-1.218-.882-1.687-.47-.445-1.053-.75-1.687-.882-.633-.13-1.29-.083-1.897.14-.273-.587-.704-1.086-1.245-1.44S11.647 1.62 11 1.604c-.646.017-1.273.213-1.813.568s-.969.854-1.24 1.44c-.608-.223-1.267-.272-1.902-.14-.635.13-1.22.436-1.69.882-.445.47-.749 1.055-.878 1.69-.13.635-.08 1.293.144 1.896-.587.274-1.087.705-1.443 1.245-.356.54-.555 1.17-.574 1.817.02.647.218 1.276.574 1.817.356.54.856.972 1.443 1.245-.224.604-.274 1.26-.144 1.896.13.636.433 1.221.878 1.69.47.446 1.055.752 1.69.883.635.13 1.294.083 1.902-.141.27.587.7 1.086 1.24 1.44s1.167.551 1.813.568c.647-.016 1.276-.213 1.817-.567s.972-.854 1.245-1.44c.604.224 1.26.272 1.895.141.636-.13 1.22-.436 1.69-.883.445-.468.749-1.053.882-1.688.13-.634.085-1.29-.138-1.896.587-.274 1.084-.705 1.438-1.246.354-.54.551-1.17.569-1.816zM9.662 14.85l-3.429-3.428 1.293-1.302 2.072 2.072 4.4-4.794 1.347 1.246z"/></svg></g>
+        <text x="350" y="380" font-family="Inter" font-size="12.5" font-weight="500" fill="rgba(255,255,255,0.6)" text-anchor="middle">Aggregates, verifies &amp; ranks every startup into one searchable index.</text>
+
+        <!-- THE MONEY: investors send recurring cash UP into Apparent -->
+        <polygon points="286,432 414,432 350,398" fill="url(#moneyUp)"/>
+        <rect x="320" y="430" width="60" height="120" rx="6" fill="url(#moneyUp)"/>
+        <circle cx="350" cy="462" r="14" fill="#fbeeb6" stroke="#8a6d12" stroke-width="1"/>
+        <text x="350" y="467" font-family="Inter" font-size="15" font-weight="800" fill="#6b4e0a" text-anchor="middle">$</text>
+        <circle cx="350" cy="498" r="14" fill="#fbeeb6" stroke="#8a6d12" stroke-width="1"/>
+        <text x="350" y="503" font-family="Inter" font-size="15" font-weight="800" fill="#6b4e0a" text-anchor="middle">$</text>
+        <circle cx="350" cy="534" r="14" fill="#fbeeb6" stroke="#8a6d12" stroke-width="1"/>
+        <text x="350" y="539" font-family="Inter" font-size="15" font-weight="800" fill="#6b4e0a" text-anchor="middle">$</text>
+        <text x="430" y="458" font-family="Inter" font-size="22" font-weight="800" fill="#a9791a">Subscriptions</text>
+        <text x="430" y="484" font-family="Inter" font-size="13" font-weight="600" fill="#6b665f">Recurring, per seat</text>
+        <text x="430" y="520" font-family="Inter" font-size="14" font-weight="800" fill="#42520d">&rarr; 100% Apparent revenue</text>
+        <text x="270" y="490" font-family="Inter" font-size="13" font-weight="700" fill="#a9791a" text-anchor="end">The only</text>
+        <text x="270" y="508" font-family="Inter" font-size="13" font-weight="700" fill="#a9791a" text-anchor="end">cash in the</text>
+        <text x="270" y="526" font-family="Inter" font-size="13" font-weight="700" fill="#a9791a" text-anchor="end">system</text>
+
+        <!-- INVESTORS: the paying demand side -->
+        <rect x="50" y="556" width="600" height="150" rx="20" fill="#fff" stroke="#42520d" stroke-width="1.5"/>
+        <text x="82" y="594" font-family="Inter" font-size="13" font-weight="700" fill="#42520d" letter-spacing="0.1em">INVESTORS &middot; THE DEMAND</text>
+        <rect x="466" y="570" width="148" height="30" rx="15" fill="#42520d"/>
+        <text x="540" y="590" font-family="Inter" font-size="12" font-weight="800" fill="#dcefc7" text-anchor="middle">PAID &middot; SUBSCRIPTION</text>
+        <text x="82" y="634" font-family="Inter" font-size="17" font-weight="700" fill="#111">Subscribe &rarr; browse verified &rarr; AI sources 24/7</text>
+        <text x="82" y="660" font-family="Inter" font-size="13" font-weight="500" fill="#6b665f">They pay to reach the founders &mdash; search, filter, get matched.</text>
+        <text x="82" y="686" font-family="Inter" font-size="13" font-weight="700" fill="#42520d">This subscription is how Apparent makes money.</text>
+
+        <!-- Why it compounds -->
+        <rect x="110" y="726" width="480" height="66" rx="16" fill="#42520d"/>
+        <text x="350" y="754" font-family="Inter" font-size="13" font-weight="700" fill="#dcefc7" text-anchor="middle">More founders &rarr; richer index &rarr; investors pay more</text>
+        <text x="350" y="776" font-family="Inter" font-size="12" font-weight="600" fill="rgba(255,255,255,0.55)" text-anchor="middle">Free supply compounds the value of a paid product.</text>
       </svg>
     </div>
   </div>
@@ -1028,7 +1033,7 @@
         <div class="ach-grid">
           <div class="ach ach--olive">
             <div class="ai"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 4h6v6"/><path d="M11 13 20 4"/><path d="M20 14v4a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h4"/></svg></div>
-            <div class="n">$780K</div>
+            <div class="n">£170K</div>
             <div class="l">Exit &middot; sold &ldquo;Esp for All&rdquo; as founder</div>
           </div>
           <div class="ach ach--green">
