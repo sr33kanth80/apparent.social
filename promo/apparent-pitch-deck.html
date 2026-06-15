@@ -833,32 +833,84 @@
       <!-- Left: Who pays, who doesn't -->
       <div style="display:flex; flex-direction:column; gap:20px;">
         <!-- Founders = Free -->
-        <div class="card card--green" style="padding:28px;">
-          <div style="display:flex; align-items:center; gap:12px; margin-bottom:16px;">
-            <svg viewBox="0 0 40 40" width="40" height="40"><circle cx="20" cy="14" r="9" fill="#42520d" opacity="0.3"/><rect x="8" y="25" width="24" height="12" rx="6" fill="#42520d" opacity="0.3"/></svg>
-            <h3 style="font-size:28px; font-weight:800; color:var(--fg);">Founders</h3>
-            <span style="background:var(--olive); color:#fff; padding:6px 18px; border-radius:999px; font-size:14px; font-weight:700; margin-left:auto;">FREE FOREVER</span>
+        <div class="card card--green" style="padding:34px;">
+          <div style="display:flex; align-items:center; gap:16px; margin-bottom:26px;">
+            <div style="flex:none; width:54px; height:54px; border-radius:15px; background:var(--olive); display:flex; align-items:center; justify-content:center;">
+              <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#dcefc7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M5 21c0-3.6 3.1-6 7-6s7 2.4 7 6"/></svg>
+            </div>
+            <h3 style="font-size:32px; font-weight:800; color:var(--fg);">Founders</h3>
+            <span style="background:var(--olive); color:#fff; padding:8px 20px; border-radius:999px; font-size:14px; font-weight:700; margin-left:auto;">FREE FOREVER</span>
           </div>
-          <div style="display:flex; flex-direction:column; gap:10px;">
-            <div class="feat"><span class="check" style="width:22px;height:22px;font-size:11px;">&#10003;</span><span class="body text-fg">Create a profile and get verified through your real work</span></div>
-            <div class="feat"><span class="check" style="width:22px;height:22px;font-size:11px;">&#10003;</span><span class="body text-fg">Get discovered by investors who match your stage and sector</span></div>
-            <div class="feat"><span class="check" style="width:22px;height:22px;font-size:11px;">&#10003;</span><span class="body text-fg">AI agent reaches out to the right investors on your behalf</span></div>
+          <div style="display:flex; flex-direction:column; gap:18px;">
+            <div style="display:flex; align-items:center; gap:16px;">
+              <div style="flex:none; width:48px; height:48px; border-radius:13px; background:rgba(66,82,13,0.12); display:flex; align-items:center; justify-content:center;">
+                <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#42520d" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 20 5.5V11c0 5-3.4 8.4-8 9.8C7.4 19.4 4 16 4 11V5.5Z"/><path d="M9 11.5 11 13.5 15.5 9"/></svg>
+              </div>
+              <div>
+                <div style="font-size:19px; font-weight:700; color:var(--fg); line-height:1.2;">Verified by real work</div>
+                <div style="font-size:13.5px; font-weight:500; color:var(--olive); opacity:0.75;">Code, traction, product history</div>
+              </div>
+            </div>
+            <div style="display:flex; align-items:center; gap:16px;">
+              <div style="flex:none; width:48px; height:48px; border-radius:13px; background:rgba(66,82,13,0.12); display:flex; align-items:center; justify-content:center;">
+                <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#42520d" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg>
+              </div>
+              <div>
+                <div style="font-size:19px; font-weight:700; color:var(--fg); line-height:1.2;">Discovered by the right investors</div>
+                <div style="font-size:13.5px; font-weight:500; color:var(--olive); opacity:0.75;">Matched on stage &amp; sector</div>
+              </div>
+            </div>
+            <div style="display:flex; align-items:center; gap:16px;">
+              <div style="flex:none; width:48px; height:48px; border-radius:13px; background:rgba(66,82,13,0.12); display:flex; align-items:center; justify-content:center;">
+                <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#42520d" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 3 10.5 13.5"/><path d="M21 3 14.5 21 10.5 13.5 3 9.5 21 3Z"/></svg>
+              </div>
+              <div>
+                <div style="font-size:19px; font-weight:700; color:var(--fg); line-height:1.2;">Your AI agent does outreach</div>
+                <div style="font-size:13.5px; font-weight:500; color:var(--olive); opacity:0.75;">Reaches investors for you</div>
+              </div>
+            </div>
           </div>
-          <p class="body-sm" style="margin-top:12px; color:var(--olive); font-weight:600;">More founders = more deal flow for investors = more revenue for us.</p>
+          <p style="margin-top:24px; padding-top:18px; border-top:1px solid rgba(66,82,13,0.15); font-size:14px; color:var(--olive); font-weight:600;">More founders = more deal flow = more revenue.</p>
         </div>
         <!-- Investors = Paid -->
-        <div class="card card--olive" style="padding:28px;">
-          <div style="display:flex; align-items:center; gap:12px; margin-bottom:16px;">
-            <svg viewBox="0 0 40 40" width="40" height="40"><rect x="6" y="10" width="28" height="20" rx="4" fill="none" stroke="rgba(255,255,255,0.5)" stroke-width="2"/><text x="20" y="25" font-family="Inter" font-size="14" font-weight="800" fill="#dcefc7" text-anchor="middle">$</text></svg>
-            <h3 style="font-size:28px; font-weight:800; color:#fff;">Investors</h3>
-            <span style="background:var(--green); color:var(--olive); padding:6px 18px; border-radius:999px; font-size:14px; font-weight:700; margin-left:auto;">PAID SUBSCRIPTIONS</span>
+        <div class="card card--olive" style="padding:34px;">
+          <div style="display:flex; align-items:center; gap:16px; margin-bottom:26px;">
+            <div style="flex:none; width:54px; height:54px; border-radius:15px; background:rgba(255,255,255,0.12); display:flex; align-items:center; justify-content:center;">
+              <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#dcefc7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9 12 4l9 5"/><path d="M5 9.5V19M19 9.5V19M9.5 9.5V19M14.5 9.5V19"/><path d="M3 19h18"/></svg>
+            </div>
+            <h3 style="font-size:32px; font-weight:800; color:#fff;">Investors</h3>
+            <span style="background:var(--green); color:var(--olive); padding:8px 20px; border-radius:999px; font-size:14px; font-weight:700; margin-left:auto;">PAID</span>
           </div>
-          <div style="display:flex; flex-direction:column; gap:10px;">
-            <div class="feat"><span class="check" style="width:22px;height:22px;font-size:11px;background:#fff;color:var(--olive);">&#10003;</span><span class="body" style="color:rgba(255,255,255,0.8);">Browse and filter thousands of verified startups by sector, stage, geography</span></div>
-            <div class="feat"><span class="check" style="width:22px;height:22px;font-size:11px;background:#fff;color:var(--olive);">&#10003;</span><span class="body" style="color:rgba(255,255,255,0.8);">AI agent sources deals 24/7, ranked by your investment thesis</span></div>
-            <div class="feat"><span class="check" style="width:22px;height:22px;font-size:11px;background:#fff;color:var(--olive);">&#10003;</span><span class="body" style="color:rgba(255,255,255,0.8);">Team workspaces, deal pipeline, CRM, and shared deal notes</span></div>
+          <div style="display:flex; flex-direction:column; gap:18px;">
+            <div style="display:flex; align-items:center; gap:16px;">
+              <div style="flex:none; width:48px; height:48px; border-radius:13px; background:rgba(255,255,255,0.1); display:flex; align-items:center; justify-content:center;">
+                <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#dcefc7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5h18l-7 8v6l-4-2.5V13Z"/></svg>
+              </div>
+              <div>
+                <div style="font-size:19px; font-weight:700; color:#fff; line-height:1.2;">Browse verified startups</div>
+                <div style="font-size:13.5px; font-weight:500; color:var(--green); opacity:0.7;">Filter by sector, stage, geo</div>
+              </div>
+            </div>
+            <div style="display:flex; align-items:center; gap:16px;">
+              <div style="flex:none; width:48px; height:48px; border-radius:13px; background:rgba(255,255,255,0.1); display:flex; align-items:center; justify-content:center;">
+                <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#dcefc7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.8 6.2L20 11l-6.2 1.8L12 19l-1.8-6.2L4 11l6.2-1.8Z"/></svg>
+              </div>
+              <div>
+                <div style="font-size:19px; font-weight:700; color:#fff; line-height:1.2;">AI sources deals 24/7</div>
+                <div style="font-size:13.5px; font-weight:500; color:var(--green); opacity:0.7;">Ranked by your thesis</div>
+              </div>
+            </div>
+            <div style="display:flex; align-items:center; gap:16px;">
+              <div style="flex:none; width:48px; height:48px; border-radius:13px; background:rgba(255,255,255,0.1); display:flex; align-items:center; justify-content:center;">
+                <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#dcefc7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="5" height="16" rx="1.2"/><rect x="9.5" y="4" width="5" height="11" rx="1.2"/><rect x="16" y="4" width="5" height="13" rx="1.2"/></svg>
+              </div>
+              <div>
+                <div style="font-size:19px; font-weight:700; color:#fff; line-height:1.2;">Pipeline, workspace &amp; CRM</div>
+                <div style="font-size:13.5px; font-weight:500; color:var(--green); opacity:0.7;">Built for the whole team</div>
+              </div>
+            </div>
           </div>
-          <p class="body-sm" style="margin-top:12px; color:var(--green); font-weight:600;">Think LinkedIn: free to be found, paid to find. We monetize the demand side.</p>
+          <p style="margin-top:24px; padding-top:18px; border-top:1px solid rgba(255,255,255,0.15); font-size:14px; color:var(--green); font-weight:600;">Free to be found, paid to find. We monetize demand.</p>
         </div>
       </div>
       <!-- Right: money-flow diagram. Founders feed free supply in; investors send cash in; Apparent keeps the subscription revenue. -->
