@@ -649,50 +649,103 @@
         <div class="step"><div class="n">2</div><div><h3 class="h-sm" style="margin-bottom:6px;">Verified matches</h3><p class="body">Apparent ranks every startup against your criteria. Verify through real code, revenue, product.</p></div></div>
         <div class="step"><div class="n">3</div><div><h3 class="h-sm" style="margin-bottom:6px;">Connect instantly</h3><p class="body">AI agents handle intros. No cold emails. No gatekeepers. Both sides opt in.</p></div></div>
       </div>
-      <!-- Network map visualization -->
+      <!-- Product mockup: the investor's live, ranked, verified dealflow screen -->
       <div class="network-map">
         <svg viewBox="0 0 900 560" fill="none" xmlns="http://www.w3.org/2000/svg" style="width:100%; height:100%;">
-          <defs><pattern id="dots" width="36" height="36" patternUnits="userSpaceOnUse"><circle cx="18" cy="18" r="1" fill="rgba(255,255,255,0.08)"/></pattern></defs>
-          <rect width="900" height="560" fill="url(#dots)"/>
-          <!-- Connection lines -->
-          <line x1="160" y1="160" x2="420" y2="250" stroke="rgba(220,239,199,0.25)" stroke-width="1.5"/>
-          <line x1="420" y1="250" x2="700" y2="130" stroke="rgba(220,239,199,0.25)" stroke-width="1.5"/>
-          <line x1="420" y1="250" x2="600" y2="390" stroke="rgba(220,239,199,0.25)" stroke-width="1.5"/>
-          <line x1="160" y1="160" x2="280" y2="380" stroke="rgba(220,239,199,0.25)" stroke-width="1.5"/>
-          <line x1="280" y1="380" x2="600" y2="390" stroke="rgba(220,239,199,0.25)" stroke-width="1.5"/>
-          <line x1="700" y1="130" x2="760" y2="310" stroke="rgba(220,239,199,0.25)" stroke-width="1.5"/>
-          <line x1="600" y1="390" x2="760" y2="310" stroke="rgba(220,239,199,0.25)" stroke-width="1.5"/>
-          <!-- City nodes: Investors (olive) -->
-          <circle cx="160" cy="160" r="20" fill="#42520d" stroke="rgba(255,255,255,0.3)" stroke-width="2"/>
-          <text x="160" y="165" font-family="Inter" font-size="11" font-weight="800" fill="#fff" text-anchor="middle">VC</text>
-          <text x="160" y="198" font-family="Inter" font-size="11" font-weight="600" fill="rgba(255,255,255,0.5)" text-anchor="middle">San Francisco</text>
-          <circle cx="700" cy="130" r="20" fill="#42520d" stroke="rgba(255,255,255,0.3)" stroke-width="2"/>
-          <text x="700" y="135" font-family="Inter" font-size="11" font-weight="800" fill="#fff" text-anchor="middle">VC</text>
-          <text x="700" y="168" font-family="Inter" font-size="11" font-weight="600" fill="rgba(255,255,255,0.5)" text-anchor="middle">London</text>
-          <circle cx="760" cy="310" r="16" fill="#42520d" stroke="rgba(255,255,255,0.3)" stroke-width="2"/>
-          <text x="760" y="315" font-family="Inter" font-size="10" font-weight="800" fill="#fff" text-anchor="middle">LP</text>
-          <text x="760" y="344" font-family="Inter" font-size="11" font-weight="600" fill="rgba(255,255,255,0.5)" text-anchor="middle">Singapore</text>
-          <!-- City nodes: Founders (green) -->
-          <circle cx="280" cy="380" r="18" fill="#dcefc7" stroke="rgba(255,255,255,0.3)" stroke-width="2"/>
-          <circle cx="280" cy="374" r="6" fill="#42520d" opacity="0.4"/>
-          <rect x="272" y="382" width="16" height="8" rx="4" fill="#42520d" opacity="0.4"/>
-          <text x="280" y="416" font-family="Inter" font-size="11" font-weight="600" fill="rgba(255,255,255,0.5)" text-anchor="middle">S&#227;o Paulo</text>
-          <circle cx="600" cy="390" r="18" fill="#dcefc7" stroke="rgba(255,255,255,0.3)" stroke-width="2"/>
-          <circle cx="600" cy="384" r="6" fill="#42520d" opacity="0.4"/>
-          <rect x="592" y="392" width="16" height="8" rx="4" fill="#42520d" opacity="0.4"/>
-          <text x="600" y="426" font-family="Inter" font-size="11" font-weight="600" fill="rgba(255,255,255,0.5)" text-anchor="middle">Bangalore</text>
-          <!-- Center hub: Apparent -->
-          <circle cx="420" cy="250" r="36" fill="#dcefc7"/>
-          <g transform="translate(404, 234) scale(0.125)"><path d="M128.005 191.173C128.448 156.208 156.93 128 192 128V64H128C128 99.346 99.346 128 64 128V192H128ZM192 256H64C28.654 256 0 227.346 0 192V64H64V0H192C227.346 0 256 28.654 256 64V192H192Z" fill="#42520d"/></g>
-          <!-- Match card -->
-          <rect x="464" y="196" width="220" height="56" rx="12" fill="rgba(255,255,255,0.12)" stroke="rgba(255,255,255,0.2)" stroke-width="1"/>
-          <text x="480" y="218" font-family="Inter" font-size="10" font-weight="700" fill="rgba(255,255,255,0.5)" letter-spacing="0.1em">MATCH FOUND</text>
-          <text x="480" y="238" font-family="Inter" font-size="14" font-weight="700" fill="#dcefc7">94% thesis fit</text>
-          <g transform="translate(654, 208)"><svg viewBox="0 0 22 22" width="16" height="16"><path fill="#1D9BF0" d="M20.396 11c-.018-.646-.215-1.275-.57-1.816-.354-.54-.852-.972-1.438-1.246.223-.607.27-1.264.14-1.897-.131-.634-.437-1.218-.882-1.687-.47-.445-1.053-.75-1.687-.882-.633-.13-1.29-.083-1.897.14-.273-.587-.704-1.086-1.245-1.44S11.647 1.62 11 1.604c-.646.017-1.273.213-1.813.568s-.969.854-1.24 1.44c-.608-.223-1.267-.272-1.902-.14-.635.13-1.22.436-1.69.882-.445.47-.749 1.055-.878 1.69-.13.635-.08 1.293.144 1.896-.587.274-1.087.705-1.443 1.245-.356.54-.555 1.17-.574 1.817.02.647.218 1.276.574 1.817.356.54.856.972 1.443 1.245-.224.604-.274 1.26-.144 1.896.13.636.433 1.221.878 1.69.47.446 1.055.752 1.69.883.635.13 1.294.083 1.902-.141.27.587.7 1.086 1.24 1.44s1.167.551 1.813.568c.647-.016 1.276-.213 1.817-.567s.972-.854 1.245-1.44c.604.224 1.26.272 1.895.141.636-.13 1.22-.436 1.69-.883.445-.468.749-1.053.882-1.688.13-.634.085-1.29-.138-1.896.587-.274 1.084-.705 1.438-1.246.354-.54.551-1.17.569-1.816zM9.662 14.85l-3.429-3.428 1.293-1.302 2.072 2.072 4.4-4.794 1.347 1.246z"/></svg></g>
-          <!-- Legend -->
-          <circle cx="60" cy="510" r="8" fill="#42520d"/><text x="78" y="514" font-family="Inter" font-size="12" font-weight="600" fill="rgba(255,255,255,0.45)">Investor</text>
-          <circle cx="180" cy="510" r="8" fill="#dcefc7"/><text x="198" y="514" font-family="Inter" font-size="12" font-weight="600" fill="rgba(255,255,255,0.45)">Startup</text>
-          <text x="750" y="514" font-family="Inter" font-size="12" font-weight="600" fill="rgba(255,255,255,0.3)" text-anchor="end">Builder Radar &middot; Global Network</text>
+          <!-- App window -->
+          <rect x="16" y="16" width="868" height="528" rx="20" fill="#1b1c14" stroke="rgba(255,255,255,0.08)" stroke-width="1"/>
+
+          <!-- Top bar -->
+          <g transform="translate(40, 34) scale(0.11)"><path d="M128.005 191.173C128.448 156.208 156.93 128 192 128V64H128C128 99.346 99.346 128 64 128V192H128ZM192 256H64C28.654 256 0 227.346 0 192V64H64V0H192C227.346 0 256 28.654 256 64V192H192Z" fill="#dcefc7"/></g>
+          <text x="80" y="55" font-family="Inter" font-size="20" font-weight="800" fill="#fff">Apparent</text>
+          <text x="178" y="55" font-family="Inter" font-size="14" font-weight="500" fill="rgba(255,255,255,0.4)">Dealflow</text>
+          <circle cx="232" cy="42" r="3.5" fill="#6ee27a"/>
+          <text x="244" y="46" font-family="Inter" font-size="10" font-weight="700" fill="rgba(255,255,255,0.4)" letter-spacing="0.08em">LIVE</text>
+          <!-- Investor identity -->
+          <circle cx="724" cy="46" r="17" fill="#dcefc7"/>
+          <text x="724" y="51" font-family="Inter" font-size="12" font-weight="800" fill="#42520d" text-anchor="middle">AV</text>
+          <text x="750" y="42" font-family="Inter" font-size="14" font-weight="700" fill="#fff">Acme Ventures</text>
+          <text x="750" y="59" font-family="Inter" font-size="11.5" font-weight="500" fill="rgba(255,255,255,0.4)">Thesis &middot; B2B Fintech</text>
+
+          <!-- Criteria bar (Step 1) -->
+          <text x="40" y="103" font-family="Inter" font-size="10" font-weight="700" fill="rgba(255,255,255,0.35)" letter-spacing="0.12em">YOUR CRITERIA</text>
+          <rect x="40" y="114" width="76" height="30" rx="15" fill="rgba(255,255,255,0.07)"/>
+          <text x="78" y="133" font-family="Inter" font-size="12.5" font-weight="600" fill="rgba(255,255,255,0.75)" text-anchor="middle">Fintech</text>
+          <rect x="124" y="114" width="62" height="30" rx="15" fill="rgba(255,255,255,0.07)"/>
+          <text x="155" y="133" font-family="Inter" font-size="12.5" font-weight="600" fill="rgba(255,255,255,0.75)" text-anchor="middle">Seed</text>
+          <rect x="194" y="114" width="74" height="30" rx="15" fill="rgba(255,255,255,0.07)"/>
+          <text x="231" y="133" font-family="Inter" font-size="12.5" font-weight="600" fill="rgba(255,255,255,0.75)" text-anchor="middle">US</text>
+          <rect x="276" y="114" width="116" height="30" rx="15" fill="rgba(255,255,255,0.07)"/>
+          <text x="334" y="133" font-family="Inter" font-size="12.5" font-weight="600" fill="rgba(255,255,255,0.75)" text-anchor="middle">$500K&ndash;$2M</text>
+          <rect x="400" y="114" width="140" height="30" rx="15" fill="rgba(220,239,199,0.14)"/>
+          <text x="424" y="133" font-family="Inter" font-size="12.5" font-weight="700" fill="#dcefc7">&#10003; Verified only</text>
+
+          <!-- Section header (Step 2) -->
+          <text x="40" y="170" font-family="Inter" font-size="14" font-weight="800" fill="#fff">Ranked for your thesis</text>
+          <text x="844" y="170" font-family="Inter" font-size="12" font-weight="600" fill="rgba(255,255,255,0.4)" text-anchor="end">Sourced 24/7 by AI &middot; 1,284 matches</text>
+
+          <!-- ===== Card 1 (top match) ===== -->
+          <rect x="40" y="182" width="804" height="104" rx="16" fill="#262a18" stroke="#dcefc7" stroke-opacity="0.55" stroke-width="1.5"/>
+          <rect x="56" y="202" width="64" height="64" rx="14" fill="#dcefc7"/>
+          <text x="88" y="244" font-family="Inter" font-size="28" font-weight="800" fill="#42520d" text-anchor="middle">L</text>
+          <circle cx="56" cy="202" r="13" fill="#dcefc7" stroke="#262a18" stroke-width="2"/>
+          <text x="56" y="206" font-family="Inter" font-size="12" font-weight="800" fill="#42520d" text-anchor="middle">1</text>
+          <text x="140" y="226" font-family="Inter" font-size="21" font-weight="800" fill="#fff">Ledgerly</text>
+          <g transform="translate(252, 211)"><svg viewBox="0 0 22 22" width="20" height="20"><path fill="#1D9BF0" d="M20.396 11c-.018-.646-.215-1.275-.57-1.816-.354-.54-.852-.972-1.438-1.246.223-.607.27-1.264.14-1.897-.131-.634-.437-1.218-.882-1.687-.47-.445-1.053-.75-1.687-.882-.633-.13-1.29-.083-1.897.14-.273-.587-.704-1.086-1.245-1.44S11.647 1.62 11 1.604c-.646.017-1.273.213-1.813.568s-.969.854-1.24 1.44c-.608-.223-1.267-.272-1.902-.14-.635.13-1.22.436-1.69.882-.445.47-.749 1.055-.878 1.69-.13.635-.08 1.293.144 1.896-.587.274-1.087.705-1.443 1.245-.356.54-.555 1.17-.574 1.817.02.647.218 1.276.574 1.817.356.54.856.972 1.443 1.245-.224.604-.274 1.26-.144 1.896.13.636.433 1.221.878 1.69.47.446 1.055.752 1.69.883.635.13 1.294.083 1.902-.141.27.587.7 1.086 1.24 1.44s1.167.551 1.813.568c.647-.016 1.276-.213 1.817-.567s.972-.854 1.245-1.44c.604.224 1.26.272 1.895.141.636-.13 1.22-.436 1.69-.883.445-.468.749-1.053.882-1.688.13-.634.085-1.29-.138-1.896.587-.274 1.084-.705 1.438-1.246.354-.54.551-1.17.569-1.816zM9.662 14.85l-3.429-3.428 1.293-1.302 2.072 2.072 4.4-4.794 1.347 1.246z"/></svg></g>
+          <text x="140" y="250" font-family="Inter" font-size="13.5" font-weight="500" fill="rgba(255,255,255,0.5)">Embedded payments API for SMBs</text>
+          <rect x="140" y="262" width="78" height="22" rx="11" fill="rgba(220,239,199,0.1)"/>
+          <text x="152" y="277" font-family="Inter" font-size="12" font-weight="600" fill="#dcefc7">&#10003; Code</text>
+          <rect x="226" y="262" width="106" height="22" rx="11" fill="rgba(220,239,199,0.1)"/>
+          <text x="238" y="277" font-family="Inter" font-size="12" font-weight="600" fill="#dcefc7">&#10003; $42K MRR</text>
+          <rect x="340" y="262" width="110" height="22" rx="11" fill="rgba(220,239,199,0.1)"/>
+          <text x="352" y="277" font-family="Inter" font-size="12" font-weight="600" fill="#dcefc7">&#10003; +22% MoM</text>
+          <polyline points="512,256 532,250 552,252 572,240 592,232 612,220" fill="none" stroke="#6ee27a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <text x="690" y="232" font-family="Inter" font-size="33" font-weight="800" fill="#dcefc7" text-anchor="middle">96%</text>
+          <text x="690" y="252" font-family="Inter" font-size="9.5" font-weight="700" fill="rgba(255,255,255,0.4)" text-anchor="middle" letter-spacing="0.12em">THESIS FIT</text>
+          <rect x="744" y="214" width="100" height="40" rx="20" fill="#dcefc7"/>
+          <text x="794" y="239" font-family="Inter" font-size="14" font-weight="800" fill="#42520d" text-anchor="middle">Connect</text>
+
+          <!-- ===== Card 2 ===== -->
+          <rect x="40" y="298" width="804" height="104" rx="16" fill="#24261b" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
+          <rect x="56" y="318" width="64" height="64" rx="14" fill="rgba(255,255,255,0.08)"/>
+          <text x="88" y="360" font-family="Inter" font-size="28" font-weight="800" fill="#dcefc7" text-anchor="middle">N</text>
+          <circle cx="56" cy="318" r="13" fill="rgba(255,255,255,0.12)" stroke="#24261b" stroke-width="2"/>
+          <text x="56" y="322" font-family="Inter" font-size="12" font-weight="800" fill="#fff" text-anchor="middle">2</text>
+          <text x="140" y="342" font-family="Inter" font-size="21" font-weight="800" fill="#fff">Northwind</text>
+          <g transform="translate(270, 327)"><svg viewBox="0 0 22 22" width="20" height="20"><path fill="#1D9BF0" d="M20.396 11c-.018-.646-.215-1.275-.57-1.816-.354-.54-.852-.972-1.438-1.246.223-.607.27-1.264.14-1.897-.131-.634-.437-1.218-.882-1.687-.47-.445-1.053-.75-1.687-.882-.633-.13-1.29-.083-1.897.14-.273-.587-.704-1.086-1.245-1.44S11.647 1.62 11 1.604c-.646.017-1.273.213-1.813.568s-.969.854-1.24 1.44c-.608-.223-1.267-.272-1.902-.14-.635.13-1.22.436-1.69.882-.445.47-.749 1.055-.878 1.69-.13.635-.08 1.293.144 1.896-.587.274-1.087.705-1.443 1.245-.356.54-.555 1.17-.574 1.817.02.647.218 1.276.574 1.817.356.54.856.972 1.443 1.245-.224.604-.274 1.26-.144 1.896.13.636.433 1.221.878 1.69.47.446 1.055.752 1.69.883.635.13 1.294.083 1.902-.141.27.587.7 1.086 1.24 1.44s1.167.551 1.813.568c.647-.016 1.276-.213 1.817-.567s.972-.854 1.245-1.44c.604.224 1.26.272 1.895.141.636-.13 1.22-.436 1.69-.883.445-.468.749-1.053.882-1.688.13-.634.085-1.29-.138-1.896.587-.274 1.084-.705 1.438-1.246.354-.54.551-1.17.569-1.816zM9.662 14.85l-3.429-3.428 1.293-1.302 2.072 2.072 4.4-4.794 1.347 1.246z"/></svg></g>
+          <text x="140" y="366" font-family="Inter" font-size="13.5" font-weight="500" fill="rgba(255,255,255,0.5)">AI underwriting for lenders</text>
+          <rect x="140" y="378" width="78" height="22" rx="11" fill="rgba(220,239,199,0.1)"/>
+          <text x="152" y="393" font-family="Inter" font-size="12" font-weight="600" fill="#dcefc7">&#10003; Code</text>
+          <rect x="226" y="378" width="106" height="22" rx="11" fill="rgba(220,239,199,0.1)"/>
+          <text x="238" y="393" font-family="Inter" font-size="12" font-weight="600" fill="#dcefc7">&#10003; $28K MRR</text>
+          <rect x="340" y="378" width="110" height="22" rx="11" fill="rgba(220,239,199,0.1)"/>
+          <text x="352" y="393" font-family="Inter" font-size="12" font-weight="600" fill="#dcefc7">&#10003; +17% MoM</text>
+          <polyline points="512,372 532,368 552,362 572,360 592,352 612,344" fill="none" stroke="#6ee27a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <text x="690" y="348" font-family="Inter" font-size="33" font-weight="800" fill="#dcefc7" text-anchor="middle">91%</text>
+          <text x="690" y="368" font-family="Inter" font-size="9.5" font-weight="700" fill="rgba(255,255,255,0.4)" text-anchor="middle" letter-spacing="0.12em">THESIS FIT</text>
+          <rect x="744" y="330" width="100" height="40" rx="20" fill="none" stroke="rgba(220,239,199,0.4)" stroke-width="1.5"/>
+          <text x="794" y="355" font-family="Inter" font-size="14" font-weight="800" fill="#dcefc7" text-anchor="middle">Connect</text>
+
+          <!-- ===== Card 3 ===== -->
+          <rect x="40" y="414" width="804" height="104" rx="16" fill="#24261b" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
+          <rect x="56" y="434" width="64" height="64" rx="14" fill="rgba(255,255,255,0.08)"/>
+          <text x="88" y="476" font-family="Inter" font-size="28" font-weight="800" fill="#dcefc7" text-anchor="middle">C</text>
+          <circle cx="56" cy="434" r="13" fill="rgba(255,255,255,0.12)" stroke="#24261b" stroke-width="2"/>
+          <text x="56" y="438" font-family="Inter" font-size="12" font-weight="800" fill="#fff" text-anchor="middle">3</text>
+          <text x="140" y="458" font-family="Inter" font-size="21" font-weight="800" fill="#fff">Cardinal</text>
+          <g transform="translate(248, 443)"><svg viewBox="0 0 22 22" width="20" height="20"><path fill="#1D9BF0" d="M20.396 11c-.018-.646-.215-1.275-.57-1.816-.354-.54-.852-.972-1.438-1.246.223-.607.27-1.264.14-1.897-.131-.634-.437-1.218-.882-1.687-.47-.445-1.053-.75-1.687-.882-.633-.13-1.29-.083-1.897.14-.273-.587-.704-1.086-1.245-1.44S11.647 1.62 11 1.604c-.646.017-1.273.213-1.813.568s-.969.854-1.24 1.44c-.608-.223-1.267-.272-1.902-.14-.635.13-1.22.436-1.69.882-.445.47-.749 1.055-.878 1.69-.13.635-.08 1.293.144 1.896-.587.274-1.087.705-1.443 1.245-.356.54-.555 1.17-.574 1.817.02.647.218 1.276.574 1.817.356.54.856.972 1.443 1.245-.224.604-.274 1.26-.144 1.896.13.636.433 1.221.878 1.69.47.446 1.055.752 1.69.883.635.13 1.294.083 1.902-.141.27.587.7 1.086 1.24 1.44s1.167.551 1.813.568c.647-.016 1.276-.213 1.817-.567s.972-.854 1.245-1.44c.604.224 1.26.272 1.895.141.636-.13 1.22-.436 1.69-.883.445-.468.749-1.053.882-1.688.13-.634.085-1.29-.138-1.896.587-.274 1.084-.705 1.438-1.246.354-.54.551-1.17.569-1.816zM9.662 14.85l-3.429-3.428 1.293-1.302 2.072 2.072 4.4-4.794 1.347 1.246z"/></svg></g>
+          <text x="140" y="482" font-family="Inter" font-size="13.5" font-weight="500" fill="rgba(255,255,255,0.5)">Treasury automation for startups</text>
+          <rect x="140" y="494" width="78" height="22" rx="11" fill="rgba(220,239,199,0.1)"/>
+          <text x="152" y="509" font-family="Inter" font-size="12" font-weight="600" fill="#dcefc7">&#10003; Code</text>
+          <rect x="226" y="494" width="106" height="22" rx="11" fill="rgba(220,239,199,0.1)"/>
+          <text x="238" y="509" font-family="Inter" font-size="12" font-weight="600" fill="#dcefc7">&#10003; $19K MRR</text>
+          <rect x="340" y="494" width="110" height="22" rx="11" fill="rgba(220,239,199,0.1)"/>
+          <text x="352" y="509" font-family="Inter" font-size="12" font-weight="600" fill="#dcefc7">&#10003; +14% MoM</text>
+          <polyline points="512,486 532,484 552,480 572,478 592,474 612,466" fill="none" stroke="#6ee27a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <text x="690" y="464" font-family="Inter" font-size="33" font-weight="800" fill="#dcefc7" text-anchor="middle">88%</text>
+          <text x="690" y="484" font-family="Inter" font-size="9.5" font-weight="700" fill="rgba(255,255,255,0.4)" text-anchor="middle" letter-spacing="0.12em">THESIS FIT</text>
+          <rect x="744" y="446" width="100" height="40" rx="20" fill="none" stroke="rgba(220,239,199,0.4)" stroke-width="1.5"/>
+          <text x="794" y="471" font-family="Inter" font-size="14" font-weight="800" fill="#dcefc7" text-anchor="middle">Connect</text>
         </svg>
       </div>
     </div>
