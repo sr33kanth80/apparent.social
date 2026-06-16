@@ -4,7 +4,7 @@ import { ArrowLeft } from 'lucide-react';
 import type { AppUser } from '@/lib/apparent-types';
 import { getCurrentAppUser } from '@/lib/auth-service';
 import { SessionNavBar } from '@/components/ui/sidebar';
-import { EditorialNavbar } from '@/components/EditorialNavbar';
+import { AldenPublicNavbar } from '@/components/AldenPublicNavbar';
 import { Footer } from '@/components/Footer';
 
 /**
@@ -53,7 +53,7 @@ export const PublicPageShell = ({ children }: { children: ReactNode }) => {
       {user ? (
         <SessionNavBar role={user.role} user={user} />
       ) : !loading ? (
-        <EditorialNavbar />
+        <AldenPublicNavbar />
       ) : null}
 
       {/* Back button only for signed-in users (visitors get the marketing nav). */}

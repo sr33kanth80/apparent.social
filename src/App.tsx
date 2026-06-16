@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import { Footer } from './components/Footer';
-import { EditorialNavbar } from './components/EditorialNavbar';
+import { AldenPublicNavbar } from './components/AldenPublicNavbar';
 import { Home } from './pages/Home';
 import { OurThesis } from './pages/OurThesis';
 import { ForFounders } from './pages/ForFounders';
@@ -66,7 +66,7 @@ function App() {
             path="/login"
             element={
               <>
-                <EditorialNavbar />
+                <AldenPublicNavbar />
                 <Login />
                 <Footer />
               </>
@@ -91,10 +91,7 @@ function App() {
           <Route
             path="/"
             element={
-              <>
-                <Home />
-                <Footer />
-              </>
+              <Home />
             }
           />
           <Route
@@ -110,7 +107,7 @@ function App() {
             path="/for-founders"
             element={
               <>
-                <EditorialNavbar />
+                <AldenPublicNavbar />
                 <ForFounders />
                 <Footer />
               </>
@@ -120,7 +117,7 @@ function App() {
             path="/for-vcs"
             element={
               <>
-                <EditorialNavbar />
+                <AldenPublicNavbar />
                 <ForVCs />
                 <Footer />
               </>
@@ -130,7 +127,7 @@ function App() {
             path="/claim/:signalId"
             element={
               <>
-                <EditorialNavbar />
+                <AldenPublicNavbar />
                 <ClaimProfile />
                 <Footer />
               </>
@@ -140,7 +137,7 @@ function App() {
             path="/claim-build"
             element={
               <>
-                <EditorialNavbar />
+                <AldenPublicNavbar />
                 <ClaimBuild />
                 <Footer />
               </>
@@ -149,8 +146,8 @@ function App() {
           <Route
             path="/heat-map"
             element={
-              <div className="flex h-screen flex-col overflow-hidden">
-                <EditorialNavbar />
+              <div className="flex h-screen flex-col overflow-hidden bg-[var(--alden-parchment)]">
+                <AldenPublicNavbar />
                 <HeatMap includeVCContacts vcOnly fullBleed fillParent lockContacts />
               </div>
             }
@@ -159,7 +156,7 @@ function App() {
             path="/about"
             element={
               <>
-                <EditorialNavbar />
+                <AldenPublicNavbar />
                 <AboutUs />
                 <Footer />
               </>
@@ -169,7 +166,7 @@ function App() {
             path="/resources"
             element={
               <>
-                <EditorialNavbar />
+                <AldenPublicNavbar />
                 <Resources />
                 <Footer />
               </>
@@ -179,7 +176,7 @@ function App() {
             path="/blog"
             element={
               <>
-                <EditorialNavbar />
+                <AldenPublicNavbar />
                 <Blog />
                 <Footer />
               </>
@@ -189,7 +186,7 @@ function App() {
             path="/blog/:slug"
             element={
               <>
-                <EditorialNavbar />
+                <AldenPublicNavbar />
                 <BlogPost />
                 <Footer />
               </>
@@ -227,7 +224,7 @@ function App() {
             path="/contact"
             element={
               <>
-                <EditorialNavbar />
+                <AldenPublicNavbar />
                 <Contact />
                 <Footer />
               </>
@@ -237,7 +234,7 @@ function App() {
             path="/privacy"
             element={
               <>
-                <EditorialNavbar />
+                <AldenPublicNavbar />
                 <PrivacyPolicy />
                 <Footer />
               </>
@@ -247,7 +244,7 @@ function App() {
             path="/terms"
             element={
               <>
-                <EditorialNavbar />
+                <AldenPublicNavbar />
                 <TermsOfService />
                 <Footer />
               </>
@@ -257,7 +254,7 @@ function App() {
             path="/cookies"
             element={
               <>
-                <EditorialNavbar />
+                <AldenPublicNavbar />
                 <CookiePolicy />
                 <Footer />
               </>
@@ -267,7 +264,7 @@ function App() {
             path="*"
             element={
               <>
-                <EditorialNavbar />
+                <AldenPublicNavbar />
                 <NotFound4042 />
                 <Footer />
               </>

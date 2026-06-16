@@ -7,8 +7,8 @@ const footerColumns = [
     links: [
       { label: 'Founder profiles', to: '/for-founders' },
       { label: 'Investor sourcing', to: '/for-vcs' },
-      { label: 'Builder Radar', to: '/#signals' },
-      { label: 'How it works', to: '/#how-to' },
+      { label: 'Builder Radar', to: '/heat-map' },
+      { label: 'How it works', to: '/#how-it-works' },
     ],
   },
   {
@@ -26,33 +26,27 @@ const footerColumns = [
 
 export const Footer = () => {
   return (
-    <footer className="monad monad-footer relative overflow-hidden border-t border-ink bg-parchment text-ink">
-      <div className="relative z-10 mx-auto max-w-[1200px] px-6 py-20">
-        <div className="grid grid-cols-1 gap-12 md:grid-cols-[1.6fr_1fr_1fr]">
-          <div>
-            <div className="mb-5 flex items-center gap-2.5">
-              <LogoIcon className="h-6 w-6 text-ink" />
-              <span className="font-serif text-[22px] leading-none text-ink">Apparent</span>
-            </div>
-            <p className="max-w-sm font-mono text-[14px] leading-[1.6] text-graphite">
-              Proof of work is the new warm intro. Founders show what they have built. Investors find them by thesis, proof, and timing.
+    <footer className="alden-footer">
+      <div className="alden-shell">
+        <div className="alden-footer__main">
+          <div className="alden-footer__brand-block">
+            <Link to="/" className="alden-brand" aria-label="Apparent home">
+              <LogoIcon className="h-6 w-6" />
+              <img src="/apparent-wordmark.png" alt="Apparent" className="alden-brand__wordmark" />
+            </Link>
+            <p>
+              Proof of work is the new warm intro. Founders show what they have built. Investors find them by
+              thesis, proof, and timing.
             </p>
           </div>
 
           {footerColumns.map((column) => (
-            <div key={column.title}>
-              <h3 className="mb-5 font-mono text-[12px] font-medium uppercase tracking-[0.08em] text-ink">
-                {column.title}
-              </h3>
-              <ul className="space-y-3">
+            <div className="alden-footer__column" key={column.title}>
+              <h3>{column.title}</h3>
+              <ul>
                 {column.links.map((link) => (
                   <li key={link.to}>
-                    <Link
-                      to={link.to}
-                      className="font-mono text-[14px] text-graphite transition-colors hover:text-ink"
-                    >
-                      {link.label}
-                    </Link>
+                    <Link to={link.to}>{link.label}</Link>
                   </li>
                 ))}
               </ul>
@@ -60,20 +54,12 @@ export const Footer = () => {
           ))}
         </div>
 
-        <div className="mt-16 border-t border-ink/15 pt-8">
-          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-            <p className="font-mono text-[12px] text-stone">© 2026 Apparent. All rights reserved.</p>
-            <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
-              <Link to="/privacy" className="font-mono text-[12px] text-stone transition-colors hover:text-ink">
-                Privacy Policy
-              </Link>
-              <Link to="/terms" className="font-mono text-[12px] text-stone transition-colors hover:text-ink">
-                Terms of Service
-              </Link>
-              <Link to="/cookies" className="font-mono text-[12px] text-stone transition-colors hover:text-ink">
-                Cookie Policy
-              </Link>
-            </div>
+        <div className="alden-footer__bottom">
+          <p>&copy; 2026 Apparent. All rights reserved.</p>
+          <div className="alden-footer__legal">
+            <Link to="/privacy">Privacy Policy</Link>
+            <Link to="/terms">Terms of Service</Link>
+            <Link to="/cookies">Cookie Policy</Link>
           </div>
         </div>
       </div>

@@ -350,9 +350,10 @@ function ApparentHeatmapLayers({
   );
 }
 
-// Anthropic / Claude-themed detail panel: warm cream ground, clay-coral accent,
+// Alden-themed detail panel: paper ground, quiet borders, sage actions.
 // serif name, clean key/value rows — shown on the side of the map.
-const CLAUDE_CLAY = '#cc785c';
+const HEATMAP_ACTION = '#c8dfaa';
+const HEATMAP_TEXT_ACCENT = '#4a4a4c';
 
 function HeatMapDetailPanel({
   point,
@@ -434,7 +435,7 @@ function HeatMapDetailPanel({
         )}
 
         {point.email && (
-          <p className="break-all px-5 pt-3 text-sm font-medium" style={{ color: CLAUDE_CLAY }}>
+          <p className="break-all px-5 pt-3 text-sm font-medium" style={{ color: HEATMAP_TEXT_ACCENT }}>
             {point.email}
           </p>
         )}
@@ -461,8 +462,8 @@ function HeatMapDetailPanel({
           {point.email && locked ? (
             <Link
               to="/login"
-              className="flex flex-1 items-center justify-center gap-1.5 rounded-full px-4 py-2.5 text-sm font-semibold text-white transition-opacity hover:opacity-90"
-              style={{ backgroundColor: CLAUDE_CLAY }}
+              className="flex flex-1 items-center justify-center gap-1.5 rounded-full px-4 py-2.5 text-sm font-semibold text-black transition-opacity hover:opacity-90"
+              style={{ backgroundColor: HEATMAP_ACTION }}
             >
               <LocateFixed className="h-3.5 w-3.5" />
               Sign in to email
@@ -471,8 +472,8 @@ function HeatMapDetailPanel({
             <button
               type="button"
               onClick={onOpenCompose}
-              className="flex flex-1 items-center justify-center gap-1.5 rounded-full px-4 py-2.5 text-sm font-semibold text-white transition-opacity hover:opacity-90"
-              style={{ backgroundColor: CLAUDE_CLAY }}
+              className="flex flex-1 items-center justify-center gap-1.5 rounded-full px-4 py-2.5 text-sm font-semibold text-black transition-opacity hover:opacity-90"
+              style={{ backgroundColor: HEATMAP_ACTION }}
             >
               <Send className="h-3.5 w-3.5" />
               Compose email
@@ -482,8 +483,8 @@ function HeatMapDetailPanel({
               href={point.email ? `mailto:${point.email}` : point.websiteUrl || '#'}
               target={point.email ? undefined : '_blank'}
               rel={point.email ? undefined : 'noreferrer'}
-              className="flex flex-1 items-center justify-center gap-1.5 rounded-full px-4 py-2.5 text-sm font-semibold text-white transition-opacity hover:opacity-90"
-              style={{ backgroundColor: CLAUDE_CLAY }}
+              className="flex flex-1 items-center justify-center gap-1.5 rounded-full px-4 py-2.5 text-sm font-semibold text-black transition-opacity hover:opacity-90"
+              style={{ backgroundColor: HEATMAP_ACTION }}
             >
               <LocateFixed className="h-3.5 w-3.5" />
               {point.email ? 'Email' : 'Focus'}
@@ -841,12 +842,12 @@ export const HeatMap = ({
     <main
       className={
         fullBleed
-          ? `${fillParent ? 'min-h-0 flex-1' : 'h-screen'} w-full overflow-hidden bg-[#e8e5dc] text-black`
-          : 'min-h-screen overflow-x-hidden bg-[#fbfaf7] text-black'
+          ? `apparent-heatmap-page ${fillParent ? 'min-h-0 flex-1' : 'h-screen'} w-full overflow-hidden text-black`
+          : 'apparent-heatmap-page min-h-screen overflow-x-hidden text-black'
       }
     >
       <section className={fullBleed ? 'h-full w-full' : 'mx-auto max-w-[92rem] px-5 pb-5 pt-5 sm:px-8'}>
-        <div className={`relative bg-[#e8e5dc] ${fullBleed ? 'h-full w-full overflow-hidden' : 'h-[calc(100vh-8.5rem)] min-h-[620px] overflow-hidden rounded-[32px] shadow-[0_18px_60px_rgba(0,0,0,0.06)]'}`}>
+        <div className={`relative bg-[var(--alden-parchment)] ${fullBleed ? 'h-full w-full overflow-hidden' : 'h-[calc(100vh-8.5rem)] min-h-[620px] overflow-hidden rounded-[32px] shadow-[0_18px_60px_rgba(0,0,0,0.06)]'}`}>
           <Map
             center={[-98, 39]}
             zoom={3.2}
@@ -1070,7 +1071,7 @@ export const HeatMap = ({
                     type="button"
                     onClick={() => goToProximityPointAtOffset(-1)}
                     className="flex h-10 w-10 items-center justify-center rounded-full text-black shadow-[0_10px_28px_rgba(0,0,0,0.18)] transition-opacity hover:opacity-90"
-                    style={{ backgroundColor: '#dcefc7' }}
+                    style={{ backgroundColor: 'var(--alden-sage)' }}
                     aria-label="Go to previous nearby pin"
                     title="Jump to the previous closest pin from the original selection"
                   >
@@ -1080,7 +1081,7 @@ export const HeatMap = ({
                     type="button"
                     onClick={() => goToProximityPointAtOffset(1)}
                     className="flex h-10 w-10 items-center justify-center rounded-full text-black shadow-[0_10px_28px_rgba(0,0,0,0.18)] transition-opacity hover:opacity-90"
-                    style={{ backgroundColor: '#dcefc7' }}
+                    style={{ backgroundColor: 'var(--alden-sage)' }}
                     aria-label="Go to next nearby pin"
                     title="Jump to the next closest pin from the original selection"
                   >

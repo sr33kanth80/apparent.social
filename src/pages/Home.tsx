@@ -1,266 +1,312 @@
-import { Link, useNavigate } from 'react-router-dom';
-import { ArrowUpRight, Check } from 'lucide-react';
-import { EditorialNavbar } from '../components/EditorialNavbar';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import {
+  ArrowRight,
+  CheckCircle2,
+  CircleDot,
+  GitBranch,
+  MapPin,
+  MessagesSquare,
+  Search,
+} from 'lucide-react';
 import { LogoIcon } from '../components/LogoIcon';
-import { DataFlowDiagram } from '../components/DataFlowDiagram';
 import { useReveal } from '../lib/useReveal';
 import { HeatMap } from './HeatMap';
 
-// Recognizable funds for the hero trust pill. Logos come from the favicon
-// service already used for launch logos, so they stay reliable (no hotlinking).
-const heroInvestors: { name: string; domain: string }[] = [
-  { name: 'Y Combinator', domain: 'ycombinator.com' },
-  { name: 'Sequoia Capital', domain: 'sequoiacap.com' },
-  { name: 'Andreessen Horowitz', domain: 'a16z.com' },
-  { name: 'Accel', domain: 'accel.com' },
-  { name: 'Antler', domain: 'antler.co' },
+const navLinks = [
+  { label: 'For Founders', to: '/for-founders' },
+  { label: 'For VCs', to: '/for-vcs' },
+  { label: 'Heat Map', to: '/heat-map' },
+  { label: 'Blog', to: '/blog' },
+  { label: 'About Us', to: '/about' },
+  { label: 'How it works', to: '#how-it-works' },
 ];
 
-const founderBullets = [
-  'Verify your work in seconds with npx apparent. GitHub, traction, and shipped products become your pitch.',
-  'Match to funds by thesis, stage, and sector, not a generic list of thousands.',
-  'Your AI founder agent reaches the investors who fit and opens the intro for you, never spam.',
+const partnerNames = ['Sequoia', 'a16z', 'Accel', 'Foundry', 'Precursor', 'Antler'];
+
+const footerColumns = [
+  {
+    title: 'Product',
+    links: [
+      { label: 'Founder profiles', to: '/for-founders' },
+      { label: 'Investor sourcing', to: '/for-vcs' },
+      { label: 'Builder Radar', to: '/heat-map' },
+      { label: 'How it works', to: '/#how-it-works' },
+    ],
+  },
+  {
+    title: 'Company',
+    links: [
+      { label: 'About', to: '/about' },
+      { label: 'Blog', to: '/blog' },
+      { label: 'Resources', to: '/resources' },
+      { label: 'Our Thesis', to: '/our-thesis' },
+      { label: 'Contact', to: '/contact' },
+      { label: 'Get started', to: '/login' },
+    ],
+  },
 ];
 
-const investorBullets = [
-  'A live map of builders who fit your stage, sector, and geography.',
-  'Your AI investor agent sources and ranks deals against your thesis 24/7, then drafts the outreach.',
-  'Every founder verified by real code and traction, so diligence starts before the first call.',
+const founderSignals = [
+  'Verified builds, launches, and traction in one quiet profile.',
+  'Investor matching by thesis, stage, sector, and geography.',
+  'An AI founder agent that drafts focused, fit-based outreach.',
 ];
 
-const howItWorks = [
-  { title: 'Show your work', text: 'Run npx apparent and your launches, commits, and traction become a profile that proves itself.' },
-  { title: 'Match on fit', text: 'Apparent ranks the investors whose thesis, stage, and sector actually fit your raise.' },
-  { title: 'Let the agents connect you', text: "Your AI agent reaches the funds that fit, or signal you're raising and let theirs come to you." },
+const investorSignals = [
+  'A thesis-aware view of builders with real proof behind them.',
+  'Ranking that separates active signal from stale fundraising lists.',
+  'AI-suggested outreach grounded in why the founder fits.',
+];
+
+const workflow = [
+  {
+    icon: GitBranch,
+    title: 'Verify the work',
+    text: 'Founders connect the proof they already have: code, launches, traction, and public momentum.',
+  },
+  {
+    icon: Search,
+    title: 'Match the thesis',
+    text: 'Apparent compares stage, sector, geography, and investor criteria before suggesting a path.',
+  },
+  {
+    icon: MessagesSquare,
+    title: 'Open the right intro',
+    text: 'Agents help both sides start with context, not a cold template or a generic database export.',
+  },
 ];
 
 export const Home = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   useReveal();
 
   return (
-    <div className="monad monad-landing min-h-screen bg-parchment text-ink">
-      {/* ANNOUNCEMENT BAR */}
-      <div className="monad-announcement w-full bg-ink">
-        <div className="mx-auto flex max-w-[1200px] flex-wrap items-center justify-center gap-x-3 gap-y-1 px-6 py-2.5 text-center">
-          <span className="font-mono text-[13px] text-parchment">Proof of work is the new warm intro.</span>
-          <Link
-            to="/our-thesis"
-            className="rounded-full bg-parchment px-3 py-1 font-mono text-[12px] text-ink transition hover:bg-[#e7e1dc]"
-          >
-            Read the thesis ↗
+    <main className="alden-landing min-h-screen bg-[var(--alden-paper)] text-[var(--alden-ink)]">
+      <header className="alden-nav">
+        <nav className="alden-shell alden-nav__inner" aria-label="Primary navigation">
+          <Link to="/" className="alden-brand" aria-label="Apparent home">
+            <LogoIcon className="h-6 w-6" />
+            <img src="/apparent-wordmark.png" alt="Apparent" className="alden-brand__wordmark" />
           </Link>
-        </div>
-      </div>
 
-      <EditorialNavbar />
+          <div className="alden-nav__links" aria-label="Site sections">
+            {navLinks.map((link) => {
+              const isHashLink = link.to.startsWith('#');
+              const isActive = isHashLink ? location.hash === link.to : location.pathname === link.to;
+              const className = `alden-nav__link${isActive ? ' alden-nav__link--active' : ''}`;
 
-      {/* HERO */}
-      <section className="relative isolate mx-auto max-w-[1200px] px-6 pb-10 pt-16 text-center md:pt-20">
-        <div className="mb-8 flex justify-center">
-          <div className="monad-trust-pill inline-flex items-center gap-2.5 rounded-full border border-ink bg-parchment px-3 py-1.5">
-            <div className="flex items-center">
-              {heroInvestors.map((investor, index) => (
-                <img
-                  key={investor.domain}
-                  src={`https://www.google.com/s2/favicons?domain=${investor.domain}&sz=128`}
-                  alt={investor.name}
-                  title={investor.name}
-                  className={`h-5 w-5 rounded-full border border-ink bg-parchment object-contain p-0.5 ${index > 0 ? '-ml-2' : ''}`}
-                />
-              ))}
-            </div>
-            <span className="font-mono text-[12px] tracking-[-0.02em] text-ink">1,800+ investors mapped</span>
+              return isHashLink ? (
+                <a key={link.to} href={link.to} className={className} aria-current={isActive ? 'page' : undefined}>
+                  {link.label}
+                </a>
+              ) : (
+                <Link key={link.to} to={link.to} className={className} aria-current={isActive ? 'page' : undefined}>
+                  {link.label}
+                </Link>
+              );
+            })}
+          </div>
+
+          <div className="alden-nav__actions">
+            <button type="button" className="alden-link-button" onClick={() => navigate('/login')}>
+              Log in
+            </button>
+            <button type="button" className="alden-button alden-button--small" onClick={() => navigate('/login')}>
+              Get started
+            </button>
+          </div>
+        </nav>
+      </header>
+
+      <section className="alden-hero alden-shell" data-reveal>
+        <div className="alden-hero__copy">
+          <h1>
+            Meet investors who actually <span>fit.</span>
+          </h1>
+          <p>
+            Apparent turns verified founder signal into investor matches, ranked by thesis, stage, sector,
+            and timing. The product stays quiet so the proof can do the talking.
+          </p>
+          <div className="alden-hero__actions">
+            <button type="button" className="alden-button" onClick={() => navigate('/login?role=founder')}>
+              I am a founder
+              <ArrowRight className="h-4 w-4" aria-hidden="true" />
+            </button>
+            <button type="button" className="alden-button alden-button--ghost" onClick={() => navigate('/login?role=investor')}>
+              I am an investor
+            </button>
           </div>
         </div>
+      </section>
 
-        <h1 className="mx-auto max-w-[920px] font-serif text-[clamp(2.7rem,6vw,4.7rem)] leading-[1.03] tracking-[-0.02em] text-ink">
-          Founders and funds that{' '}
-          <span className="text-graphite">
-            fit.
-          </span>
-        </h1>
-        <p className="mx-auto mt-6 max-w-[640px] font-mono text-[16px] leading-[1.6] tracking-[-0.02em] text-graphite">
-          AI agents work both sides of the table. Founders find the right funds, investors find the right founders. No cold emails.
+      <section id="heat-map" className="alden-map-section" aria-label="Investor heat map">
+        <div className="alden-shell">
+          <div className="alden-map-copy" data-reveal>
+            <h2>
+              Capital is easier to read when it has a <span>shape.</span>
+            </h2>
+            <p>
+              The heat map stays on the landing page because it is the clearest view of the Apparent network:
+              investors plotted by geography, stage, and thesis instead of buried in a spreadsheet.
+            </p>
+            <Link to="/heat-map" className="alden-map-link">
+              Open full heat map
+              <ArrowRight className="h-4 w-4" aria-hidden="true" />
+            </Link>
+          </div>
+
+          <div className="alden-map-frame" data-reveal>
+            <HeatMap includeVCContacts vcOnly fullBleed fillParent lockContacts />
+          </div>
+        </div>
+      </section>
+
+      <section className="alden-proof alden-shell" data-reveal>
+        <div className="alden-logo-strip" aria-label="Representative investor ecosystem">
+          {partnerNames.map((name) => (
+            <span key={name}>{name}</span>
+          ))}
+        </div>
+      </section>
+
+      <section id="how-it-works" className="alden-editorial alden-shell" data-reveal>
+        <h2>
+          A calmer way to find the <span>right conversation.</span>
+        </h2>
+        <p>
+          Apparent is not another noisy fundraising directory. It keeps the workflow narrow: prove the work,
+          match the thesis, then open a conversation with context.
         </p>
 
-        <div className="mt-9 flex flex-wrap items-center justify-center gap-3">
-          <button
-            type="button"
-            onClick={() => navigate('/login?role=founder')}
-            className="monad-cta inline-flex items-center gap-2 bg-charcoal px-6 py-3 text-[14px] text-parchment hover:bg-ink"
-          >
-            I&apos;m a founder <ArrowUpRight className="h-4 w-4" />
-          </button>
-          <button
-            type="button"
-            onClick={() => navigate('/login?role=investor')}
-            className="monad-cta inline-flex items-center gap-2 border border-ink px-6 py-3 text-[14px] text-ink hover:bg-ink hover:text-parchment"
-          >
-            I&apos;m an investor
-          </button>
+        <div className="alden-workflow">
+          {workflow.map((item, index) => {
+            const Icon = item.icon;
+            return (
+              <article className="alden-workflow-card" key={item.title} data-reveal style={{ transitionDelay: `${index * 90}ms` }}>
+                <div className="alden-workflow-card__top">
+                  <Icon className="h-5 w-5" aria-hidden="true" />
+                  <span>0{index + 1}</span>
+                </div>
+                <h3>{item.title}</h3>
+                <p>{item.text}</p>
+              </article>
+            );
+          })}
         </div>
       </section>
 
-      {/* DATA-FLOW DIAGRAM — founder proof → Apparent → investor thesis */}
-      <DataFlowDiagram />
-
-      {/* MAP — the live front door */}
-      <section data-reveal className="reveal mx-auto max-w-[1200px] border-t border-ink/12 px-6 py-20">
-        <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
-          <div>
-            <h2 className="font-serif text-[clamp(1.8rem,3.5vw,2.5rem)] leading-[1.1] text-ink">One map. Two sides of the table.</h2>
-            <p className="mt-3 font-mono text-[14px] leading-[1.6] text-graphite">1,800+ investors, plotted by geography, stage, and thesis.</p>
-          </div>
-          <Link
-            to="/heat-map"
-            className="monad-cta inline-flex items-center gap-2 border border-ink px-5 py-2.5 font-mono text-[14px] text-ink hover:bg-ink hover:text-parchment"
-          >
-            Open the full map <ArrowUpRight className="h-4 w-4" />
-          </Link>
-        </div>
-        <div className="monad-map-frame relative flex h-[clamp(360px,56vh,560px)] overflow-hidden rounded-[40px] border border-ink bg-[#e8e5dc]">
-          <HeatMap includeVCContacts vcOnly fullBleed fillParent lockContacts />
-        </div>
-      </section>
-
-      {/* WHO IT'S FOR */}
-      <section data-reveal className="reveal mx-auto max-w-[1200px] border-t border-ink/12 px-6 py-20">
-        <div className="grid gap-6 md:grid-cols-2">
-          {/* Founders */}
-          <div className="monad-feature-card monad-feature-card--founder relative isolate flex flex-col overflow-hidden rounded-[40px] bg-lavender p-10 shadow-[0_0_10px_rgba(0,0,0,0.1)]">
-            {/* Peach → periwinkle wash, contained within the card radius */}
-            <div
-              aria-hidden
-              className="pointer-events-none absolute -right-20 -top-20 -z-10 h-64 w-64 rounded-full blur-2xl"
-              style={{ background: 'linear-gradient(150deg, rgba(255,148,115,0.55), rgba(160,181,235,0.5))' }}
-            />
-            <LogoIcon className="h-6 w-6 text-ink" />
-            <h3 className="mt-6 font-serif text-[28px] leading-[1.15] text-ink">Reach the investors who fit your raise.</h3>
-            <ul className="mt-6 grid gap-3.5 font-mono text-[14px] leading-[1.55] text-graphite">
-              {founderBullets.map((item) => (
-                <li key={item} className="flex items-start gap-2.5">
-                  <Check className="mt-0.5 h-4 w-4 shrink-0 text-ink" />
-                  <span>{item}</span>
-                </li>
-              ))}
-            </ul>
-            <button
-              type="button"
-              onClick={() => navigate('/login?role=founder')}
-              className="monad-cta mt-8 inline-flex w-fit items-center gap-2 bg-charcoal px-5 py-2.5 font-mono text-[14px] text-parchment"
-            >
-              Create founder profile <ArrowUpRight className="h-4 w-4" />
-            </button>
-          </div>
-
-          {/* Investors */}
-          <div className="monad-feature-card monad-feature-card--investor relative isolate flex flex-col overflow-hidden rounded-[40px] bg-charcoal p-10 text-parchment shadow-[0_0_10px_rgba(0,0,0,0.1)]">
-            {/* Mint → periwinkle glow, reads as a soft aura on the dark surface */}
-            <div
-              aria-hidden
-              className="pointer-events-none absolute -right-20 -top-20 -z-10 h-64 w-64 rounded-full blur-2xl"
-              style={{ background: 'linear-gradient(150deg, rgba(167,252,205,0.5), rgba(160,181,235,0.45))' }}
-            />
-            <LogoIcon className="h-6 w-6 text-ink" />
-            <h3 className="mt-6 font-serif text-[28px] leading-[1.15] text-ink">Meet the founders who fit your thesis.</h3>
-            <ul className="mt-6 grid gap-3.5 font-mono text-[14px] leading-[1.55] text-graphite">
-              {investorBullets.map((item) => (
-                <li key={item} className="flex items-start gap-2.5">
-                  <Check className="mt-0.5 h-4 w-4 shrink-0 text-ink" />
-                  <span>{item}</span>
-                </li>
-              ))}
-            </ul>
-            <button
-              type="button"
-              onClick={() => navigate('/login?role=investor')}
-              className="monad-cta mt-8 inline-flex w-fit items-center gap-2 border border-ink bg-parchment px-5 py-2.5 font-mono text-[14px] text-ink hover:bg-ink hover:text-parchment"
-            >
-              Create investor profile <ArrowUpRight className="h-4 w-4" />
-            </button>
-          </div>
-        </div>
-      </section>
-
-      {/* THE WEDGE */}
-      <section data-reveal className="reveal mx-auto max-w-[1200px] border-t border-ink/12 px-6 py-20">
-        <div className="grid gap-10 md:grid-cols-2 md:items-center">
-          <div>
-            <h2 className="max-w-xl font-serif text-[clamp(1.8rem,3.5vw,2.5rem)] leading-[1.12] text-ink">
-              The right match beats a hundred wrong ones.
+      <section id="for-who" className="alden-two-column">
+        <div className="alden-shell alden-two-column__inner">
+          <article className="alden-audience-card" data-reveal>
+            <h2>
+              Make your strongest signal <span>visible.</span>
             </h2>
-            <p className="mt-5 max-w-xl font-mono text-[14px] leading-[1.6] text-graphite">
-              A generic list of thousands wastes everyone&apos;s time. Apparent matches founders and investors on
-              thesis, stage, and sector first, so the conversations that happen are the ones that should.
-            </p>
-          </div>
-          <div className="grid gap-3">
-            <div className="monad-micro-card rounded-[24px] border border-ink/15 bg-parchment p-6">
-              <p className="font-mono text-[11px] uppercase tracking-[0.12em] text-stone">The old way</p>
-              <p className="mt-2 font-mono text-[14px] leading-[1.55] text-graphite">
-                Work a list of thousands. Guess at fit. Hope something sticks.
-              </p>
-            </div>
-            <div className="monad-micro-card monad-micro-card--wash rounded-[24px] bg-lavender p-6">
-              <p className="font-mono text-[11px] uppercase tracking-[0.12em] text-ink">On Apparent</p>
-              <p className="mt-2 font-mono text-[14px] leading-[1.55] text-ink/80">
-                Match on thesis and stage. Talk to the few who fit. Skip the rest.
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* HOW IT WORKS */}
-      <section id="how-to" data-reveal className="reveal mx-auto max-w-[1200px] border-t border-ink/12 px-6 py-20">
-        <div className="grid gap-10 lg:grid-cols-[0.8fr_1.2fr] lg:items-start">
-          <h2 className="max-w-xl font-serif text-[clamp(1.8rem,3.5vw,2.5rem)] leading-[1.12] text-ink">
-            Verify. Match on fit. Let the agents connect you.
-          </h2>
-          <ol className="grid gap-x-6 gap-y-8 sm:grid-cols-3">
-            {howItWorks.map((item, i) => (
-              <li
-                key={item.title}
-                data-reveal
-                style={{ transitionDelay: `${i * 90}ms` }}
-                className="monad-step-card reveal rounded-[28px] border border-ink/15 bg-parchment p-6"
-              >
-                <span className="font-mono text-[20px] tabular-nums text-ink">0{i + 1}</span>
-                <h3 className="mt-4 font-serif text-[20px] leading-[1.2] text-ink">{item.title}</h3>
-                <p className="mt-2 font-mono text-[13px] leading-[1.55] text-graphite">{item.text}</p>
-              </li>
-            ))}
-          </ol>
-        </div>
-      </section>
-
-      {/* FINAL CTA */}
-      <section data-reveal className="reveal mx-auto max-w-[1200px] border-t border-ink/12 px-6 py-24 text-center">
-        <div className="monad-final-cta rounded-[40px] border border-ink px-6 py-14">
-          <h2 className="mx-auto max-w-2xl font-serif text-[clamp(2.2rem,5vw,3.5rem)] leading-[1.08] text-ink">Find your fit.</h2>
-          <p className="mx-auto mt-5 max-w-xl font-mono text-[14px] leading-[1.6] text-graphite">
-            Founders find the investors who fit their raise. Investors find the founders who fit their thesis. Pick your side
-            and start in under a minute.
-          </p>
-          <div className="mt-9 flex flex-wrap items-center justify-center gap-3">
-            <button
-              type="button"
-              onClick={() => navigate('/login?role=founder')}
-              className="monad-cta inline-flex items-center gap-2 bg-charcoal px-6 py-3 text-[14px] text-parchment hover:bg-ink"
-            >
-              Create founder profile <ArrowUpRight className="h-4 w-4" />
+            <ul>
+              {founderSignals.map((signal) => (
+                <li key={signal}>
+                  <CheckCircle2 className="h-4 w-4" aria-hidden="true" />
+                  <span>{signal}</span>
+                </li>
+              ))}
+            </ul>
+            <button type="button" className="alden-button" onClick={() => navigate('/login?role=founder')}>
+              Create founder profile
             </button>
-            <button
-              type="button"
-              onClick={() => navigate('/login?role=investor')}
-              className="monad-cta inline-flex items-center gap-2 border border-ink px-6 py-3 text-[14px] text-ink hover:bg-ink hover:text-parchment"
-            >
+          </article>
+
+          <article className="alden-audience-card" data-reveal>
+            <h2>
+              Source builders by <span>evidence.</span>
+            </h2>
+            <ul>
+              {investorSignals.map((signal) => (
+                <li key={signal}>
+                  <CircleDot className="h-4 w-4" aria-hidden="true" />
+                  <span>{signal}</span>
+                </li>
+              ))}
+            </ul>
+            <button type="button" className="alden-button alden-button--ghost" onClick={() => navigate('/login?role=investor')}>
               Create investor profile
             </button>
+          </article>
+        </div>
+      </section>
+
+      <section className="alden-quote alden-shell" data-reveal>
+        <div className="alden-quote__wash" aria-hidden="true" />
+        <blockquote>
+          The warm intro was a proxy for trust. Apparent makes the actual <span>proof</span> easier to read.
+        </blockquote>
+        <div className="alden-attribution">
+          <div className="alden-avatar-stack" aria-hidden="true">
+            <span />
+            <span />
+            <span />
+          </div>
+          <div>
+            <strong>Apparent network</strong>
+            <p>Founders, operators, and early-stage investors</p>
           </div>
         </div>
       </section>
-    </div>
+
+      <section className="alden-final alden-shell" data-reveal>
+        <MapPin className="h-6 w-6" aria-hidden="true" />
+        <h2>
+          Find the few matches that <span>matter.</span>
+        </h2>
+        <p>Start with a verified profile or a thesis-aware sourcing desk. Both paths meet at fit.</p>
+        <div className="alden-hero__actions">
+          <button type="button" className="alden-button" onClick={() => navigate('/login?role=founder')}>
+            Start as founder
+            <ArrowRight className="h-4 w-4" aria-hidden="true" />
+          </button>
+          <button type="button" className="alden-link-button" onClick={() => navigate('/login?role=investor')}>
+            Start as investor
+          </button>
+        </div>
+      </section>
+
+      <footer className="alden-footer">
+        <div className="alden-shell">
+          <div className="alden-footer__main">
+            <div className="alden-footer__brand-block">
+              <Link to="/" className="alden-brand" aria-label="Apparent home">
+                <LogoIcon className="h-6 w-6" />
+                <img src="/apparent-wordmark.png" alt="Apparent" className="alden-brand__wordmark" />
+              </Link>
+              <p>
+                Proof of work is the new warm intro. Founders show what they have built. Investors find them by
+                thesis, proof, and timing.
+              </p>
+            </div>
+
+            {footerColumns.map((column) => (
+              <div className="alden-footer__column" key={column.title}>
+                <h3>{column.title}</h3>
+                <ul>
+                  {column.links.map((link) => (
+                    <li key={link.to}>
+                      <Link to={link.to}>{link.label}</Link>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
+
+          <div className="alden-footer__bottom">
+            <p>&copy; 2026 Apparent. All rights reserved.</p>
+            <div className="alden-footer__legal">
+              <Link to="/privacy">Privacy Policy</Link>
+              <Link to="/terms">Terms of Service</Link>
+              <Link to="/cookies">Cookie Policy</Link>
+            </div>
+          </div>
+        </div>
+      </footer>
+    </main>
   );
 };

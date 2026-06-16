@@ -16,7 +16,7 @@ import {
   Terminal,
 } from 'lucide-react';
 import { BuilderRadarMap } from '../components/BuilderRadarMap';
-import { EditorialNavbar } from '../components/EditorialNavbar';
+import { AldenPublicNavbar } from '../components/AldenPublicNavbar';
 import { CLI_CARD_HTML } from '../components/cliCardHtml';
 import { useReveal } from '../lib/useReveal';
 import type { BuilderMapCluster, BuilderNode } from '../lib/apparent-types';
@@ -399,7 +399,7 @@ export const OurThesis = () => {
 
   return (
     <main className="monad monad-page min-h-screen overflow-x-hidden bg-[#f6f3f1] text-black">
-      <EditorialNavbar />
+      <AldenPublicNavbar />
 
       {/* Hero — the headline next to real proof: the npx apparent build card. */}
       <section data-reveal className="reveal mx-auto max-w-[92rem] px-5 pb-14 pt-14 sm:px-8 md:pt-20">

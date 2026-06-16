@@ -65,6 +65,681 @@
   --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 }
 
+/* Alden-inspired landing page. Scoped to the root Home route so the existing
+   Monad pages and dashboard keep their current design language. */
+:root {
+  --alden-parchment: #f3f1eb;
+  --alden-ink: #28262a;
+  --alden-graphite: #4a4a4c;
+  --alden-paper: #ffffff;
+  --alden-fog: #dddcdd;
+  --alden-silver: #cbcbcb;
+  --alden-sky: #97cde5;
+  --alden-sage: #c8dfaa;
+  --alden-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --alden-serif: 'Source Serif 4', ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
+}
+
+.alden-landing {
+  --alden-parchment: #f3f1eb;
+  --alden-ink: #28262a;
+  --alden-graphite: #4a4a4c;
+  --alden-paper: #ffffff;
+  --alden-fog: #dddcdd;
+  --alden-silver: #cbcbcb;
+  --alden-sky: #97cde5;
+  --alden-sage: #c8dfaa;
+  --alden-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --alden-serif: 'Source Serif 4', ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
+  background: var(--alden-paper);
+  color: var(--alden-ink);
+  font-family: var(--alden-sans);
+  letter-spacing: -0.02em;
+  -webkit-font-smoothing: antialiased;
+}
+
+.alden-landing *,
+.alden-landing *::before,
+.alden-landing *::after {
+  box-sizing: border-box;
+}
+
+.alden-landing :where(h1, h2, h3, p) {
+  margin: 0;
+}
+
+.alden-landing :where(h1, h2, h3) {
+  color: var(--alden-ink);
+  font-weight: 400;
+  text-wrap: balance;
+}
+
+.alden-landing p {
+  color: var(--alden-graphite);
+  text-wrap: pretty;
+}
+
+.alden-shell {
+  margin-inline: auto;
+  max-width: 1200px;
+  padding-inline: clamp(1.25rem, 4vw, 2rem);
+}
+
+.alden-nav {
+  background: rgba(255, 255, 255, 0.92);
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  backdrop-filter: blur(16px);
+}
+
+.alden-nav__inner {
+  align-items: center;
+  display: flex;
+  gap: 0.85rem;
+  justify-content: space-between;
+  min-height: 4rem;
+}
+
+.alden-brand {
+  align-items: center;
+  color: var(--alden-ink);
+  display: inline-flex;
+  font-size: 1.125rem;
+  font-weight: 500;
+  gap: 0.625rem;
+  line-height: 1;
+  text-decoration: none;
+}
+
+.alden-brand:hover {
+  opacity: 0.76;
+}
+
+.alden-brand__wordmark {
+  display: block;
+  height: 1.45rem;
+  object-fit: contain;
+  width: auto;
+}
+
+.alden-nav__links {
+  align-items: center;
+  display: flex;
+  flex: 1 1 auto;
+  gap: 0.15rem;
+  justify-content: center;
+  min-width: 0;
+}
+
+.alden-nav__link,
+.alden-link-button {
+  color: var(--alden-ink);
+  font: 400 0.84rem/1.2 var(--alden-sans);
+  letter-spacing: -0.01em;
+  text-decoration: none;
+}
+
+.alden-nav__link {
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  padding: 0.45rem 0.62rem;
+  transition:
+    background-color 180ms ease,
+    border-color 180ms ease,
+    color 180ms ease;
+  white-space: nowrap;
+}
+
+.alden-nav__link:hover,
+.alden-nav__link:focus-visible {
+  border-color: var(--alden-sage);
+  color: var(--alden-ink);
+  transform: none;
+}
+
+.alden-nav__link--active,
+.alden-nav__link:active {
+  background: var(--alden-sage);
+  border-color: var(--alden-sage);
+  color: var(--alden-ink);
+  font-weight: 500;
+}
+
+.alden-link-button:hover {
+  color: var(--alden-graphite);
+  transform: none;
+}
+
+.alden-nav__actions {
+  align-items: center;
+  display: flex;
+  flex: 0 0 auto;
+  gap: 0.5rem;
+}
+
+.alden-link-button {
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  padding: 0.5rem 0.75rem;
+}
+
+.alden-button {
+  align-items: center;
+  background: var(--alden-sage);
+  border: 0;
+  border-radius: 100px;
+  color: var(--alden-ink);
+  display: inline-flex;
+  font: 500 1rem/1 var(--alden-sans);
+  gap: 0.5rem;
+  justify-content: center;
+  letter-spacing: -0.02em;
+  min-height: 2.75rem;
+  padding: 0.65rem 1.1rem;
+  text-decoration: none;
+  transition:
+    background-color 180ms ease,
+    color 180ms ease,
+    transform 260ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.alden-button:hover {
+  background: #bed49f;
+  transform: translateY(-1px);
+}
+
+.alden-button--small {
+  font-size: 0.875rem;
+  min-height: 2.25rem;
+  padding: 0.55rem 0.95rem;
+}
+
+.alden-button--ghost {
+  background: var(--alden-paper);
+  border: 1px solid var(--alden-fog);
+}
+
+.alden-button--ghost:hover {
+  background: var(--alden-parchment);
+}
+
+.alden-hero {
+  display: grid;
+  min-height: clamp(24rem, 54vh, 31rem);
+  place-items: center;
+  text-align: center;
+}
+
+.alden-hero__copy {
+  margin-inline: auto;
+  max-width: 58rem;
+  padding-block: clamp(3rem, 8vw, 4.75rem) clamp(1.5rem, 4vw, 2.25rem);
+}
+
+.alden-hero h1 {
+  font: 400 clamp(3.25rem, 8vw, 5.85rem)/0.96 var(--alden-sans);
+  letter-spacing: -0.04em;
+  margin-top: 0;
+}
+
+.alden-hero h1 span,
+.alden-map-copy h2 span,
+.alden-editorial h2 span,
+.alden-audience-card h2 span,
+.alden-quote blockquote span,
+.alden-final h2 span {
+  color: var(--alden-sky);
+}
+
+.alden-hero p {
+  font-size: clamp(1rem, 2vw, 1.125rem);
+  letter-spacing: -0.02em;
+  line-height: 1.5;
+  margin: 0.9rem auto 0;
+  max-width: 42rem;
+}
+
+.alden-hero__actions {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  justify-content: center;
+  margin-top: 1.25rem;
+}
+
+.alden-map-section {
+  background: var(--alden-parchment);
+  padding-block: clamp(2rem, 5vw, 3rem);
+}
+
+.alden-map-copy {
+  margin-inline: auto;
+  max-width: 48rem;
+  text-align: center;
+}
+
+.alden-map-copy h2 {
+  font: 400 clamp(2.35rem, 5vw, 3.5rem)/1.08 var(--alden-serif);
+  letter-spacing: -0.04em;
+  margin-top: 0;
+}
+
+.alden-map-copy p {
+  color: var(--alden-graphite);
+  font-size: 1rem;
+  line-height: 1.5;
+  margin-top: 0.7rem;
+}
+
+.alden-map-link {
+  align-items: center;
+  color: var(--alden-ink);
+  display: inline-flex;
+  font-size: 0.95rem;
+  font-weight: 500;
+  gap: 0.45rem;
+  line-height: 1;
+  margin-top: 0.9rem;
+  text-decoration: none;
+}
+
+.alden-map-link:hover {
+  color: var(--alden-graphite);
+  transform: none;
+}
+
+.alden-map-frame {
+  background: #e8e5dc;
+  border: 1px solid var(--alden-fog);
+  border-radius: 24px;
+  display: flex;
+  height: clamp(30rem, 52vw, 38rem);
+  margin-top: clamp(1.25rem, 3vw, 2rem);
+  min-height: 0;
+  overflow: hidden;
+}
+
+.alden-map-frame > div {
+  flex: 1 1 auto;
+  min-height: 0;
+  width: 100%;
+}
+
+.alden-workflow-card,
+.alden-audience-card {
+  background: var(--alden-paper);
+  border: 1px solid var(--alden-fog);
+  border-radius: 16px;
+}
+
+.alden-proof {
+  padding-block: clamp(2rem, 5vw, 3rem);
+  text-align: center;
+}
+
+.alden-logo-strip {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem 1.25rem;
+  justify-content: center;
+  margin-top: 0;
+}
+
+.alden-logo-strip span {
+  color: var(--alden-ink);
+  font-size: clamp(1.1rem, 2vw, 1.5rem);
+  font-weight: 500;
+  letter-spacing: -0.04em;
+  opacity: 0.76;
+}
+
+.alden-editorial {
+  padding-block: clamp(2.35rem, 5.5vw, 3.5rem);
+  text-align: center;
+}
+
+.alden-editorial h2,
+.alden-final h2 {
+  font: 400 clamp(2.4rem, 5vw, 3.5rem)/1.08 var(--alden-serif);
+  letter-spacing: -0.04em;
+  margin-inline: auto;
+  max-width: 48rem;
+}
+
+.alden-editorial > p,
+.alden-final > p {
+  font-size: 1rem;
+  line-height: 1.5;
+  margin: 0.8rem auto 0;
+  max-width: 40rem;
+}
+
+.alden-workflow {
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin-top: clamp(1.5rem, 3.5vw, 2.25rem);
+  text-align: left;
+}
+
+.alden-workflow-card {
+  padding: clamp(1.1rem, 2.4vw, 1.5rem);
+}
+
+.alden-workflow-card__top {
+  align-items: center;
+  color: var(--alden-ink);
+  display: flex;
+  justify-content: space-between;
+}
+
+.alden-workflow-card__top span {
+  color: var(--alden-graphite);
+  font-size: 0.875rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.alden-workflow-card h3 {
+  font-size: clamp(1.45rem, 3vw, 2rem);
+  letter-spacing: -0.03em;
+  line-height: 1.15;
+  margin-top: 0.75rem;
+}
+
+.alden-audience-card h2 {
+  font-size: clamp(1.45rem, 3vw, 2rem);
+  letter-spacing: -0.03em;
+  line-height: 1.15;
+}
+
+.alden-workflow-card p {
+  font-size: 0.95rem;
+  line-height: 1.5;
+  margin-top: 0.5rem;
+}
+
+.alden-two-column {
+  background: var(--alden-parchment);
+  padding-block: clamp(2.25rem, 5vw, 3.25rem);
+}
+
+.alden-two-column__inner {
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.alden-audience-card {
+  padding: clamp(1.25rem, 3vw, 1.75rem);
+}
+
+.alden-audience-card ul {
+  display: grid;
+  gap: 0.7rem;
+  list-style: none;
+  margin: 1rem 0 0;
+  padding: 0;
+}
+
+.alden-audience-card li {
+  align-items: flex-start;
+  color: var(--alden-graphite);
+  display: flex;
+  font-size: 0.95rem;
+  gap: 0.65rem;
+  line-height: 1.45;
+}
+
+.alden-audience-card li svg {
+  color: var(--alden-ink);
+  flex: 0 0 auto;
+  margin-top: 0.15rem;
+}
+
+.alden-audience-card .alden-button {
+  margin-top: 1.25rem;
+}
+
+.alden-quote {
+  padding-block: clamp(2.35rem, 6vw, 4rem);
+  position: relative;
+  text-align: center;
+}
+
+.alden-quote__wash {
+  background: radial-gradient(circle at 50% 50%, rgba(151, 205, 229, 0.34), transparent 66%);
+  bottom: 2rem;
+  height: 15rem;
+  pointer-events: none;
+  position: absolute;
+  right: 0;
+  width: 22rem;
+}
+
+.alden-quote blockquote {
+  color: var(--alden-ink);
+  font: 400 clamp(1.6rem, 4vw, 2.5rem)/1.24 var(--alden-serif);
+  letter-spacing: -0.04em;
+  margin: 0 auto;
+  max-width: 54rem;
+  position: relative;
+}
+
+.alden-attribution {
+  align-items: center;
+  display: inline-flex;
+  gap: 1rem;
+  justify-content: center;
+  margin-top: 1.25rem;
+  position: relative;
+  text-align: left;
+}
+
+.alden-attribution strong {
+  color: var(--alden-ink);
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.alden-attribution p {
+  font-size: 0.75rem;
+  line-height: 1.3;
+  margin-top: 0.25rem;
+}
+
+.alden-avatar-stack {
+  display: flex;
+}
+
+.alden-avatar-stack span {
+  background:
+    linear-gradient(135deg, rgba(151, 205, 229, 0.65), rgba(200, 223, 170, 0.72)),
+    var(--alden-parchment);
+  border: 1px solid var(--alden-fog);
+  border-radius: 999px;
+  height: 2.5rem;
+  margin-left: -0.65rem;
+  width: 2.5rem;
+}
+
+.alden-avatar-stack span:first-child {
+  margin-left: 0;
+}
+
+.alden-final {
+  align-items: center;
+  border-top: 1px solid var(--alden-fog);
+  display: flex;
+  flex-direction: column;
+  padding-block: clamp(2.35rem, 6vw, 4rem);
+  text-align: center;
+}
+
+.alden-footer {
+  border-top: 1px solid var(--alden-fog);
+  background: var(--alden-parchment);
+  padding-block: clamp(2rem, 5vw, 3rem) 1.5rem;
+}
+
+.alden-footer__main {
+  display: grid;
+  gap: 1.5rem;
+  grid-template-columns: minmax(0, 1.6fr) minmax(10rem, 1fr) minmax(10rem, 1fr);
+}
+
+.alden-footer__brand-block p {
+  color: var(--alden-graphite);
+  font-size: 0.9rem;
+  line-height: 1.5;
+  margin-top: 0.85rem;
+  max-width: 24rem;
+}
+
+.alden-footer__column h3 {
+  color: var(--alden-ink);
+  font-size: 0.82rem;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  line-height: 1.2;
+  margin: 0 0 0.8rem;
+}
+
+.alden-footer__column ul {
+  display: grid;
+  gap: 0.55rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.alden-footer__column a,
+.alden-footer__legal a {
+  color: var(--alden-graphite);
+  font-size: 0.88rem;
+  line-height: 1.35;
+  text-decoration: none;
+}
+
+.alden-footer__column a:hover,
+.alden-footer__legal a:hover {
+  color: var(--alden-ink);
+  transform: none;
+}
+
+.alden-footer__bottom {
+  align-items: center;
+  border-top: 1px solid var(--alden-fog);
+  display: flex;
+  gap: 1rem;
+  justify-content: space-between;
+  margin-top: 2rem;
+  padding-top: 1rem;
+}
+
+.alden-footer__bottom p {
+  color: var(--alden-graphite);
+  font-size: 0.78rem;
+  line-height: 1.3;
+}
+
+.alden-footer__legal {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.95rem;
+  justify-content: flex-end;
+}
+
+.alden-footer__legal a {
+  font-size: 0.78rem;
+}
+
+.alden-landing [data-reveal] {
+  opacity: 0;
+  transform: translateY(16px);
+  transition:
+    opacity 0.8s ease,
+    transform 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.alden-landing [data-reveal].reveal-in {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+@media (max-width: 1060px) {
+  .alden-nav__links {
+    display: none;
+  }
+
+  .alden-workflow,
+  .alden-two-column__inner {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .alden-nav__inner {
+    min-height: 4rem;
+  }
+
+  .alden-nav__actions .alden-link-button {
+    display: none;
+  }
+
+  .alden-hero {
+    min-height: auto;
+  }
+
+  .alden-hero__copy {
+    padding-block: 2.5rem 1.5rem;
+  }
+
+  .alden-hero__actions,
+  .alden-final .alden-hero__actions {
+    align-items: stretch;
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .alden-button {
+    width: 100%;
+  }
+
+  .alden-map-frame {
+    border-radius: 20px;
+    height: 26rem;
+  }
+
+  .alden-footer__main {
+    grid-template-columns: 1fr;
+  }
+
+  .alden-footer__bottom {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .alden-footer__legal {
+    justify-content: flex-start;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .alden-landing [data-reveal] {
+    animation: none;
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+}
+
 .monad {
   background: var(--color-parchment);
   color: var(--color-ink);
@@ -1858,6 +2533,243 @@ a.rounded-full:hover {
 
 .nav-links.is-hovering .nav-hover-pill {
   opacity: 1;
+}
+
+/* Alden public-page override layer.
+   Scoped to .monad-page so Heat Map and dashboard surfaces are not restyled. */
+.monad-page {
+  background: var(--alden-paper) !important;
+  color: var(--alden-ink) !important;
+  font-family: var(--alden-sans);
+  letter-spacing: -0.02em;
+}
+
+.monad-page :where(h1) {
+  color: var(--alden-ink) !important;
+  font-family: var(--alden-sans) !important;
+  font-weight: 400;
+  letter-spacing: -0.04em;
+}
+
+.monad-page :where(h2, h3, blockquote) {
+  color: var(--alden-ink) !important;
+  font-family: var(--alden-serif) !important;
+  font-weight: 400;
+  letter-spacing: -0.035em;
+}
+
+.monad-page :where(p, li, span, label, input, textarea, select) {
+  letter-spacing: -0.02em;
+}
+
+.monad-page :where(p, li, [class*="text-black/"], [class*="text-white/"], [class*="text-stone"], [class*="text-graphite"]) {
+  color: var(--alden-graphite) !important;
+}
+
+.monad-page :where(h1, h2, h3, h4, strong, .text-black, .text-ink, [class*="text-[#242424]"]) {
+  color: var(--alden-ink) !important;
+}
+
+.monad-page :where(section) {
+  border-color: var(--alden-fog) !important;
+}
+
+.monad-page :where([class*="bg-[#f6f3f1]"], .bg-parchment) {
+  background: var(--alden-parchment) !important;
+}
+
+.monad-page :where([class*="bg-white"], .bg-white) {
+  background: var(--alden-paper) !important;
+}
+
+.monad-page :where([class*="bg-[#242424]"]) {
+  background: var(--alden-paper) !important;
+  border: 1px solid var(--alden-fog) !important;
+  box-shadow: none !important;
+  color: var(--alden-ink) !important;
+}
+
+.monad-page :where([class*="bg-[#242424]"]) :where(p, span, li, h2, h3, blockquote, [class*="text-white"]) {
+  color: var(--alden-ink) !important;
+}
+
+.monad-page :where([class*="bg-[#242424]"]) :where([class*="text-white/"], [class*="text-[#a7fccd]"], [class*="text-[#cfdaf5]"]) {
+  color: var(--alden-graphite) !important;
+}
+
+.monad-page :where([class*="bg-[#cfdaf5]"], [class*="bg-[#bcc8ef]"], [class*="bg-[#a7fccd]"], .bg-lavender, .bg-mint) {
+  background: var(--alden-sage) !important;
+  color: var(--alden-ink) !important;
+}
+
+.monad-page :where([class*="border-black/"], [class*="border-white/"], [class*="border-ink/"]) {
+  border-color: var(--alden-fog) !important;
+}
+
+.monad-page :where([class*="shadow-"]) {
+  box-shadow: none !important;
+}
+
+.monad-page :where(article, form, [class*="rounded-[24px]"], [class*="rounded-[28px]"], [class*="rounded-[32px]"], [class*="rounded-[40px]"]) {
+  border-color: var(--alden-fog) !important;
+}
+
+.monad-page :where(form, article[class*="bg-white"], div[class*="bg-white/"]) {
+  border: 1px solid var(--alden-fog);
+}
+
+.monad-page :where(button.rounded-full, a.rounded-full, [role='button'].rounded-full) {
+  background: var(--alden-sage) !important;
+  border: 1px solid var(--alden-sage) !important;
+  border-radius: 100px;
+  color: var(--alden-ink) !important;
+  font-family: var(--alden-sans);
+  font-weight: 500;
+  box-shadow: none !important;
+}
+
+.monad-page :where(button.rounded-full:hover, a.rounded-full:hover, [role='button'].rounded-full:hover) {
+  background: #bed49f !important;
+  color: var(--alden-ink) !important;
+  transform: translateY(-1px);
+}
+
+.monad-page :where(input, textarea, select) {
+  background: var(--alden-paper) !important;
+  border-color: var(--alden-fog) !important;
+  border-radius: 16px !important;
+  color: var(--alden-ink) !important;
+}
+
+.monad-page :where(input:focus, textarea:focus, select:focus) {
+  border-color: var(--alden-sage) !important;
+  box-shadow: 0 0 0 3px rgba(200, 223, 170, 0.38) !important;
+  outline: none;
+}
+
+.monad-page :where(svg) {
+  color: currentColor;
+}
+
+.monad-page :where(.reveal) {
+  transition:
+    opacity 0.7s ease,
+    transform 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* Alden heat-map override layer.
+   Scoped to the public heat map so dashboard map surfaces keep their own UI. */
+.apparent-heatmap-page {
+  background: var(--alden-parchment) !important;
+  color: var(--alden-ink) !important;
+  font-family: var(--alden-sans);
+  letter-spacing: 0;
+}
+
+.apparent-heatmap-page *,
+.apparent-heatmap-page *::before,
+.apparent-heatmap-page *::after {
+  box-sizing: border-box;
+  letter-spacing: 0;
+}
+
+.apparent-heatmap-page :where(h1, h2, h3, h4, strong, .text-black, [class*="text-[#1a1a1a]"], [class*="text-[#1f1e1d]"]) {
+  color: var(--alden-ink) !important;
+}
+
+.apparent-heatmap-page :where(h3.font-serif) {
+  font-family: var(--alden-serif) !important;
+  font-weight: 400;
+}
+
+.apparent-heatmap-page :where(p, li, label, pre, code, [class*="text-black/"], [class*="text-white/"]) {
+  color: var(--alden-graphite) !important;
+}
+
+.apparent-heatmap-page :where([class*="bg-[#e8e5dc]"], [class*="bg-[#fbfaf7]"], [class*="bg-[#f4f1eb]"]) {
+  background: var(--alden-parchment) !important;
+}
+
+.apparent-heatmap-page :where([class*="bg-[#f0eee6]"], [class*="bg-white"]) {
+  background: rgba(255, 255, 255, 0.94) !important;
+}
+
+.apparent-heatmap-page :where([class*="bg-[#1a1a1a]"], [class*="bg-[#242424]"]) {
+  background: rgba(255, 255, 255, 0.94) !important;
+  border: 1px solid var(--alden-fog) !important;
+  color: var(--alden-ink) !important;
+}
+
+.apparent-heatmap-page :where([class*="border-black/"], [class*="border-white/"], [class*="border-[#42520d]"]) {
+  border-color: var(--alden-fog) !important;
+}
+
+.apparent-heatmap-page :where([class*="divide-black"]) > :not([hidden]) ~ :not([hidden]) {
+  border-color: rgba(40, 38, 42, 0.08) !important;
+}
+
+.apparent-heatmap-page :where([class*="shadow-"]) {
+  box-shadow: none !important;
+}
+
+.apparent-heatmap-page :where(button, a, input, textarea, select) {
+  font-family: var(--alden-sans);
+}
+
+.apparent-heatmap-page :where(input, textarea, select) {
+  background: var(--alden-paper) !important;
+  border-color: var(--alden-fog) !important;
+  color: var(--alden-ink) !important;
+  box-shadow: none !important;
+}
+
+.apparent-heatmap-page :where(input:focus, textarea:focus, select:focus) {
+  border-color: var(--alden-sage) !important;
+  box-shadow: 0 0 0 3px rgba(200, 223, 170, 0.34) !important;
+  outline: none;
+}
+
+.apparent-heatmap-page :where(button.rounded-full, a.rounded-full, select.rounded-full) {
+  border-radius: 100px;
+  box-shadow: none !important;
+}
+
+.apparent-heatmap-page :where([class*="bg-[#42520d]"], button[style*="background-color"], a[style*="background-color"]) {
+  background: var(--alden-sage) !important;
+  border-color: var(--alden-sage) !important;
+  color: var(--alden-ink) !important;
+}
+
+.apparent-heatmap-page :where([class*="bg-[#42520d]"]) :where(svg, span),
+.apparent-heatmap-page :where([class*="text-[#42520d]"], [class*="text-[#dcefc7]"]) {
+  color: var(--alden-ink) !important;
+}
+
+.apparent-heatmap-page :where(button.rounded-full:hover, a.rounded-full:hover) {
+  background: #bed49f !important;
+  color: var(--alden-ink) !important;
+  opacity: 1 !important;
+}
+
+.apparent-heatmap-page :where(.fixed.inset-0) {
+  background: rgba(40, 38, 42, 0.32) !important;
+}
+
+.apparent-heatmap-page :where([role='dialog']) {
+  border: 1px solid var(--alden-fog);
+  box-shadow: 0 24px 80px rgba(40, 38, 42, 0.18) !important;
+}
+
+.apparent-heatmap-page :where(.maplibregl-ctrl-group) {
+  background: rgba(255, 255, 255, 0.92) !important;
+  border: 1px solid var(--alden-fog) !important;
+  border-radius: 12px !important;
+  box-shadow: none !important;
+  overflow: hidden;
+}
+
+.apparent-heatmap-page :where(.maplibregl-ctrl-group button) {
+  color: var(--alden-ink) !important;
 }
 
 @layer base {
