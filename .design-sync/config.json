@@ -1,0 +1,25 @@
+{
+  "pkg": "apparent",
+  "globalName": "Apparent",
+  "projectId": "28bf4bc9-a0a6-4b96-a800-99d9b2253048",
+  "shape": "package",
+  "srcDir": "src/components",
+  "tsconfig": "tsconfig.app.json",
+  "cssEntry": ".design-sync/styles-compiled.css",
+  "runtimeFontPrefixes": ["TT Norms Pro"],
+  "guidelinesGlob": [],
+  "componentSrcMap": {
+    "Map": null,
+    "BuilderRadarMap": null,
+    "PixelSnow": null,
+    "LogoCloud": null
+  },
+  "libOverrides": {
+    "source-kit.mjs": "drop componentSrcMap-null components from the synth entry so heavy maplibre-gl/leaflet/three deps don't blow the 5MB bundle cap"
+  },
+  "overrides": {
+    "DropdownMenu": { "cardMode": "single", "viewport": "460x340" },
+    "DropdownMenuLabel": { "cardMode": "single", "viewport": "420x300" }
+  },
+  "readmeHeader": ".design-sync/conventions.md"
+}
