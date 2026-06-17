@@ -133,6 +133,7 @@ export const Home = () => {
               I am an investor
             </button>
           </div>
+          <LogoCloud className="alden-logo-cloud--hero" />
         </div>
       </section>
 
@@ -157,8 +158,6 @@ export const Home = () => {
           </div>
         </div>
       </section>
-
-      <LogoCloud />
 
       <section id="how-it-works" className="alden-editorial alden-shell" data-reveal>
         <h2>

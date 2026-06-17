@@ -51,7 +51,7 @@ const buildLogoCloudInvestors = (contacts: VCContact[]) =>
     .filter((investor, index, investors) => investors.findIndex((item) => item.domain === investor.domain) === index)
     .slice(0, 42);
 
-export function LogoCloud() {
+export function LogoCloud({ className = '' }: { className?: string }) {
   const [investors, setInvestors] = useState<InvestorLogo[]>([]);
 
   useEffect(() => {
@@ -69,7 +69,7 @@ export function LogoCloud() {
   }, []);
 
   return (
-    <section className="alden-logo-cloud" aria-label="VC firms mapped in the heat map" data-reveal>
+    <section className={`alden-logo-cloud ${className}`} aria-label="VC firms mapped in the heat map" data-reveal>
       <div className="alden-logo-cloud__mask">
         <InfiniteSlider gap={14} reverse speed={56} speedOnHover={24}>
           {investors.map((investor) => (

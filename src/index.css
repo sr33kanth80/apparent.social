@@ -383,6 +383,11 @@
   padding: clamp(1.6rem, 4vw, 2.4rem) clamp(1.25rem, 4vw, 2rem);
 }
 
+.alden-logo-cloud--hero {
+  margin-top: 1.35rem;
+  padding: 0;
+}
+
 .alden-logo-cloud__mask {
   -webkit-mask-image: linear-gradient(to right, transparent, black 9%, black 91%, transparent);
   mask-image: linear-gradient(to right, transparent, black 9%, black 91%, transparent);
