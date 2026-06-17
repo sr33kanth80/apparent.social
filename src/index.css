@@ -1143,16 +1143,6 @@
   letter-spacing: 0;
 }
 
-.monad-page :where(a.rounded-full.bg-\[\#cfdaf5\], button.rounded-full.bg-\[\#cfdaf5\]) {
-  background: var(--color-charcoal) !important;
-  color: var(--color-parchment) !important;
-  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.1);
-}
-
-.monad-page :where(a.rounded-full.bg-\[\#cfdaf5\], button.rounded-full.bg-\[\#cfdaf5\]):hover {
-  background: var(--color-ink) !important;
-}
-
 .monad-app {
   font-family: var(--font-mono);
   letter-spacing: -0.02em;
