@@ -109,9 +109,6 @@ export const Home = () => {
           </div>
 
           <div className="alden-nav__actions">
-            <button type="button" className="alden-link-button" onClick={() => navigate('/login')}>
-              Log in
-            </button>
             <button type="button" className="alden-button alden-button--small" onClick={() => navigate('/login')}>
               Get started
             </button>

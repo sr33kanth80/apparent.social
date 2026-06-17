@@ -64,14 +64,9 @@ export const AldenPublicNavbar = () => {
               <ArrowUpRight className="h-3.5 w-3.5" />
             </button>
           ) : (
-            <>
-              <button type="button" className="alden-link-button" onClick={() => navigate('/login')}>
-                Log in
-              </button>
-              <button type="button" className="alden-button alden-button--small" onClick={() => navigate('/login')}>
-                Get started
-              </button>
-            </>
+            <button type="button" className="alden-button alden-button--small" onClick={() => navigate('/login')}>
+              Get started
+            </button>
           )}
         </div>
       </nav>
