@@ -1,7 +1,6 @@
 import { AnimatePresence, motion } from 'framer-motion';
 import { useKindeAuth } from '@kinde-oss/kinde-auth-react';
 import { ArrowUpRight, AtSign, Fingerprint, Telescope, UserRound, type LucideIcon } from 'lucide-react';
-import { Switch } from '@/components/ui/switch';
 import { clearExternalAppUser } from '@/lib/auth-service';
 import type { DashboardRole } from '@/lib/apparent-types';
 import { useEffect, useState } from 'react';
@@ -29,8 +28,6 @@ const FEATURE_PILLARS: FeaturePillar[] = [
   {
     number: '01',
     label: 'Proof',
-    // Fingerprint: identity + verifiable signal. Distinct from the generic
-    // BadgeCheck every SaaS dashboard ships with.
     Icon: Fingerprint,
     founderValue: 'GitHub links',
     founderSupport: 'Show real shipping cadence and code history.',
@@ -40,8 +37,6 @@ const FEATURE_PILLARS: FeaturePillar[] = [
   {
     number: '02',
     label: 'Radar',
-    // Telescope: far-sight + exploration. Reads more editorial than the
-    // literal radar dish.
     Icon: Telescope,
     founderValue: 'Nearby peers',
     founderSupport: 'Find founders in your city and category.',
@@ -51,8 +46,6 @@ const FEATURE_PILLARS: FeaturePillar[] = [
   {
     number: '03',
     label: 'Motion',
-    // ArrowUpRight: directional motion that mirrors the same icon the rest
-    // of the app already uses on CTAs and project links.
     Icon: ArrowUpRight,
     founderValue: 'Investor DMs',
     founderSupport: 'Cold-pitch direct, track replies in-app.',
@@ -61,8 +54,6 @@ const FEATURE_PILLARS: FeaturePillar[] = [
   },
 ];
 
-// Shared transition for role-toggle content swaps. Short and eased so the
-// crossfade reads as polish, not delay.
 const ROLE_SWAP_TRANSITION = { duration: 0.28, ease: [0.22, 0.61, 0.36, 1] } as const;
 const ROLE_SWAP_VARIANTS = {
   initial: { opacity: 0, y: 8, filter: 'blur(4px)' },
@@ -71,7 +62,11 @@ const ROLE_SWAP_VARIANTS = {
 };
 
 const serifDisplay = {
-  fontFamily: "'Source Serif 4', ui-serif, Georgia, 'Times New Roman', serif",
+  fontFamily: "var(--alden-serif, 'Source Serif 4', ui-serif, Georgia, 'Times New Roman', serif)",
+};
+
+const sansDisplay = {
+  fontFamily: "var(--alden-sans, 'Inter', ui-sans-serif, system-ui, sans-serif)",
 };
 
 export const Login = () => {
@@ -85,15 +80,16 @@ export const Login = () => {
     <>
       Define thesis.
       <br />
-      <span className="whitespace-nowrap">Find cracked builders.</span>
+      <span className="whitespace-nowrap text-[var(--alden-sky)]">Find cracked builders.</span>
     </>
   ) : (
     <>
       Build proof.
       <br />
-      Meet capital.
+      <span className="text-[var(--alden-sky)]">Meet capital.</span>
     </>
   );
+
   const bodyCopy = isInvestor
     ? 'Create an investor profile, share your thesis, discover builders, and host meetups around the communities you want to back.'
     : 'Create a founder profile, connect GitHub, list products, and get discovered by VCs whose thesis fits what you are building.';
@@ -117,21 +113,16 @@ export const Login = () => {
       ? 'founder@startup.com'
       : 'you@app.com';
 
-  const handleRoleChange = (nextRole: string) => {
-    if (nextRole === 'founder' || nextRole === 'investor') {
-      saveRequestedKindeRole(nextRole);
-    }
+  const handleRoleChange = (nextRole: DashboardRole) => {
+    saveRequestedKindeRole(nextRole);
     setSearchParams({ role: nextRole });
   };
 
   return (
-    <main className="monad monad-page overflow-x-hidden bg-[#f6f3f1] text-black">
-      <section className="mx-auto max-w-[92rem] px-5 py-14 sm:px-8 md:py-20">
-        <div className="grid items-start gap-10 lg:grid-cols-[minmax(0,1fr)_440px] xl:gap-16">
-          <section className="hidden py-4 lg:block">
-            {/* The editorial column re-themes per role. AnimatePresence
-                crossfades + slides the whole block so the swap reads as a
-                planned transition rather than instant string replacement. */}
+    <main className="min-h-screen overflow-x-hidden bg-[var(--alden-paper)] text-[var(--alden-ink)]" style={sansDisplay}>
+      <section className="mx-auto max-w-[76rem] px-5 py-10 sm:px-8 md:py-14">
+        <div className="grid items-start gap-8 lg:grid-cols-[minmax(0,1fr)_420px] xl:gap-12">
+          <section className="hidden py-2 lg:block">
             <AnimatePresence mode="wait" initial={false}>
               <motion.div
                 key={activeRole}
@@ -141,72 +132,33 @@ export const Login = () => {
                 exit="exit"
                 transition={ROLE_SWAP_TRANSITION}
               >
-                <h1
-                  className="max-w-4xl text-6xl font-normal leading-[0.94] tracking-[-0.05em] xl:text-7xl"
-                  style={serifDisplay}
-                >
+                <h1 className="max-w-4xl text-6xl font-normal leading-[0.94] tracking-[-0.05em] xl:text-7xl">
                   {headline}
                 </h1>
-                <p className="mt-8 max-w-2xl text-lg leading-8 text-black/60">
+                <p className="mt-6 max-w-2xl text-lg leading-8 text-[var(--alden-graphite)]">
                   {bodyCopy}
                 </p>
 
-                <div className="mt-12 grid gap-5">
+                <div className="mt-10 grid gap-4 border-y border-[var(--alden-fog)] py-6">
                   {contextItems.map((item, index) => (
                     <div key={item} className="grid gap-4 sm:grid-cols-[3rem_1fr]">
-                      <span className="text-sm font-semibold text-black/45">0{index + 1}</span>
-                      <p className="text-sm leading-6 text-black/65">{item}</p>
+                      <span className="text-sm font-medium text-[var(--alden-graphite)]">0{index + 1}</span>
+                      <p className="text-sm leading-6 text-[var(--alden-graphite)]">{item}</p>
                     </div>
                   ))}
                 </div>
 
-                {/* Feature pillars — three interlocking puzzle pieces. Same
-                    visual language as the hero headline on the marketing page
-                    (.pz family in index.css), upscaled to card size.
-                    Light → olive → light alternation keeps the seams crisp.
-                    Each piece animates in from a different vector and snaps
-                    into its neighbour, then a soft "click" pulse plays once
-                    all three are seated. */}
-                <div className="mt-12 grid grid-cols-3 items-stretch gap-0">
+                <div className="mt-8 grid grid-cols-3 items-stretch gap-3">
                   {FEATURE_PILLARS.map((pillar, index) => {
                     const value = isInvestor ? pillar.investorValue : pillar.founderValue;
                     const support = isInvestor ? pillar.investorSupport : pillar.founderSupport;
-
-                    // Olive in the middle, light on the ends — high-contrast
-                    // sequence that mirrors the hero headline.
                     const isMiddle = index === 1;
-                    const pieceBg = isMiddle ? '#242424' : '#cfdaf5';
-                    const pieceFg = isMiddle ? '#f6f3f1' : '#242424';
-                    const labelMuted = isMiddle ? 'text-white/60' : 'text-[#242424]/60';
-                    const supportMuted = isMiddle ? 'text-white/75' : 'text-[#242424]/72';
-                    const iconBadgeBg = isMiddle ? 'bg-white/15 text-white' : 'bg-[#242424] text-[#cfdaf5]';
-
-                    // Puzzle joint class — leftmost only has knob, middle has
-                    // both, rightmost only has socket. Z-index decreases
-                    // left→right so each knob covers the next socket's hole.
-                    const isLeft = index === 0;
-                    const isRight = index === 2;
-                    const jointClasses = [
-                      'pz-card',
-                      !isLeft && 'pz-card-socket-l',
-                      !isRight && 'pz-card-knob-r',
-                      isLeft && 'rounded-l-[18px]',
-                      isRight && 'rounded-r-[18px]',
-                    ]
-                      .filter(Boolean)
-                      .join(' ');
-                    const zIndex = 3 - index;
-
-                    // Entrance: outer pieces slide in horizontally from their
-                    // sides, middle piece drops in from above. Easing
-                    // overshoots slightly so the click-into-place reads as
-                    // satisfying instead of mechanical.
-                    const entrance = isLeft
+                    const entrance = index === 0
                       ? { initial: { opacity: 0, x: -42 }, animate: { opacity: 1, x: 0 } }
-                      : isRight
+                      : index === 2
                         ? { initial: { opacity: 0, x: 42 }, animate: { opacity: 1, x: 0 } }
-                        : { initial: { opacity: 0, y: -24, rotate: -4 }, animate: { opacity: 1, y: 0, rotate: 0 } };
-                    const delay = isLeft ? 0 : isRight ? 0.32 : 0.18;
+                        : { initial: { opacity: 0, y: 18 }, animate: { opacity: 1, y: 0 } };
+                    const delay = index === 0 ? 0 : index === 2 ? 0.24 : 0.12;
 
                     return (
                       <motion.article
@@ -214,44 +166,33 @@ export const Login = () => {
                         initial={entrance.initial}
                         animate={entrance.animate}
                         transition={{
-                          duration: 0.6,
+                          duration: 0.52,
                           delay,
-                          ease: [0.34, 1.42, 0.5, 1],
+                          ease: [0.22, 1, 0.36, 1],
                         }}
                         whileHover={{ y: -3 }}
-                        style={{
-                          // Drive .pz-card background via CSS var so the
-                          // ::after knob inherits the same fill cleanly.
-                          ['--pz-card-color' as string]: pieceBg,
-                          color: pieceFg,
-                          zIndex,
-                        }}
-                        className={`${jointClasses} relative flex flex-col px-5 py-6 shadow-[0_8px_24px_rgba(0,0,0,0.06)] transition-shadow duration-300 hover:shadow-[0_18px_44px_rgba(0,0,0,0.12)]`}
+                        className={`relative flex min-h-[12rem] flex-col rounded-[8px] border border-[var(--alden-fog)] p-5 transition-colors ${
+                          isMiddle ? 'bg-[var(--alden-sage)]' : 'bg-[var(--alden-paper)]'
+                        }`}
                       >
-                        {/* Decorative top + bottom nubs only on the outer
-                            pieces — keeps the silhouette balanced (the middle
-                            piece is symmetrical via its side joints alone). */}
-                        {isLeft && <span aria-hidden="true" className="pz-card-nub pz-card-nub-t" />}
-                        {isRight && <span aria-hidden="true" className="pz-card-nub pz-card-nub-b" />}
-
                         <div className="flex items-start justify-between gap-3">
-                          <span className={`flex h-9 w-9 items-center justify-center rounded-[12px] ${iconBadgeBg}`}>
+                          <span className="flex h-9 w-9 items-center justify-center rounded-full border border-[var(--alden-fog)] bg-white text-[var(--alden-ink)]">
                             <pillar.Icon className="h-4 w-4" />
                           </span>
-                          <span className={`text-[10px] font-semibold uppercase tracking-[0.18em] ${labelMuted}`}>
+                          <span className="text-[10px] font-medium uppercase text-[var(--alden-graphite)]">
                             {pillar.number}
                           </span>
                         </div>
-                        <p className={`mt-5 text-[10px] font-semibold uppercase tracking-[0.18em] ${labelMuted}`}>
+                        <p className="mt-5 text-[10px] font-medium uppercase text-[var(--alden-graphite)]">
                           {pillar.label}
                         </p>
                         <p
-                          className="mt-1 text-xl font-normal leading-tight tracking-[-0.02em]"
+                          className="mt-1 text-xl font-normal leading-tight tracking-[-0.03em] text-[var(--alden-ink)]"
                           style={serifDisplay}
                         >
                           {value}
                         </p>
-                        <p className={`mt-2 text-xs leading-5 ${supportMuted}`}>{support}</p>
+                        <p className="mt-2 text-xs leading-5 text-[var(--alden-graphite)]">{support}</p>
                       </motion.article>
                     );
                   })}
@@ -260,30 +201,28 @@ export const Login = () => {
             </AnimatePresence>
           </section>
 
-          <div>
-            <div className="mb-5 flex justify-center">
-              <Switch
-                name="profile-role"
-                value={activeRole}
-                onValueChange={handleRoleChange}
-                size="medium"
-                style={{ width: 'min(100%, 300px)' }}
-              >
-                <Switch.Control
-                  label="For Founders"
-                  value="founder"
-                  activeClassName="bg-[#cfdaf5] text-black fill-black"
-                />
-                <Switch.Control
-                  label="For VCs"
-                  value="investor"
-                  activeClassName="bg-[#242424] text-white fill-white"
-                />
-              </Switch>
+          <div className="lg:sticky lg:top-24">
+            <div className="mb-4 grid grid-cols-2 gap-1 rounded-full border border-[var(--alden-fog)] bg-white p-1">
+              {(['founder', 'investor'] as DashboardRole[]).map((nextRole) => {
+                const active = activeRole === nextRole;
+                return (
+                  <button
+                    key={nextRole}
+                    type="button"
+                    aria-pressed={active}
+                    onClick={() => handleRoleChange(nextRole)}
+                    className={`h-9 rounded-full px-4 text-sm font-medium transition-colors ${
+                      active
+                        ? 'bg-[var(--alden-sage)] text-[var(--alden-ink)]'
+                        : 'text-[var(--alden-graphite)] hover:bg-[var(--alden-parchment)] hover:text-[var(--alden-ink)]'
+                    }`}
+                  >
+                    {nextRole === 'founder' ? 'For Founders' : 'For VCs'}
+                  </button>
+                );
+              })}
             </div>
 
-            {/* Same crossfade on the right column so the form copy doesn't
-                snap while the editorial column animates. */}
             <AnimatePresence mode="wait" initial={false}>
               <motion.div
                 key={activeRole}
@@ -303,9 +242,9 @@ export const Login = () => {
                     emailPlaceholder={emailPlaceholder}
                   />
                 ) : (
-                  <div className="rounded-[8px] border border-red-100 bg-white/80 p-6 shadow-[0_18px_60px_rgba(0,0,0,0.06)]">
+                  <div className="rounded-[8px] border border-red-100 bg-white p-6">
                     <p className="text-sm font-semibold text-red-700">Kinde is not configured</p>
-                    <p className="mt-2 text-sm leading-6 text-black/60">
+                    <p className="mt-2 text-sm leading-6 text-[var(--alden-graphite)]">
                       Set VITE_KINDE_CLIENT_ID and VITE_KINDE_DOMAIN in Vercel and redeploy to enable sign in.
                     </p>
                   </div>
@@ -339,32 +278,17 @@ const KindeAuthPanel = ({
 
   useEffect(() => {
     if (!isLoading && isAuthenticated && kindeUser) {
-      // POST-AUTH: Kinde redirects to /login (no `?role=…`), so the URL has
-      // already defaulted `role` back to 'founder'. Trust the role we saved to
-      // localStorage BEFORE the redirect instead — that's what the user asked
-      // for when they clicked the toggle + button. Falling back to `role`
-      // (URL default 'founder') would silently steer every VC sign-up into a
-      // founder account.
       const targetRole = resolveKindeRole(kindeUser.id, role);
       navigate(`/dashboard/${targetRole}`, { replace: true });
       return;
     }
 
     if (!isLoading) {
-      // PRE-AUTH: re-save the toggle's current role so the post-redirect side
-      // can read it back. Only do this while logged out — running this branch
-      // post-auth would let the URL-default 'founder' overwrite a freshly
-      // saved 'investor'.
       saveRequestedKindeRole(role);
       clearExternalAppUser();
     }
   }, [isAuthenticated, isLoading, kindeUser, navigate, role]);
 
-  // Sign in vs Sign up — Kinde uses two different endpoints (login() and
-  // register()), so we have to commit to one before redirecting. Default to
-  // "Sign up" since the previous flow had no signup path at all and growth is
-  // the priority. For Google specifically, either path works since OAuth
-  // auto-detects new vs returning users.
   const [authMode, setAuthMode] = useState<'signin' | 'signup'>('signup');
   const isSignup = authMode === 'signup';
 
@@ -372,10 +296,6 @@ const KindeAuthPanel = ({
     saveRequestedKindeRole(role);
   };
 
-  // Each button passes Kinde's `connectionId` so its hosted picker is bypassed.
-  // For Google the user lands directly on Google's consent screen; for email /
-  // username they land on the matching Kinde form (login or registration form
-  // depending on `authMode`).
   const continueWith = async (connectionId: string) => {
     handleAuthClick();
     const opts = connectionId ? { connectionId } : undefined;
@@ -386,43 +306,33 @@ const KindeAuthPanel = ({
     }
   };
 
-  // Fallback path: until at least one VITE_KINDE_*_CONN_ID env var is set, we
-  // can't deeplink anywhere, so we keep the legacy "Sign in / Create" pair so
-  // the page still works.
   const legacyRegister = async () => {
     handleAuthClick();
     await register();
   };
 
   return (
-    // Dark olive-charcoal panel on the light editorial page — same contrast
-    // trick Vercel/Linear use to make auth feel like the focal CTA. Subtle
-    // sage hairline (#242424 at low alpha) ties it to the rest of the brand.
-    <div className="relative overflow-hidden rounded-[18px] border border-[#242424]/40 bg-[#242424] p-7 text-white shadow-[0_30px_80px_rgba(20,24,8,0.32)]">
-      {/* Soft top-corner halo so the dark box doesn't read flat. */}
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute -right-20 -top-24 h-56 w-56 rounded-full bg-[#cfdaf5]/[0.07] blur-3xl"
-      />
+    <div className="relative overflow-hidden rounded-[8px] border border-[var(--alden-fog)] bg-[var(--alden-paper)] p-6 text-[var(--alden-ink)]">
+      <div aria-hidden="true" className="absolute inset-x-0 top-0 h-1 bg-[var(--alden-sage)]" />
 
-      <div className="relative">
+      <div className="relative pt-2">
         <p
-          className="text-2xl font-normal leading-tight tracking-[-0.02em] text-white"
+          className="text-2xl font-normal leading-tight tracking-[-0.035em] text-[var(--alden-ink)]"
           style={serifDisplay}
         >
           {title}
         </p>
-        <p className="mt-2.5 text-sm leading-6 text-white/65">{description}</p>
+        <p className="mt-2.5 text-sm leading-6 text-[var(--alden-graphite)]">{description}</p>
       </div>
 
-      <div className="relative mt-6 rounded-[14px] border border-white/10 bg-white/[0.04] p-4 backdrop-blur">
-        <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#cfdaf5]/75">
+      <div className="relative mt-5 rounded-[8px] border border-[var(--alden-fog)] bg-[var(--alden-parchment)] p-4">
+        <p className="text-[10px] font-medium uppercase text-[var(--alden-graphite)]">
           {contextLabel}
         </p>
         <div className="mt-3 grid gap-2">
           {contextItems.map((item) => (
-            <div key={item} className="flex items-start gap-2.5 text-sm leading-5 text-white/80">
-              <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-[#cfdaf5]" />
+            <div key={item} className="flex items-start gap-2.5 text-sm leading-5 text-[var(--alden-graphite)]">
+              <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-[var(--alden-sage)] ring-1 ring-[var(--alden-ink)]/10" />
               {item}
             </div>
           ))}
@@ -430,13 +340,10 @@ const KindeAuthPanel = ({
       </div>
 
       {!isAuthenticated && (
-        <div className="relative mt-6 grid gap-3">
+        <div className="relative mt-5 grid gap-3">
           {hasAnyKindeConnection ? (
             <>
-              {/* Sign in / Sign up segmented control. Active pill is the sage
-                  accent on near-black — the same color language used for the
-                  feature pillars in the editorial column. */}
-              <div className="flex items-center gap-1 rounded-full border border-white/10 bg-black/40 p-1">
+              <div className="grid grid-cols-2 gap-1 rounded-full border border-[var(--alden-fog)] bg-[var(--alden-parchment)] p-1">
                 {(['signup', 'signin'] as const).map((mode) => {
                   const active = authMode === mode;
                   const label = mode === 'signup' ? 'Sign up' : 'Sign in';
@@ -444,11 +351,12 @@ const KindeAuthPanel = ({
                     <button
                       key={mode}
                       type="button"
+                      aria-pressed={active}
                       onClick={() => setAuthMode(mode)}
-                      className={`h-8 flex-1 rounded-full text-xs font-semibold transition-colors ${
+                      className={`h-8 rounded-full text-xs font-medium transition-colors ${
                         active
-                          ? 'bg-[#cfdaf5] text-[#242424] shadow-[0_4px_14px_rgba(220,239,199,0.18)]'
-                          : 'text-white/55 hover:text-white/85'
+                          ? 'bg-[var(--alden-sage)] text-[var(--alden-ink)]'
+                          : 'text-[var(--alden-graphite)] hover:bg-white hover:text-[var(--alden-ink)]'
                       }`}
                     >
                       {label}
@@ -458,107 +366,96 @@ const KindeAuthPanel = ({
               </div>
 
               {kindeConnectionIds.google && (
-                // Google's brand requires white (or correctly-styled dark) —
-                // white keeps the mark crisp and gives the page a focal CTA.
                 <button
                   type="button"
                   onClick={() => continueWith(kindeConnectionIds.google)}
                   disabled={isLoading}
-                  className="group inline-flex h-11 w-full items-center justify-center gap-3 rounded-[10px] bg-white px-4 text-sm font-semibold text-[#242424] shadow-[0_8px_22px_rgba(0,0,0,0.25)] transition-all hover:-translate-y-px hover:shadow-[0_12px_28px_rgba(0,0,0,0.32)] disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0"
+                  className="inline-flex h-11 w-full items-center justify-center gap-3 rounded-full border border-[var(--alden-fog)] bg-white px-4 text-sm font-medium text-[var(--alden-ink)] transition-colors hover:bg-[var(--alden-parchment)] disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   <GoogleMark className="h-4 w-4" />
-                  {isLoading ? 'Loading…' : isSignup ? 'Sign up with Google' : 'Sign in with Google'}
+                  {isLoading ? 'Loading...' : isSignup ? 'Sign up with Google' : 'Sign in with Google'}
                 </button>
               )}
 
               {(kindeConnectionIds.email || kindeConnectionIds.username) && kindeConnectionIds.google && (
-                <div className="flex items-center gap-3 text-[10px] font-semibold uppercase tracking-[0.18em] text-white/35">
-                  <span className="h-px flex-1 bg-white/12" />
+                <div className="flex items-center gap-3 text-[10px] font-medium uppercase text-[var(--alden-graphite)]">
+                  <span className="h-px flex-1 bg-[var(--alden-fog)]" />
                   or
-                  <span className="h-px flex-1 bg-white/12" />
+                  <span className="h-px flex-1 bg-[var(--alden-fog)]" />
                 </div>
               )}
 
               {kindeConnectionIds.email && (
-                // Primary brand action — sage on dark. Carries the same
-                // pop as the olive CTAs throughout the rest of the app, but
-                // inverted for this dark surface.
                 <button
                   type="button"
                   onClick={() => continueWith(kindeConnectionIds.email)}
                   disabled={isLoading}
-                  className="group inline-flex h-11 w-full items-center justify-center gap-3 rounded-[10px] bg-[#cfdaf5] px-4 text-sm font-semibold text-[#242424] shadow-[0_8px_22px_rgba(220,239,199,0.18)] transition-all hover:-translate-y-px hover:bg-[#cfdaf5] hover:shadow-[0_12px_28px_rgba(220,239,199,0.26)] disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0"
+                  className="inline-flex h-11 w-full items-center justify-center gap-3 rounded-full bg-[var(--alden-sage)] px-4 text-sm font-medium text-[var(--alden-ink)] transition-colors hover:bg-[#bed49f] disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   <AtSign className="h-4 w-4" />
-                  {isLoading ? 'Loading…' : isSignup ? 'Sign up with email' : 'Sign in with email'}
+                  {isLoading ? 'Loading...' : isSignup ? 'Sign up with email' : 'Sign in with email'}
                 </button>
               )}
 
               {kindeConnectionIds.username && (
-                // Secondary action — ghost button styled to read as a
-                // companion to the email button, not a competitor.
                 <button
                   type="button"
                   onClick={() => continueWith(kindeConnectionIds.username)}
                   disabled={isLoading}
-                  className="inline-flex h-11 w-full items-center justify-center gap-3 rounded-[10px] border border-white/15 bg-white/[0.04] px-4 text-sm font-semibold text-white/90 transition-colors hover:bg-white/[0.08] hover:text-white disabled:cursor-not-allowed disabled:opacity-60"
+                  className="inline-flex h-11 w-full items-center justify-center gap-3 rounded-full border border-[var(--alden-fog)] bg-white px-4 text-sm font-medium text-[var(--alden-ink)] transition-colors hover:bg-[var(--alden-parchment)] disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   <UserRound className="h-4 w-4" />
-                  {isLoading ? 'Loading…' : isSignup ? 'Sign up with username' : 'Sign in with username'}
+                  {isLoading ? 'Loading...' : isSignup ? 'Sign up with username' : 'Sign in with username'}
                 </button>
               )}
 
-              <p className="mt-1 text-center text-[11px] leading-5 text-white/45">
+              <p className="mt-1 text-center text-[11px] leading-5 text-[var(--alden-graphite)]">
                 {role === 'investor'
                   ? 'Investor profiles are bound to the email used here.'
                   : 'Founder profiles are bound to the email used here.'}{' '}
-                <span className="text-white/55">Suggested:</span> {emailPlaceholder}
+                Suggested: {emailPlaceholder}
               </p>
             </>
           ) : (
-            // Initial-setup fallback: env vars aren't wired yet, so we still
-            // route through Kinde's picker page rather than 404 the user.
             <>
               <button
                 type="button"
                 onClick={() => continueWith('')}
                 disabled={isLoading}
-                className="inline-flex h-11 w-full items-center justify-center rounded-[10px] bg-[#cfdaf5] px-4 text-sm font-semibold text-[#242424] shadow-[0_8px_22px_rgba(220,239,199,0.18)] transition-all hover:-translate-y-px hover:bg-[#cfdaf5] disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0"
+                className="inline-flex h-11 w-full items-center justify-center rounded-full bg-[var(--alden-sage)] px-4 text-sm font-medium text-[var(--alden-ink)] transition-colors hover:bg-[#bed49f] disabled:cursor-not-allowed disabled:opacity-60"
               >
-                {isLoading ? 'Loading…' : 'Sign in'}
+                {isLoading ? 'Loading...' : 'Sign in'}
               </button>
               <button
                 type="button"
                 onClick={legacyRegister}
                 disabled={isLoading}
-                className="inline-flex h-11 w-full items-center justify-center rounded-[10px] border border-white/15 bg-white/[0.04] px-4 text-sm font-semibold text-white/90 transition-colors hover:bg-white/[0.08] hover:text-white disabled:cursor-not-allowed disabled:opacity-60"
+                className="inline-flex h-11 w-full items-center justify-center rounded-full border border-[var(--alden-fog)] bg-white px-4 text-sm font-medium text-[var(--alden-ink)] transition-colors hover:bg-[var(--alden-parchment)] disabled:cursor-not-allowed disabled:opacity-60"
               >
                 Create account
               </button>
-              <p className="text-center text-[11px] text-white/45">Suggested email: {emailPlaceholder}</p>
+              <p className="text-center text-[11px] text-[var(--alden-graphite)]">Suggested email: {emailPlaceholder}</p>
             </>
           )}
         </div>
       )}
 
       {isAuthenticated && (
-        <div className="relative mt-6 flex items-center justify-between rounded-[14px] border border-white/10 bg-white/[0.04] px-4 py-3">
+        <div className="relative mt-5 flex items-center justify-between rounded-[8px] border border-[var(--alden-fog)] bg-[var(--alden-parchment)] px-4 py-3">
           <button
             type="button"
             onClick={() => logout({ redirectUrl: getKindeLogoutUri() })}
-            className="inline-flex h-9 items-center justify-center rounded-[8px] border border-white/15 bg-transparent px-4 text-sm font-semibold text-white/85 transition-colors hover:bg-white/[0.08] hover:text-white"
+            className="inline-flex h-9 items-center justify-center rounded-full border border-[var(--alden-fog)] bg-white px-4 text-sm font-medium text-[var(--alden-ink)] transition-colors hover:bg-[var(--alden-paper)]"
           >
             Sign out
           </button>
           <button
             type="button"
             onClick={() => {
-              // Same role resolution as the post-auth navigation in the
-              // useEffect — trust the saved-pre-redirect role over the URL.
               const targetRole = kindeUser ? resolveKindeRole(kindeUser.id, role) : role;
               navigate(`/dashboard/${targetRole}`);
             }}
-            className="inline-flex h-9 items-center justify-center rounded-[8px] bg-[#cfdaf5] px-4 text-sm font-semibold text-[#242424] transition-colors hover:bg-[#cfdaf5]"
+            className="inline-flex h-9 items-center justify-center rounded-full bg-[var(--alden-sage)] px-4 text-sm font-medium text-[var(--alden-ink)] transition-colors hover:bg-[#bed49f]"
           >
             Open workspace
           </button>
@@ -568,8 +465,6 @@ const KindeAuthPanel = ({
   );
 };
 
-// Google's brand "G" mark. Inlined as SVG because lucide-react doesn't ship
-// brand logos (trademark policy). Colors are Google's official palette.
 const GoogleMark = ({ className }: { className?: string }) => (
   <svg viewBox="0 0 24 24" aria-hidden="true" className={className}>
     <path
