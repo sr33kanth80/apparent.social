@@ -3,11 +3,12 @@
 Apparent helps founders find thesis-fit venture investors and helps investors discover founders who match their stage, sector, geography, and proof signals.
 
 Canonical site: https://apparent.social
+Sitemap: https://apparent.social/sitemap.xml
 
 ## Public Pages
 
 - Home: https://apparent.social/
-- Thesis: https://apparent.social/our-thesis
+- How it works: https://apparent.social/our-thesis
 - For founders: https://apparent.social/for-founders
 - For VCs: https://apparent.social/for-vcs
 - VC heat map: https://apparent.social/heat-map
@@ -15,6 +16,12 @@ Canonical site: https://apparent.social
 - Resources: https://apparent.social/resources
 - Blog: https://apparent.social/blog
 - Contact: https://apparent.social/contact
+
+## Legal Pages
+
+- Privacy: https://apparent.social/privacy
+- Terms: https://apparent.social/terms
+- Cookies: https://apparent.social/cookies
 
 ## Blog Posts
 
