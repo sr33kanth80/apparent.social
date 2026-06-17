@@ -50,7 +50,9 @@ export const AldenPublicNavbar = () => {
             <NavLink
               key={link.to}
               to={link.to}
-              className={({ isActive }) => `alden-nav__link${isActive ? ' alden-nav__link--active' : ''}`}
+              className={({ isActive }) =>
+                `alden-nav__link${link.to === '/for-vcs' ? ' alden-nav__link--investor' : ''}${isActive ? ' alden-nav__link--active' : ''}`
+              }
             >
               {link.label}
             </NavLink>

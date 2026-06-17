@@ -93,7 +93,7 @@ export const Home = () => {
             {navLinks.map((link) => {
               const isHashLink = link.to.startsWith('#');
               const isActive = isHashLink ? location.hash === link.to : location.pathname === link.to;
-              const className = `alden-nav__link${isActive ? ' alden-nav__link--active' : ''}`;
+              const className = `alden-nav__link${link.to === '/for-vcs' ? ' alden-nav__link--investor' : ''}${isActive ? ' alden-nav__link--active' : ''}`;
 
               return isHashLink ? (
                 <a key={link.to} href={link.to} className={className} aria-current={isActive ? 'page' : undefined}>
@@ -129,7 +129,7 @@ export const Home = () => {
               I am a founder
               <ArrowRight className="h-4 w-4" aria-hidden="true" />
             </button>
-            <button type="button" className="alden-button alden-button--ghost" onClick={() => navigate('/login?role=investor')}>
+            <button type="button" className="alden-button alden-investor-cta" onClick={() => navigate('/login?role=investor')}>
               I am an investor
             </button>
           </div>
@@ -216,7 +216,7 @@ export const Home = () => {
                 </li>
               ))}
             </ul>
-            <button type="button" className="alden-button alden-button--ghost" onClick={() => navigate('/login?role=investor')}>
+            <button type="button" className="alden-button alden-investor-cta" onClick={() => navigate('/login?role=investor')}>
               Create investor profile
             </button>
           </article>
@@ -252,7 +252,7 @@ export const Home = () => {
             Start as founder
             <ArrowRight className="h-4 w-4" aria-hidden="true" />
           </button>
-          <button type="button" className="alden-link-button" onClick={() => navigate('/login?role=investor')}>
+          <button type="button" className="alden-button alden-investor-cta" onClick={() => navigate('/login?role=investor')}>
             Start as investor
           </button>
         </div>

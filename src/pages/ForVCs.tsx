@@ -188,7 +188,7 @@ export const ForVCs = () => {
           <button
             type="button"
             onClick={() => navigate('/login?role=investor')}
-            className="w-full rounded-full bg-[#cfdaf5] px-6 py-3 text-sm font-semibold text-black transition-colors hover:bg-[#bcc8ef] sm:w-auto"
+            className="alden-investor-cta w-full rounded-full bg-[#cfdaf5] px-6 py-3 text-sm font-semibold text-black transition-colors hover:bg-[#bcc8ef] sm:w-auto"
           >
             Create investor profile <ArrowUpRight className="ml-1 inline h-3.5 w-3.5 align-[-2px]" />
           </button>
@@ -216,7 +216,7 @@ export const ForVCs = () => {
           <button
             type="button"
             onClick={() => navigate('/login?role=investor')}
-            className="mt-10 rounded-full bg-[#cfdaf5] px-6 py-3 text-sm font-semibold text-black transition-colors hover:bg-[#bcc8ef]"
+            className="alden-investor-cta mt-10 rounded-full bg-[#cfdaf5] px-6 py-3 text-sm font-semibold text-black transition-colors hover:bg-[#bcc8ef]"
           >
             Build your thesis
           </button>
@@ -292,7 +292,7 @@ export const ForVCs = () => {
           <button
             type="button"
             onClick={() => navigate('/login?role=investor')}
-            className="mt-10 rounded-full bg-[#cfdaf5] px-8 py-3 text-sm font-semibold text-black transition-colors hover:bg-[#bcc8ef]"
+            className="alden-investor-cta mt-10 rounded-full bg-[#cfdaf5] px-8 py-3 text-sm font-semibold text-black transition-colors hover:bg-[#bcc8ef]"
           >
             Create investor profile
           </button>

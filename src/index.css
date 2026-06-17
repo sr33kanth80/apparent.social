@@ -76,6 +76,8 @@
   --alden-silver: #cbcbcb;
   --alden-sky: #97cde5;
   --alden-sage: #c8dfaa;
+  --alden-investor: var(--alden-sky);
+  --alden-investor-hover: #86bfd9;
   --alden-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   --alden-serif: 'Source Serif 4', ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
 }
@@ -89,6 +91,8 @@
   --alden-silver: #cbcbcb;
   --alden-sky: #97cde5;
   --alden-sage: #c8dfaa;
+  --alden-investor: var(--alden-sky);
+  --alden-investor-hover: #86bfd9;
   --alden-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   --alden-serif: 'Source Serif 4', ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
   background: var(--alden-paper);
@@ -207,6 +211,15 @@
   font-weight: 500;
 }
 
+.alden-nav__link--investor:hover,
+.alden-nav__link--investor:focus-visible,
+.alden-nav__link--investor.alden-nav__link--active,
+.alden-nav__link--investor:active {
+  background: var(--alden-investor);
+  border-color: var(--alden-investor);
+  color: var(--alden-ink);
+}
+
 .alden-link-button:hover {
   color: var(--alden-graphite);
   transform: none;
@@ -264,6 +277,28 @@
 
 .alden-button--ghost:hover {
   background: var(--alden-parchment);
+}
+
+.alden-landing .alden-investor-cta,
+.monad-page .alden-investor-cta,
+.apparent-heatmap-page .alden-investor-cta,
+.alden-investor-cta {
+  background: var(--alden-investor) !important;
+  border-color: var(--alden-investor) !important;
+  color: var(--alden-ink) !important;
+}
+
+.alden-landing .alden-investor-cta:hover,
+.alden-landing .alden-investor-cta:focus-visible,
+.monad-page .alden-investor-cta:hover,
+.monad-page .alden-investor-cta:focus-visible,
+.apparent-heatmap-page .alden-investor-cta:hover,
+.apparent-heatmap-page .alden-investor-cta:focus-visible,
+.alden-investor-cta:hover,
+.alden-investor-cta:focus-visible {
+  background: var(--alden-investor-hover) !important;
+  border-color: var(--alden-investor-hover) !important;
+  color: var(--alden-ink) !important;
 }
 
 .alden-hero {

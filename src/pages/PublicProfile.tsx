@@ -1025,7 +1025,7 @@ const InvestorRestrictedPage = ({ username }: { username: string }) => (
         </Link>
         <Link
           to="/login?role=investor"
-          className="rounded-full border border-black/20 bg-white px-6 py-3 text-sm font-semibold text-black transition hover:bg-[#cfdaf5]"
+          className="alden-investor-cta rounded-full border border-black/20 bg-white px-6 py-3 text-sm font-semibold text-black transition hover:bg-[#cfdaf5]"
         >
           Sign in as investor
         </Link>

@@ -213,7 +213,9 @@ export const Login = () => {
                     onClick={() => handleRoleChange(nextRole)}
                     className={`h-9 rounded-full px-4 text-sm font-medium transition-colors ${
                       active
-                        ? 'bg-[var(--alden-sage)] text-[var(--alden-ink)]'
+                        ? nextRole === 'investor'
+                          ? 'alden-investor-cta text-[var(--alden-ink)]'
+                          : 'bg-[var(--alden-sage)] text-[var(--alden-ink)]'
                         : 'text-[var(--alden-graphite)] hover:bg-[var(--alden-parchment)] hover:text-[var(--alden-ink)]'
                     }`}
                   >
@@ -313,7 +315,7 @@ const KindeAuthPanel = ({
 
   return (
     <div className="relative overflow-hidden rounded-[8px] border border-[var(--alden-fog)] bg-[var(--alden-paper)] p-6 text-[var(--alden-ink)]">
-      <div aria-hidden="true" className="absolute inset-x-0 top-0 h-1 bg-[var(--alden-sage)]" />
+      <div aria-hidden="true" className={`absolute inset-x-0 top-0 h-1 ${role === 'investor' ? 'bg-[var(--alden-sky)]' : 'bg-[var(--alden-sage)]'}`} />
 
       <div className="relative pt-2">
         <p
@@ -355,7 +357,9 @@ const KindeAuthPanel = ({
                       onClick={() => setAuthMode(mode)}
                       className={`h-8 rounded-full text-xs font-medium transition-colors ${
                         active
-                          ? 'bg-[var(--alden-sage)] text-[var(--alden-ink)]'
+                          ? role === 'investor'
+                            ? 'alden-investor-cta text-[var(--alden-ink)]'
+                            : 'bg-[var(--alden-sage)] text-[var(--alden-ink)]'
                           : 'text-[var(--alden-graphite)] hover:bg-white hover:text-[var(--alden-ink)]'
                       }`}
                     >
@@ -390,7 +394,7 @@ const KindeAuthPanel = ({
                   type="button"
                   onClick={() => continueWith(kindeConnectionIds.email)}
                   disabled={isLoading}
-                  className="inline-flex h-11 w-full items-center justify-center gap-3 rounded-full bg-[var(--alden-sage)] px-4 text-sm font-medium text-[var(--alden-ink)] transition-colors hover:bg-[#bed49f] disabled:cursor-not-allowed disabled:opacity-60"
+                  className={`inline-flex h-11 w-full items-center justify-center gap-3 rounded-full bg-[var(--alden-sage)] px-4 text-sm font-medium text-[var(--alden-ink)] transition-colors hover:bg-[#bed49f] disabled:cursor-not-allowed disabled:opacity-60 ${role === 'investor' ? 'alden-investor-cta' : ''}`}
                 >
                   <AtSign className="h-4 w-4" />
                   {isLoading ? 'Loading...' : isSignup ? 'Sign up with email' : 'Sign in with email'}
@@ -422,7 +426,7 @@ const KindeAuthPanel = ({
                 type="button"
                 onClick={() => continueWith('')}
                 disabled={isLoading}
-                className="inline-flex h-11 w-full items-center justify-center rounded-full bg-[var(--alden-sage)] px-4 text-sm font-medium text-[var(--alden-ink)] transition-colors hover:bg-[#bed49f] disabled:cursor-not-allowed disabled:opacity-60"
+                className={`inline-flex h-11 w-full items-center justify-center rounded-full bg-[var(--alden-sage)] px-4 text-sm font-medium text-[var(--alden-ink)] transition-colors hover:bg-[#bed49f] disabled:cursor-not-allowed disabled:opacity-60 ${role === 'investor' ? 'alden-investor-cta' : ''}`}
               >
                 {isLoading ? 'Loading...' : 'Sign in'}
               </button>

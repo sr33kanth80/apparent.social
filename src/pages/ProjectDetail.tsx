@@ -222,7 +222,7 @@ export const ProjectDetail = () => {
               {!currentUser && (
                 <Link
                   to="/login?role=investor"
-                  className="inline-flex items-center justify-center gap-2 rounded-full border border-black/10 bg-white px-5 py-3 text-sm font-semibold text-black hover:bg-[#f6f3f1]"
+                  className="alden-investor-cta inline-flex items-center justify-center gap-2 rounded-full border border-black/10 bg-white px-5 py-3 text-sm font-semibold text-black hover:bg-[#f6f3f1]"
                 >
                   <MessageCircle className="h-4 w-4" /> Sign in to send outreach
                 </Link>

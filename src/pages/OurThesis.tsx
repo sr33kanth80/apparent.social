@@ -121,11 +121,13 @@ const RoleCard = ({
   title,
   bullets,
   cta,
+  ctaClassName = '',
   onClick,
 }: {
   title: string;
   bullets: string[];
   cta: string;
+  ctaClassName?: string;
   onClick: () => void;
 }) => (
   <article className="rounded-[32px] border border-black/5 bg-white/75 p-7 sm:p-8">
@@ -143,7 +145,7 @@ const RoleCard = ({
     <button
       type="button"
       onClick={onClick}
-      className="mt-8 inline-flex items-center rounded-full bg-[#cfdaf5] px-5 py-3 text-sm font-semibold text-black transition-colors hover:bg-[#bcc8ef]"
+      className={`mt-8 inline-flex items-center rounded-full bg-[#cfdaf5] px-5 py-3 text-sm font-semibold text-black transition-colors hover:bg-[#bcc8ef] ${ctaClassName}`}
     >
       {cta} <ArrowUpRight className="ml-1.5 h-4 w-4" />
     </button>
@@ -180,7 +182,7 @@ export const OurThesis = () => {
             <button
               type="button"
               onClick={() => navigate('/login?role=investor')}
-              className="rounded-full border border-black/10 bg-white px-6 py-3 text-sm font-semibold text-black transition-colors hover:bg-[#f6f3f1]"
+              className="alden-investor-cta rounded-full border border-black/10 bg-white px-6 py-3 text-sm font-semibold text-black transition-colors hover:bg-[#f6f3f1]"
             >
               I am an investor
             </button>
@@ -215,6 +217,7 @@ export const OurThesis = () => {
           title="If you are an investor"
           bullets={investorBullets}
           cta="Create investor profile"
+          ctaClassName="alden-investor-cta"
           onClick={() => navigate('/login?role=investor')}
         />
       </section>
