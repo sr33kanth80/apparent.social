@@ -1,892 +1,268 @@
-import { useMemo, useState } from 'react';
+import { ArrowUpRight, CheckCircle2, MapPin, MessageCircle, Search, Sparkles } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import {
-  ArrowUpRight,
-  Bell,
-  Crosshair,
-  FileText,
-  MapPin,
-  MessageSquare,
-  MoveRight,
-  Radar,
-  Route,
-  Search,
-  Sparkles,
-  Target,
-  Terminal,
-} from 'lucide-react';
-import { BuilderRadarMap } from '../components/BuilderRadarMap';
 import { AldenPublicNavbar } from '../components/AldenPublicNavbar';
-import { CLI_CARD_HTML } from '../components/cliCardHtml';
 import { useReveal } from '../lib/useReveal';
-import type { BuilderMapCluster, BuilderNode } from '../lib/apparent-types';
 
 const serifDisplay = {
   fontFamily: "'Source Serif 4', ui-serif, Georgia, 'Times New Roman', serif",
 };
 
-const heroStats = [
-  ['312', 'builders mapped'],
-  ['86%', 'avg thesis fit'],
-  ['42', 'new launches'],
-  ['18', 'meetups live'],
+const steps = [
+  ['01', 'Founder adds proof', 'Products, GitHub, traction, launch links, pitch video, deck, and raise context go into one profile.'],
+  ['02', 'Investor adds thesis', 'Stage, sector, geography, check size, founder signals, and pass signals become sourcing criteria.'],
+  ['03', 'Apparent compares both', 'The system ranks founder profiles by fit, freshness, proof quality, and location signal.'],
+  ['04', 'The right intro starts', 'Both sides get the reason for the match, then move into messages, saved builders, and deal flow.'],
 ];
 
-const marketRows = [
-  ['01', 'Founder proof', 'Products, GitHub, press, traction, launches, location, and capital goals become one searchable profile.'],
-  ['02', 'Investor taste', 'Thesis, sector, stage, geography, check size, founder signals, and pass signals become reusable sourcing criteria.'],
-  ['03', 'Local momentum', 'Builder Radar shows Apparent builders around any city, venue, neighborhood, or current location.'],
-  ['04', 'Relationship context', 'Messages, meetups, terms, outreach, and deal flow stay connected to the proof that started the conversation.'],
+const founderBullets = [
+  'Create a founder profile or run npx apparent.',
+  'Connect proof: code, products, traction, pitch materials, and current raise.',
+  'Let your founder agent find investors whose thesis actually fits.',
 ];
 
-const signalRows = [
-  { company: 'Anysphere', founder: 'Michael Truell', fit: '96%', detail: 'Cursor turned AI coding into a daily workflow for engineering teams.', source: 'AI devtools' },
-  { company: 'Perplexity', founder: 'Aravind Srinivas', fit: '91%', detail: 'Answer engine growth with a strong consumer and research workflow wedge.', source: 'AI search' },
-  { company: 'Mistral AI', founder: 'Arthur Mensch', fit: '88%', detail: 'Open-weight model strategy and European AI infrastructure momentum.', source: 'AI models' },
+const investorBullets = [
+  'Create an investor profile and describe what you fund.',
+  'Review ranked founders with the proof and fit reason attached.',
+  'Save, message, map, and move promising builders through your pipeline.',
 ];
 
-// Founder side: what the proof profile is made of (rendered by `npx apparent`).
-const proofSignals = [
-  ['GitHub proof', 'Recent commits, repositories, collaborators, and technical depth.'],
-  ['Launch history', 'Past products, current builds, customer signals, and public proof.'],
-  ['Place and timing', 'Where builders are active and what changed most recently.'],
-];
-
-// Investor side: the taste that turns into a private sourcing desk.
-const thesisCriteria = [
-  ['Thesis and sector', 'The categories and theses you actually write checks against.'],
-  ['Stage and check size', 'Where you enter a round and how much you deploy per deal.'],
-  ['Geography and signals', 'The places, founder signals, and pass signals that fit your fund.'],
-];
-
-const productSurfaces = [
+const surfaces = [
   {
-    title: 'Builder Radar',
-    icon: Radar,
-    text: 'A real discovery map for finding Apparent builders around any place of interest.',
+    title: 'Heat Map',
+    icon: MapPin,
+    text: 'See where relevant builders and VC contacts cluster by place.',
   },
   {
-    title: 'Signal inbox',
+    title: 'Fit-ranked search',
     icon: Search,
-    text: 'A ranked stream of founder and company proof sorted by fit, freshness, and source quality.',
+    text: 'Find founders or investors by thesis, proof, stage, geography, and freshness.',
   },
   {
-    title: 'Direct messages',
-    icon: MessageSquare,
-    text: 'Founder and investor notes stay attached to profiles, meetups, terms, and sourcing context.',
-  },
-  {
-    title: 'Terms review',
-    icon: FileText,
-    text: 'Deal notes and plain-language term context stay readable before legal work gets heavy.',
+    title: 'Contextual messages',
+    icon: MessageCircle,
+    text: 'Start outreach from the actual match reason, not a generic cold template.',
   },
 ];
 
-const workflowItems = [
-  {
-    icon: Terminal,
-    title: 'Builders make proof profiles',
-    text: 'The founder side starts with work: products, GitHub, launch history, traction, press, location, and capital goals.',
-  },
-  {
-    icon: Crosshair,
-    title: 'Investors declare taste',
-    text: 'The VC side turns thesis, stage, geography, check size, pass signals, and founder taste into a private sourcing desk.',
-  },
-  {
-    icon: Sparkles,
-    title: 'Apparent creates motion',
-    text: 'The product turns proof and taste into Builder Radar, ranked inboxes, outreach drafts, deal flow, DMs, meetups, and terms.',
-  },
-];
+const ApparentSketch = () => (
+  <div className="rounded-[36px] border border-black/5 bg-white p-4 sm:p-6">
+    <svg
+      viewBox="0 0 960 540"
+      role="img"
+      aria-label="A simple sketch showing founder proof and investor thesis flowing through Apparent into a useful match."
+      className="aspect-video w-full"
+    >
+      <defs>
+        <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M 0 0 L 10 5 L 0 10 z" fill="#dd7a1e" />
+        </marker>
+      </defs>
 
-const dealFlowPreview = [
-  {
-    stage: 'New',
-    count: '3',
-    items: [
-      ['Anysphere', '96%', 'AI devtools · San Francisco'],
-      ['Lovable', '82%', 'AI app builder · Stockholm'],
-    ],
-  },
-  {
-    stage: 'Meeting',
-    count: '2',
-    items: [
-      ['Perplexity', '91%', 'AI search · San Francisco'],
-      ['Mistral AI', '88%', 'AI models · Paris'],
-    ],
-  },
-  {
-    stage: 'Diligence',
-    count: '1',
-    items: [
-      ['Harvey', '87%', 'AI legal · San Francisco'],
-      ['Ramp', '84%', 'Fintech · New York'],
-    ],
-  },
-];
+      <rect width="960" height="540" rx="34" fill="#ffffff" />
 
-const cityCoordinates: Record<string, { latitude: number; longitude: number }> = {
-  'San Francisco': { latitude: 37.7749, longitude: -122.4194 },
-  'New York': { latitude: 40.7128, longitude: -74.006 },
-  Paris: { latitude: 48.8566, longitude: 2.3522 },
-  London: { latitude: 51.5074, longitude: -0.1278 },
-  Stockholm: { latitude: 59.3293, longitude: 18.0686 },
-  Toronto: { latitude: 43.6532, longitude: -79.3832 },
-};
+      <g fill="none" stroke="#28262a" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M84 118c50-11 104-9 154 3 13 3 22 15 20 28l-18 118c-2 14-15 23-29 21-48-8-96-8-144 2-13 3-26-6-28-20L22 158c-2-14 7-27 21-30 14-3 28-6 41-10Z" />
+        <path d="M128 90c43-8 88-6 132 5" />
+        <path d="M70 172c42-9 86-8 132 3" />
+        <path d="M76 213c36-7 74-6 113 3" />
+        <path d="M697 117c50-11 104-9 154 3 13 3 22 15 20 28l-18 118c-2 14-15 23-29 21-48-8-96-8-144 2-13 3-26-6-28-20l-17-112c-2-14 7-27 21-30 14-3 27-6 41-10Z" />
+        <path d="M734 172c42-9 86-8 132 3" />
+        <path d="M740 213c36-7 74-6 113 3" />
+        <path d="M345 142c47-10 98-9 149 0 17 3 29 18 27 36l-22 169c-2 17-17 29-34 27-49-7-98-7-147 0-17 2-32-10-34-27l-22-169c-2-18 10-33 27-36 18-3 37-3 56 0Z" />
+        <path d="M326 205c46-9 95-9 143 0" />
+        <path d="M323 260c49-9 100-9 151 0" />
+        <path d="M331 316c38-6 77-6 116-1" />
+        <path d="M328 415c78-24 162-25 244-2" />
+        <path d="M585 379c50-5 99-1 149 13 16 4 25 21 20 37l-13 44c-5 16-21 25-37 21-51-12-102-13-153-1-16 4-32-6-36-22l-11-44c-4-16 6-32 22-36 20-5 40-9 59-12Z" />
+      </g>
 
-const startupLocationOffset = (index: number) => {
-  const offsets = [
-    [0.05, -0.06],
-    [-0.045, 0.055],
-    [0.035, 0.04],
-    [-0.025, -0.035],
-  ];
-  return offsets[index % offsets.length];
-};
+      <g fill="none" stroke="#dd7a1e" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round" markerEnd="url(#arrow)">
+        <path d="M252 232c39-17 75-24 116-18" />
+        <path d="M615 228c-34-16-69-22-109-17" />
+        <path d="M478 366c30 31 67 47 113 49" />
+      </g>
 
-const makeStartupNode = (
-  startup: Omit<BuilderNode, 'id' | 'founderId' | 'displayLabel' | 'latitude' | 'longitude' | 'proofLinks' | 'latestActivity' | 'latestActivityLabel' | 'profileUrl' | 'githubUrl' | 'pressUrl' | 'launchUrl' | 'rawTags'> & {
-    website: string;
-    tags: string[];
-  },
-  index: number,
-): BuilderNode => {
-  const baseCoordinates = cityCoordinates[startup.location];
-  const [latOffset, lngOffset] = startupLocationOffset(index);
+      <g>
+        <path
+          d="M422 246c26 0 44 20 44 48 0 38-20 62-47 62-30 0-48-27-47-63 1-29 20-47 50-47Z"
+          fill="#28262a"
+        />
+        <circle cx="408" cy="286" r="6" fill="#ffffff" />
+        <circle cx="438" cy="286" r="6" fill="#ffffff" />
+        <path d="M393 355c-9 23-19 39-33 50" fill="none" stroke="#28262a" strokeWidth="4" strokeLinecap="round" />
+        <path d="M448 354c11 21 22 37 36 49" fill="none" stroke="#28262a" strokeWidth="4" strokeLinecap="round" />
+        <path d="M370 303c-19-1-34 5-48 19" fill="none" stroke="#28262a" strokeWidth="4" strokeLinecap="round" />
+        <path d="M464 306c17 2 32 10 44 24" fill="none" stroke="#28262a" strokeWidth="4" strokeLinecap="round" />
+      </g>
 
-  return {
-    ...startup,
-    id: `public-startup-${startup.company.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`,
-    founderId: `public-founder-${startup.founderName.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`,
-    displayLabel: startup.company,
-    latitude: baseCoordinates.latitude + latOffset,
-    longitude: baseCoordinates.longitude + lngOffset,
-    proofLinks: [{ label: 'Website', url: startup.website, type: 'profile' }],
-    latestActivity: new Date(Date.now() - (index + 1) * 24 * 60 * 60 * 1000).toISOString(),
-    latestActivityLabel: 'Public company signal',
-    profileUrl: startup.website,
-    githubUrl: '',
-    pressUrl: '',
-    launchUrl: startup.website,
-    rawTags: startup.tags,
-  };
-};
+      <g fontFamily="Inter, ui-sans-serif, system-ui" fontWeight="700" fill="#28262a">
+        <text x="62" y="352" fontSize="31">Founder proof</text>
+        <text x="675" y="352" fontSize="31">Investor thesis</text>
+        <text x="342" y="126" fontSize="34">Apparent</text>
+        <text x="548" y="455" fontSize="31">Fit + reason</text>
+      </g>
 
-const landingStartupNodes: BuilderNode[] = [
-  makeStartupNode({
-    founderName: 'Michael Truell',
-    company: 'Anysphere',
-    buildSummary: 'AI-native coding workspace behind Cursor, built for software teams working with code agents.',
-    category: 'AI devtools',
-    stage: 'Growth',
-    location: 'San Francisco',
-    traction: 'Widely adopted AI coding workflow.',
-    launchCount: 1,
-    fitScore: 96,
-    matchReasons: ['AI devtools', 'Developer workflow', 'Product velocity'],
-    website: 'https://www.cursor.com/',
-    tags: ['ai', 'developer-tools', 'coding'],
-  }, 0),
-  makeStartupNode({
-    founderName: 'Aravind Srinivas',
-    company: 'Perplexity',
-    buildSummary: 'AI answer engine with search, research, and knowledge workflows for consumers and teams.',
-    category: 'AI search',
-    stage: 'Growth',
-    location: 'San Francisco',
-    traction: 'Fast-growing AI search product.',
-    launchCount: 1,
-    fitScore: 91,
-    matchReasons: ['AI search', 'Consumer workflow', 'High-frequency usage'],
-    website: 'https://www.perplexity.ai/',
-    tags: ['ai', 'search', 'consumer'],
-  }, 1),
-  makeStartupNode({
-    founderName: 'Winston Weinberg',
-    company: 'Harvey',
-    buildSummary: 'AI platform for legal and professional services work, focused on high-context knowledge workflows.',
-    category: 'AI legal',
-    stage: 'Growth',
-    location: 'San Francisco',
-    traction: 'Enterprise legal workflow adoption.',
-    launchCount: 1,
-    fitScore: 87,
-    matchReasons: ['Vertical AI', 'Legal workflow', 'Enterprise pull'],
-    website: 'https://www.harvey.ai/',
-    tags: ['ai', 'legal', 'enterprise'],
-  }, 2),
-  makeStartupNode({
-    founderName: 'Eric Glyman',
-    company: 'Ramp',
-    buildSummary: 'Finance automation platform for cards, spend management, procurement, bill pay, and accounting workflows.',
-    category: 'Fintech',
-    stage: 'Growth',
-    location: 'New York',
-    traction: 'Large finance operations platform.',
-    launchCount: 1,
-    fitScore: 84,
-    matchReasons: ['Fintech', 'Workflow automation', 'Business spend'],
-    website: 'https://ramp.com/',
-    tags: ['fintech', 'finance', 'automation'],
-  }, 3),
-  makeStartupNode({
-    founderName: 'Cristobal Valenzuela',
-    company: 'Runway',
-    buildSummary: 'Generative media platform for video, creative tooling, and model-powered production workflows.',
-    category: 'Generative media',
-    stage: 'Growth',
-    location: 'New York',
-    traction: 'Creator and studio workflow pull.',
-    launchCount: 1,
-    fitScore: 83,
-    matchReasons: ['Generative video', 'Creative workflow', 'AI media'],
-    website: 'https://runwayml.com/',
-    tags: ['ai', 'video', 'media'],
-  }, 4),
-  makeStartupNode({
-    founderName: 'Clement Delangue',
-    company: 'Hugging Face',
-    buildSummary: 'Open AI platform for models, datasets, spaces, and machine learning collaboration.',
-    category: 'AI infrastructure',
-    stage: 'Growth',
-    location: 'New York',
-    traction: 'Large model and developer ecosystem.',
-    launchCount: 1,
-    fitScore: 90,
-    matchReasons: ['AI infrastructure', 'Developer community', 'Model ecosystem'],
-    website: 'https://huggingface.co/',
-    tags: ['ai', 'models', 'developer-community'],
-  }, 5),
-  makeStartupNode({
-    founderName: 'Arthur Mensch',
-    company: 'Mistral AI',
-    buildSummary: 'Frontier AI lab building open and commercial model products from Paris.',
-    category: 'AI models',
-    stage: 'Growth',
-    location: 'Paris',
-    traction: 'European AI infrastructure momentum.',
-    launchCount: 1,
-    fitScore: 88,
-    matchReasons: ['AI models', 'Open-weight strategy', 'European AI'],
-    website: 'https://mistral.ai/',
-    tags: ['ai', 'models', 'infrastructure'],
-  }, 6),
-  makeStartupNode({
-    founderName: 'Mati Staniszewski',
-    company: 'ElevenLabs',
-    buildSummary: 'AI audio platform for voice generation, dubbing, and speech workflows.',
-    category: 'AI audio',
-    stage: 'Growth',
-    location: 'London',
-    traction: 'Broad creator and enterprise voice usage.',
-    launchCount: 1,
-    fitScore: 85,
-    matchReasons: ['AI audio', 'Creator workflow', 'Enterprise media'],
-    website: 'https://elevenlabs.io/',
-    tags: ['ai', 'audio', 'voice'],
-  }, 7),
-  makeStartupNode({
-    founderName: 'Anton Osika',
-    company: 'Lovable',
-    buildSummary: 'AI app builder for turning prompts into full-stack software prototypes and shipped products.',
-    category: 'AI app builder',
-    stage: 'Growth',
-    location: 'Stockholm',
-    traction: 'Strong builder and prototype velocity.',
-    launchCount: 1,
-    fitScore: 82,
-    matchReasons: ['AI app builder', 'Builder workflow', 'Product velocity'],
-    website: 'https://lovable.dev/',
-    tags: ['ai', 'apps', 'builders'],
-  }, 8),
-  makeStartupNode({
-    founderName: 'Aidan Gomez',
-    company: 'Cohere',
-    buildSummary: 'Enterprise AI platform for language models, retrieval, agents, and secure business workflows.',
-    category: 'Enterprise AI',
-    stage: 'Growth',
-    location: 'Toronto',
-    traction: 'Enterprise model platform traction.',
-    launchCount: 1,
-    fitScore: 81,
-    matchReasons: ['Enterprise AI', 'Model platform', 'Secure deployments'],
-    website: 'https://cohere.com/',
-    tags: ['ai', 'enterprise', 'models'],
-  }, 9),
-];
+      <g fontFamily="Inter, ui-sans-serif, system-ui" fontWeight="700" fontSize="21">
+        <text x="78" y="154" fill="#317fb2">code</text>
+        <text x="82" y="197" fill="#317fb2">traction</text>
+        <text x="94" y="240" fill="#317fb2">pitch</text>
+        <text x="716" y="154" fill="#317fb2">stage</text>
+        <text x="720" y="197" fill="#317fb2">sector</text>
+        <text x="735" y="240" fill="#317fb2">check</text>
+        <text x="333" y="241" fill="#dd7a1e">compare</text>
+        <text x="333" y="296" fill="#dd7a1e">rank</text>
+        <text x="337" y="348" fill="#b23b3b">no spam</text>
+      </g>
+    </svg>
+  </div>
+);
 
-const buildLandingClusters = (builders: BuilderNode[]): BuilderMapCluster[] => {
-  const clusters = new Map<string, BuilderMapCluster>();
-
-  builders.forEach((builder) => {
-    const existing = clusters.get(builder.location);
-    const baseCoordinates = cityCoordinates[builder.location] ?? {
-      latitude: builder.latitude,
-      longitude: builder.longitude,
-    };
-    const cluster =
-      existing ??
-      {
-        city: builder.location,
-        latitude: baseCoordinates.latitude,
-        longitude: baseCoordinates.longitude,
-        builderCount: 0,
-        categoryMix: [],
-        stageMix: [],
-        latestActivity: builder.latestActivity,
-        latestActivityLabel: 'Public startup examples',
-        fitScore: 0,
-        builderIds: [],
-        meetups: 0,
-      };
-
-    cluster.builderCount += 1;
-    cluster.builderIds.push(builder.id);
-    cluster.categoryMix = Array.from(new Set([...cluster.categoryMix, builder.category])).slice(0, 4);
-    cluster.stageMix = Array.from(new Set([...cluster.stageMix, builder.stage])).slice(0, 4);
-    cluster.fitScore = Math.round(((cluster.fitScore * (cluster.builderCount - 1)) + builder.fitScore) / cluster.builderCount);
-    clusters.set(builder.location, cluster);
-  });
-
-  return Array.from(clusters.values()).sort((a, b) => b.builderCount - a.builderCount);
-};
+const RoleCard = ({
+  title,
+  bullets,
+  cta,
+  onClick,
+}: {
+  title: string;
+  bullets: string[];
+  cta: string;
+  onClick: () => void;
+}) => (
+  <article className="rounded-[32px] border border-black/5 bg-white/75 p-7 sm:p-8">
+    <h3 className="text-3xl font-normal tracking-[-0.035em]" style={serifDisplay}>
+      {title}
+    </h3>
+    <ul className="mt-7 space-y-4">
+      {bullets.map((bullet) => (
+        <li key={bullet} className="flex gap-3 text-sm leading-6 text-black/65">
+          <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#28262a]" />
+          <span>{bullet}</span>
+        </li>
+      ))}
+    </ul>
+    <button
+      type="button"
+      onClick={onClick}
+      className="mt-8 inline-flex items-center rounded-full bg-[#cfdaf5] px-5 py-3 text-sm font-semibold text-black transition-colors hover:bg-[#bcc8ef]"
+    >
+      {cta} <ArrowUpRight className="ml-1.5 h-4 w-4" />
+    </button>
+  </article>
+);
 
 export const OurThesis = () => {
   const navigate = useNavigate();
   useReveal();
-  const landingClusters = useMemo(() => buildLandingClusters(landingStartupNodes), []);
-  const [selectedLandingCity, setSelectedLandingCity] = useState('San Francisco');
-  const [selectedLandingBuilderId, setSelectedLandingBuilderId] = useState(landingStartupNodes[0].id);
-  const [visibleLandingBuilderIds, setVisibleLandingBuilderIds] = useState<string[]>([]);
-
-  const selectedLandingBuilders = useMemo(() => {
-    const bySelectedCity = landingStartupNodes.filter((builder) => builder.location === selectedLandingCity);
-
-    if (bySelectedCity.length > 0) {
-      return bySelectedCity;
-    }
-
-    if (visibleLandingBuilderIds.length > 0) {
-      const visibleSet = new Set(visibleLandingBuilderIds);
-      return landingStartupNodes.filter((builder) => visibleSet.has(builder.id));
-    }
-
-    return landingStartupNodes.slice(0, 4);
-  }, [selectedLandingCity, visibleLandingBuilderIds]);
-
-  const selectedLandingBuilder =
-    landingStartupNodes.find((builder) => builder.id === selectedLandingBuilderId) ?? selectedLandingBuilders[0] ?? landingStartupNodes[0];
-
-  const handleSelectLandingCity = (city: string) => {
-    setSelectedLandingCity(city);
-    const firstBuilder = landingStartupNodes.find((builder) => builder.location === city);
-
-    if (firstBuilder) {
-      setSelectedLandingBuilderId(firstBuilder.id);
-    }
-  };
-
-  const handleSelectLandingBuilder = (builderId: string) => {
-    const builder = landingStartupNodes.find((candidate) => candidate.id === builderId);
-
-    if (!builder) return;
-
-    setSelectedLandingBuilderId(builder.id);
-    setSelectedLandingCity(builder.location);
-  };
 
   return (
     <main className="monad monad-page min-h-screen overflow-x-hidden bg-[#f6f3f1] text-black">
       <AldenPublicNavbar />
 
-      {/* Hero — the headline next to real proof: the npx apparent build card. */}
-      <section data-reveal className="reveal mx-auto max-w-[92rem] px-5 pb-14 pt-14 sm:px-8 md:pt-20">
-        <div className="grid gap-12 lg:grid-cols-[minmax(0,1fr)_minmax(0,33rem)] lg:items-center lg:gap-16">
-          <div>
-            <span className="inline-flex items-center gap-2 rounded-full border border-black/10 bg-white/60 px-3.5 py-1.5 text-[0.7rem] font-semibold uppercase tracking-[0.18em] text-black/55">
-              <Sparkles className="h-3.5 w-3.5" /> Our thesis
-            </span>
-            <h1
-              className="mt-7 max-w-[70rem] text-[2.65rem] font-normal leading-[0.92] tracking-[-0.055em] sm:text-[4.6rem] sm:leading-[0.9] md:text-[5.4rem] lg:text-[5.6rem] xl:text-[6.3rem]"
-              style={serifDisplay}
+      <section data-reveal className="reveal mx-auto grid max-w-[92rem] gap-10 px-5 pb-12 pt-12 sm:px-8 md:pt-16 lg:grid-cols-[0.9fr_1.1fr] lg:items-center">
+        <div>
+          <h1
+            className="max-w-[52rem] text-[3.25rem] font-normal leading-[0.9] tracking-[-0.055em] sm:text-[5.5rem] md:text-[6.6rem]"
+            style={serifDisplay}
+          >
+            How Apparent works.
+          </h1>
+          <p className="mt-8 max-w-2xl text-lg leading-8 text-black/65 md:text-xl">
+            Founders put proof in. Investors put thesis in. Apparent compares both and helps the right conversation start.
+          </p>
+          <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+            <button
+              type="button"
+              onClick={() => navigate('/login?role=founder')}
+              className="rounded-full bg-[#cfdaf5] px-6 py-3 text-sm font-semibold text-black transition-colors hover:bg-[#bcc8ef]"
             >
-              Where proof
-              <br />
-              meets thesis.
-            </h1>
-            <p className="mt-8 max-w-2xl text-lg leading-8 text-black/65 md:text-xl">
-              Founders show real proof of what they&apos;ve built. Investors find builders who match what they&apos;re looking for. Apparent is where those two meet.
-            </p>
-            <div className="mt-9 flex flex-col gap-3 sm:flex-row">
-              <button
-                type="button"
-                onClick={() => navigate('/login?role=founder')}
-                className="w-full rounded-full bg-[#cfdaf5] px-6 py-3 text-sm font-semibold text-black transition-colors hover:bg-[#bcc8ef] sm:w-auto"
-              >
-                Create founder profile
-              </button>
-              <button
-                type="button"
-                onClick={() => navigate('/login?role=investor')}
-                className="inline-flex w-full items-center justify-center rounded-full border border-black/15 bg-white/60 px-6 py-3 text-sm font-semibold text-black transition-colors hover:bg-white sm:w-auto"
-              >
-                Create investor profile <ArrowUpRight className="ml-1 inline h-3.5 w-3.5 align-[-2px]" />
-              </button>
-            </div>
-          </div>
-
-          <div className="w-full">
-            <div
-              className="cli-card w-full"
-              role="img"
-              aria-label="The npx apparent build card: a verified founder profile rendered in the terminal from local git activity."
+              I am a founder
+            </button>
+            <button
+              type="button"
+              onClick={() => navigate('/login?role=investor')}
+              className="rounded-full border border-black/10 bg-white px-6 py-3 text-sm font-semibold text-black transition-colors hover:bg-[#f6f3f1]"
             >
-              <div className="cli-card__bar" aria-hidden="true">
-                <i style={{ background: '#ff5f57' }} />
-                <i style={{ background: '#febc2e' }} />
-                <i style={{ background: '#28c840' }} />
-                <span className="t">founder@local: ~/medai</span>
-              </div>
-              <pre dangerouslySetInnerHTML={{ __html: CLI_CARD_HTML }} />
-            </div>
-            <p className="mt-4 flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.14em] text-black/40">
-              <Terminal className="h-3.5 w-3.5" /> Proof, rendered from real work — not a pitch deck
-            </p>
+              I am an investor
+            </button>
           </div>
         </div>
 
-        {/* Live market pulse, as a clean stat strip. */}
-        <div className="mt-16 grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4">
-          {heroStats.map(([value, label]) => (
-            <div key={label} className="rounded-[24px] border border-black/5 bg-white/65 px-6 py-7">
-              <p className="text-4xl font-normal tracking-[-0.04em]" style={serifDisplay}>
-                {value}
-              </p>
-              <p className="mt-2 text-xs font-semibold uppercase tracking-[0.16em] text-black/45">{label}</p>
-            </div>
+        <ApparentSketch />
+      </section>
+
+      <section id="how-to" data-reveal className="reveal mx-auto max-w-[92rem] border-t border-black/10 px-5 py-12 sm:px-8">
+        <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-4">
+          {steps.map(([number, title, text]) => (
+            <article key={title} className="rounded-[28px] border border-black/5 bg-white/70 p-6">
+              <span className="text-sm font-semibold text-black/35">{number}</span>
+              <h2 className="mt-8 text-2xl font-normal tracking-[-0.03em]" style={serifDisplay}>
+                {title}
+              </h2>
+              <p className="mt-4 text-sm leading-6 text-black/60">{text}</p>
+            </article>
           ))}
         </div>
       </section>
 
-      {/* Two inputs: founder proof + investor thesis, as a diptych of better cards. */}
-      <section data-reveal className="reveal mx-auto max-w-[92rem] border-t border-black/10 px-5 py-16 sm:px-8">
-        <div className="flex flex-col justify-between gap-6 md:flex-row md:items-end">
-          <h2 className="max-w-3xl text-4xl font-normal leading-[1.02] tracking-[-0.045em] md:text-6xl" style={serifDisplay}>
-            Two inputs the network actually trusts.
-          </h2>
-          <p className="max-w-md text-base leading-7 text-black/55">
-            One side is evidence. The other is taste. Apparent turns both into a single, searchable signal.
-          </p>
-        </div>
-
-        <div className="mt-12 grid gap-5 lg:grid-cols-2">
-          {/* Founder proof — light card */}
-          <article className="flex flex-col rounded-[36px] border border-black/5 bg-white/75 p-8 transition-shadow duration-300 hover:shadow-[0_22px_60px_rgba(0,0,0,0.07)] md:p-10">
-            <div className="flex items-center justify-between">
-              <div className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-[#cfdaf5] text-[#242424]">
-                <Terminal className="h-5 w-5" />
-              </div>
-              <span className="text-xs font-semibold uppercase tracking-[0.16em] text-black/40">The founder side</span>
-            </div>
-            <h3 className="mt-8 text-3xl font-normal tracking-[-0.035em] md:text-4xl" style={serifDisplay}>
-              Proof, not a pitch.
-            </h3>
-            <p className="mt-4 text-sm leading-7 text-black/55">
-              Run <span className="font-mono text-[0.9em] text-[#242424]">npx apparent</span> and shipped work — code, launches, traction, place — becomes a verified profile investors can actually trust.
-            </p>
-            <div className="mt-8 grid gap-px overflow-hidden rounded-[22px] border border-black/5 bg-black/5">
-              {proofSignals.map(([label, text]) => (
-                <div key={label} className="bg-[#f6f3f1] px-5 py-4">
-                  <p className="text-sm font-semibold">{label}</p>
-                  <p className="mt-1 text-sm leading-6 text-black/55">{text}</p>
-                </div>
-              ))}
-            </div>
-            <span className="mt-7 inline-flex w-fit items-center gap-2 rounded-full bg-[#242424] px-3.5 py-1.5 font-mono text-xs text-white/85">
-              <span className="text-[#9cff9c]">$</span> npx apparent
-            </span>
-          </article>
-
-          {/* Investor thesis — dark card */}
-          <article className="flex flex-col rounded-[36px] bg-[#242424] p-8 text-white transition-shadow duration-300 hover:shadow-[0_22px_60px_rgba(0,0,0,0.18)] md:p-10">
-            <div className="flex items-center justify-between">
-              <div className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-[#cfdaf5] text-[#242424]">
-                <Crosshair className="h-5 w-5" />
-              </div>
-              <span className="text-xs font-semibold uppercase tracking-[0.16em] text-white/40">The investor side</span>
-            </div>
-            <h3 className="mt-8 text-3xl font-normal tracking-[-0.035em] md:text-4xl" style={serifDisplay}>
-              Thesis, made searchable.
-            </h3>
-            <p className="mt-4 text-sm leading-7 text-white/55">
-              Sector, stage, geography, check size, and founder signals become reusable sourcing criteria — a private desk that finds builders for you.
-            </p>
-            <div className="mt-8 grid gap-px overflow-hidden rounded-[22px] bg-white/10">
-              {thesisCriteria.map(([label, text]) => (
-                <div key={label} className="bg-[#242424] px-5 py-4">
-                  <p className="text-sm font-semibold">{label}</p>
-                  <p className="mt-1 text-sm leading-6 text-white/55">{text}</p>
-                </div>
-              ))}
-            </div>
-            <span className="mt-7 inline-flex w-fit items-center gap-2 rounded-full bg-[#cfdaf5] px-3.5 py-1.5 text-xs font-semibold text-[#242424]">
-              <Sparkles className="h-3.5 w-3.5" /> Private sourcing desk
-            </span>
-          </article>
-        </div>
+      <section data-reveal className="reveal mx-auto grid max-w-[92rem] gap-5 border-t border-black/10 px-5 py-12 sm:px-8 lg:grid-cols-2">
+        <RoleCard
+          title="If you are a founder"
+          bullets={founderBullets}
+          cta="Create founder profile"
+          onClick={() => navigate('/login?role=founder')}
+        />
+        <RoleCard
+          title="If you are an investor"
+          bullets={investorBullets}
+          cta="Create investor profile"
+          onClick={() => navigate('/login?role=investor')}
+        />
       </section>
 
-      {/* Discovery + Builder Radar map. */}
-      <section data-reveal className="reveal mx-auto grid max-w-[92rem] gap-8 border-t border-black/10 px-5 py-14 sm:px-8 lg:grid-cols-[0.95fr_1.05fr] lg:items-stretch">
-        <div className="py-4 lg:py-8">
-          <h2 className="text-5xl font-normal leading-none tracking-[-0.045em] md:text-7xl" style={serifDisplay}>
-            Discovery should start with evidence.
-          </h2>
-          <p className="mt-8 max-w-2xl text-base leading-8 text-black/60">
-            Warm intros are a weak database. Apparent makes the useful parts visible: what builders shipped, what investors want, where momentum is forming, and what should happen next.
-          </p>
-          <div className="mt-10 grid gap-3">
-            {marketRows.map(([number, title, text]) => (
-              <div key={number} className="group grid gap-4 rounded-[22px] border border-black/5 bg-white/55 px-5 py-5 transition-colors hover:bg-white/85 sm:grid-cols-[2.5rem_1fr]">
-                <span className="text-sm font-semibold text-black/35">{number}</span>
-                <p className="text-sm leading-6 text-black/65">
-                  <span className="font-semibold text-black">{title}:</span> {text}
-                </p>
-              </div>
-            ))}
-          </div>
-          <button
-            type="button"
-            onClick={() => navigate('/about')}
-            className="mt-10 rounded-full bg-[#cfdaf5] px-6 py-3 text-sm font-semibold text-black transition-colors hover:bg-[#bcc8ef]"
-          >
-            Why Apparent exists
-          </button>
-        </div>
-
-        <div className="overflow-hidden rounded-[40px] border border-black/5 bg-white/80 shadow-[0_18px_60px_rgba(0,0,0,0.06)]">
-          <div className="flex flex-wrap gap-2 bg-[#f6f3f1]/92 px-5 py-4 backdrop-blur">
-            {landingClusters.map((cluster) => (
-              <button
-                key={cluster.city}
-                type="button"
-                onClick={() => handleSelectLandingCity(cluster.city)}
-                className={`rounded-full px-3 py-1 text-xs font-semibold transition-colors ${
-                  selectedLandingCity === cluster.city
-                    ? 'bg-black text-white'
-                    : 'bg-white/80 text-black/60 hover:bg-[#f6f3f1]'
-                }`}
-              >
-                {cluster.city} {cluster.builderCount}
-              </button>
-            ))}
-          </div>
-
-          <BuilderRadarMap
-            clusters={landingClusters}
-            builders={landingStartupNodes}
-            selectedCity={selectedLandingCity}
-            selectedBuilderId={selectedLandingBuilder.id}
-            role="investor"
-            interestPin={null}
-            radiusMiles={100}
-            onSelectCity={handleSelectLandingCity}
-            onSelectBuilder={handleSelectLandingBuilder}
-            onViewportBuildersChange={setVisibleLandingBuilderIds}
-            badgeLabel="Real startup examples"
-            className="h-[460px] min-h-[460px] rounded-none"
-          />
-
-          <div className="grid bg-[#f6f3f1] lg:grid-cols-[1fr_18rem]">
-            <div>
-              <div className="flex items-center justify-between px-5 py-4">
-                <p className="text-sm font-semibold">
-                  {selectedLandingCity} startups
-                </p>
-                <span className="text-xs font-semibold uppercase tracking-[0.16em] text-[#242424]">
-                  {visibleLandingBuilderIds.length || landingStartupNodes.length} visible
-                </span>
-              </div>
-              <div className="px-2 pb-2">
-                {selectedLandingBuilders.map((builder) => (
-                  <button
-                    key={builder.id}
-                    type="button"
-                    onClick={() => handleSelectLandingBuilder(builder.id)}
-                    className={`grid w-full gap-3 rounded-[20px] px-4 py-4 text-left transition-colors sm:grid-cols-[1fr_auto] ${
-                      selectedLandingBuilder.id === builder.id ? 'bg-white' : 'hover:bg-white/70'
-                    }`}
-                  >
-                    <span>
-                      <span className="flex flex-wrap items-center gap-2">
-                        <span className="font-semibold">{builder.company}</span>
-                        <span className="rounded-full bg-[#cfdaf5] px-2 py-0.5 text-xs font-semibold text-black">{builder.fitScore}%</span>
-                      </span>
-                      <span className="mt-2 block text-sm leading-6 text-black/55">{builder.buildSummary}</span>
-                    </span>
-                    <span className="text-xs font-semibold uppercase tracking-[0.14em] text-black/45">
-                      {builder.category}
-                    </span>
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <aside className="p-5">
-              <div className="mb-5 flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-[#242424]">
-                <MapPin className="h-3.5 w-3.5 text-[#000000]" />
-                Selected
-              </div>
-              <h3 className="text-3xl font-normal leading-none tracking-[-0.04em]" style={serifDisplay}>
-                {selectedLandingBuilder.company}
-              </h3>
-              <p className="mt-3 text-sm font-semibold">{selectedLandingBuilder.founderName}</p>
-              <p className="mt-3 text-sm leading-6 text-black/55">{selectedLandingBuilder.traction}</p>
-              <div className="mt-5 flex flex-wrap gap-2">
-                {selectedLandingBuilder.matchReasons.slice(0, 3).map((reason) => (
-                  <span key={reason} className="rounded-full bg-white/80 px-2.5 py-1 text-xs text-black/60">
-                    {reason}
-                  </span>
-                ))}
-              </div>
-              <a
-                href={selectedLandingBuilder.profileUrl}
-                target="_blank"
-                rel="noreferrer"
-                className="mt-6 inline-flex rounded-full bg-[#cfdaf5] px-4 py-2 text-sm font-semibold text-black transition-colors hover:bg-[#bcc8ef]"
-              >
-                Open startup <ArrowUpRight className="ml-1.5 h-4 w-4" />
-              </a>
-            </aside>
-          </div>
-        </div>
-      </section>
-
-      <section data-reveal className="reveal mx-auto max-w-[92rem] px-5 py-10 sm:px-8">
-        <div className="flex min-h-[300px] items-center overflow-hidden rounded-[40px] bg-[#242424] px-8 py-14 text-white md:min-h-[360px] md:px-16">
+      <section data-reveal className="reveal mx-auto max-w-[92rem] border-t border-black/10 px-5 py-12 sm:px-8">
+        <div className="grid gap-8 lg:grid-cols-[0.9fr_1.1fr] lg:items-start">
           <div>
-            <h2 className="max-w-4xl text-4xl font-normal leading-[1.05] tracking-[-0.04em] md:text-6xl" style={serifDisplay}>
-              The next great companies are already shipping. They&apos;re just hard to find.
+            <h2 className="max-w-3xl text-5xl font-normal leading-none tracking-[-0.045em] md:text-7xl" style={serifDisplay}>
+              The match does not stop at a score.
             </h2>
-            <p className="mt-6 max-w-2xl text-base leading-7 text-white/55">
-              Apparent makes proof legible and thesis searchable, so the right founder and the right investor meet in that early window instead of missing it.
+            <p className="mt-7 max-w-xl text-base leading-8 text-black/60">
+              Apparent keeps the proof, thesis, location, message, and pipeline context attached so both sides know why the match exists.
             </p>
           </div>
-        </div>
-      </section>
 
-      <section data-reveal className="reveal mx-auto max-w-[92rem] border-t border-black/10 px-5 py-16 sm:px-8">
-        <div className="pt-2">
-          <h2 className="max-w-4xl text-5xl font-normal leading-none tracking-[-0.045em] md:text-7xl" style={serifDisplay}>
-            The network is only useful when the context travels.
-          </h2>
-          <div className="mt-16 grid gap-5 md:grid-cols-2 lg:grid-cols-4">
-            {productSurfaces.map((surface, i) => (
-              <article
-                key={surface.title}
-                data-reveal
-                style={{ transitionDelay: `${i * 90}ms` }}
-                className="reveal group flex flex-col rounded-[28px] border border-black/5 bg-white/70 p-7 transition-all duration-300 hover:-translate-y-1 hover:bg-white hover:shadow-[0_22px_55px_rgba(0,0,0,0.08)]"
-              >
-                <div className="mb-7 inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-[#cfdaf5] text-[#242424] transition-transform duration-300 group-hover:scale-105">
+          <div className="grid gap-4">
+            {surfaces.map((surface) => (
+              <article key={surface.title} className="grid gap-4 rounded-[24px] border border-black/5 bg-white/70 p-5 sm:grid-cols-[3rem_1fr]">
+                <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#cfdaf5] text-[#242424]">
                   <surface.icon className="h-5 w-5" />
                 </div>
-                <h3 className="text-xl font-normal tracking-[-0.025em]" style={serifDisplay}>
-                  {surface.title}
-                </h3>
-                <p className="mt-4 text-sm leading-6 text-black/55">{surface.text}</p>
-                <span className="mt-6 inline-flex items-center gap-1 text-xs font-semibold uppercase tracking-[0.14em] text-black/35 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
-                  Inside Apparent <ArrowUpRight className="h-3 w-3" />
-                </span>
+                <div>
+                  <h3 className="text-xl font-normal tracking-[-0.025em]" style={serifDisplay}>
+                    {surface.title}
+                  </h3>
+                  <p className="mt-2 text-sm leading-6 text-black/60">{surface.text}</p>
+                </div>
               </article>
             ))}
           </div>
         </div>
       </section>
 
-      <section id="signals" data-reveal className="reveal mx-auto max-w-[92rem] border-t border-black/10 px-5 py-16 sm:px-8">
-        <div className="grid overflow-hidden rounded-[40px] border border-black/5 bg-white/80 shadow-[0_18px_60px_rgba(0,0,0,0.06)] lg:grid-cols-[0.82fr_1.18fr]">
-          <div className="p-6 sm:p-8">
-            <div className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-[#cfdaf5] text-[#242424]">
-              <Target className="h-5 w-5" />
-            </div>
-            <h2 className="mt-10 max-w-xl text-5xl font-normal leading-none tracking-[-0.045em] md:text-7xl" style={serifDisplay}>
-              Signals become sourceable.
+      <section data-reveal className="reveal mx-auto max-w-[92rem] border-t border-black/10 px-5 py-14 sm:px-8">
+        <div className="grid gap-8 rounded-[36px] border border-black/5 bg-white/75 p-7 sm:p-10 lg:grid-cols-[1fr_auto] lg:items-center">
+          <div>
+            <Sparkles className="mb-6 h-5 w-5 text-[#28262a]" />
+            <h2 className="max-w-3xl text-4xl font-normal leading-tight tracking-[-0.04em] md:text-6xl" style={serifDisplay}>
+              Show the work. Declare the thesis. Let Apparent connect the fit.
             </h2>
-            <p className="mt-6 max-w-lg text-base leading-7 text-black/60">
-              Investors see ranked proof. Founders see who matches their build. Everyone gets direct paths into profiles, DMs, meetups, and next steps.
-            </p>
-            <div className="mt-10 grid gap-3">
-              {proofSignals.map(([label, value]) => (
-                <div key={label} className="grid gap-2 rounded-[18px] border border-black/5 bg-[#f6f3f1] px-5 py-4 sm:grid-cols-[8rem_1fr]">
-                  <p className="text-sm font-semibold">{label}</p>
-                  <p className="text-sm leading-6 text-black/55">{value}</p>
-                </div>
-              ))}
-            </div>
           </div>
-
-          <div className="bg-[#f6f3f1]">
-            <div className="flex items-center justify-between px-6 py-5 sm:px-8">
-              <div className="flex items-center gap-2 text-sm font-semibold">
-                <Search className="h-4 w-4 text-[#000000]" />
-                Ranked signal inbox
-              </div>
-              <span className="rounded-full bg-[#cfdaf5] px-3 py-1 text-xs font-semibold text-black">Avg fit 90%</span>
-            </div>
-            <div className="space-y-3 px-4 pb-4 sm:px-5 sm:pb-5">
-              {signalRows.map((row) => (
-                <div key={row.company} className="grid gap-4 rounded-[22px] border border-black/5 bg-white/75 px-5 py-5 transition-colors hover:bg-white sm:grid-cols-[1fr_auto] sm:items-center sm:px-6">
-                  <div>
-                    <div className="flex flex-wrap items-center gap-2">
-                      <h3 className="text-xl font-semibold">{row.company}</h3>
-                      <span className="text-sm text-black/45">by {row.founder}</span>
-                    </div>
-                    <p className="mt-2 text-sm leading-6 text-black/60">{row.detail}</p>
-                    <p className="mt-3 text-xs font-semibold uppercase tracking-[0.14em] text-[#242424]">{row.source}</p>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="rounded-full bg-[#cfdaf5] px-3 py-1.5 text-sm font-semibold text-black">{row.fit}</span>
-                    <button type="button" className="rounded-full border border-black/10 bg-white/80 px-3 py-1.5 text-sm font-semibold transition-colors hover:bg-white">
-                      Open
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section data-reveal className="reveal mx-auto grid max-w-[92rem] gap-8 border-t border-black/10 px-5 py-16 sm:px-8 lg:grid-cols-[1.05fr_0.95fr] lg:items-start">
-        <div className="overflow-hidden rounded-[40px] border border-black/5 bg-white/80 shadow-[0_18px_60px_rgba(0,0,0,0.06)]">
-          <div className="flex items-start justify-between gap-4 px-6 py-6 sm:px-8">
-            <div>
-              <p className="text-sm font-semibold">Deal-flow board</p>
-              <p className="mt-1 text-sm text-black/45">Saved builders move with their source, proof, and outreach context attached.</p>
-            </div>
-            <div className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#cfdaf5] text-[#242424]">
-              <Route className="h-5 w-5" />
-            </div>
-          </div>
-
-          <div className="grid gap-4 p-4 lg:grid-cols-3">
-            {dealFlowPreview.map((column) => (
-              <div key={column.stage} className="rounded-[26px] bg-[#f6f3f1] p-4">
-                <div className="mb-4 flex items-center justify-between px-2">
-                  <span className="text-xs font-semibold uppercase tracking-[0.16em] text-[#242424]">{column.stage}</span>
-                  <span className="rounded-full bg-[#cfdaf5] px-2.5 py-1 text-xs font-semibold text-black">{column.count}</span>
-                </div>
-                <div className="space-y-3">
-                  {column.items.map(([company, fit, note]) => (
-                    <div
-                      key={company}
-                      className="rounded-[18px] border border-black/5 bg-white/80 p-4 transition-colors hover:bg-white"
-                    >
-                      <div className="flex items-center justify-between gap-3">
-                        <h3 className="font-semibold tracking-[-0.02em]">{company}</h3>
-                        <span className="rounded-full bg-[#cfdaf5] px-2 py-0.5 text-xs font-semibold text-black">{fit}</span>
-                      </div>
-                      <p className="mt-3 text-sm leading-6 text-black/55">{note}</p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
-
-          <div className="grid bg-[#f6f3f1] text-xs font-semibold uppercase tracking-[0.16em] text-[#242424] sm:grid-cols-[1fr_auto]">
-            <div className="px-6 py-4 sm:px-8">Source signal to first meeting</div>
-            <div className="px-6 py-4 sm:px-8">Context follows the card</div>
-          </div>
-        </div>
-
-        <div className="lg:py-4">
-          <div className="rounded-[36px] bg-[#242424] p-8 text-white md:p-10">
-            <blockquote className="text-3xl font-normal leading-tight tracking-[-0.03em] md:text-4xl" style={serifDisplay}>
-              &ldquo;The best early companies are visible before they are famous. Apparent is designed for that exact window.&rdquo;
-            </blockquote>
-          </div>
-          <div className="mt-8 grid gap-4">
-            {[
-              ['For founders', 'Your shipped work becomes the discovery surface.'],
-              ['For investors', 'Your thesis becomes a repeatable sourcing system.'],
-              ['For the network', 'Place, proof, message, meetup, and terms stay connected.'],
-            ].map(([title, text]) => (
-              <div key={title} className="rounded-[22px] border border-black/5 bg-white/55 px-6 py-5">
-                <h3 className="text-base font-semibold">{title}</h3>
-                <p className="mt-2 text-sm leading-6 text-black/55">{text}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <section id="how-to" data-reveal className="reveal mx-auto max-w-[92rem] border-t border-black/10 px-5 py-16 sm:px-8">
-        <div className="py-2">
-          <div className="mb-14 flex flex-col justify-between gap-6 md:flex-row md:items-end">
-            <h2 className="max-w-4xl text-5xl font-normal leading-none tracking-[-0.045em] md:text-8xl" style={serifDisplay}>
-              A network that starts with proof.
-            </h2>
-            <button
-              type="button"
-              onClick={() => navigate('/login')}
-              className="inline-flex w-fit items-center gap-3 rounded-full bg-[#cfdaf5] px-6 py-3 text-sm font-semibold text-black transition-colors hover:bg-[#bcc8ef]"
-            >
-              Enter Apparent <MoveRight className="h-4 w-4" />
-            </button>
-          </div>
-          <div className="grid gap-5 lg:grid-cols-3">
-            {workflowItems.map((item, index) => (
-              <div
-                key={item.title}
-                data-reveal
-                style={{ transitionDelay: `${index * 90}ms` }}
-                className="reveal group rounded-[28px] border border-black/5 bg-white/70 p-8 transition-all duration-300 hover:-translate-y-1 hover:bg-white hover:shadow-[0_22px_55px_rgba(0,0,0,0.08)]"
-              >
-                <div className="flex items-center justify-between">
-                  <span className="text-5xl font-normal leading-none tracking-[-0.05em] text-black/15" style={serifDisplay}>
-                    0{index + 1}
-                  </span>
-                  <div className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-[#cfdaf5] text-[#242424]">
-                    <item.icon className="h-5 w-5" />
-                  </div>
-                </div>
-                <h3 className="mt-8 text-xl font-semibold">{item.title}</h3>
-                <p className="mt-3 max-w-sm text-sm leading-6 text-black/60">{item.text}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <section data-reveal className="reveal mx-auto max-w-[92rem] border-t border-black/10 px-5 py-20 sm:px-8">
-        <div className="py-10 text-center">
-          <Bell className="mx-auto mb-10 h-6 w-6 text-[#000000]" />
-          <h2 className="mx-auto max-w-4xl text-5xl font-normal leading-none tracking-[-0.045em] md:text-7xl" style={serifDisplay}>
-            Join before the obvious round.
-          </h2>
-          <p className="mx-auto mt-8 max-w-2xl text-base leading-8 text-black/55">
-            Create the profile, declare the thesis, and let Apparent turn builder proof into discovery.
-          </p>
-          <div className="mx-auto mt-10 flex max-w-3xl flex-col gap-3 sm:flex-row">
-            <button
-              type="button"
-              onClick={() => navigate('/login?role=founder')}
-              className="flex-1 rounded-full bg-[#cfdaf5] px-6 py-3 text-sm font-semibold text-black hover:bg-[#bcc8ef]"
-            >
-              Create founder profile
-            </button>
-            <button
-              type="button"
-              onClick={() => navigate('/login?role=investor')}
-              className="flex-1 rounded-full bg-[#cfdaf5] px-6 py-3 text-sm font-semibold text-black transition-colors hover:bg-[#bcc8ef]"
-            >
-              Create investor profile <ArrowUpRight className="ml-1 inline h-3.5 w-3.5 align-[-2px]" />
-            </button>
-          </div>
+          <button
+            type="button"
+            onClick={() => navigate('/login')}
+            className="h-fit rounded-full bg-[#cfdaf5] px-6 py-3 text-sm font-semibold text-black transition-colors hover:bg-[#bcc8ef]"
+          >
+            Get started <ArrowUpRight className="ml-1 inline h-3.5 w-3.5 align-[-2px]" />
+          </button>
         </div>
       </section>
     </main>
