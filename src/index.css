@@ -2634,6 +2634,23 @@ a.rounded-full:hover {
   transform: translateY(-1px);
 }
 
+.alden-landing :where(button[class~="bg-black"], a[class~="bg-black"], button[class~="bg-neutral-900"], a[class~="bg-neutral-900"], button[class~="bg-charcoal"], a[class~="bg-charcoal"]),
+.monad-page :where(button[class~="bg-black"], a[class~="bg-black"], button[class~="bg-neutral-900"], a[class~="bg-neutral-900"], button[class~="bg-charcoal"], a[class~="bg-charcoal"]),
+.apparent-heatmap-page :where(button[class~="bg-black"], a[class~="bg-black"], button[class~="bg-neutral-900"], a[class~="bg-neutral-900"], button[class~="bg-charcoal"], a[class~="bg-charcoal"]) {
+  background: var(--alden-sage) !important;
+  border-color: var(--alden-sage) !important;
+  box-shadow: none !important;
+  color: var(--alden-ink) !important;
+}
+
+.alden-landing :where(button[class~="hover:bg-black"]:hover, a[class~="hover:bg-black"]:hover, button[class~="hover:bg-black/80"]:hover, a[class~="hover:bg-black/80"]:hover, button[class~="hover:bg-black/85"]:hover, a[class~="hover:bg-black/85"]:hover, button[class~="hover:bg-gray-800"]:hover, a[class~="hover:bg-gray-800"]:hover, button[class~="hover:bg-gray-900"]:hover, a[class~="hover:bg-gray-900"]:hover, button[class~="hover:bg-ink"]:hover, a[class~="hover:bg-ink"]:hover),
+.monad-page :where(button[class~="hover:bg-black"]:hover, a[class~="hover:bg-black"]:hover, button[class~="hover:bg-black/80"]:hover, a[class~="hover:bg-black/80"]:hover, button[class~="hover:bg-black/85"]:hover, a[class~="hover:bg-black/85"]:hover, button[class~="hover:bg-gray-800"]:hover, a[class~="hover:bg-gray-800"]:hover, button[class~="hover:bg-gray-900"]:hover, a[class~="hover:bg-gray-900"]:hover, button[class~="hover:bg-ink"]:hover, a[class~="hover:bg-ink"]:hover),
+.apparent-heatmap-page :where(button[class~="hover:bg-black"]:hover, a[class~="hover:bg-black"]:hover, button[class~="hover:bg-black/80"]:hover, a[class~="hover:bg-black/80"]:hover, button[class~="hover:bg-black/85"]:hover, a[class~="hover:bg-black/85"]:hover, button[class~="hover:bg-gray-800"]:hover, a[class~="hover:bg-gray-800"]:hover, button[class~="hover:bg-gray-900"]:hover, a[class~="hover:bg-gray-900"]:hover, button[class~="hover:bg-ink"]:hover, a[class~="hover:bg-ink"]:hover) {
+  background: #bed49f !important;
+  border-color: #bed49f !important;
+  color: var(--alden-ink) !important;
+}
+
 .monad-page :where(input, textarea, select) {
   background: var(--alden-paper) !important;
   border-color: var(--alden-fog) !important;
