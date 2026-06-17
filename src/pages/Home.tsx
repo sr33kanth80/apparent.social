@@ -19,7 +19,7 @@ const navLinks = [
   { label: 'Heat Map', to: '/heat-map' },
   { label: 'Blog', to: '/blog' },
   { label: 'About Us', to: '/about' },
-  { label: 'How it works', to: '#how-it-works' },
+  { label: 'How it works', to: '/our-thesis' },
 ];
 
 const footerColumns = [
@@ -29,7 +29,7 @@ const footerColumns = [
       { label: 'Founder profiles', to: '/for-founders' },
       { label: 'Investor sourcing', to: '/for-vcs' },
       { label: 'Builder Radar', to: '/heat-map' },
-      { label: 'How it works', to: '/#how-it-works' },
+      { label: 'How it works', to: '/our-thesis' },
     ],
   },
   {

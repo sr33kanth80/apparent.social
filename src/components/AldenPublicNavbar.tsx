@@ -11,7 +11,7 @@ const navLinks = [
   { label: 'Heat Map', to: '/heat-map' },
   { label: 'Blog', to: '/blog' },
   { label: 'About Us', to: '/about' },
-  { label: 'How it works', to: '/#how-it-works' },
+  { label: 'How it works', to: '/our-thesis' },
 ];
 
 export const AldenPublicNavbar = () => {
