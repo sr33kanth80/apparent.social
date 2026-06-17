@@ -23,7 +23,7 @@ const logoUrlFromWebsite = (website: string) => {
     const domain = new URL(withProtocol).hostname.replace(/^www\./, '');
     return {
       domain,
-      src: `https://www.google.com/s2/favicons?domain=${domain}&sz=128`,
+      src: `https://www.google.com/s2/favicons?domain=${domain}&sz=256`,
     };
   } catch {
     return '';
@@ -32,6 +32,8 @@ const logoUrlFromWebsite = (website: string) => {
 
 const buildLogoCloudInvestors = (contacts: VCContact[]) =>
   contacts
+    .filter((contact) => contact.latitude !== null && contact.longitude !== null)
+    .filter((contact) => /venture|vc/i.test(contact.fundType))
     .map((contact) => {
       const logo = logoUrlFromWebsite(contact.website);
       if (!logo) return null;
@@ -47,9 +49,7 @@ const buildLogoCloudInvestors = (contacts: VCContact[]) =>
     .filter(isInvestorLogo)
     .sort((a, b) => b.score - a.score)
     .filter((investor, index, investors) => investors.findIndex((item) => item.domain === investor.domain) === index)
-    .filter((investor) => investor.domain !== 'techstars.com' && investor.name !== 'Techstars')
-    .filter((investor) => investor.domain !== 'accel.com' && investor.name !== 'Accel')
-    .slice(0, 36);
+    .slice(0, 42);
 
 export function LogoCloud() {
   const [investors, setInvestors] = useState<InvestorLogo[]>([]);
@@ -69,19 +69,19 @@ export function LogoCloud() {
   }, []);
 
   return (
-    <section className="mx-auto max-w-[78rem] px-5 pb-10 sm:px-8">
-      <div className="mask-[linear-gradient(to_right,transparent,black_10%,black_90%,transparent)] overflow-hidden py-2">
-        <InfiniteSlider gap={42} reverse speed={62} speedOnHover={24}>
+    <section className="alden-logo-cloud" aria-label="VC firms mapped in the heat map" data-reveal>
+      <div className="alden-logo-cloud__mask">
+        <InfiniteSlider gap={14} reverse speed={56} speedOnHover={24}>
           {investors.map((investor) => (
             <img
               alt={`${investor.name} logo`}
-              className="h-12 w-12 shrink-0 select-none object-contain"
-              height={48}
+              className="alden-logo-cloud__logo"
+              height={56}
               key={`${investor.domain}-${investor.name}`}
               loading="lazy"
               src={investor.src}
               title={investor.name}
-              width={48}
+              width={56}
             />
           ))}
         </InfiniteSlider>

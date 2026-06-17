@@ -9,6 +9,7 @@ import {
   Search,
 } from 'lucide-react';
 import { LogoIcon } from '../components/LogoIcon';
+import { LogoCloud } from '../components/logo-cloud';
 import { useReveal } from '../lib/useReveal';
 import { HeatMap } from './HeatMap';
 
@@ -20,8 +21,6 @@ const navLinks = [
   { label: 'About Us', to: '/about' },
   { label: 'How it works', to: '#how-it-works' },
 ];
-
-const partnerNames = ['Sequoia', 'a16z', 'Accel', 'Foundry', 'Precursor', 'Antler'];
 
 const footerColumns = [
   {
@@ -159,13 +158,7 @@ export const Home = () => {
         </div>
       </section>
 
-      <section className="alden-proof alden-shell" data-reveal>
-        <div className="alden-logo-strip" aria-label="Representative investor ecosystem">
-          {partnerNames.map((name) => (
-            <span key={name}>{name}</span>
-          ))}
-        </div>
-      </section>
+      <LogoCloud />
 
       <section id="how-it-works" className="alden-editorial alden-shell" data-reveal>
         <h2>
