@@ -1083,6 +1083,69 @@ const builderToInvestorSignal = (
   rawTags: builder.rawTags,
 });
 
+// ---------- Sourced (web-discovered) signals ----------
+// Rows in public.source_signals are "Sourced" leads written by the scheduled
+// ingestion job (api/ingest-signals.js): real startups found on the web that
+// match the platform's aggregate investor sectors. Unlike Apparent builders
+// they are NOT GitHub-verified, so the dashboard renders them distinctly
+// (source 'Web', no verified avatar). We score them against the investor's
+// thesis with the same weighting as calculateBuilderFit's investor branch so
+// ranked order is consistent across both sources.
+const scoreSourcedSignal = (criteria: InvestorCriteriaValues, haystack: string, stage: string): number => {
+  let score = 44;
+  const thesis = relevanceScore(criteria.thesis, haystack);
+  if (thesis.matched) score += scaledPoints(16, thesis.score);
+  const sectors = relevanceScore(criteria.sectors, haystack);
+  if (sectors.matched) score += scaledPoints(12, sectors.score);
+  if (criteria.stage && stage && stageMatches(criteria.stage, stage)) score += 9;
+  const geography = relevanceScore(criteria.geography, haystack);
+  if (geography.matched) score += scaledPoints(7, geography.score);
+  const founderSignals = relevanceScore(criteria.founderSignals, haystack);
+  if (founderSignals.matched) score += scaledPoints(10, founderSignals.score);
+  const passSignals = relevanceScore(criteria.passSignals, haystack);
+  if (passSignals.matched) score -= scaledPoints(18, passSignals.score);
+  return Math.max(1, Math.min(98, Math.round(score)));
+};
+
+const mapSourceSignalRow = (
+  row: Record<string, unknown>,
+  criteria: InvestorCriteriaValues,
+  // Keyed by the stored signal_id, which is the full `sourced:<uuid>` id (see
+  // saveSignalStage) so a card the investor dragged keeps its kanban column.
+  stageBySignalId: Map<string, InvestorDealStage>,
+): InvestorSignal => {
+  const rawId = String(row.id ?? '');
+  const id = `sourced:${rawId}`;
+  const company = String(row.company ?? '');
+  const founder = String(row.founder ?? '') || 'Founding team';
+  const detail = String(row.detail ?? '');
+  const stage = String(row.stage ?? '');
+  const location = String(row.location ?? '');
+  const sourceUrl = String(row.source_url ?? '');
+  const tags = Array.isArray(row.raw_tags) ? (row.raw_tags as unknown[]).map(String).filter(Boolean) : [];
+  const freshnessAt = String(row.freshness_at ?? row.created_at ?? '');
+  const haystack = [company, founder, detail, stage, location, tags.join(' ')].join(' ');
+  return {
+    id,
+    company,
+    founder,
+    detail: detail || 'Sourced from the web',
+    source: 'Sourced',
+    sourceUrl,
+    profileUrl: String(row.profile_url ?? '') || sourceUrl,
+    relevance: scoreSourcedSignal(criteria, haystack, stage),
+    freshness: freshnessAt ? formatFreshness(freshnessAt) : '',
+    stage,
+    location,
+    column: stageBySignalId.get(id) ?? 'New',
+    outreach: '',
+    sourceType: 'web',
+    freshnessAt,
+    githubUrl: String(row.github_url ?? ''),
+    rawTags: tags,
+  };
+};
+
 const mergeBuilderDealFlowSignals = (
   signalRows: InvestorSignal[],
   builders: BuilderNode[],
@@ -2129,6 +2192,8 @@ export const loadDashboardData = async (
     { data: builderStateRows },
     { data: criteriaRow },
     { data: founderRow },
+    { data: sourceSignalRows },
+    { data: signalStateRows },
   ] = await Promise.all([
     supabase.from('user_settings').select('*').eq('user_id', user.id).maybeSingle(),
     supabase.from('product_launches').select('*').eq('owner_id', user.id).order('updated_at', { ascending: false }),
@@ -2144,6 +2209,15 @@ export const loadDashboardData = async (
     !isInvestor
       ? supabase.from('founder_profiles').select('*').eq('user_id', user.id).maybeSingle()
       : Promise.resolve({ data: null }),
+    // Sourced deal flow (web-discovered leads) + the investor's saved kanban
+    // stages for them. Investor-only; the ingestion job (api/ingest-signals.js)
+    // keeps source_signals fresh, deduped by (source_type, source_url).
+    isInvestor
+      ? supabase.from('source_signals').select('*').order('freshness_at', { ascending: false }).limit(200)
+      : Promise.resolve({ data: [] }),
+    isInvestor
+      ? supabase.from('investor_signal_states').select('signal_id, stage').eq('investor_id', user.id)
+      : Promise.resolve({ data: [] }),
   ]);
 
   const settings: UserSettings = {
@@ -2253,13 +2327,21 @@ export const loadDashboardData = async (
   });
 
   if (role === 'investor') {
-    // The legacy `source_signals` table was populated by an Apify scraper
-    // (YC / GitHub / Product Hunt / Hacker News). That pipeline is gone, so
-    // we no longer read from it. Deal flow now comes entirely from real
-    // Apparent builders the investor has added (via mergeBuilderDealFlowSignals).
+    // Deal flow is two sources, merged: (1) "Sourced" web-discovered leads from
+    // public.source_signals, kept fresh + deduped by the scheduled ingestion
+    // job (api/ingest-signals.js); (2) real Apparent builders the investor has
+    // added (via mergeBuilderDealFlowSignals below). Sourced rows are ranked
+    // against the investor's thesis and carry their saved kanban stage.
     const criteria = mapCriteriaRow(criteriaRow as Record<string, unknown> | null);
     const intakeValues = toIntakeRecord(criteria);
-    const signalRows: InvestorSignal[] = [];
+    const stageBySignalId = new Map<string, InvestorDealStage>(
+      (signalStateRows ?? [])
+        .map((row) => [String((row as Record<string, unknown>).signal_id ?? ''), String((row as Record<string, unknown>).stage ?? '') as InvestorDealStage] as const)
+        .filter(([signalId, stage]) => signalId && stage),
+    );
+    const signalRows: InvestorSignal[] = (sourceSignalRows ?? [])
+      .map((row) => mapSourceSignalRow(row as Record<string, unknown>, criteria, stageBySignalId))
+      .sort((a, b) => b.relevance - a.relevance);
 
     const profileSaved = completedLabels(intakeValues, labelByKey).length > 0;
     const builderNodes = mappedBuildersRaw

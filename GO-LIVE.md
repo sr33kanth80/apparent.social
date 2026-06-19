@@ -51,6 +51,32 @@ After adding/changing env vars: **redeploy**.
       ```
       (version is `0.2.0`; bump it for each subsequent publish.)
 
+## 3b. Investor deal-flow ingestion (`/api/ingest-signals`)
+
+Keeps the investor dashboard populated with fresh, deduped "Sourced" startups
+even before native founders onboard. Same web_search/web_fetch the investor
+agent already uses, but run on a schedule and persisted to `source_signals`.
+
+- **Env (all required to enable; degrades to a no-op skip otherwise):**
+  `ANTHROPIC_API_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `VITE_SUPABASE_URL`,
+  and `AGENT_CRON_SECRET`. Optional tuning: `INGEST_MODEL` (default
+  `claude-sonnet-4-6`), `INGEST_TARGET_COUNT` (default 18, max 40).
+- **Trigger — Claude Code Routine, every 12h:**
+  ```
+  POST https://apparent.social/api/ingest-signals
+  header  x-agent-cron-secret: <AGENT_CRON_SECRET>
+  ```
+  Discovery targets the union of sectors from real `investor_criteria` rows
+  (falls back to a default sector set when none exist yet).
+- **Dedup is automatic** — upsert on the `(source_type, source_url)` unique
+  index; re-runs refresh `freshness_at` instead of duplicating. Each startup
+  is keyed by its canonical bare-domain homepage (see `canonicalSourceUrl`).
+- **Provenance:** ingested rows render as **Sourced** (source `Web`, no GitHub
+  verification) — distinct from GitHub-verified Apparent builders. Do not let
+  them wear the verified badge.
+- **Verify after a run:** `select count(*) from source_signals where source_type='web';`
+  and check `scrape_runs` for the latest `claude-web-discovery` row.
+
 ## 4. End-to-end smoke test
 
 1. **Investor agent** — sign in as an investor with a thesis set; open the overview chat; ask
@@ -65,5 +91,6 @@ After adding/changing env vars: **redeploy**.
 
 ## 5. Known honest limits (by design, for later)
 - Off-hours autonomous follow-ups need the Routine + `AGENT_CRON_SECRET` wired (optional).
+- Sourced deal flow is AI-discovered and unverified — labeled "Sourced", never "Verified". Investors should treat it as leads, not vetted founders.
 - Off-platform email is always draft-to-inbox (no send backend — intentional).
 - Git line counts feed the brag card, not investor underwriting.
