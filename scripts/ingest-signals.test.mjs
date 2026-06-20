@@ -1,9 +1,10 @@
-// Self-check for the dedup key. Run: node api/ingest-signals.test.mjs
+// Self-check for the dedup key. Run: node scripts/ingest-signals.test.mjs
+// Lives outside api/ so Vercel doesn't deploy it as a serverless function.
 // The (source_type, source_url) unique index only dedupes EXACT source_url
 // matches, so canonicalSourceUrl must collapse every way the model might cite
 // one startup to a single bare-domain key — or the 12h re-run duplicates rows.
 import assert from 'node:assert';
-import { canonicalSourceUrl } from './ingest-signals.js';
+import { canonicalSourceUrl } from '../api/ingest-signals.js';
 
 const sameStartup = [
   'https://www.acme.com',
