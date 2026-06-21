@@ -205,15 +205,17 @@ export const Home = () => {
         </section>
 
         {/* HEAT MAP */}
-        <section className="ed-sec ed-divider">
-          <div className="ed-inner ed-work">
-            <div>
+        <section id="builder-radar" className="ed-sec ed-divider ed-map-feature">
+          <div className="ed-inner">
+            <div className="ed-map-head">
+              <div>
               <h2 className="ed-sec-title">Capital is easier to read when it has a shape.</h2>
               <p className="ed-lead">Builder Radar plots investors and builders by geography, stage, and thesis instead of burying them in a spreadsheet. Read the density before it becomes consensus.</p>
-              <Link className="ed-btn ed-btn-filled" to="/heat-map" style={{ marginTop: 28 }}>Open Builder Radar</Link>
+              </div>
+              <Link className="ed-btn ed-btn-filled" to="/heat-map">Open Builder Radar</Link>
             </div>
             <div className="ed-map-stage">
-              <HeatMap includeVCContacts vcOnly fillParent lockContacts />
+              <HeatMap includeVCContacts vcOnly fullBleed fillParent lockContacts />
             </div>
           </div>
         </section>

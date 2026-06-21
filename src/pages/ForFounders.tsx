@@ -2,13 +2,14 @@ import { Link } from 'react-router-dom';
 import { EditorialNavbar } from '../components/editorial/EditorialNavbar';
 import { EditorialFooter } from '../components/editorial/EditorialFooter';
 import { LogoIcon } from '../components/LogoIcon';
+import { CLI_CARD_HTML } from '../components/cliCardHtml';
 
 export const ForFounders = () => (
   <div className="ed-page">
     <EditorialNavbar />
     <main>
       {/* HERO */}
-      <section className="ed-subhero ed-inner ed-split">
+      <section className="ed-subhero ed-inner ed-split ed-founder-hero">
         <div>
           <h1 className="ed-display">Stop launching into the <em>void.</em></h1>
           <p className="ed-lede">Most launches disappear. On Apparent you launch in front of investors who are actively writing cheques, so the right ones DM you, matched by thesis, proof, and stage. Run <code style={{ fontFamily: 'var(--ed-mono)', fontSize: '0.92em' }}>npx apparent</code> and your shipped work becomes the proof that earns the intro. No warm intro required.</p>
@@ -24,18 +25,17 @@ export const ForFounders = () => (
             <span>Investors DM you</span>
           </div>
         </div>
-        <div className="ed-term">
-          <div className="ed-bar"><i /><i /><i /><span className="ed-tt">founder@local: ~/medai</span></div>
-          <pre>
-<span className="ed-cmd">$ npx apparent</span>{'\n'}
-<span className="ed-mut">reading git history, launches, products...</span>{'\n\n'}
-{'  '}<span className="ed-ok">✓</span> GitHub verified            <span className="ed-mut">412 commits · 7 repos</span>{'\n'}
-{'  '}<span className="ed-ok">✓</span> Shipped products           <span className="ed-mut">3 live</span>{'\n'}
-{'  '}<span className="ed-ok">✓</span> Traction signals           <span className="ed-mut">owner supplied</span>{'\n'}
-{'  '}<span className="ed-ok">✓</span> Pitch + deck attached{'\n\n'}
-<span className="ed-cmd">Proof profile ready.</span>{'\n'}
-<span className="ed-mut">Matched to 127 investors by thesis fit.</span>
-          </pre>
+        <div className="ed-cli-wrap" aria-label="npx apparent terminal preview">
+          <div className="cli-card ed-cli-card">
+            <div className="cli-card__bar">
+              <i style={{ background: '#ff5f57' }} />
+              <i style={{ background: '#febc2e' }} />
+              <i style={{ background: '#28c840' }} />
+              <span className="t">founder@local: ~/medai</span>
+            </div>
+            <pre dangerouslySetInnerHTML={{ __html: CLI_CARD_HTML }} />
+          </div>
+          <p className="ed-cli-caption">One command reads local git, renders this verified build card, and shows exactly what reaches your Apparent profile. Source code never leaves the machine.</p>
         </div>
       </section>
 
@@ -47,7 +47,7 @@ export const ForFounders = () => (
           <div style={{ marginTop: 'clamp(28px,4vw,44px)', maxWidth: 660 }}>
             <div className="ed-mock">
               <div className="ed-mock-head"><span className="ed-t">Investor inbox</span><span className="ed-live"><i />3 new</span></div>
-              <div className="ed-row"><div className="ed-av">SV</div><div className="ed-who"><b>Seed fund, dev tools</b><span>Writing $250k–$1M cheques now</span></div><div className="ed-score"><b>DM</b><span>New</span></div></div>
+              <div className="ed-row"><div className="ed-av">SV</div><div className="ed-who"><b>Seed fund, dev tools</b><span>Writing $250k-$1M cheques now</span></div><div className="ed-score"><b>DM</b><span>New</span></div></div>
               <div className="ed-row"><div className="ed-av">AC</div><div className="ed-who"><b>Angel, ex-founder</b><span>Backs technical pre-seed teams</span></div><div className="ed-score"><b>DM</b><span>New</span></div></div>
               <div className="ed-row"><div className="ed-av">GP</div><div className="ed-who"><b>GP, AI infra thesis</b><span>Leads and co-invests at seed</span></div><div className="ed-score"><b>DM</b><span>New</span></div></div>
               <div className="ed-thesis-foot">Matched to your proof profile the moment you launched.</div>
