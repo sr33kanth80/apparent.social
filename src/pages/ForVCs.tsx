@@ -1,7 +1,148 @@
+import { useEffect, useState } from 'react';
+import type { CSSProperties } from 'react';
 import { Link } from 'react-router-dom';
 import { EditorialNavbar } from '../components/editorial/EditorialNavbar';
 import { EditorialFooter } from '../components/editorial/EditorialFooter';
 import { LogoIcon } from '../components/LogoIcon';
+
+type VcSignal = {
+  initials: string;
+  company: string;
+  meta: string;
+  score: number;
+  proof: string[];
+  source: string;
+  draft: string;
+  stage: 'Inbox' | 'Reviewing' | 'Drafted';
+};
+
+const VC_SIGNALS: VcSignal[] = [
+  {
+    initials: 'AK',
+    company: 'Edge runtime for agents',
+    meta: 'Dev tools | Pre-seed | SF',
+    score: 96,
+    proof: ['412 commits', 'GitHub verified', '3 launches'],
+    source: 'Fresh proof from npx apparent',
+    draft: 'Your devtools thesis maps to their agent runtime and weekly shipping cadence.',
+    stage: 'Reviewing',
+  },
+  {
+    initials: 'NL',
+    company: 'Local-first sync engine',
+    meta: 'AI infra | Seed | Remote',
+    score: 92,
+    proof: ['Usage up 38%', 'Open-source traction', 'Seed raise'],
+    source: 'Founder signal updated today',
+    draft: 'They fit your AI infra mandate and are actively collecting seed conversations.',
+    stage: 'Inbox',
+  },
+  {
+    initials: 'RS',
+    company: 'Eval harness for LLMs',
+    meta: 'Dev tools | Pre-seed | NYC',
+    score: 89,
+    proof: ['New enterprise pilot', 'Demo attached', 'Warm category fit'],
+    source: 'Product launch and proof links',
+    draft: 'The eval workflow is close to your recent pass/fund signals. Ask for the pilot notes.',
+    stage: 'Drafted',
+  },
+];
+
+const InvestorSourcingPreview = () => {
+  const [selectedIndex, setSelectedIndex] = useState(0);
+  const [paused, setPaused] = useState(false);
+  const [activity, setActivity] = useState('Agent ranked 3 fresh builders against your thesis.');
+  const selectedSignal = VC_SIGNALS[selectedIndex];
+
+  useEffect(() => {
+    if (paused) return;
+    const id = window.setInterval(() => {
+      setSelectedIndex((current) => (current + 1) % VC_SIGNALS.length);
+    }, 2200);
+
+    return () => window.clearInterval(id);
+  }, [paused]);
+
+  const selectSignal = (index: number) => {
+    setSelectedIndex(index);
+    setActivity(`Opened ${VC_SIGNALS[index].company} from Signal inbox.`);
+  };
+
+  return (
+    <div
+      className="ed-mock ed-vc-sourcing-card"
+      onMouseEnter={() => setPaused(true)}
+      onMouseLeave={() => setPaused(false)}
+      onFocus={() => setPaused(true)}
+      onBlur={() => setPaused(false)}
+    >
+      <div className="ed-mock-head">
+        <span className="ed-t">Signal inbox</span>
+        <span className="ed-live"><i />fresh today</span>
+      </div>
+
+      <div className="ed-vc-board">
+        <div className="ed-vc-list" role="list" aria-label="Ranked founder signals">
+          {VC_SIGNALS.map((signal, index) => (
+            <button
+              key={signal.company}
+              type="button"
+              className={`ed-row ed-signal-row${index === selectedIndex ? ' is-active' : ''}`}
+              onClick={() => selectSignal(index)}
+              aria-pressed={index === selectedIndex}
+            >
+              <div className="ed-av">{signal.initials}</div>
+              <div className="ed-who">
+                <b>{signal.company}</b>
+                <span>{signal.meta}</span>
+              </div>
+              <div className="ed-score">
+                <b>{signal.score}</b>
+                <span>Fit</span>
+              </div>
+            </button>
+          ))}
+        </div>
+
+        <div className="ed-signal-detail" aria-live="polite">
+          <div className="ed-signal-detail-top">
+            <div>
+              <span className="ed-signal-kicker">{selectedSignal.stage}</span>
+              <h3>{selectedSignal.company}</h3>
+            </div>
+            <div className="ed-fit-orb" style={{ '--fit': selectedSignal.score } as CSSProperties}>
+              <span>{selectedSignal.score}</span>
+            </div>
+          </div>
+
+          <div className="ed-proof-row">
+            {selectedSignal.proof.map((item) => (
+              <span key={item}>{item}</span>
+            ))}
+          </div>
+
+          <div className="ed-agent-draft">
+            <span>Agent draft</span>
+            <p>{selectedSignal.draft}</p>
+          </div>
+
+          <div className="ed-signal-source">{selectedSignal.source}</div>
+
+          <div className="ed-signal-actions">
+            <button type="button" onClick={() => setActivity(`Saved ${selectedSignal.company} to deal flow.`)}>Save</button>
+            <button type="button" onClick={() => setActivity(`Opened source links for ${selectedSignal.company}.`)}>Source</button>
+            <button type="button" className="is-primary" onClick={() => setActivity(`Drafted outreach for ${selectedSignal.company}.`)}>Draft outreach</button>
+          </div>
+        </div>
+      </div>
+
+      <div className="ed-vc-activity">
+        <span>{activity}</span>
+      </div>
+    </div>
+  );
+};
 
 export const ForVCs = () => (
   <div className="ed-page">
@@ -24,13 +165,7 @@ export const ForVCs = () => (
             <span>Agent-drafted outreach</span>
           </div>
         </div>
-        <div className="ed-mock">
-          <div className="ed-mock-head"><span className="ed-t">Ranked by fit</span><span className="ed-live"><i />fresh today</span></div>
-          <div className="ed-row"><div className="ed-av">AK</div><div className="ed-who"><b>Edge runtime for agents</b><span>Dev tools · Pre-seed · SF</span></div><div className="ed-score"><b>96</b><span>Fit</span></div></div>
-          <div className="ed-row"><div className="ed-av">NL</div><div className="ed-who"><b>Local-first sync engine</b><span>AI infra · Seed · Remote</span></div><div className="ed-score"><b>92</b><span>Fit</span></div></div>
-          <div className="ed-row"><div className="ed-av">RS</div><div className="ed-who"><b>Eval harness for LLMs</b><span>Dev tools · Pre-seed · NYC</span></div><div className="ed-score"><b>89</b><span>Fit</span></div></div>
-          <div className="ed-thesis-foot">Each match arrives with proof, source links, and a relevance score.</div>
-        </div>
+        <InvestorSourcingPreview />
       </section>
 
       {/* WORKFLOW */}
