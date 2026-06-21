@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import { Footer } from './components/Footer';
 import { AldenPublicNavbar } from './components/AldenPublicNavbar';
+import { EditorialNavbar } from './components/editorial/EditorialNavbar';
 import { Home } from './pages/Home';
 import { OurThesis } from './pages/OurThesis';
 import { ForFounders } from './pages/ForFounders';
@@ -120,34 +121,16 @@ function App() {
           <Route
             path="/heat-map"
             element={
-              <div className="flex h-screen flex-col overflow-hidden bg-[var(--alden-parchment)]">
-                <AldenPublicNavbar />
+              <div className="ed-page flex h-screen flex-col overflow-hidden">
+                <EditorialNavbar />
                 <HeatMap includeVCContacts vcOnly fullBleed fillParent lockContacts />
               </div>
             }
           />
           <Route path="/about" element={<AboutUs />} />
           <Route path="/resources" element={<Resources />} />
-          <Route
-            path="/blog"
-            element={
-              <>
-                <AldenPublicNavbar />
-                <Blog />
-                <Footer />
-              </>
-            }
-          />
-          <Route
-            path="/blog/:slug"
-            element={
-              <>
-                <AldenPublicNavbar />
-                <BlogPost />
-                <Footer />
-              </>
-            }
-          />
+          <Route path="/blog" element={<Blog />} />
+          <Route path="/blog/:slug" element={<BlogPost />} />
           <Route
             path="/projects/:projectId"
             element={
@@ -176,46 +159,10 @@ function App() {
               </PublicPageShell>
             }
           />
-          <Route
-            path="/contact"
-            element={
-              <>
-                <AldenPublicNavbar />
-                <Contact />
-                <Footer />
-              </>
-            }
-          />
-          <Route
-            path="/privacy"
-            element={
-              <>
-                <AldenPublicNavbar />
-                <PrivacyPolicy />
-                <Footer />
-              </>
-            }
-          />
-          <Route
-            path="/terms"
-            element={
-              <>
-                <AldenPublicNavbar />
-                <TermsOfService />
-                <Footer />
-              </>
-            }
-          />
-          <Route
-            path="/cookies"
-            element={
-              <>
-                <AldenPublicNavbar />
-                <CookiePolicy />
-                <Footer />
-              </>
-            }
-          />
+          <Route path="/contact" element={<Contact />} />
+          <Route path="/privacy" element={<PrivacyPolicy />} />
+          <Route path="/terms" element={<TermsOfService />} />
+          <Route path="/cookies" element={<CookiePolicy />} />
           <Route
             path="*"
             element={

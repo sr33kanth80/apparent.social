@@ -1,11 +1,8 @@
 import { type ChangeEvent, type FormEvent, useState } from 'react';
-import { ArrowUpRight, CheckCircle2, Clock, Mail, MapPin, Send } from 'lucide-react';
+import { EditorialNavbar } from '@/components/editorial/EditorialNavbar';
+import { EditorialFooter } from '@/components/editorial/EditorialFooter';
 import { LogoIcon } from '@/components/LogoIcon';
 import { isSupabaseConfigured, supabase } from '@/lib/supabase';
-
-const serifDisplay = {
-  fontFamily: "'Source Serif 4', ui-serif, Georgia, 'Times New Roman', serif",
-};
 
 const CONTACT_EMAIL = 'hello@apparent.social';
 
@@ -20,32 +17,8 @@ type ContactFormValues = {
 };
 
 const initialValues: ContactFormValues = {
-  name: '',
-  email: '',
-  company: '',
-  role: 'Founder',
-  topic: 'General',
-  message: '',
-  website: '',
+  name: '', email: '', company: '', role: 'Founder', topic: 'General', message: '', website: '',
 };
-
-const contactNotes = [
-  {
-    icon: Mail,
-    title: 'General questions',
-    text: 'Product access, partnerships, support, and anything that needs a human response.',
-  },
-  {
-    icon: MapPin,
-    title: 'Founder and investor signal',
-    text: 'Tell us what you are building, funding, researching, or trying to find inside Apparent.',
-  },
-  {
-    icon: Clock,
-    title: 'Response window',
-    text: 'We read every note and route it to the right person as soon as possible.',
-  },
-];
 
 const topicOptions = ['General', 'Founder access', 'Investor access', 'Partnerships', 'Support', 'Privacy'];
 const roleOptions = ['Founder', 'Investor', 'Operator', 'Partner', 'Press', 'Other'];
@@ -63,7 +36,6 @@ const buildMailto = (values: ContactFormValues) => {
       values.message,
     ].join('\n'),
   );
-
   return `mailto:${CONTACT_EMAIL}?subject=${subject}&body=${body}`;
 };
 
@@ -78,12 +50,10 @@ export const Contact = () => {
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-
     if (values.website.trim()) {
       setStatus('success');
       return;
     }
-
     setStatus('submitting');
 
     if (isSupabaseConfigured && supabase) {
@@ -96,7 +66,6 @@ export const Contact = () => {
         message: values.message.trim(),
         page_url: window.location.href,
       });
-
       if (!error) {
         setValues(initialValues);
         setStatus('success');
@@ -109,184 +78,91 @@ export const Contact = () => {
   };
 
   return (
-    <main className="monad monad-page overflow-x-hidden bg-[#f6f3f1] text-black">
-      <section className="mx-auto max-w-[92rem] px-5 pb-14 pt-14 sm:px-8 md:pt-20">
-        <h1
-          className="max-w-[86rem] text-[3.45rem] font-normal leading-[0.88] tracking-[-0.055em] sm:text-[7rem] md:text-[8.5rem] lg:text-[10rem]"
-          style={serifDisplay}
-        >
-          Talk to the
-          <br />
-          Apparent
-          <LogoIcon className="mx-3 inline h-[0.62em] w-[0.62em] align-[-0.02em] text-black sm:mx-4" />
-          team.
-        </h1>
-        <p className="mt-10 max-w-3xl text-lg leading-8 text-black/65 md:text-xl">
-          Send a note about access, support, partnerships, privacy, or the founder and investor workflows you want to run through Apparent.
-        </p>
-      </section>
+    <div className="ed-page">
+      <EditorialNavbar />
+      <main>
+        {/* HERO */}
+        <section className="ed-subhero ed-inner">
+          <h1 className="ed-display">Talk to the Apparent <em>team.</em></h1>
+          <p className="ed-lede">Send a note about access, support, partnerships, privacy, or the founder and investor workflows you want to run through Apparent.</p>
+        </section>
 
-      <section className="mx-auto grid max-w-[92rem] gap-10 border-t border-black/10 px-5 py-16 sm:px-8 lg:grid-cols-[0.82fr_1.18fr] lg:items-start">
-        <div className="py-2">
-          <h2 className="max-w-2xl text-5xl font-normal leading-none tracking-[-0.045em] md:text-7xl" style={serifDisplay}>
-            Send the right signal.
-          </h2>
-          <p className="mt-8 max-w-xl text-base leading-8 text-black/60">
-            The more context you include, the faster we can route your message to the right person.
-          </p>
-
-          <div className="mt-14 grid gap-8">
-            {contactNotes.map((note) => (
-              <article key={note.title} className="grid gap-4 sm:grid-cols-[2.5rem_1fr]">
-                <note.icon className="mt-1 h-5 w-5 text-[#242424]" />
-                <div>
-                  <h3 className="text-lg font-normal tracking-[-0.025em]" style={serifDisplay}>
-                    {note.title}
-                  </h3>
-                  <p className="mt-2 text-sm leading-6 text-black/55">{note.text}</p>
+        {/* CONTACT GRID */}
+        <section className="ed-sec ed-divider">
+          <div className="ed-inner ed-contact-grid">
+            <div>
+              <h2 className="ed-sec-title" style={{ maxWidth: '14ch' }}>Send the right signal.</h2>
+              <p className="ed-lead" style={{ maxWidth: '38ch' }}>The more context you include, the faster we can route your message to the right person.</p>
+              <div className="ed-notes">
+                <div className="ed-note">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="3" y="5" width="18" height="14" rx="2" /><path d="m3 7 9 6 9-6" /></svg>
+                  <div><h3>General questions</h3><p>Product access, partnerships, support, and anything that needs a human response.</p></div>
                 </div>
-              </article>
-            ))}
-          </div>
-        </div>
-
-        <form onSubmit={handleSubmit} className="rounded-[32px] bg-white/72 p-5 shadow-[0_18px_60px_rgba(0,0,0,0.045)] sm:p-8">
-          <div className="grid gap-5 md:grid-cols-2">
-            <label className="grid gap-2 text-sm font-semibold">
-              Name
-              <input
-                required
-                name="name"
-                value={values.name}
-                onChange={handleChange}
-                className="h-12 rounded-2xl border border-black/10 bg-[#f6f3f1] px-4 text-sm font-normal outline-none transition-colors placeholder:text-black/35 focus:border-[#4e4d4d]"
-                placeholder="Your name"
-              />
-            </label>
-
-            <label className="grid gap-2 text-sm font-semibold">
-              Email
-              <input
-                required
-                type="email"
-                name="email"
-                value={values.email}
-                onChange={handleChange}
-                className="h-12 rounded-2xl border border-black/10 bg-[#f6f3f1] px-4 text-sm font-normal outline-none transition-colors placeholder:text-black/35 focus:border-[#4e4d4d]"
-                placeholder="you@company.com"
-              />
-            </label>
-
-            <label className="grid gap-2 text-sm font-semibold">
-              Company
-              <input
-                name="company"
-                value={values.company}
-                onChange={handleChange}
-                className="h-12 rounded-2xl border border-black/10 bg-[#f6f3f1] px-4 text-sm font-normal outline-none transition-colors placeholder:text-black/35 focus:border-[#4e4d4d]"
-                placeholder="Company or fund"
-              />
-            </label>
-
-            <label className="grid gap-2 text-sm font-semibold">
-              I am a
-              <select
-                name="role"
-                value={values.role}
-                onChange={handleChange}
-                className="h-12 rounded-2xl border border-black/10 bg-[#f6f3f1] px-4 text-sm font-normal outline-none transition-colors focus:border-[#4e4d4d]"
-              >
-                {roleOptions.map((role) => (
-                  <option key={role} value={role}>
-                    {role}
-                  </option>
-                ))}
-              </select>
-            </label>
-
-            <label className="grid gap-2 text-sm font-semibold md:col-span-2">
-              Topic
-              <select
-                name="topic"
-                value={values.topic}
-                onChange={handleChange}
-                className="h-12 rounded-2xl border border-black/10 bg-[#f6f3f1] px-4 text-sm font-normal outline-none transition-colors focus:border-[#4e4d4d]"
-              >
-                {topicOptions.map((topic) => (
-                  <option key={topic} value={topic}>
-                    {topic}
-                  </option>
-                ))}
-              </select>
-            </label>
-
-            <label className="grid gap-2 text-sm font-semibold md:col-span-2">
-              Message
-              <textarea
-                required
-                name="message"
-                value={values.message}
-                onChange={handleChange}
-                className="min-h-44 resize-none rounded-[24px] border border-black/10 bg-[#f6f3f1] px-4 py-3 text-sm font-normal leading-7 outline-none transition-colors placeholder:text-black/35 focus:border-[#4e4d4d]"
-                placeholder="Tell us what you need, who should follow up, and any relevant context."
-              />
-            </label>
-
-            <label className="hidden">
-              Website
-              <input name="website" value={values.website} onChange={handleChange} tabIndex={-1} autoComplete="off" />
-            </label>
-          </div>
-
-          <div className="mt-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <p className="text-sm leading-6 text-black/50">
-              By submitting, you agree that Apparent may use your message to respond to your request.
-            </p>
-            <button
-              type="submit"
-              disabled={status === 'submitting'}
-              className="inline-flex shrink-0 items-center justify-center rounded-full bg-[#4e4d4d] px-6 py-3 text-sm font-semibold text-white transition-all hover:-translate-y-0.5 hover:text-black disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              {status === 'submitting' ? 'Sending...' : 'Send message'}
-              {status === 'submitting' ? null : <Send className="ml-2 h-4 w-4" />}
-            </button>
-          </div>
-
-          {status === 'success' ? (
-            <div className="mt-6 flex items-start gap-3 rounded-[22px] bg-[#cfdaf5] px-4 py-4 text-sm leading-6 text-black">
-              <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0" />
-              <p>Your message is in. We will route it to the right person.</p>
+                <div className="ed-note">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M12 21s-7-5.2-7-11a7 7 0 0 1 14 0c0 5.8-7 11-7 11Z" /><circle cx="12" cy="10" r="2.5" /></svg>
+                  <div><h3>Founder and investor signal</h3><p>Tell us what you are building, funding, researching, or trying to find inside Apparent.</p></div>
+                </div>
+                <div className="ed-note">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" /></svg>
+                  <div><h3>Response window</h3><p>We read every note and route it to the right person as soon as possible.</p></div>
+                </div>
+              </div>
             </div>
-          ) : null}
 
-          {status === 'fallback' || status === 'error' ? (
-            <div className="mt-6 rounded-[22px] bg-[#f6f3f1] px-4 py-4 text-sm leading-6 text-black/60">
-              Your email client should open with the message prepared. You can also email{' '}
-              <a href={`mailto:${CONTACT_EMAIL}`} className="font-semibold text-black hover:text-[#242424]">
-                {CONTACT_EMAIL}
-              </a>
-              .
+            <form className="ed-form" onSubmit={handleSubmit} noValidate>
+              <div className="ed-field-two">
+                <div className="ed-field"><label htmlFor="name">Name</label><input id="name" name="name" required value={values.name} onChange={handleChange} placeholder="Your name" /></div>
+                <div className="ed-field"><label htmlFor="email">Email</label><input id="email" name="email" type="email" required value={values.email} onChange={handleChange} placeholder="you@company.com" /></div>
+              </div>
+              <div className="ed-field-two">
+                <div className="ed-field"><label htmlFor="company">Company</label><input id="company" name="company" value={values.company} onChange={handleChange} placeholder="Company or fund" /></div>
+                <div className="ed-field">
+                  <label htmlFor="role">I am a</label>
+                  <select id="role" name="role" value={values.role} onChange={handleChange}>
+                    {roleOptions.map((r) => (<option key={r} value={r}>{r}</option>))}
+                  </select>
+                </div>
+              </div>
+              <div className="ed-field">
+                <label htmlFor="topic">Topic</label>
+                <select id="topic" name="topic" value={values.topic} onChange={handleChange}>
+                  {topicOptions.map((t) => (<option key={t} value={t}>{t}</option>))}
+                </select>
+              </div>
+              <div className="ed-field">
+                <label htmlFor="message">Message</label>
+                <textarea id="message" name="message" required value={values.message} onChange={handleChange} placeholder="Tell us what you need, who should follow up, and any relevant context." />
+              </div>
+              <label className="ed-hp">Website<input name="website" value={values.website} onChange={handleChange} tabIndex={-1} autoComplete="off" /></label>
+              <div className="ed-form-row">
+                <p className="ed-foot-note">By submitting, you agree that Apparent may use your message to respond to your request.</p>
+                <button type="submit" className="ed-btn ed-btn-filled" disabled={status === 'submitting'}>
+                  {status === 'submitting' ? 'Sending...' : 'Send message'}
+                </button>
+              </div>
+              {status === 'success' && (
+                <div className="ed-sent">Your message is in. We will route it to the right person.</div>
+              )}
+              {(status === 'fallback' || status === 'error') && (
+                <div className="ed-sent">Your email client should open with the message prepared. You can also email {CONTACT_EMAIL}.</div>
+              )}
+            </form>
+          </div>
+        </section>
+
+        {/* PREFER EMAIL */}
+        <section className="ed-sec ed-divider ed-final">
+          <div className="ed-inner">
+            <LogoIcon className="ed-mark" />
+            <h2>Prefer email?</h2>
+            <p>Reach us directly and include the same context you would put in the form.</p>
+            <div className="ed-cta">
+              <a className="ed-btn ed-btn-filled" href={`mailto:${CONTACT_EMAIL}`}>Email {CONTACT_EMAIL}</a>
             </div>
-          ) : null}
-        </form>
-      </section>
-
-      <section className="mx-auto max-w-[92rem] border-t border-black/10 px-5 py-20 text-center sm:px-8">
-        <Mail className="mx-auto mb-10 h-6 w-6 text-[#000000]" />
-        <h2 className="mx-auto max-w-3xl text-5xl font-normal leading-none tracking-[-0.045em] md:text-7xl" style={serifDisplay}>
-          Prefer email?
-        </h2>
-        <p className="mx-auto mt-8 max-w-2xl text-base leading-8 text-black/55">
-          Reach us directly and include the same context you would put in the form.
-        </p>
-        <a
-          href={`mailto:${CONTACT_EMAIL}`}
-          className="mt-10 inline-flex rounded-full bg-[#cfdaf5] px-8 py-3 text-sm font-semibold text-black transition-colors hover:bg-[#bcc8ef]"
-        >
-          Email {CONTACT_EMAIL}
-          <ArrowUpRight className="ml-1 inline h-3.5 w-3.5 align-[-2px]" />
-        </a>
-      </section>
-    </main>
+          </div>
+        </section>
+      </main>
+      <EditorialFooter />
+    </div>
   );
 };

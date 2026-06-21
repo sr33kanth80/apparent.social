@@ -1,7 +1,8 @@
 import { ArrowLeft, ArrowRight, ExternalLink } from 'lucide-react';
 import { useMemo } from 'react';
-import { Link, Navigate, useNavigate, useParams } from 'react-router-dom';
-import PixelSnow from '@/components/PixelSnow';
+import { Link, Navigate, useParams } from 'react-router-dom';
+import { EditorialNavbar } from '@/components/editorial/EditorialNavbar';
+import { EditorialFooter } from '@/components/editorial/EditorialFooter';
 
 type BlogSection = {
   heading: string;
@@ -887,65 +888,37 @@ const postMeta = (article: BlogArticle) => `${article.author} / ${article.date} 
 
 export const Blog = () => {
   return (
-    <main className="monad monad-page relative isolate overflow-x-hidden bg-[#f6f3f1] text-black">
-      <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden bg-[linear-gradient(180deg,#f6f3f1_0%,#f6f3f1_48%,#f6f3f1_100%)]">
-        <PixelSnow
-          color="#4e4d4d"
-          flakeSize={0.012}
-          minFlakeSize={1.15}
-          pixelResolution={190}
-          speed={0.55}
-          density={0.24}
-          direction={125}
-          brightness={0.78}
-          depthFade={9}
-          farPlane={22}
-          className="opacity-[0.16]"
-        />
-      </div>
+    <div className="ed-page">
+      <EditorialNavbar />
+      <main>
+        <section className="ed-subhero ed-inner" style={{ textAlign: 'center' }}>
+          <h1 className="ed-display" style={{ margin: '0 auto', maxWidth: '14ch' }}>Latest posts.</h1>
+          <p className="ed-lede" style={{ marginLeft: 'auto', marginRight: 'auto', textAlign: 'center' }}>
+            Working notes on who actually invests, where, and at what stage, built to make a fundraising list smaller and sharper, not longer.
+          </p>
+        </section>
 
-      <section className="relative mx-auto max-w-[92rem] px-5 pb-14 pt-14 text-center sm:px-8 md:pt-20">
-        <div className="mx-auto max-w-[54rem]">
-          <h1
-            className="text-[3.2rem] font-normal leading-[0.9] tracking-[-0.055em] sm:text-[5.5rem] md:text-[6.6rem]"
-            style={serifDisplay}
-          >
-            Latest posts
-          </h1>
-        </div>
-      </section>
-
-      <section className="relative mx-auto max-w-[92rem] border-t border-black/10 px-5 py-16 sm:px-8">
-        <div className="mx-auto max-w-[54rem]">
-          <div className="grid gap-5">
-            {articles.map((article) => (
-              <Link
-                key={article.slug}
-                to={`/blog/${article.slug}`}
-                className="rounded-[32px] border border-white/70 bg-white/92 p-6 text-center shadow-[0_18px_60px_rgba(58,72,34,0.08)] backdrop-blur-sm transition-colors hover:bg-white sm:p-8"
-              >
-                <p className="text-xs font-semibold text-black/45">{postMeta(article)}</p>
-                <h2 className="mx-auto mt-3 max-w-4xl text-4xl font-normal leading-[0.96] tracking-[-0.04em] md:text-5xl" style={serifDisplay}>
-                  {article.title}
-                </h2>
-                <p className="mx-auto mt-4 max-w-3xl text-base leading-8 text-black/60">{article.excerpt}</p>
-                <div className="mt-6">
-                  <span className="inline-flex items-center rounded-full bg-[#cfdaf5] px-5 py-2.5 text-sm font-semibold text-black">
-                    Read more
-                    <ArrowRight className="ml-2 h-4 w-4" />
-                  </span>
-                </div>
-              </Link>
-            ))}
+        <section className="ed-sec ed-divider">
+          <div className="ed-inner">
+            <div className="ed-postlist">
+              {articles.map((article) => (
+                <Link className="ed-post" key={article.slug} to={`/blog/${article.slug}`}>
+                  <p className="ed-pmeta">{postMeta(article)}</p>
+                  <h2>{article.title}</h2>
+                  <p>{article.excerpt}</p>
+                  <span className="ed-more">Read more <ArrowRight /></span>
+                </Link>
+              ))}
+            </div>
           </div>
-        </div>
-      </section>
-    </main>
+        </section>
+      </main>
+      <EditorialFooter />
+    </div>
   );
 };
 
 export const BlogPost = () => {
-  const navigate = useNavigate();
   const { slug } = useParams();
 
   const article = useMemo(() => articles.find((entry) => entry.slug === slug), [slug]);
@@ -968,74 +941,37 @@ export const BlogPost = () => {
   const nextArticle = articles[(articleIndex + 1) % articles.length];
 
   return (
-    <main className="monad monad-page overflow-x-hidden bg-[#f6f3f1] text-black">
-      <article className="mx-auto max-w-[44rem] px-5 py-20 sm:px-8 md:py-24">
-        <button
-          type="button"
-          onClick={() => navigate('/blog')}
-          className="mb-10 inline-flex items-center gap-2 rounded-full bg-[#cfdaf5] px-5 py-2.5 text-sm font-semibold text-black transition-colors hover:bg-[#bcc8ef]"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          Back to blog
-        </button>
-
-        <h1 className="text-balance text-5xl font-normal leading-[0.92] tracking-[-0.05em] md:text-6xl" style={serifDisplay}>
-          {article.title}
-        </h1>
-
-        <div className="mt-6 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm font-semibold text-black/45">
-          <span>By {article.author}</span>
-          <span className="h-4 w-px bg-black/15" />
-          <span>{article.date}</span>
-          <span className="h-4 w-px bg-black/15" />
-          <span>{article.readTime}</span>
-        </div>
-
-        <p className="mt-8 text-xl leading-9 text-black/68">{article.dek}</p>
-
-        <div className="mt-12 space-y-12">
+    <div className="ed-page">
+      <EditorialNavbar />
+      <main>
+        <article className="ed-article ed-inner">
+          <Link className="ed-back" to="/blog"><ArrowLeft /> Back to blog</Link>
+          <h1>{article.title}</h1>
+          <p className="ed-ameta">By {article.author} · {article.date} · {article.readTime}</p>
+          <p className="ed-dek">{article.dek}</p>
           {articleSections.map((section) => (
-            <section key={section.id} id={section.id} className="scroll-mt-32">
-              <h2 className="text-3xl font-normal leading-tight tracking-[-0.035em] md:text-4xl" style={serifDisplay}>
-                {section.heading}
-              </h2>
-              <div className="mt-4 space-y-5 text-base leading-8 text-black/65">
-                {section.paragraphs.map((paragraph) => (
-                  <p key={paragraph}>{paragraph}</p>
-                ))}
-              </div>
+            <section className="ed-asection" key={section.id} id={section.id}>
+              <h2>{section.heading}</h2>
+              {section.paragraphs.map((paragraph) => (<p key={paragraph}>{paragraph}</p>))}
               {section.bullets && section.heading === 'How to qualify the list' ? renderInsightCard(section.bullets) : null}
               {section.bullets && section.heading !== 'How to qualify the list' ? (
-                <ul className="mt-6 divide-y divide-black/10 border-y border-black/10">
-                  {section.bullets.map((bullet) => (
-                    <li key={bullet} className="list-none py-5">
-                      {renderBullet(bullet)}
-                    </li>
-                  ))}
-                </ul>
+                <ul>{section.bullets.map((bullet) => (<li key={bullet}>{renderBullet(bullet)}</li>))}</ul>
               ) : null}
             </section>
           ))}
-        </div>
-      </article>
+        </article>
 
-      <section className="mx-auto max-w-[92rem] border-t border-black/10 px-5 py-20 text-center sm:px-8">
-        <h2 className="mx-auto max-w-3xl text-5xl font-normal leading-none tracking-[-0.045em] md:text-7xl" style={serifDisplay}>
-          Read the next one.
-        </h2>
-        <p className="mx-auto mt-8 max-w-3xl text-3xl font-normal leading-[1.02] tracking-[-0.03em] text-black/82 md:text-4xl" style={serifDisplay}>
-          {nextArticle.title}
-        </p>
-        <div className="mt-10">
-          <Link
-            to={`/blog/${nextArticle.slug}`}
-            className="inline-flex items-center rounded-full bg-[#cfdaf5] px-8 py-3 text-sm font-semibold text-black transition-colors hover:bg-[#bcc8ef]"
-          >
-            Read next post
-            <ArrowRight className="ml-2 h-4 w-4" />
-          </Link>
-        </div>
-      </section>
-    </main>
+        <section className="ed-sec ed-divider ed-final">
+          <div className="ed-inner">
+            <h2>Read the next one.</h2>
+            <p style={{ marginTop: 16, fontSize: 22, color: 'var(--ed-graphite)' }}>{nextArticle.title}</p>
+            <div className="ed-cta">
+              <Link className="ed-btn ed-btn-filled" to={`/blog/${nextArticle.slug}`}>Read next post <ArrowRight /></Link>
+            </div>
+          </div>
+        </section>
+      </main>
+      <EditorialFooter />
+    </div>
   );
 };

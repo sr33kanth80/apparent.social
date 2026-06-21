@@ -1,6 +1,5 @@
-const serifDisplay = {
-  fontFamily: "'Source Serif 4', ui-serif, Georgia, 'Times New Roman', serif",
-};
+import { EditorialNavbar } from '../components/editorial/EditorialNavbar';
+import { EditorialFooter } from '../components/editorial/EditorialFooter';
 
 type LegalSection = {
   title: string;
@@ -180,35 +179,31 @@ const LegalPage = ({ type }: { type: keyof typeof legalContent }) => {
   const content = legalContent[type];
 
   return (
-    <main className="monad monad-page min-h-screen overflow-x-hidden bg-[#f6f3f1] text-black">
-      <section className="mx-auto max-w-[92rem] px-5 pb-14 pt-14 sm:px-8 md:pt-20">
-        <h1
-          className="max-w-[82rem] text-[3.1rem] font-normal leading-[0.9] tracking-[-0.055em] sm:text-[6rem] md:text-[7.5rem] lg:text-[8.5rem]"
-          style={serifDisplay}
-        >
-          {content.title}
-        </h1>
-        <p className="mt-10 max-w-3xl text-lg leading-8 text-black/65 md:text-xl">
-          {content.intro}
-        </p>
-      </section>
-
-      <section className="mx-auto max-w-[92rem] border-t border-black/10 px-5 py-16 sm:px-8">
-        <div className="grid gap-10 md:grid-cols-2">
-          {content.sections.map((section) => (
-            <article key={section.title} className="rounded-[28px] bg-white/70 p-6 sm:p-8">
-              <h2 className="text-2xl font-normal tracking-[-0.025em]" style={serifDisplay}>
-                {section.title}
-              </h2>
-              <p className="mt-5 text-sm leading-7 text-black/60">{section.body}</p>
-            </article>
-          ))}
-        </div>
-        <p className="mt-12 max-w-3xl text-sm leading-7 text-black/50">
-          Last updated: May 25, 2026. These policies are intended to describe Apparent's current practices and contractual rules. They should be reviewed by qualified counsel for your company structure, jurisdictions, data flows, and launch plan.
-        </p>
-      </section>
-    </main>
+    <div className="ed-page">
+      <EditorialNavbar />
+      <main>
+        <section className="ed-subhero ed-inner">
+          <h1 className="ed-display">{content.title}</h1>
+          <p className="ed-lede">{content.intro}</p>
+        </section>
+        <section className="ed-sec ed-divider">
+          <div className="ed-inner">
+            <div className="ed-legal-grid">
+              {content.sections.map((section) => (
+                <article key={section.title} className="ed-legal-card">
+                  <h2>{section.title}</h2>
+                  <p>{section.body}</p>
+                </article>
+              ))}
+            </div>
+            <p className="ed-legal-updated">
+              Last updated: May 25, 2026. These policies describe Apparent&apos;s current practices and contractual rules. They should be reviewed by qualified counsel for your company structure, jurisdictions, data flows, and launch plan.
+            </p>
+          </div>
+        </section>
+      </main>
+      <EditorialFooter />
+    </div>
   );
 };
 
