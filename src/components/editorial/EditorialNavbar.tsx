@@ -38,8 +38,7 @@ export const EditorialNavbar = () => {
           ))}
         </nav>
         <div className="ed-nav-actions">
-          <Link className="ed-nav-login" to="/login">Log in</Link>
-          <Link className="ed-btn ed-btn-filled" to="/login">Sign up</Link>
+          <Link className="ed-btn ed-btn-filled" to="/login">Get Started</Link>
         </div>
       </div>
     </header>
