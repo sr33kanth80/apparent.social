@@ -358,6 +358,44 @@
 .ed-legal-card p { margin-top: 14px; font-size: 14px; line-height: 1.7; color: var(--ed-graphite); }
 .ed-legal-updated { margin-top: 32px; font-size: 13px; line-height: 1.6; color: var(--ed-smoke); max-width: 64ch; }
 
+/* ---------- Auth (login / signup) ---------- */
+.ed-auth { display: grid; grid-template-columns: 1fr 420px; gap: clamp(32px, 5vw, 72px); align-items: start; }
+@media (max-width: 940px) { .ed-auth { grid-template-columns: 1fr; } .ed-auth-pitch { display: none; } }
+.ed-auth-pitch h1 { font-weight: 300; font-size: clamp(2.4rem, 5vw, 64px); line-height: 0.96; letter-spacing: -0.03em; }
+.ed-auth-pitch h1 em { font-style: normal; color: var(--ed-smoke); }
+.ed-auth-pitch .ed-lede { margin-top: 24px; max-width: 46ch; }
+.ed-auth-list { margin-top: 32px; border-block: 1px solid var(--ed-fog); padding-block: 8px; }
+.ed-auth-list .ed-it { display: grid; grid-template-columns: 40px 1fr; gap: 12px; padding: 14px 0; }
+.ed-auth-list .ed-it + .ed-it { border-top: 1px solid var(--ed-fog); }
+.ed-auth-list .ed-it span { font-size: 13px; font-weight: 600; color: var(--ed-smoke); }
+.ed-auth-list .ed-it p { font-size: 14px; line-height: 1.5; color: var(--ed-graphite); }
+.ed-pillars { margin-top: 28px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+.ed-pillar { border: 1px solid var(--ed-fog); border-radius: var(--ed-r); padding: 16px; background: var(--ed-paper); }
+.ed-pillar .ed-pl { font-size: 10px; letter-spacing: .14em; text-transform: uppercase; color: var(--ed-smoke); }
+.ed-pillar b { display: block; margin-top: 8px; font-size: 16px; font-weight: 500; }
+.ed-pillar p { margin-top: 6px; font-size: 12px; line-height: 1.5; color: var(--ed-graphite); }
+.ed-auth-card { position: relative; background: var(--ed-paper); border: 1px solid var(--ed-fog); border-radius: var(--ed-r-feature); padding: 28px; overflow: hidden; }
+.ed-auth-card::before { content: ""; position: absolute; inset: 0 0 auto 0; height: 3px; background: var(--ed-ember); }
+.ed-seg { display: grid; grid-auto-flow: column; gap: 4px; background: var(--ed-canvas); border: 1px solid var(--ed-fog); border-radius: 999px; padding: 4px; }
+.ed-seg button { font-family: var(--ed-font); font-size: 13px; font-weight: 500; color: var(--ed-graphite); background: transparent; border: 0; border-radius: 999px; height: 36px; cursor: pointer; transition: background .15s, color .15s; }
+.ed-seg button.is-on { background: var(--ed-ink); color: var(--ed-paper); }
+.ed-auth-card h2 { margin-top: 22px; font-size: 22px; font-weight: 500; letter-spacing: -0.01em; }
+.ed-auth-card .ed-desc { margin-top: 8px; font-size: 13px; line-height: 1.5; color: var(--ed-graphite); }
+.ed-auth-ctx { margin-top: 18px; background: var(--ed-canvas); border-radius: var(--ed-r); padding: 14px 16px; }
+.ed-auth-ctx p { display: flex; gap: 10px; align-items: flex-start; font-size: 13px; line-height: 1.4; color: var(--ed-graphite); }
+.ed-auth-ctx p + p { margin-top: 8px; }
+.ed-auth-ctx p i { width: 6px; height: 6px; border-radius: 50%; background: var(--ed-ash); margin-top: 6px; flex-shrink: 0; }
+.ed-auth-methods { margin-top: 18px; display: grid; gap: 10px; }
+.ed-btn.ed-block { width: 100%; justify-content: center; height: 46px; }
+.ed-btn.ed-gh { background: var(--ed-canvas); color: var(--ed-ink); border-color: var(--ed-fog); }
+.ed-btn.ed-gh:hover { background: var(--ed-fog); }
+.ed-auth-or { display: flex; align-items: center; gap: 12px; font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--ed-smoke); }
+.ed-auth-or::before, .ed-auth-or::after { content: ""; flex: 1; height: 1px; background: var(--ed-fog); }
+.ed-auth-foot { margin-top: 18px; font-size: 13px; color: var(--ed-graphite); text-align: center; }
+.ed-auth-foot button { font-weight: 600; color: var(--ed-ink); background: none; border: 0; cursor: pointer; font-family: var(--ed-font); font-size: 13px; padding: 0; }
+.ed-auth-fine { margin-top: 12px; font-size: 11px; line-height: 1.5; color: var(--ed-smoke); text-align: center; }
+.ed-authed { margin-top: 18px; display: flex; gap: 10px; flex-wrap: wrap; }
+
 /* Final CTA */
 .ed-final { text-align: center; }
 .ed-final .ed-mark { width: 26px; height: 26px; color: var(--ed-ink); margin: 0 auto 28px; }

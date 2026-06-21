@@ -63,16 +63,7 @@ function App() {
       <div className="bg-white min-h-screen">
         <ScrollToHash />
         <Routes>
-          <Route
-            path="/login"
-            element={
-              <>
-                <AldenPublicNavbar />
-                <Login />
-                <Footer />
-              </>
-            }
-          />
+          <Route path="/login" element={<Login />} />
           <Route
             path="/dashboard/founder/*"
             element={
