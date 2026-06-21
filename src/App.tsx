@@ -1,8 +1,7 @@
 import { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
-import { Footer } from './components/Footer';
-import { AldenPublicNavbar } from './components/AldenPublicNavbar';
 import { EditorialNavbar } from './components/editorial/EditorialNavbar';
+import { EditorialFooter } from './components/editorial/EditorialFooter';
 import { Home } from './pages/Home';
 import { OurThesis } from './pages/OurThesis';
 import { ForFounders } from './pages/ForFounders';
@@ -89,26 +88,8 @@ function App() {
           <Route path="/our-thesis" element={<OurThesis />} />
           <Route path="/for-founders" element={<ForFounders />} />
           <Route path="/for-vcs" element={<ForVCs />} />
-          <Route
-            path="/claim/:signalId"
-            element={
-              <>
-                <AldenPublicNavbar />
-                <ClaimProfile />
-                <Footer />
-              </>
-            }
-          />
-          <Route
-            path="/claim-build"
-            element={
-              <>
-                <AldenPublicNavbar />
-                <ClaimBuild />
-                <Footer />
-              </>
-            }
-          />
+          <Route path="/claim/:signalId" element={<ClaimProfile />} />
+          <Route path="/claim-build" element={<ClaimBuild />} />
           <Route
             path="/heat-map"
             element={
@@ -157,11 +138,11 @@ function App() {
           <Route
             path="*"
             element={
-              <>
-                <AldenPublicNavbar />
+              <div className="ed-page">
+                <EditorialNavbar />
                 <NotFound4042 />
-                <Footer />
-              </>
+                <EditorialFooter />
+              </div>
             }
           />
         </Routes>

@@ -8,10 +8,6 @@ import { getCurrentAppUser } from '@/lib/auth-service';
 import { VerifiedAvatar } from '@/components/VerifiedAvatar';
 import NotFound4042 from '@/components/4042';
 
-const serifDisplay = {
-  fontFamily: "'Source Serif 4', ui-serif, Georgia, 'Times New Roman', serif",
-};
-
 const getDomain = (url: string) => {
   try {
     return new URL(url).hostname.replace('www.', '');
@@ -31,14 +27,12 @@ export const ProjectDetail = () => {
 
   useEffect(() => {
     let isMounted = true;
-
     setIsLoading(true);
     loadPublicProjectDetail(projectId).then((loadedDetail) => {
       if (!isMounted) return;
       setDetail(loadedDetail);
       setIsLoading(false);
     });
-
     return () => {
       isMounted = false;
     };
@@ -58,9 +52,6 @@ export const ProjectDetail = () => {
     };
   }, []);
 
-  // Investor outreach: send a canned DM via the existing user_messages flow.
-  // The founder sees the message in their inbox; this replaces the old sample
-  // outreach drafts that were generated locally inside the investor dashboard.
   const handleSendOutreach = async () => {
     if (!currentUser || !detail) return;
     const founderName = detail.founder?.profileName || 'Founder on Apparent';
@@ -102,21 +93,13 @@ export const ProjectDetail = () => {
 
   if (isLoading) {
     return (
-      <main className="monad monad-page min-h-screen bg-[#f6f3f1] px-5 py-20 text-black sm:px-8">
-        <p className="text-sm font-semibold text-[#242424]">Loading project profile...</p>
-      </main>
+      <section className="ed-sec ed-inner"><p className="ed-lead">Loading project profile...</p></section>
     );
   }
 
   if (!detail) {
     return (
-      <main className="monad monad-page min-h-screen bg-[#f6f3f1]">
-        <NotFound4042
-          title="Project not found"
-          message="That launch is unavailable or does not exist on Apparent yet."
-          primaryLabel="Back to launches"
-        />
-      </main>
+      <NotFound4042 title="Project not found" message="That launch is unavailable or does not exist on Apparent yet." primaryLabel="Back to launches" />
     );
   }
 
@@ -125,107 +108,55 @@ export const ProjectDetail = () => {
   const founderName = founder?.profileName || 'Founder on Apparent';
 
   return (
-    <main className="monad monad-page overflow-x-hidden bg-[#f6f3f1] text-black">
-      <section className="mx-auto max-w-[92rem] px-5 pb-14 pt-14 sm:px-8 md:pt-20">
-        <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_22rem] lg:items-end">
+    <main>
+      {/* HERO */}
+      <section className="ed-subhero ed-inner">
+        <div style={{ display: 'grid', gap: 32, gridTemplateColumns: 'minmax(0,1fr) 22rem', alignItems: 'end' }} className="ed-proj-hero">
           <div>
-            <div className="mb-8 flex items-center gap-3">
-              <img
-                src={launch.logoUrl || `https://www.google.com/s2/favicons?domain=${domain}&sz=128`}
-                alt=""
-                className="h-14 w-14 rounded-[18px] bg-white object-contain p-3 shadow-sm"
-              />
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 24 }}>
+              <img src={launch.logoUrl || `https://www.google.com/s2/favicons?domain=${domain}&sz=128`} alt="" style={{ width: 52, height: 52, borderRadius: 'var(--ed-r)', background: 'var(--ed-paper)', objectFit: 'contain', padding: 10 }} />
               <div>
-                <p className="text-sm font-semibold text-[#242424]">{launch.category || 'Project profile'}</p>
-                <p className="mt-1 text-sm text-black/50">{launch.stage || 'Live on Apparent'}</p>
+                <p style={{ fontSize: 14, fontWeight: 600 }}>{launch.category || 'Project profile'}</p>
+                <p style={{ marginTop: 2, fontSize: 13, color: 'var(--ed-smoke)' }}>{launch.stage || 'Live on Apparent'}</p>
               </div>
             </div>
-            <h1
-              className="max-w-[76rem] text-[3.4rem] font-normal leading-[0.88] tracking-[-0.055em] sm:text-[7rem] md:text-[8.5rem] lg:text-[9.5rem]"
-              style={serifDisplay}
-            >
-              {launch.name}
-            </h1>
-            <p className="mt-10 max-w-3xl text-lg leading-8 text-black/65 md:text-xl">
-              {launch.intro || launch.tagline}
-            </p>
+            <h1 className="ed-display" style={{ fontSize: 'clamp(2.6rem,8vw,96px)', maxWidth: '14ch' }}>{launch.name}</h1>
+            <p className="ed-lede">{launch.intro || launch.tagline}</p>
           </div>
 
-          <aside className="rounded-[24px] bg-white/75 p-5 shadow-[0_14px_44px_rgba(0,0,0,0.05)]">
-            <p className="text-sm font-semibold text-[#242424]">Launched by</p>
-
-            {/* Founder card — entire row is one clickable link */}
-            <Link
-              to={`/profile/${founder?.userId || launch.ownerId}`}
-              className="mt-4 flex items-center gap-3 rounded-[18px] p-2 -mx-2 transition-colors hover:bg-[#f6f3f1] group"
-            >
-              {/* Avatar */}
-              <VerifiedAvatar
-                src={founder?.profilePhotoUrl}
-                name={founderName}
-                size="md"
-                verified={founder?.githubVerified}
-              />
-
-              {/* Name + headline */}
-              <div className="min-w-0 flex-1">
-                <p className="text-base font-semibold leading-tight group-hover:text-[#242424] transition-colors">
-                  {founderName}
-                </p>
-                <p className="mt-1 truncate text-sm text-black/50">
-                  {founder?.headline || founder?.currentBuild || launch.tagline}
-                </p>
+          <aside className="ed-pp-panel">
+            <p style={{ fontSize: 13, fontWeight: 600, letterSpacing: '.12em', textTransform: 'uppercase', color: 'var(--ed-smoke)' }}>Launched by</p>
+            <Link to={`/profile/${founder?.userId || launch.ownerId}`} className="ed-row" style={{ marginTop: 14, background: 'var(--ed-canvas)', borderColor: 'var(--ed-fog)' }}>
+              <VerifiedAvatar src={founder?.profilePhotoUrl} name={founderName} size="md" verified={founder?.githubVerified} />
+              <div className="ed-who" style={{ flex: 1 }}>
+                <b style={{ color: 'var(--ed-ink)' }}>{founderName}</b>
+                <span style={{ color: 'var(--ed-smoke)' }}>{founder?.headline || founder?.currentBuild || launch.tagline}</span>
               </div>
-
-              {/* Arrow hint */}
-              <ArrowUpRight className="h-4 w-4 shrink-0 text-black/25 transition-colors group-hover:text-[#242424]" />
+              <ArrowUpRight style={{ width: 16, height: 16, color: 'var(--ed-ash)' }} />
             </Link>
-            <div className="mt-5 grid gap-3">
+            <div style={{ marginTop: 18, display: 'grid', gap: 10 }}>
               {launch.launchUrl && (
-                <a href={launch.launchUrl} target="_blank" rel="noreferrer" className="inline-flex justify-center rounded-full bg-[#cfdaf5] px-5 py-3 text-sm font-semibold text-black hover:bg-[#bcc8ef]">
-                  Visit website <ArrowUpRight className="ml-2 h-4 w-4" />
-                </a>
+                <a className="ed-btn ed-btn-filled ed-block" href={launch.launchUrl} target="_blank" rel="noreferrer">Visit website <ArrowUpRight style={{ width: 16, height: 16 }} /></a>
               )}
               {launch.proofUrl && (
-                <a href={launch.proofUrl} target="_blank" rel="noreferrer" className="inline-flex justify-center rounded-full bg-[#cfdaf5] px-5 py-3 text-sm font-semibold text-black hover:bg-[#bcc8ef]">
-                  View proof <ArrowUpRight className="ml-2 h-4 w-4" />
-                </a>
+                <a className="ed-btn ed-btn-outline ed-block" href={launch.proofUrl} target="_blank" rel="noreferrer">View proof <ArrowUpRight style={{ width: 16, height: 16 }} /></a>
               )}
-              {/* Outreach: only shown to logged-in investors viewing someone else's
-                  launch. Sends a canned DM via the existing user_messages system. */}
               {currentUser?.role === 'investor' && currentUser.id !== launch.ownerId && (
                 <>
                   {outreachStatus === 'sent' ? (
-                    <button
-                      type="button"
-                      onClick={() => navigate('/dashboard/investor/messages')}
-                      className="inline-flex items-center justify-center gap-2 rounded-full border border-[#242424]/30 bg-white px-5 py-3 text-sm font-semibold text-[#242424] hover:bg-[#f6f3f1]"
-                    >
-                      <MessageCircle className="h-4 w-4" /> Outreach sent · open inbox
+                    <button type="button" className="ed-btn ed-btn-outline ed-block" onClick={() => navigate('/dashboard/investor/messages')}>
+                      <MessageCircle style={{ width: 16, height: 16 }} /> Outreach sent · open inbox
                     </button>
                   ) : (
-                    <button
-                      type="button"
-                      onClick={handleSendOutreach}
-                      disabled={outreachStatus === 'sending'}
-                      className="inline-flex items-center justify-center gap-2 rounded-full bg-[#cfdaf5] px-5 py-3 text-sm font-semibold text-black hover:bg-[#bcc8ef] disabled:cursor-not-allowed disabled:opacity-60"
-                    >
-                      <MessageCircle className="h-4 w-4" />
-                      {outreachStatus === 'sending' ? 'Sending…' : 'Send outreach DM'}
+                    <button type="button" className="ed-btn ed-btn-filled ed-block" onClick={handleSendOutreach} disabled={outreachStatus === 'sending'}>
+                      <MessageCircle style={{ width: 16, height: 16 }} /> {outreachStatus === 'sending' ? 'Sending…' : 'Send outreach DM'}
                     </button>
                   )}
-                  {outreachError && (
-                    <p className="rounded-lg bg-red-50 px-3 py-2 text-xs text-red-700">{outreachError}</p>
-                  )}
+                  {outreachError && <p style={{ fontSize: 12, color: 'var(--ed-ember)' }}>{outreachError}</p>}
                 </>
               )}
               {!currentUser && (
-                <Link
-                  to="/login?role=investor"
-                  className="alden-investor-cta inline-flex items-center justify-center gap-2 rounded-full border border-black/10 bg-white px-5 py-3 text-sm font-semibold text-black hover:bg-[#f6f3f1]"
-                >
-                  <MessageCircle className="h-4 w-4" /> Sign in to send outreach
-                </Link>
+                <Link className="ed-btn ed-btn-outline ed-block" to="/login?role=investor"><MessageCircle style={{ width: 16, height: 16 }} /> Sign in to send outreach</Link>
               )}
             </div>
           </aside>
@@ -233,110 +164,88 @@ export const ProjectDetail = () => {
       </section>
 
       {launch.bannerUrl && (
-        <section className="mx-auto max-w-[92rem] px-5 pb-10 sm:px-8">
-          <div className="h-[320px] overflow-hidden rounded-[32px] bg-[#d7d0c0] md:h-[460px]">
-            <img src={launch.bannerUrl} alt="" className="h-full w-full object-cover" />
+        <section className="ed-inner" style={{ paddingBottom: 40 }}>
+          <div style={{ height: 380, overflow: 'hidden', borderRadius: 'var(--ed-r-feature)', background: 'var(--ed-fog)' }}>
+            <img src={launch.bannerUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
           </div>
         </section>
       )}
 
-      <section className="mx-auto max-w-[92rem] border-t border-black/10 px-5 py-16 sm:px-8">
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {[
-            ['Location', launch.location || founder?.location || 'Not provided', MapPin],
-            ['Momentum', launch.metrics || 'Not provided', Star],
-            ['Tech stack', launch.techStack || 'Not provided', GitHubIcon],
-            ['Funding', launch.fundingStatus || 'Not provided', Globe2],
-          ].map(([label, value, Icon]) => (
-            <article key={String(label)} className="rounded-[24px] bg-white/70 p-5">
-              <Icon className="mb-5 h-4 w-4 text-[#242424]" />
-              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-black/40">{String(label)}</p>
-              <p className="mt-3 text-sm leading-6 text-black/65">{String(value)}</p>
+      {/* STATS */}
+      <section className="ed-sec ed-divider ed-inner">
+        <div className="ed-benefits" style={{ marginTop: 0 }}>
+          {([['Location', launch.location || founder?.location || 'Not provided', MapPin], ['Momentum', launch.metrics || 'Not provided', Star], ['Tech stack', launch.techStack || 'Not provided', GitHubIcon], ['Funding', launch.fundingStatus || 'Not provided', Globe2]] as const).map(([label, value, Icon]) => (
+            <article className="ed-infocard" key={String(label)}>
+              <Icon style={{ width: 18, height: 18, color: 'var(--ed-ink)', marginBottom: 14 }} />
+              <div style={{ fontSize: 10, fontWeight: 600, letterSpacing: '.12em', textTransform: 'uppercase', color: 'var(--ed-smoke)' }}>{String(label)}</div>
+              <p style={{ marginTop: 8 }}>{String(value)}</p>
             </article>
           ))}
         </div>
       </section>
 
-      <section className="mx-auto grid max-w-[92rem] gap-8 border-t border-black/10 px-5 py-16 sm:px-8 lg:grid-cols-3">
-        <article className="rounded-[28px] bg-white/70 p-6 lg:col-span-2">
-          <h2 className="text-3xl font-normal tracking-[-0.035em]" style={serifDisplay}>
-            Proof signals
-          </h2>
-          <div className="mt-6 grid gap-3">
-            {proofSignals.map((signal) => (
-              <div key={signal} className="flex items-start gap-3 text-sm leading-7 text-black/60">
-                <Star className="mt-1 h-4 w-4 shrink-0 text-[#242424]" />
-                <span>{signal}</span>
-              </div>
-            ))}
-          </div>
-        </article>
-        <article className="rounded-[28px] bg-white/70 p-6">
-          <h2 className="text-3xl font-normal tracking-[-0.035em]" style={serifDisplay}>
-            Looking for
-          </h2>
-          <p className="mt-6 text-sm leading-7 text-black/60">
-            {launch.lookingFor || founder?.lookingFor || 'The founder has not specified what they are looking for yet.'}
-          </p>
-        </article>
+      {/* PROOF + LOOKING FOR */}
+      <section className="ed-sec ed-divider ed-inner">
+        <div style={{ display: 'grid', gap: 20, gridTemplateColumns: '2fr 1fr' }} className="ed-proj-cols">
+          <article className="ed-infocard">
+            <h2 className="ed-sec-title" style={{ fontSize: 'clamp(1.5rem,3vw,28px)' }}>Proof signals</h2>
+            <div style={{ marginTop: 18, display: 'grid', gap: 12 }}>
+              {proofSignals.map((signal) => (
+                <div key={signal} style={{ display: 'flex', gap: 12, alignItems: 'flex-start', fontSize: 14, lineHeight: 1.6, color: 'var(--ed-graphite)' }}>
+                  <Star style={{ width: 16, height: 16, marginTop: 3, flexShrink: 0, color: 'var(--ed-ink)' }} /> <span>{signal}</span>
+                </div>
+              ))}
+            </div>
+          </article>
+          <article className="ed-infocard">
+            <h2 className="ed-sec-title" style={{ fontSize: 'clamp(1.5rem,3vw,28px)' }}>Looking for</h2>
+            <p style={{ marginTop: 18 }}>{launch.lookingFor || founder?.lookingFor || 'The founder has not specified what they are looking for yet.'}</p>
+          </article>
+        </div>
       </section>
 
-      <section className="mx-auto max-w-[92rem] border-t border-black/10 px-5 py-16 sm:px-8">
-        <div className="grid gap-6 md:grid-cols-3">
-          {(teamMembers.length ? teamMembers : []).map((member) => (
-            <article key={`${member.name}-${member.role}`} className="rounded-[28px] bg-white/70 p-6">
-              <div className="flex items-center gap-3">
+      {/* TEAM */}
+      <section className="ed-sec ed-divider ed-inner">
+        <div className="ed-infocards">
+          {teamMembers.map((member) => (
+            <article className="ed-infocard" key={`${member.name}-${member.role}`}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                 {member.avatarUrl ? (
-                  <img src={member.avatarUrl} alt="" className="h-12 w-12 rounded-2xl object-cover" />
+                  <img src={member.avatarUrl} alt="" style={{ width: 48, height: 48, borderRadius: 'var(--ed-r)', objectFit: 'cover' }} />
                 ) : (
-                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#cfdaf5] text-sm font-semibold">
-                    {member.name.slice(0, 2).toUpperCase()}
-                  </div>
+                  <div style={{ width: 48, height: 48, borderRadius: 'var(--ed-r)', background: 'var(--ed-canvas)', display: 'grid', placeItems: 'center', fontSize: 13, fontWeight: 600 }}>{member.name.slice(0, 2).toUpperCase()}</div>
                 )}
-                <div>
-                  <h3 className="text-lg font-semibold">{member.name}</h3>
-                  <p className="mt-1 text-sm text-black/50">{member.role || 'Team member'}</p>
-                </div>
+                <div><h3 style={{ fontSize: 16, fontWeight: 600 }}>{member.name}</h3><p style={{ marginTop: 2, fontSize: 13, color: 'var(--ed-smoke)' }}>{member.role || 'Team member'}</p></div>
               </div>
-              <p className="mt-5 text-sm leading-7 text-black/60">{member.bio || 'Team context has not been added yet.'}</p>
-              <div className="mt-5 flex flex-wrap gap-2">
+              <p style={{ marginTop: 14 }}>{member.bio || 'Team context has not been added yet.'}</p>
+              <div style={{ marginTop: 14, display: 'flex', flexWrap: 'wrap', gap: 8 }}>
                 {(member.apparentUserId || member.profileUrl) && (
-                  <Link to={member.apparentUserId ? `/profile/${member.apparentUserId}` : member.profileUrl} className="rounded-full bg-[#cfdaf5] px-3 py-1.5 text-xs font-semibold text-black">
-                    Apparent profile
-                  </Link>
+                  <Link className="ed-proof" to={member.apparentUserId ? `/profile/${member.apparentUserId}` : member.profileUrl}>Apparent profile</Link>
                 )}
                 {member.linkedinUrl && (
-                  <a href={member.linkedinUrl} target="_blank" rel="noreferrer" className="rounded-full bg-[#f6f3f1] px-3 py-1.5 text-xs font-semibold text-black/60">
-                    <LinkIcon className="mr-1 inline h-3.5 w-3.5" />
-                    LinkedIn
-                  </a>
+                  <a className="ed-proof" href={member.linkedinUrl} target="_blank" rel="noreferrer"><LinkIcon style={{ width: 13, height: 13 }} /> LinkedIn</a>
                 )}
               </div>
             </article>
           ))}
           {teamMembers.length === 0 && (
-            <div className="rounded-[28px] bg-white/70 p-6 text-sm leading-7 text-black/60 md:col-span-3">
-              <Users className="mb-5 h-5 w-5 text-[#242424]" />
-              Team members have not been added yet.
-            </div>
+            <div className="ed-infocard"><Users style={{ width: 20, height: 20, color: 'var(--ed-ink)', marginBottom: 12 }} /><p>Team members have not been added yet.</p></div>
           )}
         </div>
-        {launch.teamSummary && <p className="mt-8 max-w-3xl text-sm leading-7 text-black/60">{launch.teamSummary}</p>}
+        {launch.teamSummary && <p style={{ marginTop: 24, maxWidth: '60ch', fontSize: 14, lineHeight: 1.6, color: 'var(--ed-graphite)' }}>{launch.teamSummary}</p>}
       </section>
 
       {(launch.demoVideoUrl || launch.pitchVideoUrl || launch.pitchDeckUrl || launch.pitchBookNote) && (
-        <section className="mx-auto max-w-[92rem] border-t border-black/10 px-5 py-16 sm:px-8">
-          <div className="grid gap-6 lg:grid-cols-2">
-            {launch.demoVideoUrl && <video className="aspect-video w-full rounded-[24px] bg-black object-cover" src={launch.demoVideoUrl} controls />}
-            {launch.pitchVideoUrl && <video className="aspect-video w-full rounded-[24px] bg-black object-cover" src={launch.pitchVideoUrl} controls />}
+        <section className="ed-sec ed-divider ed-inner">
+          <div style={{ display: 'grid', gap: 20, gridTemplateColumns: '1fr 1fr' }} className="ed-proj-cols">
+            {launch.demoVideoUrl && <video style={{ aspectRatio: '16/9', width: '100%', borderRadius: 'var(--ed-r-feature)', background: '#000', objectFit: 'cover' }} src={launch.demoVideoUrl} controls />}
+            {launch.pitchVideoUrl && <video style={{ aspectRatio: '16/9', width: '100%', borderRadius: 'var(--ed-r-feature)', background: '#000', objectFit: 'cover' }} src={launch.pitchVideoUrl} controls />}
             {(launch.pitchDeckUrl || launch.pitchBookNote) && (
-              <article className="rounded-[28px] bg-white/70 p-6 lg:col-span-2">
-                <FileText className="mb-5 h-5 w-5 text-[#242424]" />
-                <p className="text-sm leading-7 text-black/60">{launch.pitchBookNote || 'Pitch material attached.'}</p>
+              <article className="ed-infocard" style={{ gridColumn: '1 / -1' }}>
+                <FileText style={{ width: 20, height: 20, color: 'var(--ed-ink)', marginBottom: 12 }} />
+                <p>{launch.pitchBookNote || 'Pitch material attached.'}</p>
                 {launch.pitchDeckUrl && (
-                  <a href={launch.pitchDeckUrl} target="_blank" rel="noreferrer" className="mt-5 inline-flex rounded-full bg-[#cfdaf5] px-4 py-2 text-sm font-semibold text-black">
-                    Open pitch deck <ArrowUpRight className="ml-2 h-4 w-4" />
-                  </a>
+                  <a className="ed-btn ed-btn-filled" href={launch.pitchDeckUrl} target="_blank" rel="noreferrer" style={{ marginTop: 16 }}>Open pitch deck <ArrowUpRight style={{ width: 16, height: 16 }} /></a>
                 )}
               </article>
             )}

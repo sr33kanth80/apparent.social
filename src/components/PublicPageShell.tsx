@@ -4,8 +4,8 @@ import { ArrowLeft } from 'lucide-react';
 import type { AppUser } from '@/lib/apparent-types';
 import { getCurrentAppUser } from '@/lib/auth-service';
 import { SessionNavBar } from '@/components/ui/sidebar';
-import { AldenPublicNavbar } from '@/components/AldenPublicNavbar';
-import { Footer } from '@/components/Footer';
+import { EditorialNavbar } from '@/components/editorial/EditorialNavbar';
+import { EditorialFooter } from '@/components/editorial/EditorialFooter';
 
 /**
  * Auth-aware chrome for public content pages (profiles, project detail, …).
@@ -49,11 +49,11 @@ export const PublicPageShell = ({ children }: { children: ReactNode }) => {
   }, []);
 
   return (
-    <div className={user ? 'min-h-screen bg-[#fbfaf7] pl-[15rem]' : 'monad monad-page min-h-screen bg-[#f6f3f1]'}>
+    <div className={user ? 'min-h-screen bg-[#fbfaf7] pl-[15rem]' : 'ed-page min-h-screen'}>
       {user ? (
         <SessionNavBar role={user.role} user={user} />
       ) : !loading ? (
-        <AldenPublicNavbar />
+        <EditorialNavbar />
       ) : null}
 
       {/* Back button only for signed-in users (visitors get the marketing nav). */}
@@ -72,7 +72,8 @@ export const PublicPageShell = ({ children }: { children: ReactNode }) => {
 
       {children}
 
-      {!user && !loading && <Footer />}
+      {!user && !loading && <EditorialFooter />}
     </div>
+
   );
 };

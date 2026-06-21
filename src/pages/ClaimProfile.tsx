@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
 import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { ArrowUpRight, Sparkles, Star, Zap } from 'lucide-react';
+import { EditorialNavbar } from '../components/editorial/EditorialNavbar';
+import { EditorialFooter } from '../components/editorial/EditorialFooter';
 import { loadBuilderInterestSummary, loadSourceSignal } from '../lib/dashboard-service';
-
-const serif = { fontFamily: "'Source Serif 4', ui-serif, Georgia, 'Times New Roman', serif" };
 
 /**
  * Public claim landing for an ingested (scraped) builder. Shown via a link sent
@@ -44,76 +44,64 @@ export const ClaimProfile = () => {
   const label = company || 'your work';
 
   return (
-    <main className="monad monad-page min-h-screen bg-[#f6f3f1] px-5 py-16 text-black sm:px-8">
-      <div className="mx-auto max-w-2xl">
-        <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-black/10 bg-white/70 px-3 py-1.5 text-xs font-semibold text-[#242424]">
-          <Sparkles className="h-3.5 w-3.5" /> Apparent · investor interest
-        </div>
-
-        {loading ? (
-          <p className="text-lg text-black/50">Loading…</p>
-        ) : total > 0 ? (
-          <>
-            <h1 className="text-4xl font-normal leading-[1.05] tracking-[-0.03em] sm:text-5xl" style={serif}>
-              {total} investor{total === 1 ? '' : 's'}{' '}
-              {summary.superlikes > 0 ? 'want to talk to you' : 'are interested in'}{' '}
-              {company ? company : 'you'}.
-            </h1>
-            <p className="mt-5 max-w-xl text-base leading-7 text-black/65">
-              {founder ? `${founder.split(/\s+/)[0]}, ` : ''}we surfaced {label} from public signals and
-              thesis-fit investors have already flagged it on Apparent. Claim your profile to see who they
-              are and start the conversation.
-            </p>
-
-            <div className="mt-8 grid gap-3 sm:grid-cols-2">
-              <div className="flex items-center gap-3 rounded-[20px] border border-black/10 bg-white/70 p-5">
-                <span className="flex h-11 w-11 items-center justify-center rounded-full bg-[#242424] text-white">
-                  <Star className="h-5 w-5" fill="currentColor" />
-                </span>
-                <div>
-                  <p className="text-2xl font-semibold tracking-[-0.02em]">{summary.likes}</p>
-                  <p className="text-xs font-semibold uppercase tracking-[0.12em] text-black/40">Liked you</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-3 rounded-[20px] border border-[#3aa0ff]/30 bg-[#eaf4ff] p-5">
-                <span className="flex h-11 w-11 items-center justify-center rounded-full bg-[#3aa0ff] text-white">
-                  <Zap className="h-5 w-5" fill="currentColor" />
-                </span>
-                <div>
-                  <p className="text-2xl font-semibold tracking-[-0.02em]">{summary.superlikes}</p>
-                  <p className="text-xs font-semibold uppercase tracking-[0.12em] text-black/40">Want a call</p>
-                </div>
-              </div>
+    <div className="ed-page">
+      <EditorialNavbar />
+      <main>
+        <section className="ed-subhero ed-inner">
+          <div style={{ maxWidth: 640 }}>
+            <div className="ed-trust" style={{ marginTop: 0, marginBottom: 24 }}>
+              <Sparkles style={{ width: 14, height: 14, color: 'var(--ed-ember)' }} /> <span>Apparent · investor interest</span>
             </div>
-          </>
-        ) : (
-          <>
-            <h1 className="text-4xl font-normal leading-[1.05] tracking-[-0.03em] sm:text-5xl" style={serif}>
-              Claim {company ? company : 'your profile'} on Apparent.
-            </h1>
-            <p className="mt-5 max-w-xl text-base leading-7 text-black/65">
-              We surfaced {label} from public signals. Claim your profile so thesis-fit investors can find
-              you, follow what you ship, and reach out when there&apos;s a fit.
-            </p>
-          </>
-        )}
 
-        <div className="mt-10 flex flex-wrap items-center gap-3">
-          <Link
-            to={`/login?role=founder${signalId ? `&claim=${encodeURIComponent(signalId)}` : ''}`}
-            className="inline-flex items-center gap-2 rounded-full bg-[#cfdaf5] px-6 py-3 text-sm font-semibold text-black transition hover:bg-[#bcc8ef]"
-          >
-            Claim my profile <ArrowUpRight className="h-4 w-4" />
-          </Link>
-          <Link to="/for-founders" className="px-2 py-3 text-sm font-semibold text-black/60 transition hover:text-black">
-            What is Apparent?
-          </Link>
-        </div>
+            {loading ? (
+              <p className="ed-lede">Loading…</p>
+            ) : total > 0 ? (
+              <>
+                <h1 className="ed-display" style={{ fontSize: 'clamp(2.2rem,6vw,64px)' }}>
+                  {total} investor{total === 1 ? '' : 's'}{' '}
+                  {summary.superlikes > 0 ? 'want to talk to you' : 'are interested in'}{' '}
+                  <em>{company ? company : 'you'}.</em>
+                </h1>
+                <p className="ed-lede">
+                  {founder ? `${founder.split(/\s+/)[0]}, ` : ''}we surfaced {label} from public signals and
+                  thesis-fit investors have already flagged it on Apparent. Claim your profile to see who they
+                  are and start the conversation.
+                </p>
 
-        <p className="mt-8 text-xs text-black/40">
-          Free to claim. You control your profile and who can reach you.
-        </p>
-      </div>
-    </main>
+                <div className="ed-infocards" style={{ gridTemplateColumns: 'repeat(2,1fr)', marginTop: 32 }}>
+                  <div className="ed-infocard" style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+                    <span style={{ display: 'grid', placeItems: 'center', width: 44, height: 44, borderRadius: 999, background: 'var(--ed-ink)', color: 'var(--ed-paper)' }}><Star style={{ width: 18, height: 18 }} fill="currentColor" /></span>
+                    <div><div style={{ fontSize: 24, fontWeight: 600 }}>{summary.likes}</div><div style={{ fontSize: 11, letterSpacing: '.1em', textTransform: 'uppercase', color: 'var(--ed-smoke)' }}>Liked you</div></div>
+                  </div>
+                  <div className="ed-infocard" style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+                    <span style={{ display: 'grid', placeItems: 'center', width: 44, height: 44, borderRadius: 999, background: 'var(--ed-ember)', color: 'var(--ed-paper)' }}><Zap style={{ width: 18, height: 18 }} fill="currentColor" /></span>
+                    <div><div style={{ fontSize: 24, fontWeight: 600, color: 'var(--ed-ember)' }}>{summary.superlikes}</div><div style={{ fontSize: 11, letterSpacing: '.1em', textTransform: 'uppercase', color: 'var(--ed-smoke)' }}>Want a call</div></div>
+                  </div>
+                </div>
+              </>
+            ) : (
+              <>
+                <h1 className="ed-display" style={{ fontSize: 'clamp(2.2rem,6vw,64px)' }}>
+                  Claim {company ? company : 'your profile'} on <em>Apparent.</em>
+                </h1>
+                <p className="ed-lede">
+                  We surfaced {label} from public signals. Claim your profile so thesis-fit investors can find
+                  you, follow what you ship, and reach out when there&apos;s a fit.
+                </p>
+              </>
+            )}
+
+            <div className="ed-cta" style={{ marginTop: 32 }}>
+              <Link className="ed-btn ed-btn-filled" to={`/login?role=founder${signalId ? `&claim=${encodeURIComponent(signalId)}` : ''}`}>
+                Claim my profile <ArrowUpRight style={{ width: 16, height: 16 }} />
+              </Link>
+              <Link className="ed-btn ed-btn-outline" to="/for-founders">What is Apparent?</Link>
+            </div>
+            <p style={{ marginTop: 24, fontSize: 12, color: 'var(--ed-smoke)' }}>Free to claim. You control your profile and who can reach you.</p>
+          </div>
+        </section>
+      </main>
+      <EditorialFooter />
+    </div>
   );
 };

@@ -396,6 +396,11 @@
 .ed-auth-fine { margin-top: 12px; font-size: 11px; line-height: 1.5; color: var(--ed-smoke); text-align: center; }
 .ed-authed { margin-top: 18px; display: flex; gap: 10px; flex-wrap: wrap; }
 
+/* Project / profile panels */
+.ed-pp-panel { background: var(--ed-paper); border-radius: var(--ed-r-feature); padding: clamp(20px, 3vw, 28px); }
+@media (max-width: 900px) { .ed-proj-hero { grid-template-columns: 1fr !important; } }
+@media (max-width: 760px) { .ed-proj-cols { grid-template-columns: 1fr !important; } }
+
 /* Final CTA */
 .ed-final { text-align: center; }
 .ed-final .ed-mark { width: 26px; height: 26px; color: var(--ed-ink); margin: 0 auto 28px; }

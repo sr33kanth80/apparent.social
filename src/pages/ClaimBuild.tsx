@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { Check, Loader2, Sparkles, Terminal } from 'lucide-react';
+import { EditorialNavbar } from '../components/editorial/EditorialNavbar';
+import { EditorialFooter } from '../components/editorial/EditorialFooter';
 import { isSupabaseConfigured, supabase } from '@/lib/supabase';
 
 /** Shared with the Dashboard finisher so a post-login claim still completes. */
@@ -66,85 +68,68 @@ export const ClaimBuild = () => {
   }, [code]);
 
   return (
-    <div className="monad monad-page flex min-h-[70vh] items-center justify-center bg-[#f6f3f1] px-6 py-16">
-      <div className="w-full max-w-md rounded-2xl border border-black/10 bg-white p-8 shadow-[0_10px_34px_rgba(0,0,0,0.05)]">
-        <div className="mb-4 flex items-center gap-2 text-sm font-semibold text-[#242424]">
-          <Terminal className="h-4 w-4" />
-          npx apparent
-        </div>
-
-        {(state === 'checking' || state === 'claiming') && (
-          <div className="flex items-center gap-2 text-sm text-gray-600">
-            <Loader2 className="h-4 w-4 animate-spin" />
-            {state === 'claiming' ? 'Attaching your build to your profile…' : 'Checking your link…'}
-          </div>
-        )}
-
-        {state === 'need_auth' && (
-          <div>
-            <h1 className="text-xl font-semibold text-black">Claim your build</h1>
-            <p className="mt-2 text-sm leading-relaxed text-gray-600">
-              Sign in or create your founder account, and your <span className="font-medium">npx apparent</span> build
-              attaches to your Apparent profile automatically.
-            </p>
-            <Link
-              to="/login?role=founder"
-              className="mt-5 inline-flex items-center gap-2 rounded-xl bg-neutral-900 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-black"
-            >
-              <Sparkles className="h-4 w-4" /> Sign in to claim
-            </Link>
-            <p className="mt-3 text-xs text-gray-400">Your code is saved. Finish signing in and it'll attach itself.</p>
-          </div>
-        )}
-
-        {state === 'done' && (
-          <div>
-            <div className="mb-2 flex items-center gap-2 text-[#242424]">
-              <Check className="h-5 w-5" />
-              <h1 className="text-xl font-semibold">You're on Apparent.</h1>
-            </div>
-            <p className="text-sm leading-relaxed text-gray-600">
-              Your build is now part of your founder profile, and visible to the investors whose thesis you fit.
-            </p>
-            {result && (
-              <div className="mt-4 space-y-1 rounded-xl bg-[#f6f3f1] p-3 text-sm text-gray-700">
-                {result.project ? <p className="font-medium text-black">{result.project}</p> : null}
-                <p>
-                  {result.commits ? `${result.commits.toLocaleString()} commits` : ''}
-                  {result.languages ? `  ·  ${result.languages}` : ''}
-                </p>
+    <div className="ed-page">
+      <EditorialNavbar />
+      <main>
+        <section className="ed-sec" style={{ minHeight: '60vh', display: 'grid', placeItems: 'center' }}>
+          <div className="ed-inner" style={{ width: '100%', maxWidth: 460 }}>
+            <div className="ed-form" style={{ padding: 28 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, fontWeight: 600, fontFamily: 'var(--ed-mono)', marginBottom: 16 }}>
+                <Terminal style={{ width: 16, height: 16 }} /> npx apparent
               </div>
-            )}
-            <div className="mt-5 flex flex-wrap gap-2">
-              <Link
-                to="/dashboard/founder/profile"
-                className="inline-flex items-center gap-2 rounded-xl bg-neutral-900 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-black"
-              >
-                Finish your profile
-              </Link>
-              <Link
-                to="/dashboard/founder"
-                className="inline-flex items-center rounded-xl border border-black/10 px-4 py-2.5 text-sm font-medium text-gray-700 transition-colors hover:text-black"
-              >
-                Go to dashboard
-              </Link>
+
+              {(state === 'checking' || state === 'claiming') && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 14, color: 'var(--ed-graphite)' }}>
+                  <Loader2 style={{ width: 16, height: 16 }} className="animate-spin" />
+                  {state === 'claiming' ? 'Attaching your build to your profile…' : 'Checking your link…'}
+                </div>
+              )}
+
+              {state === 'need_auth' && (
+                <div>
+                  <h2 style={{ fontSize: 21, fontWeight: 500 }}>Claim your build</h2>
+                  <p className="ed-desc" style={{ marginTop: 8, fontSize: 14 }}>
+                    Sign in or create your founder account, and your <span style={{ fontFamily: 'var(--ed-mono)' }}>npx apparent</span> build attaches to your Apparent profile automatically.
+                  </p>
+                  <Link className="ed-btn ed-btn-filled" to="/login?role=founder" style={{ marginTop: 20 }}>
+                    <Sparkles style={{ width: 16, height: 16 }} /> Sign in to claim
+                  </Link>
+                  <p style={{ marginTop: 12, fontSize: 12, color: 'var(--ed-smoke)' }}>Your code is saved. Finish signing in and it&apos;ll attach itself.</p>
+                </div>
+              )}
+
+              {state === 'done' && (
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+                    <Check style={{ width: 20, height: 20, color: 'var(--ed-ember)' }} />
+                    <h2 style={{ fontSize: 21, fontWeight: 500 }}>You&apos;re on Apparent.</h2>
+                  </div>
+                  <p className="ed-desc" style={{ fontSize: 14 }}>Your build is now part of your founder profile, and visible to the investors whose thesis you fit.</p>
+                  {result && (
+                    <div style={{ marginTop: 16, padding: 12, borderRadius: 'var(--ed-r)', background: 'var(--ed-canvas)', fontSize: 14, color: 'var(--ed-graphite)' }}>
+                      {result.project ? <p style={{ fontWeight: 600, color: 'var(--ed-ink)' }}>{result.project}</p> : null}
+                      <p>{result.commits ? `${result.commits.toLocaleString()} commits` : ''}{result.languages ? `  ·  ${result.languages}` : ''}</p>
+                    </div>
+                  )}
+                  <div className="ed-cta" style={{ marginTop: 20 }}>
+                    <Link className="ed-btn ed-btn-filled" to="/dashboard/founder/profile">Finish your profile</Link>
+                    <Link className="ed-btn ed-btn-outline" to="/dashboard/founder">Go to dashboard</Link>
+                  </div>
+                </div>
+              )}
+
+              {state === 'error' && (
+                <div>
+                  <h2 style={{ fontSize: 21, fontWeight: 500 }}>Couldn&apos;t claim that</h2>
+                  <p className="ed-desc" style={{ marginTop: 8, fontSize: 14 }}>{error}</p>
+                  <Link className="ed-btn ed-btn-outline" to="/dashboard/founder" style={{ marginTop: 20 }}>Go to dashboard</Link>
+                </div>
+              )}
             </div>
           </div>
-        )}
-
-        {state === 'error' && (
-          <div>
-            <h1 className="text-xl font-semibold text-black">Couldn't claim that</h1>
-            <p className="mt-2 text-sm leading-relaxed text-gray-600">{error}</p>
-            <Link
-              to="/dashboard/founder"
-              className="mt-5 inline-flex items-center rounded-xl border border-black/10 px-4 py-2.5 text-sm font-medium text-gray-700 transition-colors hover:text-black"
-            >
-              Go to dashboard
-            </Link>
-          </div>
-        )}
-      </div>
+        </section>
+      </main>
+      <EditorialFooter />
     </div>
   );
 };
