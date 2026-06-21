@@ -18,6 +18,66 @@ const META: Record<Tab, { n: string; label: string; note: string }> = {
 const HOT = new Set([27, 28, 39, 40]);
 const ON = new Set([5, 7, 14, 19, 22, 33, 45, 51, 53, 58, 62, 66, 70]);
 
+const VC_LOGOS = [
+  ['Accel', 'www.accel.com'],
+  ['8VC', 'www.8vc.com'],
+  ['Bessemer', 'www.bvp.com'],
+  ['Bain Capital Ventures', 'www.baincapitalventures.com'],
+  ['FJ Labs', 'www.fjlabs.com'],
+  ['500 Global', 'www.500.co'],
+  ['Madrona', 'www.madrona.com'],
+  ['Upfront Ventures', 'www.upfront.com'],
+  ['Initialized Capital', 'www.initialized.com'],
+  ['Founder Collective', 'foundercollective.com'],
+  ['Threshold Ventures', 'www.threshold.vc'],
+  ['LocalGlobe', 'localglobe.vc'],
+  ['Innovation Endeavors', 'www.innovationendeavors.com'],
+  ['Jackson Square Ventures', 'www.jsv.com'],
+  ['Javelin Venture Partners', 'www.javelinvp.com'],
+  ['Jazz Venture Partners', 'www.jazzvp.com'],
+  ['Acrew Capital', 'www.acrewcapital.com'],
+  ['Amino Capital', 'www.aminocapital.com'],
+  ['Abstract', 'www.abstract.com'],
+  ['Glasswing Ventures', 'www.glasswing.vc'],
+  ['Hyperplane', 'hyperplane.vc'],
+  ['BootstrapLabs', 'www.bootstraplabs.com'],
+  ['BBG Ventures', 'www.bbgventures.com'],
+  ['Flourish Ventures', 'www.flourishventures.com'],
+  ['Pioneer Square Labs', 'www.psl.com'],
+  ['FUSE', 'www.fuse.vc'],
+  ['Ascend', 'www.ascend.vc'],
+  ['Founders Co-op', 'www.founderscoop.com'],
+  ['01 Advisors', 'www.01a.com'],
+  ['1517 Fund', 'www.1517fund.com'],
+  ['2048 Ventures', 'www.2048.vc'],
+  ['January Ventures', 'www.january.ventures'],
+  ['Operator Partners', 'www.operatorpartners.com'],
+  ['Shrug Capital', 'www.shrug.vc'],
+  ['The Fund', 'www.thefund.vc'],
+  ['MaC Venture Capital', 'www.macventurecapital.com'],
+  ['4DX Ventures', 'www.4dxventures.com'],
+  ['7wire Ventures', 'www.7wireventures.com'],
+  ['Altos Ventures', 'www.altos.vc'],
+  ['Voyager Capital', 'www.voyagercapital.com'],
+] as const;
+
+const VC_LOGO_ROWS = [
+  VC_LOGOS.slice(0, 14),
+  VC_LOGOS.slice(14, 28),
+  VC_LOGOS.slice(28),
+] as const;
+
+const vcLogoUrl = (website: string) => `https://www.google.com/s2/favicons?sz=128&domain_url=${encodeURIComponent(`https://${website}`)}`;
+
+const VerifiedBadge = ({ className = '' }: { className?: string }) => (
+  <svg className={className} viewBox="0 0 22 22" aria-hidden="true" focusable="false">
+    <path
+      fill="currentColor"
+      d="M20.396 11c-.018-.646-.215-1.275-.57-1.816-.354-.54-.852-.972-1.438-1.246.223-.607.27-1.264.14-1.897-.131-.634-.437-1.218-.882-1.687-.47-.445-1.053-.75-1.687-.882-.633-.13-1.29-.083-1.897.14-.273-.587-.704-1.086-1.245-1.44S11.647 1.62 11 1.604c-.646.017-1.273.213-1.813.568s-.969.854-1.24 1.44c-.608-.223-1.267-.272-1.902-.14-.635.13-1.22.436-1.69.882-.445.47-.749 1.055-.878 1.69-.13.635-.08 1.293.144 1.896-.587.274-1.087.705-1.443 1.245-.356.54-.555 1.17-.574 1.817.02.647.218 1.276.574 1.817.356.54.856.972 1.443 1.245-.224.604-.274 1.26-.144 1.896.13.636.433 1.221.878 1.69.47.446 1.055.752 1.69.883.635.13 1.294.083 1.902-.141.27.587.7 1.086 1.24 1.44s1.167.551 1.813.568c.647-.016 1.276-.213 1.817-.567s.972-.854 1.245-1.44c.604.224 1.26.272 1.895.141.636-.13 1.22-.436 1.69-.883.445-.468.749-1.053.882-1.688.13-.634.085-1.29-.138-1.896.587-.274 1.084-.705 1.438-1.246.354-.54.551-1.17.569-1.816zM9.662 14.85l-3.429-3.428 1.293-1.302 2.072 2.072 4.4-4.794 1.347 1.246z"
+    />
+  </svg>
+);
+
 const GitHubGlyph = () => (
   <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 .5A11.5 11.5 0 0 0 8.4 22.9c.6.1.8-.2.8-.6v-2c-3.2.7-3.9-1.4-3.9-1.4-.5-1.3-1.3-1.7-1.3-1.7-1-.7.1-.7.1-.7 1.2.1 1.8 1.2 1.8 1.2 1 1.8 2.8 1.3 3.5 1 .1-.8.4-1.3.7-1.6-2.6-.3-5.3-1.3-5.3-5.7 0-1.3.5-2.3 1.2-3.1-.1-.3-.5-1.5.1-3.1 0 0 1-.3 3.3 1.2a11.5 11.5 0 0 1 6 0C17 5.3 18 5.6 18 5.6c.6 1.6.2 2.8.1 3.1.8.8 1.2 1.8 1.2 3.1 0 4.4-2.7 5.4-5.3 5.7.4.4.8 1.1.8 2.2v3.3c0 .4.2.7.8.6A11.5 11.5 0 0 0 12 .5Z" /></svg>
 );
@@ -98,16 +158,27 @@ export const Home = () => {
             </div>
             <div className="ed-trust">
               <span><b>1,800+</b> investors on Apparent</span><span className="ed-d" />
-              <span>Verified proof, not pitches</span><span className="ed-d" />
+              <span className="ed-trust-verified"><VerifiedBadge className="ed-vb ed-vb-sm" />Verified proof, not pitches</span><span className="ed-d" />
               <span>No warm intro required</span>
             </div>
             <div className="ed-logos">
-              <span className="ed-lbl">Builders &amp; investors on Apparent</span>
-              <svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10" /></svg>
-              <svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5" /></svg>
-              <svg width="26" height="24" viewBox="0 0 26 24" aria-hidden="true"><path d="M13 2 24 22H2Z" /></svg>
-              <svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2 22 12 12 22 2 12Z" /></svg>
-              <svg width="26" height="24" viewBox="0 0 26 24" aria-hidden="true"><path d="M7 2h12l5 10-5 10H7L2 12Z" /></svg>
+              <span className="ed-lbl">VCs mapped in Builder Radar</span>
+              <div className="ed-logo-cloud" aria-label="VC firms listed in Apparent's investor heatmap">
+                {VC_LOGO_ROWS.map((row, rowIndex) => (
+                  <div className={`ed-logo-row row-${rowIndex + 1}`} key={rowIndex}>
+                    <div className="ed-logo-track">
+                      {[0, 1].map((copy) =>
+                        row.map(([name, website]) => (
+                          <span className="ed-vc-logo" key={`${name}-${copy}`} title={name} aria-hidden={copy === 1}>
+                            <img src={vcLogoUrl(website)} alt="" loading="lazy" />
+                            <span>{name}</span>
+                          </span>
+                        )),
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
 
@@ -195,6 +266,10 @@ export const Home = () => {
             <h2 className="ed-sec-title">Two sides, one fit.</h2>
             <div className="ed-audience">
               <div className="ed-acard">
+                <div className="ed-acard-head">
+                  <LogoIcon className="ed-acard-mark" />
+                  <span>Founder proof</span>
+                </div>
                 <h3>Make your strongest signal visible.</h3>
                 <ul>
                   <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6"><circle cx="12" cy="12" r="9" /><path d="M9 12l2 2 4-4" /></svg>Verified builds, launches, and traction in one quiet profile.</li>
@@ -204,6 +279,10 @@ export const Home = () => {
                 <Link className="ed-btn ed-btn-ember" to="/for-founders">Create founder profile</Link>
               </div>
               <div className="ed-acard">
+                <div className="ed-acard-head">
+                  <LogoIcon className="ed-acard-mark" />
+                  <span>Investor desk</span>
+                </div>
                 <h3>Source builders by evidence.</h3>
                 <ul>
                   <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6"><circle cx="12" cy="12" r="9" /><circle cx="12" cy="12" r="2.5" /></svg>A thesis-aware view of builders with real proof behind them.</li>
@@ -218,9 +297,23 @@ export const Home = () => {
 
         {/* DARK BAND */}
         <section className="ed-band">
-          <div className="ed-inner">
-            <h2>By the time it&apos;s consensus, the round is full.</h2>
-            <p>Apparent surfaces founders who fit your thesis while they&apos;re still building, not after the deal turns competitive.</p>
+          <div className="ed-inner ed-band-grid">
+            <div>
+              <h2>By the time it&apos;s consensus, the round is full.</h2>
+              <p>Apparent surfaces founders who fit your thesis while they&apos;re still building, not after the deal turns competitive.</p>
+            </div>
+            <div className="ed-band-signal" aria-hidden="true">
+              <LogoIcon className="ed-band-mark" />
+              <div className="ed-band-lines">
+                <span>Proof profile</span>
+                <span>Thesis fit</span>
+                <span>Drafted outreach</span>
+              </div>
+              <div className="ed-band-score">
+                <b>96</b>
+                <span>fit</span>
+              </div>
+            </div>
           </div>
         </section>
 
@@ -246,7 +339,7 @@ export const Home = () => {
                 ['RS', 'Eval harness for LLMs', 'Dev tools · Pre-seed', 'A reusable card for the product, team, proof links, and current raise.', 'Pre-seed', '$800k', 'Deck', '89 fit'],
               ].map((c) => (
                 <article className="ed-card" key={c[0]}>
-                  <div className="ed-ch"><div className="ed-av">{c[0]}</div><div><b>{c[1]}</b><span>{c[2]}</span></div><span className="ed-badge">Verified</span></div>
+                  <div className="ed-ch"><div className="ed-av">{c[0]}</div><div><b>{c[1]}</b><span>{c[2]}</span></div><span className="ed-badge ed-badge-icon" aria-label="Verified"><VerifiedBadge className="ed-vb" /></span></div>
                   <p className="ed-desc">{c[3]}</p>
                   <div className="ed-meta"><div><span>Stage</span><b>{c[4]}</b></div><div><span>Raising</span><b>{c[5]}</b></div></div>
                   <div className="ed-proofs">
