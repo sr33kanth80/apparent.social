@@ -1,486 +1,75 @@
-import { ArrowUpRight, ChevronLeft, ChevronRight, CircleDot, Globe2, Radar, Search, ShieldCheck } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
+import { EditorialNavbar } from '../components/editorial/EditorialNavbar';
+import { EditorialFooter } from '../components/editorial/EditorialFooter';
 import { LogoIcon } from '../components/LogoIcon';
-import { useReveal } from '../lib/useReveal';
 
-const serifDisplay = {
-  fontFamily: "'Source Serif 4', ui-serif, Georgia, 'Times New Roman', serif",
-};
-
-const proofRows = [
-  ['01', 'Proof beats proximity', 'Products, GitHub, launches, press, and traction, verified in one command, should travel farther than a warm intro.'],
-  ['02', 'Taste should be searchable', 'Investors need a place to declare thesis, stage, sector, geography, and founder signals clearly.'],
-  ['03', 'Place reveals momentum', 'Builder Radar makes local clusters and nearby rooms visible before they become consensus.'],
-  ['04', 'The intro should write itself', 'AI agents work both sides, matching founders and investors on each other’s criteria and opening the first message.'],
-];
-
-const values = [
-  {
-    title: 'Builders first',
-    icon: CircleDot,
-    text: 'The founder profile starts with shipped work instead of social proof theatre.',
-  },
-  {
-    title: 'Taste over status',
-    icon: Search,
-    text: 'VC discovery should start from conviction, not just brand gravity.',
-  },
-  {
-    title: 'Local context',
-    icon: Radar,
-    text: 'The map turns cities, venues, and clusters into a sourcing surface.',
-  },
-  {
-    title: 'Clear motion',
-    icon: ShieldCheck,
-    text: 'DMs, terms, and pipeline work better when they keep the original proof nearby.',
-  },
-];
-
-type MatchRow = { id: string; founder: string; investor: string; weight: number };
-type Match = {
-  founder: string;
-  investor: string;
-  total: number;
-  founderAvatar: string;
-  investorLogo: string;
-  rows: MatchRow[];
-};
-
-// Initials for the monogram avatars and logos.
-const initials = (name: string) =>
-  name
-    .split(' ')
-    .map((w) => w[0])
-    .join('')
-    .slice(0, 2)
-    .toUpperCase();
-
-// A deck of founder ⇄ investor matches. Each row's weights sum to that match's total.
-const matches: Match[] = [
-  {
-    founder: 'Founder profile',
-    investor: 'Investor thesis',
-    total: 92,
-    founderAvatar: 'from-rose-400 to-orange-300',
-    investorLogo: 'bg-emerald-500',
-    rows: [
-      { id: 'proof', founder: 'Owner-supplied proof', investor: 'Technical founder fit', weight: 24 },
-      { id: 'sector', founder: 'Selected category', investor: 'Sector thesis', weight: 30 },
-      { id: 'stage', founder: 'Selected stage', investor: 'Stage fit', weight: 23 },
-      { id: 'geo', founder: 'Builder location', investor: 'Geography fit', weight: 15 },
-    ],
-  },
-  {
-    founder: 'Product profile',
-    investor: 'Fund criteria',
-    total: 88,
-    founderAvatar: 'from-sky-400 to-cyan-300',
-    investorLogo: 'bg-amber-500',
-    rows: [
-      { id: 'proof', founder: 'Launch evidence', investor: 'Proof preference', weight: 22 },
-      { id: 'sector', founder: 'Selected sector', investor: 'Thesis match', weight: 28 },
-      { id: 'stage', founder: 'Fundraising stage', investor: 'Check strategy', weight: 20 },
-      { id: 'geo', founder: 'Operating market', investor: 'Market focus', weight: 18 },
-    ],
-  },
-  {
-    founder: 'Launch signal',
-    investor: 'Partner focus',
-    total: 95,
-    founderAvatar: 'from-violet-400 to-fuchsia-300',
-    investorLogo: 'bg-indigo-500',
-    rows: [
-      { id: 'proof', founder: 'Founder proof', investor: 'Signal quality', weight: 25 },
-      { id: 'sector', founder: 'Company category', investor: 'Investment focus', weight: 32 },
-      { id: 'stage', founder: 'Current stage', investor: 'Stage mandate', weight: 20 },
-      { id: 'geo', founder: 'Founder location', investor: 'Geography mandate', weight: 18 },
-    ],
-  },
-];
-// A single match: animates its connectors and counts the score up whenever it activates.
-const MatchView = ({ match, play }: { match: Match; play: boolean }) => {
-  const [pct, setPct] = useState(0);
-  const [connected, setConnected] = useState(false);
-  const [hovered, setHovered] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (!play) return;
-    setConnected(false);
-    setPct(0);
-    const startLines = setTimeout(() => setConnected(true), 60);
-    const duration = 1100;
-    let raf = 0;
-    let startTs = 0;
-    const tick = (now: number) => {
-      if (!startTs) startTs = now;
-      const t = Math.min(1, (now - startTs) / duration);
-      const eased = 1 - Math.pow(1 - t, 3);
-      setPct(Math.round(eased * match.total));
-      if (t < 1) raf = requestAnimationFrame(tick);
-    };
-    const startCount = setTimeout(() => {
-      raf = requestAnimationFrame(tick);
-    }, 220);
-    return () => {
-      clearTimeout(startLines);
-      clearTimeout(startCount);
-      cancelAnimationFrame(raf);
-    };
-  }, [play, match]);
-
-  return (
-    <div className="flex flex-1 flex-col">
-      {/* Founder + investor identities */}
-      <div className="flex items-center justify-between gap-3">
-        <div className="flex items-center gap-2.5">
-          <div
-            className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br ${match.founderAvatar} text-[11px] font-bold text-white ring-1 ring-white/15`}
-          >
-            {initials(match.founder)}
-          </div>
-          <div className="leading-tight">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-white/35">Founder</p>
-            <p className="text-sm font-semibold text-white">{match.founder}</p>
+export const AboutUs = () => (
+  <div className="ed-page">
+    <EditorialNavbar />
+    <main>
+      {/* HERO */}
+      <section className="ed-subhero ed-inner">
+        <h1 className="ed-display">Capital should find <em>proof.</em></h1>
+        <div className="ed-about-intro">
+          <p className="ed-lede" style={{ marginTop: 0 }}>Apparent exists because warm intros are a bad database for ambition. Great builders should become visible by what they ship, and investors should find them by thesis, proof, and timing.</p>
+          <div className="ed-infocards">
+            <div className="ed-infocard"><b>Builder profiles</b><p>Proof, products, GitHub, traction, and location.</p></div>
+            <div className="ed-infocard"><b>Investor thesis pages</b><p>Stage, sector, geography, founder taste, and pass signals.</p></div>
+            <div className="ed-infocard"><b>Network map</b><p>A live view of Apparent builders around any place of interest.</p></div>
           </div>
         </div>
-        <div className="flex items-center gap-2.5">
-          <div className="text-right leading-tight">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-white/35">Investor</p>
-            <p className="text-sm font-semibold text-white">{match.investor}</p>
-          </div>
-          <div
-            className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-[10px] ${match.investorLogo} text-[11px] font-bold text-white ring-1 ring-white/10`}
-          >
-            {initials(match.investor)}
-          </div>
-        </div>
-      </div>
+      </section>
 
-      {/* Match rows — centered so the card always fills */}
-      <div className="flex flex-1 flex-col justify-center gap-2.5 py-5">
-        {match.rows.map((row, i) => {
-          const isHover = hovered === row.id;
-          const dim = hovered !== null && !isHover;
-          return (
-            <div
-              key={row.id}
-              onMouseEnter={() => setHovered(row.id)}
-              onMouseLeave={() => setHovered(null)}
-              className={`grid cursor-default grid-cols-[1fr_auto_1fr] items-center gap-2 transition-opacity duration-300 ${
-                dim ? 'opacity-40' : 'opacity-100'
-              }`}
-            >
-              {/* Founder signal */}
-              <div
-                className={`justify-self-stretch rounded-xl border px-3 py-2.5 text-right text-xs font-semibold transition-colors duration-300 ${
-                  isHover
-                    ? 'border-[#a7fccd]/50 bg-[#a7fccd]/10 text-white'
-                    : 'border-white/10 bg-white/[0.04] text-white/80'
-                }`}
-              >
-                {row.founder}
-              </div>
-
-              {/* Connector */}
-              <div className="relative flex w-16 items-center sm:w-20">
-                {isHover && (
-                  <span className="absolute left-1/2 top-[-17px] -translate-x-1/2 whitespace-nowrap rounded-full bg-[#a7fccd] px-2 py-0.5 text-[9px] font-bold text-black">
-                    +{row.weight}%
-                  </span>
-                )}
-                <span
-                  className={`h-1.5 w-1.5 shrink-0 rounded-full transition-colors duration-500 ${
-                    connected ? 'bg-[#a7fccd]' : 'bg-white/20'
-                  }`}
-                />
-                <span className="relative h-px flex-1 overflow-hidden bg-white/10">
-                  <span
-                    className={`absolute inset-0 origin-left bg-gradient-to-r from-[#a7fccd] to-[#a7fccd]/60 transition-transform duration-700 ease-out ${
-                      connected ? 'scale-x-100' : 'scale-x-0'
-                    } ${isHover ? 'shadow-[0_0_8px_#a7fccd]' : ''}`}
-                    style={{ transitionDelay: `${i * 110 + 120}ms` }}
-                  />
-                </span>
-                <span
-                  className={`h-1.5 w-1.5 shrink-0 rounded-full transition-colors duration-500 ${
-                    connected ? 'bg-[#a7fccd]' : 'bg-white/20'
-                  }`}
-                  style={{ transitionDelay: `${i * 110 + 320}ms` }}
-                />
-              </div>
-
-              {/* Investor signal */}
-              <div
-                className={`justify-self-stretch rounded-xl border px-3 py-2.5 text-left text-xs font-semibold transition-colors duration-300 ${
-                  isHover
-                    ? 'border-[#a7fccd]/50 bg-[#a7fccd]/10 text-white'
-                    : 'border-white/10 bg-white/[0.04] text-white/80'
-                }`}
-              >
-                {row.investor}
-              </div>
-            </div>
-          );
-        })}
-      </div>
-
-      {/* Match readout */}
-      <div>
-        <div className="flex items-end justify-between">
+      {/* PRINCIPLES */}
+      <section className="ed-sec ed-divider">
+        <div className="ed-inner ed-work">
           <div>
-            <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-white/35">Thesis match</p>
-            <p className="text-4xl font-normal tracking-[-0.03em] text-[#a7fccd]" style={serifDisplay}>
-              {pct}%
-            </p>
+            <h2 className="ed-sec-title">See the whole builder market.</h2>
+            <p className="ed-lead">The traditional fundraising loop rewards proximity. Apparent shifts the center of gravity to proof: founders bring evidence, investors bring taste, and the product turns both into a network.</p>
           </div>
-          <p className="mb-1 max-w-[12rem] text-right text-xs leading-5 text-white/40">
-            Proof meets thesis. The intro writes itself.
-          </p>
-        </div>
-        <div className="mt-3 h-1 w-full overflow-hidden rounded-full bg-white/10">
-          <div
-            className="h-full rounded-full bg-gradient-to-r from-[#a7fccd] to-[#000000]"
-            style={{ width: `${pct}%` }}
-          />
-        </div>
-      </div>
-    </div>
-  );
-};
-
-const MatchCard = () => {
-  const cardRef = useRef<HTMLDivElement>(null);
-  const [inView, setInView] = useState(false);
-  const [index, setIndex] = useState(0);
-  const [paused, setPaused] = useState(false);
-
-  // Reveal the deck once it scrolls into view.
-  useEffect(() => {
-    const el = cardRef.current;
-    if (!el) return;
-    const io = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setInView(true);
-          io.disconnect();
-        }
-      },
-      { threshold: 0.4 },
-    );
-    io.observe(el);
-    return () => io.disconnect();
-  }, []);
-
-  // Auto-advance through the deck, pausing while hovered.
-  useEffect(() => {
-    if (!inView || paused) return;
-    const id = setTimeout(() => setIndex((n) => (n + 1) % matches.length), 4800);
-    return () => clearTimeout(id);
-  }, [inView, paused, index]);
-
-  const go = (n: number) => setIndex((n + matches.length) % matches.length);
-
-  return (
-    <div
-      className="relative h-full"
-      onMouseEnter={() => setPaused(true)}
-      onMouseLeave={() => setPaused(false)}
-    >
-      {/* Peeking deck behind, for depth */}
-      <div className="pointer-events-none absolute inset-x-3 top-2 -bottom-2 -z-10 rounded-[40px] bg-[#1f1f1f]" />
-      <div className="pointer-events-none absolute inset-x-6 top-4 -bottom-4 -z-20 rounded-[40px] bg-[#1a1a1a]" />
-
-      <div
-        ref={cardRef}
-        className="relative flex h-full min-h-[520px] flex-col overflow-hidden rounded-[40px] bg-[#242424] p-8 text-white"
-      >
-        {/* Ambient glow */}
-        <div className="pointer-events-none absolute -right-24 -top-24 h-64 w-64 rounded-full bg-[#a7fccd]/10 blur-3xl" />
-
-        {/* Header */}
-        <div className="relative flex items-start justify-between">
-          <div>
-            <h3 className="text-2xl font-normal leading-tight tracking-[-0.03em] text-white" style={serifDisplay}>
-              A fit,<br />both ways.
-            </h3>
-            <p className="mt-2 text-sm text-white/40">Hover a signal to trace the match.</p>
-          </div>
-          <LogoIcon className="h-9 w-9 text-[#a7fccd]" />
-        </div>
-
-        {/* Active match — keyed so the connect + count-up replays per card */}
-        <div className="relative mt-9 flex flex-1 flex-col">
-          <MatchView key={index} match={matches[index]} play={inView} />
-        </div>
-
-        {/* Deck navigation */}
-        <div className="relative mt-6 flex items-center justify-between border-t border-white/[0.07] pt-5">
-          <div className="flex items-center gap-2">
-            {matches.map((m, i) => (
-              <button
-                key={m.founder}
-                type="button"
-                aria-label={`Show match ${i + 1}`}
-                onClick={() => go(i)}
-                className={`h-1.5 rounded-full transition-all duration-300 ${
-                  i === index ? 'w-6 bg-[#a7fccd]' : 'w-1.5 bg-white/25 hover:bg-white/50'
-                }`}
-              />
-            ))}
-            <span className="ml-3 text-[11px] font-semibold text-white/40">
-              {index + 1} / {matches.length} live matches
-            </span>
-          </div>
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              aria-label="Previous match"
-              onClick={() => go(index - 1)}
-              className="flex h-8 w-8 items-center justify-center rounded-full border border-white/10 text-white/60 transition-colors hover:border-white/30 hover:text-white"
-            >
-              <ChevronLeft className="h-4 w-4" />
-            </button>
-            <button
-              type="button"
-              aria-label="Next match"
-              onClick={() => go(index + 1)}
-              className="flex h-8 w-8 items-center justify-center rounded-full border border-white/10 text-white/60 transition-colors hover:border-white/30 hover:text-white"
-            >
-              <ChevronRight className="h-4 w-4" />
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-export const AboutUs = () => {
-  const navigate = useNavigate();
-  useReveal();
-
-  return (
-    <main className="monad monad-page overflow-x-hidden bg-[#f6f3f1] text-black">
-      <section data-reveal className="reveal mx-auto max-w-[92rem] px-5 pb-14 pt-14 sm:px-8 md:pt-20">
-        <h1
-          className="max-w-[84rem] text-[3.65rem] font-normal leading-[0.88] tracking-[-0.055em] sm:text-[7rem] md:text-[8.5rem] lg:text-[10rem]"
-          style={serifDisplay}
-        >
-          Capital <span className="block sm:inline">should</span>
-          <br />
-          find proof.
-        </h1>
-        <div className="mt-10 grid gap-8 lg:grid-cols-[0.9fr_1.1fr]">
-          <p className="max-w-2xl text-lg leading-8 text-black/65 md:text-xl">
-            Apparent exists because warm intros are a bad database for ambition. Great builders should become visible by what they ship, and investors should find them by thesis, proof, and timing.
-          </p>
-          <div className="grid gap-4 sm:grid-cols-3">
-            {[
-              ['Builder profiles', 'Proof, products, GitHub, traction, and location'],
-              ['Investor thesis pages', 'Stage, sector, geography, founder taste, and pass signals'],
-              ['Network map', 'A live view of Apparent builders around any place of interest'],
-            ].map(([label, value]) => (
-              <div key={label} className="rounded-[22px] bg-white/70 p-5">
-                <p className="text-sm font-semibold">{label}</p>
-                <p className="mt-3 text-sm leading-6 text-black/55">{value}</p>
-              </div>
-            ))}
+          <div className="ed-steps">
+            <div className="ed-step"><span className="ed-n">01</span><div><h3>Proof beats proximity</h3><p>Products, GitHub, launches, press, and traction, verified in one command, should travel farther than a warm intro.</p></div></div>
+            <div className="ed-step"><span className="ed-n">02</span><div><h3>Taste should be searchable</h3><p>Investors need a place to declare thesis, stage, sector, geography, and founder signals clearly.</p></div></div>
+            <div className="ed-step"><span className="ed-n">03</span><div><h3>Place reveals momentum</h3><p>Builder Radar makes local clusters and nearby rooms visible before they become consensus.</p></div></div>
+            <div className="ed-step"><span className="ed-n">04</span><div><h3>The intro should write itself</h3><p>AI agents work both sides, matching founders and investors on each other&apos;s criteria and opening the first message.</p></div></div>
           </div>
         </div>
       </section>
 
-      <section data-reveal className="reveal mx-auto grid max-w-[92rem] gap-8 border-t border-black/10 px-5 py-14 sm:px-8 lg:grid-cols-[0.95fr_1.05fr] lg:items-stretch">
-        <div className="py-4 lg:py-8">
-          <h2 className="text-5xl font-normal leading-none tracking-[-0.045em] md:text-7xl" style={serifDisplay}>
-            See the whole builder market.
-          </h2>
-          <p className="mt-8 max-w-2xl text-base leading-8 text-black/60">
-            The traditional fundraising loop rewards proximity. Apparent shifts the center of gravity to proof: founders bring evidence, investors bring taste, and the product turns both into a network.
-          </p>
-          <div className="mt-10 grid gap-5">
-            {proofRows.map(([number, title, text]) => (
-              <div key={number} className="grid gap-4 sm:grid-cols-[3rem_1fr]">
-                <span className="text-sm font-semibold text-black/45">{number}</span>
-                <p className="text-sm leading-6 text-black/65">
-                  <span className="font-semibold text-black">{title}:</span> {text}
-                </p>
-              </div>
-            ))}
-          </div>
-          <button
-            type="button"
-            onClick={() => navigate('/login')}
-            className="mt-10 rounded-full bg-[#cfdaf5] px-6 py-3 text-sm font-semibold text-black transition-colors hover:bg-[#bcc8ef]"
-          >
-            Discover more
-          </button>
-        </div>
-
-        {/* The match, both ways — proof meeting thesis, interactively. */}
-        <MatchCard />
-      </section>
-
-      <section data-reveal className="reveal mx-auto max-w-[92rem] border-t border-black/10 px-5 py-16 sm:px-8">
-        <div className="pt-2">
-          <h2 className="max-w-4xl text-5xl font-normal leading-none tracking-[-0.045em] md:text-7xl" style={serifDisplay}>
-            We are rebuilding discovery around work.
-          </h2>
-          <div className="mt-24 grid gap-10 md:grid-cols-4">
-            {values.map((value, i) => (
-              <article key={value.title} data-reveal style={{ transitionDelay: `${i * 90}ms` }} className="reveal pt-1">
-                <value.icon className="mb-8 h-5 w-5 text-black" />
-                <h3 className="text-xl font-normal tracking-[-0.025em]" style={serifDisplay}>
-                  {value.title}
-                </h3>
-                <p className="mt-5 text-sm leading-6 text-black/55">{value.text}</p>
-              </article>
-            ))}
+      {/* VALUES */}
+      <section className="ed-sec ed-divider">
+        <div className="ed-inner">
+          <h2 className="ed-sec-title">We are rebuilding discovery around work.</h2>
+          <div className="ed-benefits">
+            <div className="ed-benefit"><svg className="ed-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="12" cy="12" r="9" /><circle cx="12" cy="12" r="3" /></svg><h3>Builders first</h3><p>The founder profile starts with shipped work instead of social proof theatre.</p></div>
+            <div className="ed-benefit"><svg className="ed-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="11" cy="11" r="7" /><path d="m21 21-4.3-4.3" /></svg><h3>Taste over status</h3><p>VC discovery should start from conviction, not just brand gravity.</p></div>
+            <div className="ed-benefit"><svg className="ed-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M12 21s-7-5.2-7-11a7 7 0 0 1 14 0c0 5.8-7 11-7 11Z" /><circle cx="12" cy="10" r="2.5" /></svg><h3>Local context</h3><p>The map turns cities, venues, and clusters into a sourcing surface.</p></div>
+            <div className="ed-benefit"><svg className="ed-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M12 3l8 4v5c0 4.5-3.2 7.6-8 9-4.8-1.4-8-4.5-8-9V7Z" /><path d="M9 12l2 2 4-4" /></svg><h3>Clear motion</h3><p>DMs, terms, and pipeline work better when they keep the original proof nearby.</p></div>
           </div>
         </div>
       </section>
 
-      <section data-reveal className="reveal mx-auto grid max-w-[92rem] border-t border-black/10 px-5 py-16 sm:px-8 lg:grid-cols-[0.95fr_1.05fr]">
-        <div className="flex min-h-[420px] items-center overflow-hidden rounded-[40px] bg-[#242424] p-10 text-white lg:min-h-[580px] lg:rounded-r-none lg:p-14">
-          <blockquote className="max-w-md text-3xl font-normal leading-tight tracking-[-0.03em] md:text-4xl" style={serifDisplay}>
-            “The best early companies are visible before they are famous. Apparent is designed for that exact window.”
-          </blockquote>
-        </div>
-        <div className="bg-[#f6f3f1] px-0 py-10 lg:px-14 lg:py-16">
-          <p className="max-w-xl text-base leading-8 text-black/60">
-            The next great companies are already shipping in public. They just aren&apos;t easy to find yet. Apparent verifies proof in one command and makes thesis searchable, then puts an AI agent on each side, so the right founder and the right investor meet in that early window instead of missing it.
-          </p>
+      {/* ESSAY */}
+      <section className="ed-band">
+        <div className="ed-inner ed-essay">
+          <blockquote>&ldquo;The best early companies are visible before they are famous. Apparent is designed for that exact window.&rdquo;</blockquote>
+          <p>The next great companies are already shipping in public. They just aren&apos;t easy to find yet. Apparent verifies proof in one command and makes thesis searchable, then puts an AI agent on each side, so the right founder and the right investor meet in that early window instead of missing it.</p>
         </div>
       </section>
 
-      <section data-reveal className="reveal mx-auto max-w-[92rem] border-t border-black/10 px-5 py-20 sm:px-8">
-        <div className="py-10 text-center">
-          <Globe2 className="mx-auto mb-10 h-6 w-6 text-[#000000]" />
-          <h2 className="mx-auto max-w-3xl text-5xl font-normal leading-none tracking-[-0.045em] md:text-7xl" style={serifDisplay}>
-            Join before the obvious round.
-          </h2>
-          <p className="mx-auto mt-8 max-w-2xl text-base leading-8 text-black/55">
-            Create the profile, declare the thesis, and let Apparent turn proof into discovery.
-          </p>
-          <div className="mx-auto mt-10 flex max-w-3xl flex-col gap-3 sm:flex-row">
-            <button
-              type="button"
-              onClick={() => navigate('/login?role=founder')}
-              className="flex-1 rounded-full bg-[#cfdaf5] px-6 py-3 text-sm font-semibold text-black hover:bg-[#bcc8ef]"
-            >
-              Create founder profile
-            </button>
-            <button
-              type="button"
-              onClick={() => navigate('/login?role=investor')}
-              className="alden-investor-cta flex-1 rounded-full bg-[#cfdaf5] px-6 py-3 text-sm font-semibold text-black transition-colors hover:bg-[#bcc8ef]"
-            >
-              Create investor profile <ArrowUpRight className="ml-1 inline h-3.5 w-3.5 align-[-2px]" />
-            </button>
+      {/* FINAL CTA */}
+      <section className="ed-sec ed-divider ed-final">
+        <div className="ed-inner">
+          <LogoIcon className="ed-mark" />
+          <h2>Join before the obvious round.</h2>
+          <p>Create the profile, declare the thesis, and let Apparent turn proof into discovery.</p>
+          <div className="ed-cta">
+            <Link className="ed-btn ed-btn-filled" to="/login?role=founder">Create founder profile</Link>
+            <Link className="ed-btn ed-btn-outline" to="/login?role=investor">Create investor profile</Link>
           </div>
         </div>
       </section>
     </main>
-  );
-};
+    <EditorialFooter />
+  </div>
+);

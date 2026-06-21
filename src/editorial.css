@@ -257,6 +257,53 @@
 .ed-proof svg { width: 13px; height: 13px; }
 .ed-proof .ed-fit { color: var(--ed-ember); }
 
+/* Terminal card */
+.ed-term { background: var(--ed-ink); border-radius: var(--ed-r-feature); overflow: hidden; }
+.ed-term .ed-bar { display: flex; align-items: center; gap: 8px; padding: 12px 14px; border-bottom: 1px solid rgba(255,255,255,.08); }
+.ed-term .ed-bar i { width: 11px; height: 11px; border-radius: 50%; background: rgba(255,255,255,.2); }
+.ed-term .ed-bar .ed-tt { margin-left: 8px; font-size: 11px; color: rgba(255,255,255,.45); font-family: var(--ed-mono); }
+.ed-term pre { margin: 0; padding: 18px; font-family: var(--ed-mono); font-size: 12.5px; line-height: 1.7; color: rgba(255,255,255,.82); white-space: pre-wrap; }
+.ed-term .ed-cmd { color: var(--ed-paper); }
+.ed-term .ed-ok { color: var(--ed-ember); }
+.ed-term .ed-mut { color: rgba(255,255,255,.4); }
+
+/* FAQ */
+.ed-faq { max-width: 820px; margin-top: clamp(28px, 4vw, 44px); }
+.ed-faq .ed-q { border-top: 1px solid var(--ed-fog); padding: 24px 0; }
+.ed-faq .ed-q:last-child { border-bottom: 1px solid var(--ed-fog); }
+.ed-faq h3 { font-size: 18px; font-weight: 500; letter-spacing: -0.01em; }
+.ed-faq p { margin-top: 10px; font-size: 14px; line-height: 1.6; color: var(--ed-graphite); max-width: 64ch; }
+
+/* Big steps (thesis) + achromatic diagrams */
+.ed-bigsteps { display: grid; gap: 0; }
+.ed-bigstep { display: grid; grid-template-columns: 0.8fr 1.2fr; gap: clamp(28px, 5vw, 64px); align-items: center; padding-block: clamp(36px, 5vw, 64px); border-top: 1px solid var(--ed-fog); }
+@media (max-width: 860px) { .ed-bigstep { grid-template-columns: 1fr; gap: 28px; } }
+.ed-bigstep .ed-n { font-size: 14px; font-weight: 600; color: var(--ed-smoke); }
+.ed-bigstep h3 { margin-top: 16px; font-weight: 300; font-size: clamp(2rem, 5vw, 56px); line-height: 1.0; letter-spacing: -0.03em; }
+.ed-bigstep p { margin-top: 18px; max-width: 40ch; font-size: 16px; line-height: 1.6; color: var(--ed-graphite); }
+.ed-figure { background: var(--ed-paper); border-radius: var(--ed-r-feature); padding: clamp(20px, 3vw, 32px); aspect-ratio: 16/10; display: flex; align-items: center; justify-content: center; }
+.ed-fin { width: 100%; }
+.ed-dlabel { font-size: 10px; letter-spacing: .14em; text-transform: uppercase; color: var(--ed-smoke); }
+.ed-dbar { height: 10px; border-radius: 3px; background: var(--ed-canvas); margin-top: 8px; }
+.ed-dbar.ink { background: var(--ed-ink); }
+.ed-dbar.ember { background: var(--ed-ember); }
+.ed-drow { display: flex; align-items: center; gap: 12px; margin-top: 12px; }
+.ed-dpill { font-size: 12px; font-weight: 500; padding: 7px 12px; border-radius: 999px; border: 1px solid var(--ed-fog); background: var(--ed-canvas); }
+.ed-dpill.ink { background: var(--ed-ink); color: var(--ed-paper); border-color: var(--ed-ink); }
+.ed-dline { flex: 1; height: 1px; background: var(--ed-ash); position: relative; }
+.ed-dline::after { content: ""; position: absolute; right: 0; top: 50%; width: 5px; height: 5px; border-radius: 50%; background: var(--ed-ember); transform: translateY(-50%); }
+.ed-dgrid { display: grid; grid-template-columns: repeat(8, 1fr); gap: 6px; width: 100%; }
+.ed-dgrid i { aspect-ratio: 1; border-radius: 2px; background: var(--ed-canvas); }
+.ed-dgrid i.on { background: var(--ed-ash); }
+.ed-dgrid i.hot { background: var(--ed-ember); }
+
+/* About splits */
+.ed-about-intro { display: grid; grid-template-columns: 0.9fr 1.1fr; gap: clamp(28px, 5vw, 56px); align-items: start; margin-top: 32px; }
+.ed-essay { display: grid; grid-template-columns: 1fr 1fr; gap: clamp(28px, 5vw, 64px); align-items: center; }
+.ed-essay blockquote { font-weight: 300; font-size: clamp(1.6rem, 3.4vw, 38px); line-height: 1.15; letter-spacing: -0.02em; max-width: 22ch; margin: 0; }
+.ed-essay p { font-size: 16px; line-height: 1.7; color: rgba(255,255,255,.6); max-width: 50ch; }
+@media (max-width: 760px) { .ed-about-intro, .ed-essay { grid-template-columns: 1fr; } }
+
 /* Final CTA */
 .ed-final { text-align: center; }
 .ed-final .ed-mark { width: 26px; height: 26px; color: var(--ed-ink); margin: 0 auto 28px; }

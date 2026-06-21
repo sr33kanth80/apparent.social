@@ -1,194 +1,123 @@
-import { ArrowUpRight } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
-import { AldenPublicNavbar } from '../components/AldenPublicNavbar';
-import { useReveal } from '../lib/useReveal';
+import { Link } from 'react-router-dom';
+import { EditorialNavbar } from '../components/editorial/EditorialNavbar';
+import { EditorialFooter } from '../components/editorial/EditorialFooter';
 
-const serifDisplay = {
-  fontFamily: "'Source Serif 4', ui-serif, Georgia, 'Times New Roman', serif",
-};
+const HOT = new Set([10, 11, 18, 19]);
+const ON = new Set([3, 5, 6, 13, 14, 21, 22, 25, 28, 30]);
 
-type IllustrationVariant = 'proof' | 'fit' | 'radar' | 'outreach' | 'dealFlow';
-
-const illustrations: Record<IllustrationVariant, { src: string; alt: string }> = {
-  proof: {
-    src: '/assets/illustrations/our-thesis-proof-profile.png',
-    alt: 'Proof Profile illustration showing launch, traction, customers, product, and ask proof blocks.',
-  },
-  fit: {
-    src: '/assets/illustrations/our-thesis-thesis-fit.png',
-    alt: 'Thesis Fit illustration showing founder proof matched with investor thesis.',
-  },
-  radar: {
-    src: '/assets/illustrations/our-thesis-builder-radar.png',
-    alt: 'Builder Radar illustration showing a heat map of emerging founder investor fit.',
-  },
-  outreach: {
-    src: '/assets/illustrations/our-thesis-smart-outreach.png',
-    alt: 'Smart Outreach illustration showing proof and context becoming a personalized draft.',
-  },
-  dealFlow: {
-    src: '/assets/illustrations/our-thesis-deal-flow.png',
-    alt: 'Deal Flow illustration showing new, review, shortlist, context, priority, and thesis fit.',
-  },
-};
-
-const walkthrough: Array<{
-  number: string;
-  title: string;
-  text: string;
-  variant: IllustrationVariant;
-}> = [
-  {
-    number: '01',
-    title: 'Create a Proof Profile',
-    text: 'Founders put the useful evidence in one place: launch, traction, customers, product, GitHub, pitch, and the current ask.',
-    variant: 'proof',
-  },
-  {
-    number: '02',
-    title: 'Match it to thesis',
-    text: 'Investors define what they actually fund. Apparent compares that thesis to founder proof, stage, category, geography, and timing.',
-    variant: 'fit',
-  },
-  {
-    number: '03',
-    title: 'See where builders are moving',
-    text: 'Builder Radar turns founder density and investor context into a map, so discovery is grounded in place instead of noise.',
-    variant: 'radar',
-  },
-  {
-    number: '04',
-    title: 'Start outreach with context',
-    text: 'The agent drafts from the actual reason for fit, so messages feel specific, useful, and tied to proof.',
-    variant: 'outreach',
-  },
-  {
-    number: '05',
-    title: 'Move fit into deal flow',
-    text: 'Investors can save, review, prioritize, and follow up with builders without losing the proof that made the match matter.',
-    variant: 'dealFlow',
-  },
-];
-
-const ThesisIllustration = ({ variant, priority = false }: { variant: IllustrationVariant; priority?: boolean }) => {
-  const illustration = illustrations[variant];
-
-  return (
-    <figure className="overflow-hidden rounded-[30px] border border-black/5 bg-white p-2 shadow-none">
-      <img
-        src={illustration.src}
-        alt={illustration.alt}
-        className="aspect-video h-auto w-full rounded-[24px] object-contain"
-        loading={priority ? 'eager' : 'lazy'}
-        decoding={priority ? 'sync' : 'async'}
-      />
-    </figure>
-  );
-};
-
-export const OurThesis = () => {
-  const navigate = useNavigate();
-  useReveal();
-
-  return (
-    <main className="monad monad-page min-h-screen overflow-x-hidden bg-[#f6f3f1] text-black">
-      <AldenPublicNavbar />
-
-      <section data-reveal className="reveal mx-auto grid max-w-[92rem] gap-8 px-5 pb-10 pt-12 sm:px-8 md:pt-16 lg:grid-cols-[0.82fr_1.18fr] lg:items-center">
-        <div>
-          <h1
-            className="max-w-[52rem] text-[3.2rem] font-normal leading-[0.9] tracking-[-0.055em] sm:text-[5.4rem] md:text-[6.4rem]"
-            style={serifDisplay}
-          >
-            How Apparent works.
-          </h1>
-          <p className="mt-6 max-w-2xl text-lg leading-8 text-black/65 md:text-xl">
-            Apparent turns founder proof and investor thesis into a usable match: profile, fit reason, map context,
-            outreach, and deal flow.
-          </p>
-          <div className="mt-7 flex flex-col gap-3 sm:flex-row">
-            <button
-              type="button"
-              onClick={() => navigate('/login?role=founder')}
-              className="rounded-full bg-[#cfdaf5] px-6 py-3 text-sm font-semibold text-black transition-colors hover:bg-[#bcc8ef]"
-            >
-              I am a founder
-            </button>
-            <button
-              type="button"
-              onClick={() => navigate('/login?role=investor')}
-              className="alden-investor-cta rounded-full border border-black/10 bg-white px-6 py-3 text-sm font-semibold text-black transition-colors"
-            >
-              I am an investor
-            </button>
-          </div>
-        </div>
-
-        <ThesisIllustration variant="proof" priority />
-      </section>
-
-      <section data-reveal className="reveal mx-auto max-w-[92rem] border-t border-black/10 px-5 py-10 sm:px-8">
-        <div className="max-w-4xl">
-          <h2 className="text-5xl font-normal leading-none tracking-[-0.045em] md:text-7xl" style={serifDisplay}>
-            Five pieces, one fundraising workflow.
-          </h2>
-          <p className="mt-6 max-w-2xl text-base leading-7 text-black/60">
-            The product is not just a directory. Apparent keeps the evidence, thesis, geography, message, and pipeline
-            connected from the first match to the next step.
-          </p>
+export const OurThesis = () => (
+  <div className="ed-page">
+    <EditorialNavbar />
+    <main>
+      {/* HERO */}
+      <section className="ed-subhero ed-inner">
+        <h1 className="ed-display">How Apparent <em>works.</em></h1>
+        <p className="ed-lede">Apparent turns founder proof and investor thesis into a usable match: profile, fit reason, map context, outreach, and deal flow.</p>
+        <div className="ed-cta">
+          <Link className="ed-btn ed-btn-filled" to="/login?role=founder">I&apos;m a founder</Link>
+          <Link className="ed-btn ed-btn-outline" to="/login?role=investor">I&apos;m an investor</Link>
         </div>
       </section>
 
-      <section className="mx-auto max-w-[92rem] px-5 pb-10 sm:px-8">
-        <div className="grid gap-5">
-          {walkthrough.map((step, index) => (
-            <article
-              key={step.title}
-              data-reveal
-              className="reveal grid gap-6 border-t border-black/10 py-8 lg:grid-cols-[0.72fr_1.28fr] lg:items-center lg:gap-10"
-              style={{ transitionDelay: `${Math.min(index * 70, 240)}ms` }}
-            >
-              <div>
-                <span className="text-sm font-semibold text-black/35">{step.number}</span>
-                <h3 className="mt-4 text-4xl font-normal leading-none tracking-[-0.04em] md:text-6xl" style={serifDisplay}>
-                  {step.title}
-                </h3>
-                <p className="mt-5 max-w-xl text-base leading-7 text-black/60">{step.text}</p>
+      {/* INTRO */}
+      <section className="ed-sec ed-divider" style={{ paddingBlock: 'clamp(40px,6vw,72px)' }}>
+        <div className="ed-inner">
+          <h2 className="ed-sec-title">Five pieces, one fundraising workflow.</h2>
+          <p className="ed-lead" style={{ marginTop: 20, maxWidth: '52ch' }}>The product is not just a directory. Apparent keeps the evidence, thesis, geography, message, and pipeline connected from the first match to the next step.</p>
+        </div>
+      </section>
+
+      {/* BIG STEPS */}
+      <section className="ed-sec" style={{ paddingTop: 0 }}>
+        <div className="ed-inner ed-bigsteps">
+          <article className="ed-bigstep">
+            <div>
+              <span className="ed-n">01</span>
+              <h3>Create a Proof Profile</h3>
+              <p>Founders put the useful evidence in one place: launch, traction, customers, product, GitHub, pitch, and the current ask.</p>
+            </div>
+            <div className="ed-figure"><div className="ed-fin">
+              <span className="ed-dlabel">Proof profile</span>
+              <div className="ed-dbar ink" style={{ width: '72%' }} />
+              <div className="ed-dbar" style={{ width: '90%' }} />
+              <div className="ed-dbar" style={{ width: '58%' }} />
+              <div className="ed-dbar ember" style={{ width: '40%' }} />
+              <div className="ed-dbar" style={{ width: '80%' }} />
+              <div className="ed-drow"><span className="ed-dpill ink">GitHub</span><span className="ed-dpill">Launch</span><span className="ed-dpill">Deck</span><span className="ed-dpill">Ask</span></div>
+            </div></div>
+          </article>
+
+          <article className="ed-bigstep">
+            <div>
+              <span className="ed-n">02</span>
+              <h3>Match it to thesis</h3>
+              <p>Investors define what they actually fund. Apparent compares that thesis to founder proof, stage, category, geography, and timing.</p>
+            </div>
+            <div className="ed-figure"><div className="ed-fin">
+              <div className="ed-drow"><span className="ed-dpill">Founder proof</span><span className="ed-dline" /><span className="ed-dpill ink">Investor thesis</span></div>
+              <div className="ed-drow"><span className="ed-dpill">Stage</span><span className="ed-dline" /><span className="ed-dpill ink">Check fit</span></div>
+              <div className="ed-drow"><span className="ed-dpill">Sector</span><span className="ed-dline" /><span className="ed-dpill ink">Mandate</span></div>
+              <div style={{ marginTop: 18 }}><span className="ed-dlabel">Thesis match</span><div style={{ fontWeight: 300, fontSize: 42, letterSpacing: '-.03em', color: 'var(--ed-ember)', lineHeight: 1 }}>92%</div></div>
+            </div></div>
+          </article>
+
+          <article className="ed-bigstep">
+            <div>
+              <span className="ed-n">03</span>
+              <h3>See where builders are moving</h3>
+              <p>Builder Radar turns founder density and investor context into a map, so discovery is grounded in place instead of noise.</p>
+            </div>
+            <div className="ed-figure"><div className="ed-fin">
+              <span className="ed-dlabel" style={{ display: 'block', marginBottom: 10 }}>Builder density</span>
+              <div className="ed-dgrid">{Array.from({ length: 32 }).map((_, i) => (<i key={i} className={HOT.has(i) ? 'hot' : ON.has(i) ? 'on' : undefined} />))}</div>
+            </div></div>
+          </article>
+
+          <article className="ed-bigstep">
+            <div>
+              <span className="ed-n">04</span>
+              <h3>Start outreach with context</h3>
+              <p>The agent drafts from the actual reason for fit, so messages feel specific, useful, and tied to proof.</p>
+            </div>
+            <div className="ed-figure"><div className="ed-fin">
+              <span className="ed-dlabel">Drafted outreach</span>
+              <div className="ed-dbar" style={{ width: '96%', marginTop: 12 }} />
+              <div className="ed-dbar" style={{ width: '88%' }} />
+              <div className="ed-dbar" style={{ width: '92%' }} />
+              <div className="ed-dbar" style={{ width: '64%' }} />
+              <div className="ed-drow"><span className="ed-dpill ink">Send</span><span className="ed-dpill">Edit</span><span className="ed-dlabel" style={{ marginLeft: 'auto' }}>From your thesis and their proof</span></div>
+            </div></div>
+          </article>
+
+          <article className="ed-bigstep">
+            <div>
+              <span className="ed-n">05</span>
+              <h3>Move fit into deal flow</h3>
+              <p>Investors can save, review, prioritize, and follow up with builders without losing the proof that made the match matter.</p>
+            </div>
+            <div className="ed-figure"><div className="ed-fin">
+              <div className="ed-kanban">
+                <div className="ed-kcol"><div className="ed-dlabel">New</div><div className="ed-dbar" style={{ width: '100%', marginTop: 8 }} /><div className="ed-dbar" style={{ width: '100%' }} /></div>
+                <div className="ed-kcol"><div className="ed-dlabel">Review</div><div className="ed-dbar ink" style={{ width: '100%', marginTop: 8 }} /></div>
+                <div className="ed-kcol"><div className="ed-dlabel">Shortlist</div><div className="ed-dbar ember" style={{ width: '100%', marginTop: 8 }} /></div>
               </div>
-              <ThesisIllustration variant={step.variant} />
-            </article>
-          ))}
+            </div></div>
+          </article>
         </div>
       </section>
 
-      <section data-reveal className="reveal mx-auto max-w-[92rem] border-t border-black/10 px-5 py-12 sm:px-8">
-        <div className="grid gap-8 rounded-[34px] border border-black/5 bg-white p-7 sm:p-9 lg:grid-cols-[1fr_auto] lg:items-center">
-          <div>
-            <h2 className="max-w-3xl text-4xl font-normal leading-tight tracking-[-0.04em] md:text-6xl" style={serifDisplay}>
-              Show the work. Declare the thesis. Let Apparent connect the fit.
-            </h2>
-            <p className="mt-5 max-w-2xl text-base leading-7 text-black/60">
-              Start with the side of the marketplace you are on. Apparent keeps the rest of the workflow attached.
-            </p>
-          </div>
-          <div className="flex flex-col gap-3 sm:flex-row lg:flex-col xl:flex-row">
-            <button
-              type="button"
-              onClick={() => navigate('/login?role=founder')}
-              className="h-fit rounded-full bg-[#cfdaf5] px-6 py-3 text-sm font-semibold text-black transition-colors hover:bg-[#bcc8ef]"
-            >
-              Start as founder <ArrowUpRight className="ml-1 inline h-3.5 w-3.5 align-[-2px]" />
-            </button>
-            <button
-              type="button"
-              onClick={() => navigate('/login?role=investor')}
-              className="alden-investor-cta h-fit rounded-full px-6 py-3 text-sm font-semibold text-black transition-colors"
-            >
-              Start as investor <ArrowUpRight className="ml-1 inline h-3.5 w-3.5 align-[-2px]" />
-            </button>
+      {/* CLOSING */}
+      <section className="ed-band">
+        <div className="ed-inner">
+          <h2>Show the work. Declare the thesis. Let Apparent connect the fit.</h2>
+          <p>Start with the side of the marketplace you are on. Apparent keeps the rest of the workflow attached.</p>
+          <div className="ed-cta" style={{ marginTop: 32 }}>
+            <Link className="ed-btn ed-btn-filled" style={{ background: 'var(--ed-paper)', color: 'var(--ed-ink)' }} to="/login?role=founder">Start as founder</Link>
+            <Link className="ed-btn ed-btn-outline" style={{ borderColor: 'var(--ed-paper)', color: 'var(--ed-paper)' }} to="/login?role=investor">Start as investor</Link>
           </div>
         </div>
       </section>
     </main>
-  );
-};
+    <EditorialFooter />
+  </div>
+);

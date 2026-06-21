@@ -94,35 +94,9 @@ function App() {
               <Home />
             }
           />
-          <Route
-            path="/our-thesis"
-            element={
-              <>
-                <OurThesis />
-                <Footer />
-              </>
-            }
-          />
-          <Route
-            path="/for-founders"
-            element={
-              <>
-                <AldenPublicNavbar />
-                <ForFounders />
-                <Footer />
-              </>
-            }
-          />
-          <Route
-            path="/for-vcs"
-            element={
-              <>
-                <AldenPublicNavbar />
-                <ForVCs />
-                <Footer />
-              </>
-            }
-          />
+          <Route path="/our-thesis" element={<OurThesis />} />
+          <Route path="/for-founders" element={<ForFounders />} />
+          <Route path="/for-vcs" element={<ForVCs />} />
           <Route
             path="/claim/:signalId"
             element={
@@ -152,26 +126,8 @@ function App() {
               </div>
             }
           />
-          <Route
-            path="/about"
-            element={
-              <>
-                <AldenPublicNavbar />
-                <AboutUs />
-                <Footer />
-              </>
-            }
-          />
-          <Route
-            path="/resources"
-            element={
-              <>
-                <AldenPublicNavbar />
-                <Resources />
-                <Footer />
-              </>
-            }
-          />
+          <Route path="/about" element={<AboutUs />} />
+          <Route path="/resources" element={<Resources />} />
           <Route
             path="/blog"
             element={
