@@ -199,10 +199,135 @@
 .ed-chip { font-size: 12px; font-weight: 500; padding: 8px 12px; border-radius: 999px; background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.10); }
 .ed-chip b { color: rgba(255,255,255,.55); font-weight: 500; }
 .ed-thesis-foot { margin-top: 16px; font-size: 12px; color: rgba(255,255,255,.5); display: flex; align-items: center; gap: 8px; }
-.ed-density { display: grid; grid-template-columns: repeat(12, 1fr); gap: 7px; }
-.ed-density i { aspect-ratio: 1; border-radius: 2px; background: rgba(255,255,255,.07); }
-.ed-density i.on { background: rgba(255,255,255,.45); }
-.ed-density i.hot { background: var(--ed-ember); }
+.ed-density-map {
+  position: relative;
+  min-height: 190px;
+  overflow: hidden;
+  border: 1px solid rgba(255,255,255,.1);
+  border-radius: var(--ed-r);
+  background: #1f2424;
+}
+.ed-density-map::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 2;
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.08);
+  background: linear-gradient(180deg, rgba(31,31,31,.02), rgba(31,31,31,.2));
+}
+.ed-density-map-canvas {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+}
+.ed-density-map-canvas .leaflet-container {
+  width: 100%;
+  height: 100%;
+  background: #202625;
+}
+.ed-density-map-canvas .leaflet-tile {
+  filter: grayscale(1) saturate(.6) contrast(.95) brightness(.66);
+}
+.ed-density-map-canvas .leaflet-pane,
+.ed-density-map-canvas .leaflet-top,
+.ed-density-map-canvas .leaflet-bottom {
+  z-index: 1;
+}
+.ed-density-marker-shell {
+  background: transparent;
+  border: 0;
+}
+.ed-density-place-pin {
+  position: relative;
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  border-radius: 50% 50% 50% 4px;
+  background: var(--ed-ember);
+  box-shadow: 0 0 0 7px rgba(250,93,41,.2), 0 10px 24px rgba(0,0,0,.28);
+  transform: rotate(-45deg);
+}
+.ed-density-place-pin span {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--ed-paper);
+  transform: rotate(45deg);
+}
+.ed-density-builder-marker {
+  display: inline-grid;
+  grid-template-columns: 24px auto;
+  grid-template-rows: auto auto;
+  column-gap: 7px;
+  align-items: center;
+  min-width: 96px;
+  border: 1px solid rgba(255,255,255,.16);
+  border-radius: 9px;
+  background: rgba(18,31,43,.9);
+  color: var(--ed-paper);
+  padding: 5px 7px 5px 5px;
+  box-shadow: 0 12px 28px rgba(0,0,0,.28);
+}
+.ed-density-builder-marker span {
+  grid-row: 1 / span 2;
+  width: 24px;
+  height: 24px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--ed-ember);
+  color: var(--ed-paper);
+  font-size: 9px;
+  font-weight: 700;
+}
+.ed-density-builder-marker b {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 10px;
+  font-weight: 650;
+  line-height: 1.1;
+}
+.ed-density-builder-marker small {
+  font-size: 9px;
+  line-height: 1.1;
+  color: rgba(255,255,255,.52);
+}
+.ed-density-map-chip {
+  position: absolute;
+  left: 12px;
+  top: 12px;
+  z-index: 2;
+  border: 1px solid rgba(255,255,255,.16);
+  border-radius: var(--ed-r);
+  background: rgba(17,33,47,.9);
+  padding: 9px 10px;
+  box-shadow: 0 12px 32px rgba(0,0,0,.18);
+}
+.ed-density-map-chip b {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+}
+.ed-density-map-chip span {
+  display: block;
+  margin-top: 2px;
+  font-size: 10px;
+  color: rgba(255,255,255,.46);
+}
+@media (max-width: 560px) {
+  .ed-density-builder-marker {
+    min-width: auto;
+    grid-template-columns: 24px;
+    padding: 5px;
+  }
+  .ed-density-builder-marker b,
+  .ed-density-builder-marker small {
+    display: none;
+  }
+}
 .ed-kanban { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
 .ed-kcol .ed-kt { font-size: 9px; letter-spacing: .14em; text-transform: uppercase; color: rgba(255,255,255,.4); margin-bottom: 8px; }
 .ed-kcard { font-size: 12px; font-weight: 500; padding: 10px; border-radius: var(--ed-r); background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.08); margin-bottom: 8px; }

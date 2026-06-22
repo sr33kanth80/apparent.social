@@ -1,4 +1,6 @@
-import { useEffect, useState } from 'react';
+import L, { type Map as LeafletMap } from 'leaflet';
+import 'leaflet/dist/leaflet.css';
+import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { EditorialNavbar } from '../components/editorial/EditorialNavbar';
 import { EditorialFooter } from '../components/editorial/EditorialFooter';
@@ -15,8 +17,85 @@ const META: Record<Tab, { n: string; label: string; note: string }> = {
   pipeline: { n: '04', label: 'Move saved builders through a clean deal-flow board.', note: 'Sourced, meeting, diligence, partner review. The agent drafts the first outreach for you.' },
 };
 
-const HOT = new Set([27, 28, 39, 40]);
-const ON = new Set([5, 7, 14, 19, 22, 33, 45, 51, 53, 58, 62, 66, 70]);
+const DENSITY_CENTER: [number, number] = [37.7767, -122.4242];
+const DENSITY_TILE_URL =
+  (import.meta.env.VITE_NETWORK_TILE_URL as string | undefined) ||
+  'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
+
+const DENSITY_BUILDERS = [
+  { lat: 37.7779, lng: -122.4231, initials: 'AK', company: 'Edge runtime', meta: '0.2 mi' },
+  { lat: 37.7718, lng: -122.4265, initials: 'NL', company: 'Sync engine', meta: '0.5 mi' },
+  { lat: 37.7822, lng: -122.4313, initials: 'RS', company: 'Eval harness', meta: '0.8 mi' },
+  { lat: 37.7691, lng: -122.4146, initials: 'VM', company: 'Vector memory', meta: '1.0 mi' },
+  { lat: 37.7856, lng: -122.4148, initials: 'IO', company: 'Infra ops', meta: '1.3 mi' },
+] as const;
+
+const DensityMapPreview = () => {
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const mapRef = useRef<LeafletMap | null>(null);
+
+  useEffect(() => {
+    if (!containerRef.current || mapRef.current) return;
+
+    const map = L.map(containerRef.current, {
+      center: DENSITY_CENTER,
+      zoom: 14,
+      zoomControl: false,
+      attributionControl: false,
+      dragging: false,
+      scrollWheelZoom: false,
+      doubleClickZoom: false,
+      touchZoom: false,
+      boxZoom: false,
+      keyboard: false,
+    });
+
+    L.tileLayer(DENSITY_TILE_URL, {
+      maxZoom: 19,
+      attribution: '&copy; OpenStreetMap contributors',
+    }).addTo(map);
+
+    L.circle(DENSITY_CENTER, {
+      radius: 1400,
+      color: '#fa5d29',
+      weight: 1,
+      fillColor: '#fa5d29',
+      fillOpacity: 0.12,
+    }).addTo(map);
+
+    L.marker(DENSITY_CENTER, {
+      interactive: false,
+      icon: L.divIcon({
+        html: '<div class="ed-density-place-pin"><span></span></div>',
+        className: 'ed-density-marker-shell',
+        iconSize: [34, 42],
+        iconAnchor: [17, 38],
+      }),
+    }).addTo(map);
+
+    DENSITY_BUILDERS.forEach((builder) => {
+      L.marker([builder.lat, builder.lng], {
+        interactive: false,
+        icon: L.divIcon({
+          html: `<div class="ed-density-builder-marker"><span>${builder.initials}</span><b>${builder.company}</b><small>${builder.meta}</small></div>`,
+          className: 'ed-density-marker-shell',
+          iconSize: [104, 34],
+          iconAnchor: [16, 17],
+        }),
+      }).addTo(map);
+    });
+
+    mapRef.current = map;
+    window.setTimeout(() => map.invalidateSize({ animate: false }), 0);
+
+    return () => {
+      map.remove();
+      mapRef.current = null;
+    };
+  }, []);
+
+  return <div ref={containerRef} className="ed-density-map-canvas" aria-hidden="true" />;
+};
 
 const VC_LOGOS = [
   ['Accel', 'www.accel.com'],
@@ -111,8 +190,14 @@ const Panel = ({ tab }: { tab: Tab }) => {
     case 'density':
       return (
         <div className="ed-mock">
-          <div className="ed-mock-head"><span className="ed-t">Builder density · SF</span><span className="ed-live"><i />18 nearby</span></div>
-          <div className="ed-density">{Array.from({ length: 72 }).map((_, i) => (<i key={i} className={HOT.has(i) ? 'hot' : ON.has(i) ? 'on' : undefined} />))}</div>
+          <div className="ed-mock-head"><span className="ed-t">Builder density - SF</span><span className="ed-live"><i />18 nearby</span></div>
+          <div className="ed-density-map" role="img" aria-label="Map of builder density around Hayes Valley in San Francisco">
+            <DensityMapPreview />
+            <div className="ed-density-map-chip">
+              <b>Hayes Valley</b>
+              <span>focus place</span>
+            </div>
+          </div>
           <div className="ed-thesis-foot">Drop a place to see Apparent builders working near your focus.</div>
         </div>
       );
