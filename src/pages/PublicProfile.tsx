@@ -53,14 +53,14 @@ const Avatar = ({ src, name, size = 'lg', bg = 'var(--ed-ink)' }: { src?: string
 
 const Tag = ({ children, accent = false }: { children: React.ReactNode; accent?: boolean }) => (
   <span
-    className={`rounded-full px-3 py-1.5 text-xs font-semibold ${accent ? 'bg-[var(--ed-ink)] text-white' : 'bg-[var(--ed-canvas)] text-black'}`}
+    className={`ap-profile-tag${accent ? ' ap-profile-tag--accent' : ''}`}
   >
     {children}
   </span>
 );
 
 const SectionLabel = ({ children }: { children: React.ReactNode }) => (
-  <p className="mb-8 text-sm font-semibold uppercase tracking-[0.12em] text-[var(--ed-ink)]">{children}</p>
+  <p className="ap-profile-label">{children}</p>
 );
 
 // ─── messaging ──────────────────────────────────────────────────────────────
@@ -70,7 +70,7 @@ const firstNameOf = (name: string) => name.split(/\s+/)[0] || 'them';
 // Primary "Message" button for the hero. DM is gated to logged-in viewers.
 const MessageButton = ({ viewer, name, onMessage }: { viewer: AppUser | null; name: string; onMessage: () => void }) => {
   const cls =
-    'inline-flex items-center gap-1.5 rounded-full bg-[var(--ed-ink)] px-5 py-2.5 text-sm font-semibold text-[var(--ed-paper)] transition hover:opacity-90';
+    'ed-btn ed-btn-filled ap-profile-action';
   return viewer ? (
     <button type="button" onClick={onMessage} className={cls}>
       <MessageSquare className="h-4 w-4" /> Message {firstNameOf(name)}
@@ -126,7 +126,7 @@ const ShareButton = ({ username, name }: { username: string; name: string }) => 
 
   const xUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(url)}`;
   const liUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}`;
-  const itemCls = 'flex w-full items-center gap-2 rounded-xl px-3 py-2 text-sm text-black transition-colors hover:bg-[var(--ed-canvas)]';
+  const itemCls = 'flex w-full items-center gap-2 rounded-[8px] px-3 py-2 text-sm text-[var(--ed-ink)] transition-colors hover:bg-[var(--ed-canvas)]';
 
   return (
     <div className="inline-block">
@@ -134,7 +134,7 @@ const ShareButton = ({ username, name }: { username: string; name: string }) => 
         ref={btnRef}
         type="button"
         onClick={toggle}
-        className="inline-flex items-center gap-1.5 rounded-full border border-black/15 bg-white px-5 py-2.5 text-sm font-semibold text-black transition hover:bg-black/5"
+        className="ed-btn ed-btn-outline ap-profile-action"
       >
         <Share2 className="h-4 w-4" /> Share
       </button>
@@ -143,7 +143,7 @@ const ShareButton = ({ username, name }: { username: string; name: string }) => 
           <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
           {/* Fixed so it isn't clipped by the profile card's overflow-hidden. */}
           <div
-            className="fixed z-50 w-60 rounded-2xl border border-black/10 bg-white p-2 shadow-xl"
+            className="fixed z-50 w-60 rounded-[14px] border border-black/10 bg-white p-2 shadow-xl"
             style={{ top: pos.top, left: pos.left }}
           >
             <button type="button" onClick={copy} className={itemCls}>
@@ -187,9 +187,9 @@ const ConnectSection = ({
   if (viewer) return null;
 
   const fname = firstNameOf(name);
-  const card = tone === 'dark' ? 'bg-[var(--ed-ink)] text-white' : 'bg-[var(--ed-canvas)] text-black';
-  const eyebrow = tone === 'dark' ? 'text-white/60' : 'text-[var(--ed-ink)]';
-  const sub = tone === 'dark' ? 'text-white/70' : 'text-black/60';
+  const card = tone === 'dark' ? 'ap-profile-connect--dark' : 'ap-profile-connect--light';
+  const eyebrow = tone === 'dark' ? 'text-white/60' : 'text-[var(--ed-smoke)]';
+  const sub = tone === 'dark' ? 'text-white/70' : 'text-[var(--ed-graphite)]';
   const primary =
     tone === 'dark'
       ? 'bg-white text-[var(--ed-ink)] hover:bg-[var(--ed-canvas)]'
@@ -198,14 +198,14 @@ const ConnectSection = ({
     tone === 'dark' ? 'border-white/30 text-white hover:bg-white/10' : 'border-black/20 text-black hover:bg-black/5';
 
   return (
-    <section className="mx-auto max-w-[92rem] border-t border-black/10 px-5 py-16 sm:px-8">
-      <div className={`rounded-[14px] px-8 py-10 md:flex md:items-center md:justify-between ${card}`}>
+    <section className="ap-profile-connect-wrap ed-inner">
+      <div className={`ap-profile-connect ${card}`}>
         <div>
-          <p className={`text-sm font-semibold uppercase tracking-[0.12em] ${eyebrow}`}>{viewer ? 'On Apparent' : 'Connect on Apparent'}</p>
-          <h2 className="mt-3 max-w-xl text-3xl font-normal leading-tight tracking-[-0.03em]" style={serif}>
+          <p className={`ap-profile-connect-label ${eyebrow}`}>{viewer ? 'On Apparent' : 'Connect on Apparent'}</p>
+          <h2 className="ap-profile-connect-title" style={serif}>
             {viewer ? `Reach out to ${fname}` : `Want to reach ${fname}?`}
           </h2>
-          <p className={`mt-3 max-w-lg text-sm leading-7 ${sub}`}>
+          <p className={`ap-profile-connect-copy ${sub}`}>
             {viewer
               ? `Send ${fname} a direct message on Apparent.`
               : `Sign in to message ${fname} directly and follow their work on Apparent.`}
@@ -216,16 +216,16 @@ const ConnectSection = ({
             <button
               type="button"
               onClick={onMessage}
-              className={`inline-flex items-center justify-center gap-1.5 rounded-full px-6 py-3 text-sm font-semibold transition ${primary}`}
+              className={`ed-btn inline-flex items-center justify-center gap-1.5 ${primary}`}
             >
               <MessageSquare className="h-4 w-4" /> Message {fname}
             </button>
           ) : (
             <>
-              <Link to="/login" className={`rounded-full px-6 py-3 text-center text-sm font-semibold transition ${primary}`}>
+              <Link to="/login" className={`ed-btn justify-center text-center ${primary}`}>
                 Log in to message
               </Link>
-              <Link to="/login" className={`rounded-full border px-6 py-3 text-center text-sm font-semibold transition ${secondary}`}>
+              <Link to="/login" className={`ed-btn justify-center text-center ${secondary}`}>
                 Create a free account
               </Link>
             </>
@@ -271,12 +271,12 @@ const ProfileMessageModal = ({
 
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 px-4" onClick={onClose}>
-      <div className="w-full max-w-md rounded-[14px] bg-white p-6 shadow-2xl" onClick={(event) => event.stopPropagation()}>
+      <div className="w-full max-w-md rounded-[14px] border border-[var(--ed-fog)] bg-white p-6 shadow-[0_24px_80px_rgba(34,34,34,0.16)]" onClick={(event) => event.stopPropagation()}>
         {status === 'sent' ? (
           <div className="py-6 text-center">
             <p className="text-lg font-semibold" style={serif}>Message sent</p>
             <p className="mt-2 text-sm text-black/60">Your message to {target.name} is on its way.</p>
-            <button type="button" onClick={onClose} className="mt-6 rounded-full bg-[var(--ed-canvas)] px-6 py-2.5 text-sm font-semibold text-black transition hover:bg-[var(--ed-fog)]">
+            <button type="button" onClick={onClose} className="ed-btn ed-btn-filled mt-6">
               Done
             </button>
           </div>
@@ -292,23 +292,23 @@ const ProfileMessageModal = ({
               value={subject}
               onChange={(event) => setSubject(event.target.value)}
               placeholder="Subject (optional)"
-              className="mt-4 h-10 w-full rounded-xl border border-black/10 px-3 text-sm outline-none focus:border-black/30"
+              className="mt-4 h-10 w-full rounded-[8px] border border-black/10 bg-[var(--ed-canvas)] px-3 text-sm outline-none focus:border-black/30"
             />
             <textarea
               value={body}
               onChange={(event) => setBody(event.target.value)}
               placeholder={`Write to ${target.name}…`}
-              className="mt-3 min-h-32 w-full resize-none rounded-xl border border-black/10 px-3 py-2 text-sm leading-relaxed outline-none focus:border-black/30"
+              className="mt-3 min-h-32 w-full resize-none rounded-[8px] border border-black/10 bg-[var(--ed-canvas)] px-3 py-2 text-sm leading-relaxed outline-none focus:border-black/30"
             />
             <div className="mt-4 flex justify-end gap-2">
-              <button type="button" onClick={onClose} className="rounded-full border border-black/10 px-4 py-2 text-sm font-semibold hover:bg-[var(--ed-canvas)]">
+              <button type="button" onClick={onClose} className="ed-btn ed-btn-outline">
                 Cancel
               </button>
               <button
                 type="button"
                 onClick={send}
                 disabled={status === 'sending' || !body.trim()}
-                className="inline-flex items-center gap-1.5 rounded-full bg-[var(--ed-canvas)] px-5 py-2 text-sm font-semibold text-black transition hover:bg-[var(--ed-fog)] disabled:opacity-50"
+                className="ed-btn ed-btn-filled disabled:cursor-not-allowed disabled:opacity-50"
               >
                 <Send className="h-3.5 w-3.5" /> {status === 'sending' ? 'Sending…' : 'Send'}
               </button>
@@ -437,7 +437,7 @@ const FounderHero = ({
       })
     : [];
 
-  const realStarsLabel = ghStats ? `${compact(ghStats.stars)} stars · ${compact(ghStats.publicRepos)} repos` : 'GitHub';
+  const realStarsLabel = ghStats ? `${compact(ghStats.stars)} stars / ${compact(ghStats.publicRepos)} repos` : 'GitHub';
   const headlineCount = `${compact(calendar?.totalContributions ?? 0)} contributions`;
 
   const name = profile.profileName || profile.username || 'Apparent Builder';
@@ -445,7 +445,7 @@ const FounderHero = ({
   const fundraisingPill =
     profile.fundraisingStatus === 'raising'
       ? `Raising${profile.raisingRound ? ` ${profile.raisingRound}` : ''}${
-          profile.raisingAmount ? ` · ${profile.raisingAmount}` : ''
+          profile.raisingAmount ? ` / ${profile.raisingAmount}` : ''
         }`
       : profile.fundraisingStatus === 'open'
         ? 'Open to investor intros'
@@ -476,11 +476,11 @@ const FounderHero = ({
   ].filter(Boolean) as { label: string; href: string; icon: React.ElementType }[];
 
   return (
-    <section className="mx-auto max-w-[64rem] px-5 pt-12 sm:px-8 md:pt-16">
+    <section className="ap-profile-hero ed-inner">
       {/* Action bar — Message + Share — sits inline above the editorial flow.
           No dark card wrapper anymore; everything below flows on the cream
           page background with hairline separators between sections. */}
-      <div className="mb-8 flex flex-wrap items-center justify-end gap-2">
+      <div className="ap-profile-actions">
         <MessageButton viewer={viewer} name={name} onMessage={onMessage} />
         {profile.shareable !== false && (
           <ShareButton username={profile.username} name={name} />
@@ -488,28 +488,28 @@ const FounderHero = ({
       </div>
 
       {/* ─ Top pill row ─ */}
-      <div className="flex flex-wrap items-center gap-2">
-        <span className="rounded-full bg-[var(--ed-canvas)] px-3 py-1 text-xs font-semibold text-[var(--ed-ink)]">
+      <div className="ap-profile-kicker">
+        <span className="ap-profile-tag">
           Founder on Apparent
         </span>
         {fundraisingPill && (
-          <span className="rounded-full bg-[var(--ed-ink)] px-3 py-1 text-xs font-semibold text-white">
+          <span className="ap-profile-tag ap-profile-tag--accent">
             {fundraisingPill}
           </span>
         )}
         {profile.location && (
-          <span className="inline-flex items-center gap-1 text-xs font-semibold text-black/60">
+          <span className="ap-profile-location">
             <MapPin className="h-3.5 w-3.5" /> {profile.location}
           </span>
         )}
       </div>
 
       {/* ─ Header row ─ */}
-      <div className="mt-6 flex flex-wrap items-center gap-4">
+      <div className="ap-profile-identity">
         <VerifiedAvatar src={profile.profilePhotoUrl} name={name} size="sm" bg="var(--ed-ink)" verified={profile.githubVerified} />
         <div className="min-w-0">
-          <p className="truncate text-2xl font-normal tracking-[-0.02em]" style={serif}>{name}</p>
-          <p className="mt-0.5 text-xs font-semibold text-black/55">@{profile.username}</p>
+          <h1 className="ap-profile-name" style={serif}>{name}</h1>
+          <p className="ap-profile-handle">@{profile.username}</p>
         </div>
         {profile.githubVerified && (
           <GitHubBadge
@@ -521,15 +521,15 @@ const FounderHero = ({
 
       {/* ─ Headline ─ */}
       {headline ? (
-        <p className="mt-5 max-w-3xl text-base leading-7 text-black/70">{headline}</p>
+        <p className="ap-profile-dek">{headline}</p>
       ) : (
         <div className="mt-5">
           <div className="space-y-2">
-            <div className="h-4 w-2/3 max-w-md rounded bg-[#e8e4da]" />
-            <div className="h-4 w-1/2 max-w-xs rounded bg-[#e8e4da]" />
+            <div className="ap-profile-skeleton h-4 w-2/3 max-w-md rounded" />
+            <div className="ap-profile-skeleton h-4 w-1/2 max-w-xs rounded" />
           </div>
           {!isOwnProfile && (
-            <span className="mt-2 inline-flex items-center rounded-full border border-black/8 bg-[#ebe8e0] px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.1em] text-black/35">
+            <span className="ap-profile-tag mt-3">
               Incomplete
             </span>
           )}
@@ -546,10 +546,10 @@ const FounderHero = ({
 
       {/* ─ GitHub activity grid ─ */}
       {ghHandle && calendar && (
-        <div className="mt-10 border-t border-black/10 pt-6">
+        <div className="ap-profile-panel ap-profile-github">
           <div className="flex flex-wrap items-baseline justify-between gap-2">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-black/45">
-              {headlineCount} · last year{calendar ? ' · verified' : ''}
+            <p className="ap-profile-micro">
+              {headlineCount} / last year{calendar ? ' / verified' : ''}
             </p>
             <div className="flex items-center gap-1.5 text-[11px] text-black/45">
               <span>Less</span>
@@ -589,13 +589,13 @@ const FounderHero = ({
 
       {/* ─ Connect GitHub prompt (own profile, no github linked) ─ */}
       {!ghHandle && isOwnProfile && (
-        <div className="mt-10 border-t border-black/10 pt-6">
-          <p className="mb-3 text-[11px] font-semibold uppercase tracking-[0.18em] text-black/45">
+        <div className="ap-profile-panel">
+          <p className="ap-profile-micro mb-3">
             GitHub activity
           </p>
           <Link
             to="/dashboard/founder/profile"
-            className="flex items-center gap-3 rounded-2xl border border-dashed border-black/15 bg-[var(--ed-canvas)] p-4 transition-colors hover:border-[var(--ed-ink)]/30 hover:bg-[#edeae3]"
+            className="ap-profile-empty-link"
           >
             <GitHubIcon className="h-5 w-5 shrink-0 text-black/35" />
             <div className="min-w-0">
@@ -609,13 +609,13 @@ const FounderHero = ({
 
       {/* ─ Facts grid ─ */}
       {facts.length > 0 && (
-        <div className="mt-10 grid gap-px overflow-hidden rounded-2xl border border-black/10 bg-black/[0.06] sm:grid-cols-2">
+        <div className="ap-profile-facts">
           {facts.map((f) => (
-            <div key={f.label} className="bg-[var(--ed-canvas)] px-5 py-4">
-              <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-black/45">
+            <div key={f.label} className="ap-profile-fact">
+              <p className="ap-profile-micro">
                 {f.label}
               </p>
-              <p className="mt-1 text-base font-semibold text-black">{f.value}</p>
+              <p className="ap-profile-fact-value">{f.value}</p>
             </div>
           ))}
         </div>
@@ -623,8 +623,8 @@ const FounderHero = ({
 
       {/* ─ Pitch row: video + deck ─ */}
       {latestLaunch && (latestLaunch.pitchVideoUrl || latestLaunch.demoVideoUrl || latestLaunch.pitchDeckUrl) && (
-        <div className="mt-10 border-t border-black/10 pt-6">
-          <p className="mb-3 text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--ed-ink)]">
+        <div className="ap-profile-panel">
+          <p className="ap-profile-micro mb-3">
             Pitch
           </p>
           <div className="grid gap-3 sm:grid-cols-2">
@@ -634,7 +634,7 @@ const FounderHero = ({
                 href={latestLaunch.pitchVideoUrl || latestLaunch.demoVideoUrl}
                 target="_blank"
                 rel="noreferrer"
-                className="group relative flex h-44 items-center justify-center overflow-hidden rounded-2xl bg-[var(--ed-ink)]"
+                className="ap-profile-media ap-profile-media--video group"
               >
                 <span className="flex h-12 w-12 items-center justify-center rounded-full bg-white text-[var(--ed-ink)] shadow-lg transition-transform group-hover:scale-105">
                   <Play className="h-5 w-5 translate-x-[1px]" />
@@ -650,17 +650,15 @@ const FounderHero = ({
                 href={latestLaunch.pitchDeckUrl}
                 target="_blank"
                 rel="noreferrer"
-                className="relative flex h-44 flex-col justify-between overflow-hidden rounded-2xl border border-black/10 bg-white p-5 transition-colors hover:bg-[var(--ed-canvas)]"
+                className="ap-profile-media ap-profile-media--deck group"
               >
-                <div className="space-y-2">
-                  <div className="h-2 w-2/3 rounded-full bg-black/10" />
-                  <div className="h-2 w-1/2 rounded-full bg-black/08" />
-                  <div className="h-2 w-3/5 rounded-full bg-black/08" />
+                <FileText className="h-6 w-6 text-[var(--ed-ember)]" />
+                <div>
+                  <p className="text-base font-semibold text-[var(--ed-ink)]">Pitch deck</p>
+                  <p className="mt-2 text-sm text-[var(--ed-graphite)]">Open the material attached to the latest launch.</p>
                 </div>
                 <div className="flex items-center justify-between text-[11px] font-semibold uppercase tracking-[0.14em] text-black/55">
-                  <span className="inline-flex items-center gap-1.5">
-                    <FileText className="h-3.5 w-3.5" /> Deck
-                  </span>
+                  <span>Deck</span>
                   <span>Open</span>
                 </div>
               </a>
@@ -671,14 +669,14 @@ const FounderHero = ({
 
       {/* ─ Footer link pills ─ */}
       {links.length > 0 && (
-        <div className="mt-10 flex flex-wrap gap-2 border-t border-black/10 pt-6">
+        <div className="ap-profile-linkbar">
           {links.map(({ label, href, icon: Icon }) => (
             <a
               key={label}
               href={href}
               target="_blank"
               rel="noreferrer"
-              className="inline-flex items-center gap-1.5 rounded-full border border-black/10 bg-white px-3 py-1.5 text-xs font-semibold text-black/70 transition-colors hover:border-black/20 hover:bg-[var(--ed-canvas)] hover:text-black"
+              className="ap-profile-link"
             >
               <Icon className="h-3.5 w-3.5" /> {label}
               {label === 'GitHub' && profile.githubVerified && (
@@ -695,21 +693,21 @@ const FounderHero = ({
 // ─── founder profile ──────────────────────────────────────────────────────────
 
 const SkeletonLaunchCard = () => (
-  <div className="rounded-[14px] bg-white/80 p-6">
+  <div className="ap-profile-card">
     <div className="flex items-center gap-3">
-      <div className="h-10 w-10 rounded-[12px] bg-[#e8e4da]" />
+      <div className="ap-profile-skeleton h-10 w-10 rounded-[8px]" />
       <div className="flex-1 space-y-2">
-        <div className="h-4 w-28 rounded bg-[#e8e4da]" />
-        <div className="h-3 w-16 rounded bg-[#e8e4da]" />
+        <div className="ap-profile-skeleton h-4 w-28 rounded" />
+        <div className="ap-profile-skeleton h-3 w-16 rounded" />
       </div>
     </div>
     <div className="mt-4 space-y-2">
-      <div className="h-3 w-full rounded bg-[#e8e4da]" />
-      <div className="h-3 w-3/4 rounded bg-[#e8e4da]" />
+      <div className="ap-profile-skeleton h-3 w-full rounded" />
+      <div className="ap-profile-skeleton h-3 w-3/4 rounded" />
     </div>
     <div className="mt-4 flex gap-2">
-      <div className="h-6 w-14 rounded-full bg-[#e8e4da]" />
-      <div className="h-6 w-10 rounded-full bg-[#e8e4da]" />
+      <div className="ap-profile-skeleton h-6 w-14 rounded-full" />
+      <div className="ap-profile-skeleton h-6 w-10 rounded-full" />
     </div>
   </div>
 );
@@ -741,17 +739,17 @@ const FounderProfilePage = ({
   const isProfileComplete = completedCount === totalCount;
 
   return (
-    <main className="overflow-x-hidden bg-[var(--ed-canvas)] text-black">
+    <main className="ed-page apparent-profile apparent-profile-founder">
       {/* ── Completion banner (own profile, incomplete) ── */}
       {isOwnProfile && !isProfileComplete && (
-        <div className="border-b border-black/10 bg-[var(--ed-canvas)] px-5 py-3 sm:px-8">
-          <div className="mx-auto flex max-w-[64rem] items-center justify-between gap-4">
+        <div className="ap-profile-completion">
+          <div className="ed-inner flex items-center justify-between gap-4">
             <div className="flex items-center gap-3">
               <div className="flex gap-1">
                 {Object.values(completionFields).map((done, i) => (
                   <div
                     key={i}
-                    className={`h-1.5 w-8 rounded-full transition-colors ${done ? 'bg-[var(--ed-ink)]' : 'bg-[#d4d0c8]'}`}
+                    className={`h-1.5 w-8 rounded-full transition-colors ${done ? 'bg-[var(--ed-ink)]' : 'bg-[var(--ed-fog)]'}`}
                   />
                 ))}
               </div>
@@ -763,7 +761,7 @@ const FounderProfilePage = ({
               to="/dashboard/founder/profile"
               className="shrink-0 text-xs font-semibold text-[var(--ed-ink)] hover:underline"
             >
-              Complete profile →
+              Complete profile
             </Link>
           </div>
         </div>
@@ -773,11 +771,11 @@ const FounderProfilePage = ({
       <FounderHero profile={profile} viewer={viewer} onMessage={onMessage} isOwnProfile={isOwnProfile} />
 
       {/* ── Product launches ── */}
-      <section className="mx-auto max-w-[82rem] border-t border-black/10 px-5 py-16 sm:px-8">
-        <div className="mb-8 flex flex-wrap items-center gap-3">
-          <p className="text-sm font-semibold uppercase tracking-[0.12em] text-[var(--ed-ink)]">Products &amp; launches</p>
+      <section className="ap-profile-section ed-inner">
+        <div className="ap-profile-section-head">
+          <p className="ap-profile-label">Products &amp; launches</p>
           {profile.launches.length === 0 && !isOwnProfile && (
-            <span className="rounded-full border border-black/8 bg-[#ebe8e0] px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.1em] text-black/35">
+            <span className="ap-profile-tag">
               Incomplete
             </span>
           )}
@@ -788,14 +786,14 @@ const FounderProfilePage = ({
               <Link
                 key={launch.id}
                 to={`/projects/${launch.slug || launch.id}`}
-                className="group rounded-[14px] bg-white/80 p-6 transition-all hover:-translate-y-0.5 hover:bg-white hover:shadow-lg"
+                className="ap-profile-card group"
               >
                 <div className="flex items-center gap-3">
                   {launch.logoUrl ? (
                     <img
                       src={launch.logoUrl}
                       alt=""
-                      className="h-10 w-10 rounded-[12px] object-contain p-1"
+                      className="h-10 w-10 rounded-[8px] object-contain p-1"
                       onError={(e) => {
                         const img = e.currentTarget;
                         img.style.display = 'none';
@@ -805,13 +803,13 @@ const FounderProfilePage = ({
                     />
                   ) : null}
                   <div
-                    className="h-10 w-10 items-center justify-center rounded-[12px] bg-[var(--ed-canvas)] text-xs font-bold text-[var(--ed-ink)]"
+                    className="h-10 w-10 items-center justify-center rounded-[8px] bg-[var(--ed-canvas)] text-xs font-bold text-[var(--ed-ink)]"
                     style={{ display: launch.logoUrl ? 'none' : 'flex' }}
                   >
                     {launch.name.slice(0, 2).toUpperCase()}
                   </div>
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-base font-semibold" style={serif}>{launch.name}</p>
+                    <p className="truncate text-base font-semibold text-[var(--ed-ink)]" style={serif}>{launch.name}</p>
                     <p className="mt-0.5 text-xs text-black/50">{launch.category}</p>
                   </div>
                   <ArrowUpRight className="h-4 w-4 shrink-0 text-black/30 transition group-hover:text-[var(--ed-ink)]" />
@@ -833,7 +831,7 @@ const FounderProfilePage = ({
           <div className="grid gap-5 md:grid-cols-2">
             <Link
               to="/dashboard/founder/profile"
-              className="flex flex-col items-center justify-center gap-3 rounded-[14px] border-2 border-dashed border-[var(--ed-ink)]/20 bg-white/60 p-8 text-center transition-colors hover:border-[var(--ed-ink)]/35 hover:bg-white/80"
+              className="ap-profile-card ap-profile-card--empty flex flex-col items-center justify-center gap-3 text-center"
             >
               <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[var(--ed-canvas)]">
                 <Plus className="h-5 w-5 text-[var(--ed-ink)]" />
@@ -857,11 +855,11 @@ const FounderProfilePage = ({
 
       {/* ── Past products ── */}
       {pastProductList.length > 0 && (
-        <section className="mx-auto max-w-[82rem] border-t border-black/10 px-5 py-16 sm:px-8">
+        <section className="ap-profile-section ed-inner">
           <SectionLabel>Past products</SectionLabel>
           <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {pastProductList.map((item) => (
-              <li key={item} className="flex items-center gap-2 rounded-2xl bg-white/80 px-4 py-3 text-sm text-black/70">
+              <li key={item} className="ap-profile-list-item">
                 <Briefcase className="h-3.5 w-3.5 shrink-0 text-[var(--ed-ink)]" />
                 {item}
               </li>
@@ -873,7 +871,7 @@ const FounderProfilePage = ({
       {/* ── Raising ── */}
       {(profile.fundraisingStatus === 'raising' || profile.fundraisingStatus === 'open') &&
         (profile.raisingAsk || profile.raisingRound || profile.raisingAmount) && (
-          <section className="mx-auto max-w-[82rem] border-t border-black/10 px-5 py-16 sm:px-8">
+          <section className="ap-profile-section ed-inner">
             <SectionLabel>{profile.fundraisingStatus === 'raising' ? 'Raising now' : 'Open to investor intros'}</SectionLabel>
             <div className="flex flex-wrap items-center gap-2">
               {profile.raisingRound && <Tag accent>{profile.raisingRound}</Tag>}
@@ -881,16 +879,16 @@ const FounderProfilePage = ({
               {profile.openToContact && <Tag>Open to contact</Tag>}
             </div>
             {profile.raisingAsk && (
-              <p className="mt-6 max-w-2xl text-lg leading-8 text-black/65">{profile.raisingAsk}</p>
+              <p className="ap-profile-body">{profile.raisingAsk}</p>
             )}
           </section>
         )}
 
       {/* ── Looking for ── */}
       {profile.lookingFor && (
-        <section className="mx-auto max-w-[82rem] border-t border-black/10 px-5 py-16 sm:px-8">
+        <section className="ap-profile-section ed-inner">
           <SectionLabel>Looking to meet</SectionLabel>
-          <p className="max-w-2xl text-lg leading-8 text-black/65">{profile.lookingFor}</p>
+          <p className="ap-profile-body">{profile.lookingFor}</p>
         </section>
       )}
 
@@ -927,11 +925,11 @@ const InvestorProfilePage = ({
     : [];
 
   return (
-    <main className="overflow-x-hidden bg-[var(--ed-canvas)] text-black">
+    <main className="ed-page apparent-profile apparent-profile-investor">
       {/* ── Hero — open editorial layout, mirrors FounderHero ── */}
-      <section className="mx-auto max-w-[64rem] px-5 pt-12 sm:px-8 md:pt-16">
+      <section className="ap-profile-hero ed-inner">
         {/* Action bar */}
-        <div className="mb-8 flex flex-wrap items-center justify-end gap-2">
+        <div className="ap-profile-actions">
           <MessageButton viewer={viewer} name={name} onMessage={onMessage} />
           {profile.shareable !== false && (
             <ShareButton username={profile.username} name={name} />
@@ -939,40 +937,40 @@ const InvestorProfilePage = ({
         </div>
 
         {/* Pill row */}
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="rounded-full bg-[var(--ed-ink)] px-3 py-1 text-xs font-semibold text-white">
+        <div className="ap-profile-kicker">
+          <span className="ap-profile-tag ap-profile-tag--accent">
             Investor on Apparent
           </span>
         </div>
 
         {/* Header row: avatar + name */}
-        <div className="mt-6 flex flex-wrap items-center gap-4">
+        <div className="ap-profile-identity">
           <Avatar src={profile.profilePhotoUrl} name={name} bg="var(--ed-ink)" />
           <div className="min-w-0">
-            <p className="truncate text-2xl font-normal tracking-[-0.02em]" style={serif}>{name}</p>
-            <p className="mt-0.5 text-xs font-semibold text-black/55">@{profile.username}</p>
+            <h1 className="ap-profile-name" style={serif}>{name}</h1>
+            <p className="ap-profile-handle">@{profile.username}</p>
           </div>
         </div>
 
         {/* Thesis — where founder's headline lives */}
         {visible('thesis') && profile.thesis ? (
-          <p className="mt-5 max-w-3xl text-base leading-7 text-black/70">{profile.thesis}</p>
+          <p className="ap-profile-dek">{profile.thesis}</p>
         ) : (
           <div className="mt-5 space-y-2">
-            <div className="h-4 w-2/3 max-w-md rounded bg-[#e8e4da]" />
-            <div className="h-4 w-1/2 max-w-xs rounded bg-[#e8e4da]" />
+            <div className="ap-profile-skeleton h-4 w-2/3 max-w-md rounded" />
+            <div className="ap-profile-skeleton h-4 w-1/2 max-w-xs rounded" />
           </div>
         )}
 
         {/* Facts grid: Sectors / Stage / Geography / Check size */}
         {facts.length > 0 && (
-          <div className="mt-10 grid gap-px overflow-hidden rounded-2xl border border-black/10 bg-black/[0.06] sm:grid-cols-2">
+          <div className="ap-profile-facts">
             {facts.map((f) => (
-              <div key={f.label} className="bg-[var(--ed-canvas)] px-5 py-4">
-                <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-black/45">
+              <div key={f.label} className="ap-profile-fact">
+                <p className="ap-profile-micro">
                   {f.label}
                 </p>
-                <p className="mt-1 text-base font-semibold text-black">{f.value}</p>
+                <p className="ap-profile-fact-value">{f.value}</p>
               </div>
             ))}
           </div>
@@ -981,7 +979,7 @@ const InvestorProfilePage = ({
 
       {/* ── Portfolio calibration ── */}
       {portfolioList.length > 0 && (
-        <section className="mx-auto max-w-[82rem] border-t border-black/10 px-5 py-16 sm:px-8">
+        <section className="ap-profile-section ed-inner">
           <SectionLabel>Companies that match their taste</SectionLabel>
           <div className="flex flex-wrap gap-2">
             {portfolioList.map((co) => (
@@ -993,14 +991,14 @@ const InvestorProfilePage = ({
 
       {/* ── What they back ── */}
       {visible('founderSignals') && profile.founderSignals && (
-        <section className="mx-auto max-w-[82rem] border-t border-black/10 px-5 py-16 sm:px-8">
+        <section className="ap-profile-section ed-inner">
           <SectionLabel>What they back</SectionLabel>
-          <p className="max-w-2xl text-lg leading-8 text-black/65">{profile.founderSignals}</p>
+          <p className="ap-profile-body">{profile.founderSignals}</p>
         </section>
       )}
 
       {/* ── Connect / message ── */}
-      <ConnectSection viewer={viewer} name={name} onMessage={onMessage} tone="light" />
+      <ConnectSection viewer={viewer} name={name} onMessage={onMessage} tone="dark" />
     </main>
   );
 };
@@ -1008,25 +1006,25 @@ const InvestorProfilePage = ({
 // ─── restricted investor gate ─────────────────────────────────────────────────
 
 const InvestorRestrictedPage = ({ username }: { username: string }) => (
-  <main className="min-h-screen overflow-x-hidden bg-[var(--ed-canvas)] text-black">
-    <section className="mx-auto flex min-h-[70vh] max-w-[92rem] flex-col items-start justify-center px-5 sm:px-8">
-      <p className="mb-6 text-sm font-semibold uppercase tracking-[0.12em] text-[var(--ed-ink)]">Apparent investor</p>
-      <h1 className="max-w-3xl text-5xl font-normal leading-none tracking-[-0.045em] md:text-7xl" style={serif}>
+  <main className="ed-page apparent-profile apparent-profile-restricted">
+    <section className="ap-profile-hero ed-inner min-h-[70dvh]">
+      <p className="ap-profile-label">Apparent investor</p>
+      <h1 className="ap-profile-name ap-profile-name--large" style={serif}>
         @{username}
       </h1>
-      <p className="mt-8 max-w-lg text-lg leading-8 text-black/60">
+      <p className="ap-profile-dek">
         This investor profile is only visible to Apparent members. Sign in or create an account to view their full thesis, sectors, and contact details.
       </p>
       <div className="mt-10 flex flex-wrap gap-3">
         <Link
           to="/login?role=founder"
-          className="rounded-full bg-[var(--ed-canvas)] px-6 py-3 text-sm font-semibold text-black transition hover:bg-[var(--ed-fog)]"
+          className="ed-btn ed-btn-filled"
         >
           Sign in as founder
         </Link>
         <Link
           to="/login?role=investor"
-          className="alden-investor-cta rounded-full border border-black/20 bg-white px-6 py-3 text-sm font-semibold text-black transition hover:bg-[var(--ed-canvas)]"
+          className="ed-btn ed-btn-outline"
         >
           Sign in as investor
         </Link>
@@ -1097,7 +1095,7 @@ export const PublicProfile = () => {
 
   if (isLoading) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-[var(--ed-canvas)]">
+      <main className="ed-page apparent-profile flex min-h-screen items-center justify-center">
         <div className="flex flex-col items-center gap-4">
           <LogoIcon className="h-8 w-8 animate-pulse text-[var(--ed-ink)]" />
           <p className="text-sm text-black/40">Loading profile…</p>
@@ -1108,7 +1106,7 @@ export const PublicProfile = () => {
 
   if (!result || result.kind === 'not_found') {
     return (
-      <main className="min-h-screen overflow-x-hidden bg-[var(--ed-canvas)]">
+      <main className="ed-page apparent-profile min-h-screen overflow-x-hidden">
         <NotFound4042
           title="Profile not found"
           message={`@${handle || 'that profile'} does not exist on Apparent yet.`}
