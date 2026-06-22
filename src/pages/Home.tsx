@@ -274,7 +274,15 @@ export const Home = () => {
                   {t[0].toUpperCase() + t.slice(1)}
                 </button>
               ))}
-              <Link className="ed-visit" to="/for-vcs">See it live</Link>
+              <div className="ed-live-picker">
+                <button className="ed-visit" type="button" aria-haspopup="true">
+                  See it live
+                </button>
+                <div className="ed-live-menu" aria-label="Choose live demo audience">
+                  <Link to="/for-founders">Founders</Link>
+                  <Link to="/for-vcs">Investors</Link>
+                </div>
+              </div>
             </div>
             <div className="ed-surface ed-inner">
               <div className="ed-surface-grid">
