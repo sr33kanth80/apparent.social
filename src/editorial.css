@@ -154,8 +154,8 @@
 .ed-logo-row.row-2 .ed-logo-track { animation-direction: reverse; animation-duration: 44s; transform: translateX(-120px); }
 .ed-logo-row.row-3 .ed-logo-track { animation-duration: 40s; transform: translateX(-64px); }
 .ed-logo-cloud:hover .ed-logo-track { animation-play-state: paused; }
-.ed-vc-logo { display: inline-flex; align-items: center; gap: 8px; min-height: 36px; border: 1px solid rgba(34,34,34,.08); border-radius: 999px; background: rgba(255,255,255,.42); padding: 7px 12px 7px 8px; color: var(--ed-graphite); filter: grayscale(1); opacity: .78; transition: border-color .16s, filter .16s, opacity .16s, transform .16s; }
-.ed-vc-logo:hover { border-color: rgba(34,34,34,.18); filter: grayscale(.2); opacity: 1; transform: translateY(-1px); }
+.ed-vc-logo { display: inline-flex; align-items: center; gap: 8px; min-height: 36px; border: 1px solid rgba(34,34,34,.08); border-radius: 999px; background: rgba(255,255,255,.42); padding: 7px 12px 7px 8px; color: var(--ed-graphite); filter: none; opacity: .78; transition: border-color .16s, filter .16s, opacity .16s, transform .16s; }
+.ed-vc-logo:hover { border-color: rgba(34,34,34,.18); filter: none; opacity: 1; transform: translateY(-1px); }
 .ed-vc-logo img { width: 20px; height: 20px; border-radius: 5px; background: var(--ed-paper); object-fit: contain; }
 .ed-vc-logo span { font-size: 12px; font-weight: 600; letter-spacing: -.01em; white-space: nowrap; }
 @keyframes ed-logo-scroll { from { transform: translateX(0); } to { transform: translateX(calc(-50% - 5px)); } }
