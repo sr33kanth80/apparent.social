@@ -21,6 +21,8 @@
 
 /* Page root wrapper for redesigned routes. */
 .ed-page {
+  position: relative;
+  isolation: isolate;
   font-family: var(--ed-font);
   font-size: 14px;
   line-height: 1.5;
@@ -30,6 +32,21 @@
   -webkit-font-smoothing: antialiased;
   min-height: 100vh;
 }
+.ed-page:not(.ed-page-no-grid)::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background-image:
+    linear-gradient(rgba(34,34,34,.045) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(34,34,34,.045) 1px, transparent 1px);
+  background-size: 44px 44px;
+  background-position: center top;
+  mask-image: radial-gradient(ellipse at center, #000 0%, #000 46%, rgba(0,0,0,.72) 66%, transparent 100%);
+  -webkit-mask-image: radial-gradient(ellipse at center, #000 0%, #000 46%, rgba(0,0,0,.72) 66%, transparent 100%);
+}
+.ed-page > * { position: relative; z-index: 1; }
 .ed-page *, .ed-page *::before, .ed-page *::after { box-sizing: border-box; }
 .ed-page ::selection { background: var(--ed-ink); color: var(--ed-paper); }
 .ed-page a { color: inherit; text-decoration: none; }
