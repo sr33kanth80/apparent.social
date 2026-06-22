@@ -129,8 +129,8 @@ const roleConfig = {
     account: 'Founder Account',
     email: 'founder@apparent.test',
     initials: 'F',
-    accent: 'text-[#37d28b]',
-    active: 'bg-lavender text-black',
+    accent: 'text-[#fa5d29]',
+    active: 'bg-[#fa5d29] text-white',
     basePath: '/dashboard/founder',
     groups: [
       [
@@ -156,8 +156,8 @@ const roleConfig = {
     account: 'Investor Account',
     email: 'partner@apparent.test',
     initials: 'VC',
-    accent: 'text-green-700',
-    active: 'bg-green-50 text-green-700',
+    accent: 'text-[#222222]',
+    active: 'bg-[#222222] text-white',
     basePath: '/dashboard/investor',
     groups: [
       [
@@ -201,7 +201,7 @@ const NavLinkItem = ({
     <Link
       to={to}
       className={cn(
-        'flex h-8 w-full flex-row items-center rounded-md px-2 py-1.5 transition hover:bg-muted hover:text-primary',
+        'flex h-8 w-full flex-row items-center rounded-md px-2 py-1.5 transition hover:bg-[#f2f2f2] hover:text-[#222222]',
         isActive && activeClass,
       )}
     >
@@ -218,7 +218,7 @@ const NavLinkItem = ({
             <p className="text-sm font-medium">{item.label}</p>
             {item.badge && (
               <Badge
-                className="flex h-fit w-fit items-center rounded border-none bg-gradient-to-r from-[#ff7a52] via-[#7e9bf0] to-[#37d28b] px-1.5 text-[10px] font-semibold text-ink"
+                className="flex h-fit w-fit items-center rounded border-none bg-[#fa5d29] px-1.5 text-[10px] font-semibold text-white"
                 variant="outline"
               >
                 {item.badge}
@@ -302,7 +302,7 @@ function BaseSessionNavBar({
 
   return (
     <motion.div
-      className="sidebar fixed left-0 top-0 z-40 h-screen shrink-0 border-r border-black/10"
+      className="sidebar ed-dashboard-sidebar fixed left-0 top-0 z-40 h-screen shrink-0 border-r border-black/10"
       initial={isCollapsed ? 'closed' : 'open'}
       animate={isCollapsed ? 'closed' : 'open'}
       variants={sidebarVariants}

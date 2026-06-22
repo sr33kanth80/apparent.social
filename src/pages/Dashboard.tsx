@@ -1044,10 +1044,10 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
     }
   }, [dashboardBasePath, location.hash, location.pathname, navigate]);
 
-  const accentSurface = isInvestor ? 'bg-charcoal' : 'bg-lavender';
-  const accentForeground = isInvestor ? 'text-white' : 'text-black';
-  const accentSwitchForeground = isInvestor ? 'text-white fill-white' : 'text-black fill-black';
-  const accentIconForeground = isInvestor ? 'text-white/90' : 'text-black/75';
+  const accentSurface = isInvestor ? 'bg-[#222222]' : 'bg-[#fa5d29]';
+  const accentForeground = 'text-white';
+  const accentSwitchForeground = 'text-white fill-white';
+  const accentIconForeground = 'text-white/90';
   const dmSurface = isInvestor ? 'bg-[#f7f3e4]' : 'bg-[#effbf4]';
   const dmSelectedSurface = isInvestor ? 'bg-[#f3edd7]' : 'bg-[#e2f7ec]';
   const dmSoftSurface = isInvestor ? 'bg-[#faf7eb]' : 'bg-[#f3fcf7]';
@@ -6535,7 +6535,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
       >
         {renderOnboardingChecklist()}
         <div id="overview" className="mx-auto max-w-[1292px] scroll-mt-24 space-y-6">
-          <div className="mx-auto max-w-4xl">
+          <div className="ed-agent-chat-scope mx-auto max-w-4xl">
             <InvestorAgentChat
               user={user}
               criteria={intakeValues}
@@ -8815,22 +8815,22 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
   );
 
   return (
-    <div className="monad-app min-h-screen bg-parchment text-ink">
+    <div className="monad-app ed-dashboard min-h-screen text-ink">
       <SessionNavBar role={role} user={user} activated={profileSaved} unreadMessages={totalUnreadMessages} />
 
-      <main className="min-h-screen pl-[15rem]">
-        <div className={isVCHeatMapView ? 'min-h-screen' : isMessagesView ? 'relative mx-auto flex h-screen w-full max-w-[1440px] flex-col overflow-hidden px-6 pt-6' : showWorkspaceHeader ? 'mx-auto max-w-[1440px] px-6 py-6' : 'relative mx-auto max-w-[1440px] px-6 pb-6 pt-6'}>
+      <main className="ed-dashboard-main min-h-screen pl-[15rem]">
+        <div className={isVCHeatMapView ? 'min-h-screen' : isMessagesView ? 'ed-dashboard-frame relative mx-auto flex h-screen w-full max-w-[1440px] flex-col overflow-hidden px-6 pt-6' : showWorkspaceHeader ? 'ed-dashboard-frame mx-auto max-w-[1440px] px-6 py-6' : 'ed-dashboard-frame relative mx-auto max-w-[1440px] px-6 pb-6 pt-6'}>
           {/* Overview + For You: full header with the workspace/For-You toggle +
               global search + bell. Other section pages drop it — the toggle's
               targets are both reachable here, and sections carry their own
               in-context controls — so they reserve no vertical band (no leftover
               whitespace). */}
           {!isVCHeatMapView && showWorkspaceHeader && (
-            <header className="mb-6 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+            <header className="ed-dashboard-topbar mb-6 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
               {isInvestor ? (
                 // Investor side: no For You toggle (the feed duplicated `daily`),
                 // so the workspace label is shown statically.
-                <div className={`inline-flex items-center rounded-full px-4 py-2 text-sm font-semibold ${accentSurface} ${accentSwitchForeground}`}>
+                <div className={`ed-dashboard-workspace-pill inline-flex items-center rounded-full px-4 py-2 text-sm font-semibold ${accentSurface} ${accentSwitchForeground}`}>
                   Investor workspace
                 </div>
               ) : (
@@ -9049,7 +9049,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
                   {renderOnboardingChecklist()}
                   {!isInvestor && (
                     <div className="mx-auto mt-6 max-w-[1292px] space-y-4">
-                      <div className="mx-auto max-w-4xl">
+                      <div className="ed-agent-chat-scope mx-auto max-w-4xl">
                         <FounderAgentChat
                           user={user}
                           founder={founderAgentContext}
