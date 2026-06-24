@@ -92,9 +92,33 @@
 .ed-brand { display: inline-flex; align-items: center; gap: 10px; }
 .ed-brand .ed-mark { width: 22px; height: 22px; color: var(--ed-ink); }
 .ed-brand .ed-word { display: block; height: 19px; width: auto; }
-.ed-nav-links { display: flex; gap: 24px; margin-left: 16px; }
-.ed-nav-links a { font-size: 13px; font-weight: 500; color: var(--ed-ink); opacity: .65; transition: opacity .15s; }
-.ed-nav-links a:hover, .ed-nav-links a.is-active { opacity: 1; }
+.ed-nav-links { display: flex; gap: 8px; margin-left: 16px; }
+.ed-nav-links a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 32px;
+  padding: 6px 10px;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ed-ink);
+  opacity: .65;
+  transition: opacity .15s ease, border-color .15s ease, background-color .15s ease, color .15s ease;
+  white-space: nowrap;
+}
+.ed-nav-links a:hover,
+.ed-nav-links a:focus-visible {
+  border-color: var(--ed-ember);
+  opacity: 1;
+}
+.ed-nav-links a.is-active {
+  background: var(--ed-ember);
+  border-color: var(--ed-ember);
+  color: var(--ed-paper);
+  opacity: 1;
+}
 .ed-nav-actions { display: flex; align-items: center; gap: 14px; margin-left: auto; }
 .ed-nav-login { font-size: 13px; font-weight: 500; opacity: .75; cursor: pointer; }
 .ed-nav-login:hover { opacity: 1; }
