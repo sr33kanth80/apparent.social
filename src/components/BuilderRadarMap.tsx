@@ -78,6 +78,7 @@ export function BuilderRadarMap({
   const hasFitInitialViewRef = useRef(false);
   const previousDatasetKeyRef = useRef('');
   const previousPinKeyRef = useRef('');
+  const initialInterestPinRef = useRef(interestPin);
   const onSelectCityRef = useRef(onSelectCity);
   const onSelectBuilderRef = useRef(onSelectBuilder);
   const onViewportBuildersChangeRef = useRef(onViewportBuildersChange);
@@ -127,6 +128,14 @@ export function BuilderRadarMap({
     builderLayerRef.current = L.layerGroup().addTo(map);
     pinLayerRef.current = L.layerGroup().addTo(map);
     mapRef.current = map;
+
+    const initialInterestPin = initialInterestPinRef.current;
+    if (initialInterestPin) {
+      map.setView([initialInterestPin.latitude, initialInterestPin.longitude], 8, { animate: false });
+      previousPinKeyRef.current = `${initialInterestPin.label}:${initialInterestPin.latitude}:${initialInterestPin.longitude}`;
+      hasFitInitialViewRef.current = true;
+    }
+
     map.on('moveend zoomend', emitVisibleBuilders);
 
     const resizeObserver = new ResizeObserver(() => {
