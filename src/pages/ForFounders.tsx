@@ -11,7 +11,14 @@ export const ForFounders = () => (
       {/* HERO */}
       <section className="ed-subhero ed-inner ed-split ed-founder-hero">
         <div>
-          <h1 className="ed-display">Stop launching into the <em>void.</em></h1>
+          <h1 className="ed-display ed-genz-head">
+            <span className="ed-genz-word">Stop<span className="ed-clap">👏</span></span>{' '}
+            <span className="ed-genz-word">launching<span className="ed-clap">👏</span></span>{' '}
+            <span className="ed-genz-word">into<span className="ed-clap">👏</span></span>{' '}
+            <span className="ed-genz-word">the<span className="ed-clap">👏</span></span>{' '}
+            <br />
+            <span className="ed-genz-word">void<span className="ed-clap">👏</span></span>
+          </h1>
           <p className="ed-lede">Most launches disappear. On Apparent you launch in front of investors who are actively writing cheques, so the right ones DM you, matched by thesis, proof, and stage. Run <code style={{ fontFamily: 'var(--ed-mono)', fontSize: '0.92em' }}>npx apparent</code> and your shipped work becomes the proof that earns the intro. No warm intro required.</p>
           <div className="ed-cta">
             <Link className="ed-btn ed-btn-filled" to="/login?role=founder">Launch to active investors

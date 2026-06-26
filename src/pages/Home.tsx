@@ -233,7 +233,10 @@ export const Home = () => {
         {/* HERO */}
         <section className="ed-hero">
           <div className="ed-inner">
-            <h1 className="ed-display">Where proof meets <em>capital.</em></h1>
+            <h1 className="ed-display">
+              Where <span className="ed-hero-keep">traction 📈</span> meets{' '}
+              <span className="ed-hero-keep">conviction💸</span>
+            </h1>
             <p className="ed-sub">Apparent connects founders who&apos;ve shipped with investors who are actively writing cheques. Founders turn proof into intros; investors source startups that fit their thesis, ranked by proof, stage, and freshness.</p>
             <div className="ed-cta">
               <Link className="ed-btn ed-btn-filled" to="/login?role=investor">Source your deal flow
