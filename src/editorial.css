@@ -61,6 +61,9 @@
 /* Typography */
 .ed-display { font-weight: 300; font-size: clamp(2.9rem, 11.5vw, 127px); line-height: 0.93; letter-spacing: -0.02em; }
 .ed-display em { font-style: normal; }
+.ed-emoji-keep { display: inline-block; white-space: nowrap; }
+.ed-display-emoji { display: inline-block; margin-left: .06em; font-size: .42em; line-height: 1; vertical-align: .08em; letter-spacing: 0; }
+.ed-copy-emoji { display: inline-block; margin-left: .08em; line-height: 1; vertical-align: -.04em; letter-spacing: 0; }
 .ed-sec-title { font-weight: 300; font-size: clamp(2rem, 5.5vw, 64px); line-height: 1.0; letter-spacing: -0.03em; max-width: 20ch; }
 .ed-lede { font-size: 18px; font-weight: 300; line-height: 1.6; color: var(--ed-graphite); }
 .ed-sub { font-size: 16px; font-weight: 300; line-height: 1.6; color: var(--ed-graphite); }

@@ -78,8 +78,8 @@ const InvestorSourcingPreview = () => {
       onBlur={() => setPaused(false)}
     >
       <div className="ed-mock-head">
-        <span className="ed-t">Signal inbox</span>
-        <span className="ed-live"><i />fresh today</span>
+        <span className="ed-t">Signal inbox 📡</span>
+        <span className="ed-live"><i />fresh today ⚡</span>
       </div>
 
       <div className="ed-vc-board">
@@ -108,7 +108,7 @@ const InvestorSourcingPreview = () => {
         <div className="ed-signal-detail" aria-live="polite">
           <div className="ed-signal-detail-top">
             <div>
-              <span className="ed-signal-kicker">{selectedSignal.stage}</span>
+              <span className="ed-signal-kicker">Ranked by fit 🎯</span>
               <h3>{selectedSignal.company}</h3>
             </div>
             <div className="ed-fit-orb" style={{ '--fit': selectedSignal.score } as CSSProperties}>
@@ -123,7 +123,7 @@ const InvestorSourcingPreview = () => {
           </div>
 
           <div className="ed-agent-draft">
-            <span>Agent draft</span>
+            <span>Agent draft ✍️</span>
             <p>{selectedSignal.draft}</p>
           </div>
 
@@ -151,8 +151,10 @@ export const ForVCs = () => (
       {/* HERO */}
       <section className="ed-subhero ed-inner ed-split">
         <div>
-          <h1 className="ed-display">Source your next deal before <em>consensus.</em></h1>
-          <p className="ed-lede">Apparent is a private sourcing desk for VCs, GPs, and angels. Capture your thesis once and an AI agent surfaces investable startups that fit, ranked by proof, stage, and freshness, then drafts the outreach.</p>
+          <h1 className="ed-display">
+            Source your next deal before <span className="ed-emoji-keep"><em>consensus.</em><span className="ed-display-emoji">🔎</span></span>
+          </h1>
+          <p className="ed-lede">Apparent is a private sourcing desk for VCs, GPs, and angels. Capture your <span className="ed-emoji-keep">thesis once <span className="ed-copy-emoji">🧭</span></span> and an AI agent surfaces investable startups that fit, ranked by proof, stage, and <span className="ed-emoji-keep">freshness <span className="ed-copy-emoji">📈</span></span>, then drafts the outreach.</p>
           <div className="ed-cta">
             <Link className="ed-btn ed-btn-filled" to="/login?role=investor">Source your deal flow
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M7 17 17 7M9 7h8v8" /></svg>
@@ -160,9 +162,9 @@ export const ForVCs = () => (
             <Link className="ed-btn ed-btn-outline" to="/our-thesis">How it works</Link>
           </div>
           <div className="ed-trust">
-            <span><b>1,800+</b> investors on Apparent</span><span className="ed-d" />
-            <span>Verified proof, not pitches</span><span className="ed-d" />
-            <span>Agent-drafted outreach</span>
+            <span className="ed-emoji-keep"><b>1,800+</b> investors on Apparent <span className="ed-copy-emoji">💸</span></span><span className="ed-d" />
+            <span className="ed-emoji-keep">Verified proof, not pitches <span className="ed-copy-emoji">✅</span></span><span className="ed-d" />
+            <span className="ed-emoji-keep">No warm intro required <span className="ed-copy-emoji">🤝</span></span>
           </div>
         </div>
         <InvestorSourcingPreview />
