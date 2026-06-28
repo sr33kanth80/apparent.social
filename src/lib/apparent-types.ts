@@ -308,6 +308,28 @@ export interface PublicProjectDetail {
   teamMembers: LaunchTeamMember[];
 }
 
+/**
+ * A startup Apparent's sourcing agent discovered from public signals (a
+ * `source_signals` row), surfaced to investors in the same editorial template
+ * as a native launch — but explicitly labeled "Sourced · unverified" (no
+ * founder has claimed it, no GitHub verification). `dossier` is the on-demand
+ * agent enrichment (Phase 2); null until generated.
+ */
+export interface SourcedStartup {
+  id: string;
+  company: string;
+  founder: string;
+  detail: string;
+  sourceType: string;
+  sourceUrl: string;
+  profileUrl: string;
+  stage: string;
+  location: string;
+  githubUrl: string;
+  tags: string[];
+  freshnessAt: string;
+}
+
 export interface Meetup {
   id: string;
   hostId: string;

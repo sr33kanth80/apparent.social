@@ -32,6 +32,7 @@ import type {
   PublicProfileResult,
   PublicProjectDetail,
   ProductLaunch,
+  SourcedStartup,
   TermReview,
   VCContact,
   UserMessage,
@@ -1510,6 +1511,41 @@ export const loadSourceSignal = async (
       detail: String(data.detail ?? ''),
       sourceType: String(data.source_type ?? ''),
       location: String(data.location ?? ''),
+    };
+  } catch {
+    return null;
+  }
+};
+
+/**
+ * Full sourced-startup record for the investor-facing /sourced/:id detail page.
+ * Richer than loadSourceSignal (which backs the founder claim landing) — pulls
+ * every column the editorial template surfaces.
+ */
+export const loadSourceSignalDetail = async (
+  signalId: string,
+): Promise<SourcedStartup | null> => {
+  if (!isSupabaseConfigured || !supabase) return null;
+  try {
+    const { data, error } = await supabase
+      .from('source_signals')
+      .select('id, company, founder, detail, source_type, source_url, profile_url, stage, location, github_url, raw_tags, freshness_at')
+      .eq('id', signalId)
+      .maybeSingle();
+    if (error || !data) return null;
+    return {
+      id: String(data.id ?? signalId),
+      company: String(data.company ?? ''),
+      founder: String(data.founder ?? ''),
+      detail: String(data.detail ?? ''),
+      sourceType: String(data.source_type ?? ''),
+      sourceUrl: String(data.source_url ?? ''),
+      profileUrl: String(data.profile_url ?? ''),
+      stage: String(data.stage ?? ''),
+      location: String(data.location ?? ''),
+      githubUrl: String(data.github_url ?? ''),
+      tags: Array.isArray(data.raw_tags) ? data.raw_tags.map(String) : [],
+      freshnessAt: String(data.freshness_at ?? ''),
     };
   } catch {
     return null;

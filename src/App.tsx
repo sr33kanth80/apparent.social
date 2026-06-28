@@ -11,6 +11,7 @@ import { AboutUs } from './pages/AboutUs';
 import { Blog, BlogPost } from './pages/Blog';
 import { Contact } from './pages/Contact';
 import { ProjectDetail } from './pages/ProjectDetail';
+import { SourcedDetail } from './pages/SourcedDetail';
 import { PublicProfile } from './pages/PublicProfile';
 import { PublicPageShell } from './components/PublicPageShell';
 import { Resources } from './pages/Resources';
@@ -108,6 +109,14 @@ function App() {
             element={
               <PublicPageShell>
                 <ProjectDetail />
+              </PublicPageShell>
+            }
+          />
+          <Route
+            path="/sourced/:signalId"
+            element={
+              <PublicPageShell>
+                <SourcedDetail />
               </PublicPageShell>
             }
           />
