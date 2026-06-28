@@ -1528,9 +1528,13 @@ export const loadSourceSignalDetail = async (
 ): Promise<SourcedStartup | null> => {
   if (!isSupabaseConfigured || !supabase) return null;
   try {
+    // select('*') (not an explicit column list) so this read keeps working
+    // before the dossier/dossier_at migration is applied — those columns are
+    // simply absent until then, leaving dossier null. Avoids a deploy-vs-migration
+    // window where naming a missing column would 500 the whole page.
     const { data, error } = await supabase
       .from('source_signals')
-      .select('id, company, founder, detail, source_type, source_url, profile_url, stage, location, github_url, raw_tags, freshness_at, dossier, dossier_at')
+      .select('*')
       .eq('id', signalId)
       .maybeSingle();
     if (error || !data) return null;
