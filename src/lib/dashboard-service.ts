@@ -33,6 +33,7 @@ import type {
   PublicProjectDetail,
   ProductLaunch,
   SourcedStartup,
+  SourcedDossier,
   TermReview,
   VCContact,
   UserMessage,
@@ -1529,7 +1530,7 @@ export const loadSourceSignalDetail = async (
   try {
     const { data, error } = await supabase
       .from('source_signals')
-      .select('id, company, founder, detail, source_type, source_url, profile_url, stage, location, github_url, raw_tags, freshness_at')
+      .select('id, company, founder, detail, source_type, source_url, profile_url, stage, location, github_url, raw_tags, freshness_at, dossier, dossier_at')
       .eq('id', signalId)
       .maybeSingle();
     if (error || !data) return null;
@@ -1546,9 +1547,39 @@ export const loadSourceSignalDetail = async (
       githubUrl: String(data.github_url ?? ''),
       tags: Array.isArray(data.raw_tags) ? data.raw_tags.map(String) : [],
       freshnessAt: String(data.freshness_at ?? ''),
+      dossier: (data.dossier as SourcedDossier | null) ?? null,
+      dossierAt: String(data.dossier_at ?? ''),
     };
   } catch {
     return null;
+  }
+};
+
+/**
+ * Trigger (or fetch the cached) agent deep dive for a sourced startup. POSTs to
+ * /api/sourced-enrich with the caller's Supabase JWT — the server researches the
+ * company with Claude web tools, caches the dossier on the row, and returns it.
+ * On-demand: only called when an investor clicks "Generate deep dive".
+ */
+export const enrichSourcedStartup = async (
+  signalId: string,
+  force = false,
+): Promise<{ ok: boolean; dossier: SourcedDossier | null; error?: string }> => {
+  if (!isSupabaseConfigured || !supabase) return { ok: false, dossier: null, error: 'Sign-in required.' };
+  const { data } = await supabase.auth.getSession();
+  const jwt = data.session?.access_token;
+  if (!jwt) return { ok: false, dossier: null, error: 'Your session expired — sign in again.' };
+  try {
+    const res = await fetch('/api/sourced-enrich', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', authorization: `Bearer ${jwt}` },
+      body: JSON.stringify({ signalId, force }),
+    });
+    const body = (await res.json().catch(() => ({}))) as { ok?: boolean; dossier?: SourcedDossier; error?: string };
+    if (res.ok && body.ok && body.dossier) return { ok: true, dossier: body.dossier };
+    return { ok: false, dossier: null, error: body.error || `Deep dive failed (${res.status})` };
+  } catch (error) {
+    return { ok: false, dossier: null, error: error instanceof Error ? error.message : 'Network error.' };
   }
 };
 

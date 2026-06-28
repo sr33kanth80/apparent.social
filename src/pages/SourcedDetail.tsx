@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { ArrowUpRight, Globe2, MapPin, Sparkles, Star, Tag } from 'lucide-react';
+import { ArrowUpRight, Globe2, Link as LinkIcon, Loader2, MapPin, Sparkles, Star, Tag, Users } from 'lucide-react';
 import { GitHubIcon } from '@/components/GitHubIcon';
 import { VerifiedAvatar } from '@/components/VerifiedAvatar';
-import type { SourcedStartup } from '@/lib/apparent-types';
-import { loadSourceSignalDetail } from '@/lib/dashboard-service';
+import type { SourcedDossier, SourcedStartup } from '@/lib/apparent-types';
+import { enrichSourcedStartup, loadSourceSignalDetail } from '@/lib/dashboard-service';
 import NotFound4042 from '@/components/4042';
 
 const getDomain = (url: string) => {
@@ -35,6 +35,9 @@ export const SourcedDetail = () => {
   const { signalId = '' } = useParams();
   const [startup, setStartup] = useState<SourcedStartup | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [dossier, setDossier] = useState<SourcedDossier | null>(null);
+  const [enriching, setEnriching] = useState(false);
+  const [enrichError, setEnrichError] = useState('');
 
   useEffect(() => {
     let isMounted = true;
@@ -42,12 +45,23 @@ export const SourcedDetail = () => {
     loadSourceSignalDetail(signalId).then((loaded) => {
       if (!isMounted) return;
       setStartup(loaded);
+      setDossier(loaded?.dossier ?? null);
       setIsLoading(false);
     });
     return () => {
       isMounted = false;
     };
   }, [signalId]);
+
+  const handleEnrich = async () => {
+    if (!startup || enriching) return;
+    setEnriching(true);
+    setEnrichError('');
+    const result = await enrichSourcedStartup(startup.id);
+    if (result.ok) setDossier(result.dossier);
+    else setEnrichError(result.error || 'Could not build the deep dive. Try again.');
+    setEnriching(false);
+  };
 
   if (isLoading) {
     return <section className="ed-sec ed-inner"><p className="ed-lead">Loading sourced profile...</p></section>;
@@ -152,15 +166,85 @@ export const SourcedDetail = () => {
         </div>
       </section>
 
-      {/* DEEP DIVE — ponytail: placeholder, Phase 2 fills this from /api/sourced-enrich */}
+      {/* DEEP DIVE — on-demand agent dossier (Phase 2, via /api/sourced-enrich) */}
       <section className="ed-sec ed-divider ed-inner">
-        <article className="ed-infocard" style={{ textAlign: 'center', padding: '40px 24px' }}>
-          <Sparkles style={{ width: 22, height: 22, color: 'var(--ed-ink)', margin: '0 auto 14px' }} />
-          <h2 className="ed-sec-title" style={{ fontSize: 'clamp(1.4rem,3vw,26px)' }}>Deep dive coming</h2>
-          <p style={{ marginTop: 12, maxWidth: '52ch', margin: '12px auto 0', color: 'var(--ed-smoke)', lineHeight: 1.6 }}>
-            An AI dossier on this company — team, traction, and why it fits your thesis — will appear here, built on demand by Apparent's research agent.
-          </p>
-        </article>
+        {dossier ? (
+          <div style={{ display: 'grid', gap: 20 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <Sparkles style={{ width: 20, height: 20, color: 'var(--ed-ink)' }} />
+              <h2 className="ed-sec-title" style={{ fontSize: 'clamp(1.5rem,3vw,28px)' }}>Deep dive</h2>
+              <span style={{ fontSize: 11, fontWeight: 600, letterSpacing: '.1em', textTransform: 'uppercase', color: 'var(--ed-smoke)' }}>AI research</span>
+            </div>
+
+            <article className="ed-infocard">
+              <p style={{ fontSize: 16, lineHeight: 1.7, color: 'var(--ed-ink)' }}>{dossier.summary}</p>
+              {dossier.whatTheyBuild && (
+                <p style={{ marginTop: 16, fontSize: 15, lineHeight: 1.7, color: 'var(--ed-graphite)' }}>{dossier.whatTheyBuild}</p>
+              )}
+            </article>
+
+            <div style={{ display: 'grid', gap: 20, gridTemplateColumns: '1fr 1fr' }} className="ed-proj-cols">
+              {(dossier.traction?.length ?? 0) > 0 && (
+                <article className="ed-infocard">
+                  <h3 className="ed-sec-title" style={{ fontSize: 'clamp(1.3rem,3vw,22px)' }}>Traction signals</h3>
+                  <div style={{ marginTop: 16, display: 'grid', gap: 12 }}>
+                    {dossier.traction!.map((item) => (
+                      <div key={item} style={{ display: 'flex', gap: 12, alignItems: 'flex-start', fontSize: 14, lineHeight: 1.6, color: 'var(--ed-graphite)' }}>
+                        <Star style={{ width: 16, height: 16, marginTop: 3, flexShrink: 0, color: 'var(--ed-ink)' }} /> <span>{item}</span>
+                      </div>
+                    ))}
+                  </div>
+                </article>
+              )}
+              {dossier.thesisFit && (
+                <article className="ed-infocard">
+                  <h3 className="ed-sec-title" style={{ fontSize: 'clamp(1.3rem,3vw,22px)' }}>Thesis fit & risk</h3>
+                  <p style={{ marginTop: 16, fontSize: 14, lineHeight: 1.7, color: 'var(--ed-graphite)' }}>{dossier.thesisFit}</p>
+                </article>
+              )}
+            </div>
+
+            {(dossier.team?.length ?? 0) > 0 && (
+              <article className="ed-infocard">
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <Users style={{ width: 18, height: 18, color: 'var(--ed-ink)' }} />
+                  <h3 className="ed-sec-title" style={{ fontSize: 'clamp(1.3rem,3vw,22px)' }}>Team</h3>
+                </div>
+                <div style={{ marginTop: 16, display: 'grid', gap: 14 }}>
+                  {dossier.team!.map((member) => (
+                    <div key={member.name}>
+                      <p style={{ fontSize: 15, fontWeight: 600 }}>{member.name}{member.role ? <span style={{ color: 'var(--ed-smoke)', fontWeight: 400 }}> — {member.role}</span> : null}</p>
+                      {member.note && <p style={{ marginTop: 4, fontSize: 14, lineHeight: 1.6, color: 'var(--ed-graphite)' }}>{member.note}</p>}
+                    </div>
+                  ))}
+                </div>
+              </article>
+            )}
+
+            {(dossier.sources?.length ?? 0) > 0 && (
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center' }}>
+                <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--ed-smoke)' }}>Sources:</span>
+                {dossier.sources!.map((s) => (
+                  <a key={s.url} className="ed-proof" href={s.url} target="_blank" rel="noreferrer"><LinkIcon style={{ width: 13, height: 13 }} /> {s.label || getDomain(s.url) || 'link'}</a>
+                ))}
+              </div>
+            )}
+            <p style={{ fontSize: 12, color: 'var(--ed-smoke)' }}>AI-generated from public sources — verify before acting.</p>
+          </div>
+        ) : (
+          <article className="ed-infocard" style={{ textAlign: 'center', padding: '40px 24px' }}>
+            <Sparkles style={{ width: 22, height: 22, color: 'var(--ed-ink)', margin: '0 auto 14px' }} />
+            <h2 className="ed-sec-title" style={{ fontSize: 'clamp(1.4rem,3vw,26px)' }}>Generate a deep dive</h2>
+            <p style={{ maxWidth: '52ch', margin: '12px auto 0', color: 'var(--ed-smoke)', lineHeight: 1.6 }}>
+              Apparent's research agent will dig into this company — team, traction, and why it fits your thesis — from public sources.
+            </p>
+            <button type="button" className="ed-btn ed-btn-filled" onClick={handleEnrich} disabled={enriching} style={{ marginTop: 20 }}>
+              {enriching ? (<><Loader2 className="animate-spin" style={{ width: 16, height: 16 }} /> Researching…</>) : (<><Sparkles style={{ width: 16, height: 16 }} /> Generate deep dive</>)}
+            </button>
+            {enriching && <p style={{ marginTop: 12, fontSize: 12, color: 'var(--ed-smoke)' }}>This takes ~20–40 seconds while the agent reads the web.</p>}
+            {enrichError && <p style={{ marginTop: 12, fontSize: 13, color: 'var(--ed-ember)' }}>{enrichError}</p>}
+          </article>
+        )}
       </section>
     </main>
   );

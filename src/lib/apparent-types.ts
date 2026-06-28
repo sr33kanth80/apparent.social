@@ -334,6 +334,24 @@ export interface SourcedStartup {
   githubUrl: string;
   tags: string[];
   freshnessAt: string;
+  dossier: SourcedDossier | null;
+  dossierAt: string;
+}
+
+/**
+ * The on-demand agent deep dive for a sourced startup, built by
+ * /api/sourced-enrich via Claude web research and cached on the source_signals
+ * row. Stored in jsonb in this exact (camelCase) shape so the client reads it
+ * back without remapping.
+ */
+export interface SourcedDossier {
+  summary: string;
+  whatTheyBuild?: string;
+  team?: { name: string; role?: string; note?: string }[];
+  traction?: string[];
+  thesisFit?: string;
+  sources?: { label?: string; url: string }[];
+  generatedAt?: string;
 }
 
 export interface Meetup {
