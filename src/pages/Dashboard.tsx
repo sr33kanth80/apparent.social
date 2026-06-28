@@ -124,6 +124,7 @@ import {
   saveSettings,
   saveSignalStage,
   saveTermReview,
+  loadDailyDigestSourced,
   subscribeBuilderNetwork,
   toggleLaunchUpvote,
   toggleMeetupRsvp,
@@ -1621,19 +1622,33 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
     };
   }, []);
 
-  // Investor side: load the curated daily digest (R2 feed, refreshed 07:00 PST)
-  // that powers the "Daily" tab. No-op / empty when unconfigured.
+  // Investor side: load the "Daily" tab deal flow. Primary source is the durable
+  // source_signals table (each item routable → /sourced/:id, so cards open the
+  // in-app profile). Falls back to the legacy R2 digest (refreshed 07:00 PST)
+  // only when the table is empty, so the tab is never emptier than before.
+  // ponytail: drop the R2 fallback once source_signals coverage is confirmed in prod.
   useEffect(() => {
     if (!isInvestor) return;
     let cancelled = false;
-    loadDailyDigest((cached) => {
-      if (!cancelled) setDailyDigest(cached);
-    })
-      .then((launches) => {
-        if (!cancelled) setDailyDigest(launches);
+    const fallbackToR2 = () => {
+      loadDailyDigest((cached) => {
+        if (!cancelled && cached.length) setDailyDigest(cached);
+      })
+        .then((launches) => {
+          if (!cancelled) setDailyDigest(launches);
+        })
+        .catch(() => {
+          if (!cancelled) setDailyDigest([]);
+        });
+    };
+    loadDailyDigestSourced()
+      .then((sourced) => {
+        if (cancelled) return;
+        if (sourced.length) setDailyDigest(sourced);
+        else fallbackToR2();
       })
       .catch(() => {
-        if (!cancelled) setDailyDigest([]);
+        if (!cancelled) fallbackToR2();
       });
     return () => {
       cancelled = true;
@@ -6760,8 +6775,8 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
                   </button>
                 </div>
                 <div className="mt-4 divide-y divide-black/10 border-y border-black/10">
-                  {dailyLaunches.map((launch) => (
-                    <a key={launch.id} href={launch.sourceUrl || launch.launchUrl || undefined} target="_blank" rel="noreferrer" className="block py-3 hover:bg-[#f6f3f1]">
+                  {dailyLaunches.map((launch) => {
+                    const inner = (
                       <div className="flex items-start justify-between gap-3">
                         <div className="min-w-0">
                           <p className="truncate text-sm font-semibold">{launch.name}</p>
@@ -6769,8 +6784,13 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
                         </div>
                         <span className="shrink-0 rounded-full bg-[#f4f1eb] px-2 py-1 text-[11px] text-black/50">{launch.stage}</span>
                       </div>
-                    </a>
-                  ))}
+                    );
+                    return launch.projectPath ? (
+                      <Link key={launch.id} to={launch.projectPath} className="block py-3 hover:bg-[#f6f3f1]">{inner}</Link>
+                    ) : (
+                      <a key={launch.id} href={launch.sourceUrl || launch.launchUrl || undefined} target="_blank" rel="noreferrer" className="block py-3 hover:bg-[#f6f3f1]">{inner}</a>
+                    );
+                  })}
                   {dailyLaunches.length === 0 && (
                     <p className="py-6 text-sm leading-6 text-black/50">No daily launch feed yet. Builder Discovery still ranks Apparent-native founders from available proof.</p>
                   )}
@@ -7476,14 +7496,12 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
                 {filtered.map((launch, index) => {
                   const domain = dashboardLaunchDomain(launch.launchUrl || launch.sourceUrl || '');
                   const href = launch.sourceUrl || launch.launchUrl || '';
-                  return (
-                    <a
-                      key={launch.id}
-                      href={href || undefined}
-                      target={href ? '_blank' : undefined}
-                      rel="noreferrer"
-                      className="group relative flex h-full flex-col rounded-[18px] border border-black/10 bg-white p-5 shadow-[0_8px_24px_rgba(0,0,0,0.04)] transition-all hover:-translate-y-0.5 hover:border-black/15 hover:shadow-[0_14px_38px_rgba(0,0,0,0.08)]"
-                    >
+                  // Sourced items carry projectPath → open the in-app /sourced/:id
+                  // profile (SPA nav). Legacy R2-fallback items have none → link out.
+                  const internalTo = launch.projectPath;
+                  const cardClass = "group relative flex h-full flex-col rounded-[18px] border border-black/10 bg-white p-5 shadow-[0_8px_24px_rgba(0,0,0,0.04)] transition-all hover:-translate-y-0.5 hover:border-black/15 hover:shadow-[0_14px_38px_rgba(0,0,0,0.08)]";
+                  const inner = (
+                    <>
                       {/* Top: logo + source pill (right) + index (left of logo on hover) */}
                       <div className="flex items-start justify-between gap-3">
                         <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-[14px] bg-[#fbfaf7]">
@@ -7541,13 +7559,18 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
                       {/* Footer CTA — fills olive on hover to mirror the rest of the app */}
                       <div className="mt-4 flex items-center justify-between border-t border-black/[0.06] pt-3">
                         <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-black/35">
-                          View launch
+                          {internalTo ? 'View profile' : 'View source'}
                         </span>
                         <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-[#f4f1eb] text-black/60 transition-colors group-hover:bg-charcoal group-hover:text-white">
                           <ArrowUpRight className="h-3.5 w-3.5" />
                         </span>
                       </div>
-                    </a>
+                    </>
+                  );
+                  return internalTo ? (
+                    <Link key={launch.id} to={internalTo} className={cardClass}>{inner}</Link>
+                  ) : (
+                    <a key={launch.id} href={href || undefined} target={href ? '_blank' : undefined} rel="noreferrer" className={cardClass}>{inner}</a>
                   );
                 })}
               </div>

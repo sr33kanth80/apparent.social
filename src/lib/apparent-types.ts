@@ -183,6 +183,12 @@ export interface ProductLaunch {
   source?: string;
   /** For external launches: link back to the original listing. */
   sourceUrl?: string;
+  /**
+   * Internal in-app route for this item when one exists (e.g. /sourced/:id for
+   * agent-sourced startups). When set, feed cards link here instead of out to
+   * the original listing.
+   */
+  projectPath?: string;
 }
 
 /**

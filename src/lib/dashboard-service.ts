@@ -1552,6 +1552,57 @@ export const loadSourceSignalDetail = async (
   }
 };
 
+/**
+ * Daily deal flow for the investor "Daily" tab, sourced from the durable
+ * source_signals table rather than the R2 digest. Each item carries
+ * projectPath → /sourced/<uuid> so cards open the in-app sourced profile
+ * instead of linking out to the original listing. Ordered by freshness.
+ * Returns [] when unconfigured/empty so the caller can fall back to the legacy
+ * R2 feed.
+ */
+export const loadDailyDigestSourced = async (limit = 30): Promise<ProductLaunch[]> => {
+  if (!isSupabaseConfigured || !supabase) return [];
+  try {
+    const { data, error } = await supabase
+      .from('source_signals')
+      .select('id, company, founder, detail, source_type, source_url, profile_url, stage, location, github_url, raw_tags, freshness_at')
+      .order('freshness_at', { ascending: false })
+      .limit(limit);
+    if (error || !Array.isArray(data)) return [];
+    return data
+      .map((row): ProductLaunch => {
+        const id = String(row.id ?? '');
+        const tags = Array.isArray(row.raw_tags) ? (row.raw_tags as unknown[]).map(String).filter(Boolean) : [];
+        const sourceUrl = String(row.source_url ?? '');
+        const homepage = String(row.profile_url ?? '') || sourceUrl;
+        const detail = String(row.detail ?? '');
+        return {
+          id,
+          ownerId: '',
+          name: String(row.company ?? ''),
+          tagline: detail,
+          intro: detail,
+          category: tags[0] ?? '',
+          stage: String(row.stage ?? ''),
+          location: String(row.location ?? ''),
+          launchUrl: homepage,
+          proofUrl: sourceUrl,
+          logoUrl: '',
+          founderSignals: tags,
+          metrics: '',
+          updatedAt: String(row.freshness_at ?? ''),
+          origin: 'external',
+          source: 'Sourced',
+          sourceUrl,
+          projectPath: id ? `/sourced/${id}` : undefined,
+        };
+      })
+      .filter((launch) => launch.name && launch.projectPath);
+  } catch {
+    return [];
+  }
+};
+
 export const subscribeBuilderNetwork = (
   user: AppUser,
   onChange: () => void,
