@@ -7383,13 +7383,15 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
   const renderDailyDigestPage = () => {
     // Distinct filter options derived from whatever the scraper delivered today.
     const uniq = (values: string[]) => Array.from(new Set(values.map((v) => v.trim()).filter(Boolean))).sort();
-    const sectorOptions = uniq(dailyDigest.map((l) => l.category));
+    // Sector options span every tag a sourced startup carries (founderSignals),
+    // not just its primary category — so a multi-sector startup is findable under each.
+    const sectorOptions = uniq(dailyDigest.flatMap((l) => [l.category, ...(l.founderSignals ?? [])]));
     const stageOptions = uniq(dailyDigest.map((l) => l.stage));
     const locationOptions = uniq(dailyDigest.map((l) => l.location ?? ''));
 
     const q = dailyFilters.query.trim().toLowerCase();
     const filtered = dailyDigest.filter((l) => {
-      if (dailyFilters.sector && l.category !== dailyFilters.sector) return false;
+      if (dailyFilters.sector && l.category !== dailyFilters.sector && !(l.founderSignals ?? []).includes(dailyFilters.sector)) return false;
       if (dailyFilters.stage && l.stage !== dailyFilters.stage) return false;
       if (dailyFilters.location && (l.location ?? '') !== dailyFilters.location) return false;
       if (q) {
@@ -7400,7 +7402,6 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
     });
 
     const hasActiveFilter = Boolean(dailyFilters.query || dailyFilters.sector || dailyFilters.stage || dailyFilters.location);
-    const todayLabel = new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' });
     const selectCls =
       'h-9 rounded-full border border-black/10 bg-white px-3 text-xs font-semibold text-black/70 outline-none focus:border-black/30';
 
@@ -7422,12 +7423,12 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
                     <Sunrise className="h-5 w-5 text-ink" />
                   </div>
                   <div>
-                    <h2 className="text-xl font-semibold tracking-[-0.02em]">Today&apos;s deal flow</h2>
-                    <p className="mt-0.5 text-xs text-black/50">{todayLabel} · refreshes daily at 7:00 AM PST</p>
+                    <h2 className="text-xl font-semibold tracking-[-0.02em]">Sourced deal flow</h2>
+                    <p className="mt-0.5 text-xs text-black/50">Newest first · fresh leads added daily at 7:00 AM PST</p>
                   </div>
                 </div>
                 <span className="rounded-full bg-[#f4f1eb] px-3 py-1.5 text-xs font-semibold text-black/60">
-                  {filtered.length} {filtered.length === 1 ? 'launch' : 'launches'}
+                  {filtered.length} {filtered.length === 1 ? 'startup' : 'startups'}
                 </span>
               </div>
 
@@ -7439,7 +7440,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
                     <input
                       value={dailyFilters.query}
                       onChange={(e) => setDailyFilters((f) => ({ ...f, query: e.target.value }))}
-                      placeholder="Search today's launches"
+                      placeholder="Search sourced startups"
                       className="h-9 w-full rounded-full border border-black/10 bg-white pl-9 pr-3 text-xs font-medium outline-none focus:border-black/30"
                     />
                   </div>

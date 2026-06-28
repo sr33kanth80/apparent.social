@@ -1595,7 +1595,7 @@ export const enrichSourcedStartup = async (
  * Returns [] when unconfigured/empty so the caller can fall back to the legacy
  * R2 feed.
  */
-export const loadDailyDigestSourced = async (limit = 30): Promise<ProductLaunch[]> => {
+export const loadDailyDigestSourced = async (limit = 200): Promise<ProductLaunch[]> => {
   if (!isSupabaseConfigured || !supabase) return [];
   try {
     const { data, error } = await supabase

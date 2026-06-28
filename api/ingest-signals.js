@@ -33,8 +33,12 @@ const CRON_SECRET = process.env.AGENT_CRON_SECRET || '';
 const MODEL = process.env.INGEST_MODEL || process.env.AGENT_MODEL || 'claude-sonnet-4-6';
 
 const MAX_TOKENS = 8192;
-const MAX_AGENT_STEPS = 16; // web search across several sectors needs headroom
-const TARGET_COUNT = Math.min(Math.max(Number(process.env.INGEST_TARGET_COUNT) || 18, 1), 40);
+const MAX_AGENT_STEPS = 22; // more targets need more web_search/web_fetch headroom
+// Per-run scrape volume. Default 24, env-tunable up to 60. Each run upserts into
+// source_signals (deduped), so the investor Daily list grows run over run rather
+// than resetting — bigger target = faster accumulation, but a longer/costlier
+// agent loop, so keep the ceiling sane.
+const TARGET_COUNT = Math.min(Math.max(Number(process.env.INGEST_TARGET_COUNT) || 24, 1), 60);
 
 const DEFAULT_SECTORS = 'developer tools, AI infrastructure, vertical SaaS, fintech, agents, devops, data infrastructure';
 
