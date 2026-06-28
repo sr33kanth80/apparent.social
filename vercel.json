@@ -25,6 +25,10 @@
       "destination": "/api/upload?route=delete"
     },
     {
+      "source": "/api/sourced-enrich",
+      "destination": "/api/founder-enrich?route=sourced"
+    },
+    {
       "source": "/",
       "has": [
         {

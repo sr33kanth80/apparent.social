@@ -187,6 +187,16 @@ const synthesizeNarrative = async (profile, launches, gd) => {
 // ---------- Handler ----------
 
 export default async function handler(req, res) {
+  // The sourced-startup deep dive shares this function to stay under Vercel's
+  // 12-function cap (same JWT auth + Anthropic/Supabase deps). It's mounted at
+  // /api/sourced-enrich via a vercel.json rewrite → ?route=sourced and lives in
+  // the underscore helper (not its own routable function). Static import string
+  // so node-file-trace bundles it.
+  if (String(req.query?.route || '') === 'sourced') {
+    const { default: sourcedHandler } = await import('./_sourced-enrich.js');
+    return sourcedHandler(req, res);
+  }
+
   if (req.method !== 'POST') {
     res.setHeader('Allow', 'POST');
     return res.status(405).json({ ok: false, error: 'method_not_allowed' });
