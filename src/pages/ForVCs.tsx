@@ -1,154 +1,104 @@
-import { useEffect, useState } from 'react';
-import type { CSSProperties } from 'react';
 import { Link } from 'react-router-dom';
 import { EditorialNavbar } from '../components/editorial/EditorialNavbar';
 import { EditorialFooter } from '../components/editorial/EditorialFooter';
 import { LogoIcon } from '../components/LogoIcon';
 
 type VcSignal = {
-  initials: string;
   company: string;
-  meta: string;
-  score: number;
-  proof: string[];
+  founder: string;
+  relevance: number;
+  column: 'Inbox' | 'Reviewing' | 'Drafted';
+  detail: string;
   source: string;
-  draft: string;
-  stage: 'Inbox' | 'Reviewing' | 'Drafted';
+  freshness: string;
+  stage: string;
+  location: string;
 };
 
 const VC_SIGNALS: VcSignal[] = [
   {
-    initials: 'AK',
     company: 'Edge runtime for agents',
-    meta: 'Dev tools | Pre-seed | SF',
-    score: 96,
-    proof: ['412 commits', 'GitHub verified', '3 launches'],
-    source: 'Fresh proof from npx apparent',
-    draft: 'Your devtools thesis maps to their agent runtime and weekly shipping cadence.',
-    stage: 'Reviewing',
+    founder: 'Ari Kaplan',
+    relevance: 96,
+    column: 'Reviewing',
+    detail: '412 commits in 90 days, GitHub-verified. Ships weekly against a dev-tools thesis you starred twice.',
+    source: 'npx apparent',
+    freshness: 'Updated 2h ago',
+    stage: 'Pre-seed',
+    location: 'SF',
   },
   {
-    initials: 'NL',
     company: 'Local-first sync engine',
-    meta: 'AI infra | Seed | Remote',
-    score: 92,
-    proof: ['Usage up 38%', 'Open-source traction', 'Seed raise'],
-    source: 'Founder signal updated today',
-    draft: 'They fit your AI infra mandate and are actively collecting seed conversations.',
-    stage: 'Inbox',
+    founder: 'Nia Lassiter',
+    relevance: 92,
+    column: 'Inbox',
+    detail: 'Open-source usage up 38% in 30 days. Actively collecting seed conversations this month.',
+    source: 'Founder signal',
+    freshness: 'Fresh today',
+    stage: 'Seed',
+    location: 'Remote',
   },
   {
-    initials: 'RS',
     company: 'Eval harness for LLMs',
-    meta: 'Dev tools | Pre-seed | NYC',
-    score: 89,
-    proof: ['New enterprise pilot', 'Demo attached', 'Warm category fit'],
-    source: 'Product launch and proof links',
-    draft: 'The eval workflow is close to your recent pass/fund signals. Ask for the pilot notes.',
-    stage: 'Drafted',
+    founder: 'Rae Shirota',
+    relevance: 89,
+    column: 'Drafted',
+    detail: 'New enterprise pilot attached. Category maps to two of your last three passes-turned-funds.',
+    source: 'Product launch',
+    freshness: 'Yesterday',
+    stage: 'Pre-seed',
+    location: 'NYC',
   },
 ];
 
 const THESIS_TAGS = ['AI infra', 'Dev tools', 'Pre-seed → Seed', 'Bay Area / Remote'];
 
 const InvestorSourcingPreview = () => {
-  const [selectedIndex, setSelectedIndex] = useState(0);
-  const [paused, setPaused] = useState(false);
-  const [activity, setActivity] = useState('Agent ranked 3 fresh builders against your thesis.');
-  const selectedSignal = VC_SIGNALS[selectedIndex];
-
-  useEffect(() => {
-    if (paused) return;
-    const id = window.setInterval(() => {
-      setSelectedIndex((current) => (current + 1) % VC_SIGNALS.length);
-    }, 2200);
-
-    return () => window.clearInterval(id);
-  }, [paused]);
-
-  const selectSignal = (index: number) => {
-    setSelectedIndex(index);
-    setActivity(`Opened ${VC_SIGNALS[index].company}.`);
-  };
+  const avgRelevance = Math.round(
+    VC_SIGNALS.reduce((sum, s) => sum + s.relevance, 0) / VC_SIGNALS.length
+  );
 
   return (
-    <div
-      className="ed-mock ed-vc-sourcing-card"
-      onMouseEnter={() => setPaused(true)}
-      onMouseLeave={() => setPaused(false)}
-      onFocus={() => setPaused(true)}
-      onBlur={() => setPaused(false)}
-    >
-      <div className="ed-mock-head">
-        <span className="ed-t">Today&apos;s dealflow</span>
-        <span className="ed-live"><i />3 new · 4m ago</span>
-      </div>
-
-      <div className="ed-vc-thesis" aria-label="Your thesis">
-        <span className="ed-vc-thesis-label">Your thesis</span>
-        <div className="ed-vc-thesis-tags">
-          {THESIS_TAGS.map((tag) => <span key={tag}>{tag}</span>)}
+    <div className="ed-vc-dash" aria-label="Signal inbox preview">
+      <div className="ed-vc-dash-head">
+        <div className="ed-vc-dash-title">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" aria-hidden><circle cx="11" cy="11" r="7" /><path d="m21 21-4.3-4.3" /></svg>
+          <h3>Signal inbox</h3>
         </div>
+        <span className="ed-vc-dash-meta">Avg relevance {avgRelevance}%</span>
       </div>
 
-      <div className="ed-vc-board">
-        <div className="ed-vc-list" role="list" aria-label="Ranked founder signals">
-          {VC_SIGNALS.map((signal, index) => (
-            <button
-              key={signal.company}
-              type="button"
-              className={`ed-row ed-signal-row${index === selectedIndex ? ' is-active' : ''}`}
-              onClick={() => selectSignal(index)}
-              aria-pressed={index === selectedIndex}
-            >
-              <div className="ed-av">{signal.initials}</div>
-              <div className="ed-who">
+      <div className="ed-vc-dash-thesis" aria-label="Your thesis">
+        <span className="ed-vc-dash-thesis-label">Thesis</span>
+        {THESIS_TAGS.map((tag) => <span key={tag} className="ed-vc-dash-chip">{tag}</span>)}
+      </div>
+
+      <ul className="ed-vc-dash-list">
+        {VC_SIGNALS.map((signal) => (
+          <li key={signal.company} className="ed-vc-dash-row">
+            <div className="ed-vc-dash-main">
+              <div className="ed-vc-dash-title-row">
                 <b>{signal.company}</b>
-                <span>{signal.meta}</span>
+                <span className="ed-vc-dash-by">by {signal.founder}</span>
+                <span className="ed-vc-dash-rel">{signal.relevance}%</span>
+                <span className="ed-vc-dash-col">{signal.column}</span>
               </div>
-              <div className="ed-score">
-                <b>{signal.score}</b>
-                <span>Fit</span>
+              <p className="ed-vc-dash-detail">{signal.detail}</p>
+              <div className="ed-vc-dash-meta-row">
+                <span>{signal.source}</span>
+                <span>{signal.freshness}</span>
+                <span>{signal.stage}</span>
+                <span>{signal.location}</span>
               </div>
-            </button>
-          ))}
-        </div>
-
-        <div className="ed-signal-detail" aria-live="polite">
-          <div className="ed-signal-detail-top">
-            <div>
-              <span className="ed-signal-kicker">Thesis match</span>
-              <h3>{selectedSignal.company}</h3>
             </div>
-            <div className="ed-fit-orb" style={{ '--fit': selectedSignal.score } as CSSProperties}>
-              <span>{selectedSignal.score}</span>
+            <div className="ed-vc-dash-actions">
+              <span className="ed-vc-dash-pill">Profile</span>
+              <span className="ed-vc-dash-pill">Source</span>
+              <span className="ed-vc-dash-pill is-primary">Draft</span>
             </div>
-          </div>
-
-          <div className="ed-proof-row">
-            {selectedSignal.proof.map((item) => (
-              <span key={item}>{item}</span>
-            ))}
-          </div>
-
-          <div className="ed-agent-draft">
-            <span>First-touch draft</span>
-            <p>{selectedSignal.draft}</p>
-          </div>
-
-          <div className="ed-signal-source">{selectedSignal.source}</div>
-
-          <div className="ed-signal-actions">
-            <button type="button" onClick={() => setActivity(`Saved ${selectedSignal.company} to deal flow.`)}>Save</button>
-            <button type="button" onClick={() => setActivity(`Opened source links for ${selectedSignal.company}.`)}>Source</button>
-            <button type="button" className="is-primary" onClick={() => setActivity(`Drafted outreach for ${selectedSignal.company}.`)}>Draft outreach</button>
-          </div>
-        </div>
-      </div>
-
-      <div className="ed-vc-activity">
-        <span>{activity}</span>
-      </div>
+          </li>
+        ))}
+      </ul>
     </div>
   );
 };
