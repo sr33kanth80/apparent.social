@@ -49,6 +49,8 @@ const VC_SIGNALS: VcSignal[] = [
   },
 ];
 
+const THESIS_TAGS = ['AI infra', 'Dev tools', 'Pre-seed → Seed', 'Bay Area / Remote'];
+
 const InvestorSourcingPreview = () => {
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [paused, setPaused] = useState(false);
@@ -66,7 +68,7 @@ const InvestorSourcingPreview = () => {
 
   const selectSignal = (index: number) => {
     setSelectedIndex(index);
-    setActivity(`Opened ${VC_SIGNALS[index].company} from Signal inbox.`);
+    setActivity(`Opened ${VC_SIGNALS[index].company}.`);
   };
 
   return (
@@ -78,8 +80,15 @@ const InvestorSourcingPreview = () => {
       onBlur={() => setPaused(false)}
     >
       <div className="ed-mock-head">
-        <span className="ed-t">Signal inbox 📡</span>
-        <span className="ed-live"><i />fresh today ⚡</span>
+        <span className="ed-t">Today&apos;s dealflow</span>
+        <span className="ed-live"><i />3 new · 4m ago</span>
+      </div>
+
+      <div className="ed-vc-thesis" aria-label="Your thesis">
+        <span className="ed-vc-thesis-label">Your thesis</span>
+        <div className="ed-vc-thesis-tags">
+          {THESIS_TAGS.map((tag) => <span key={tag}>{tag}</span>)}
+        </div>
       </div>
 
       <div className="ed-vc-board">
@@ -108,7 +117,7 @@ const InvestorSourcingPreview = () => {
         <div className="ed-signal-detail" aria-live="polite">
           <div className="ed-signal-detail-top">
             <div>
-              <span className="ed-signal-kicker">Ranked by fit 🎯</span>
+              <span className="ed-signal-kicker">Thesis match</span>
               <h3>{selectedSignal.company}</h3>
             </div>
             <div className="ed-fit-orb" style={{ '--fit': selectedSignal.score } as CSSProperties}>
@@ -123,7 +132,7 @@ const InvestorSourcingPreview = () => {
           </div>
 
           <div className="ed-agent-draft">
-            <span>Agent draft ✍️</span>
+            <span>First-touch draft</span>
             <p>{selectedSignal.draft}</p>
           </div>
 
