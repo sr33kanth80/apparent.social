@@ -1,5 +1,7 @@
+import { Link } from 'react-router-dom';
 import { EditorialNavbar } from '../components/editorial/EditorialNavbar';
 import { EditorialFooter } from '../components/editorial/EditorialFooter';
+import { LogoIcon } from '../components/LogoIcon';
 
 type LegalSection = {
   title: string;
@@ -207,6 +209,101 @@ const LegalPage = ({ type }: { type: keyof typeof legalContent }) => {
   );
 };
 
+const cookieSummary = [
+  ['Required storage', 'Used for sign-in, security, routing, privacy choices, and core product features.'],
+  ['Optional storage', 'Used for preferences and analytics where allowed by law or consent.'],
+  ['Advertising cookies', 'Not currently a core product feature. Controls will be added before applicable use.'],
+] as const;
+
+const cookieSectionId = (title: string) =>
+  title
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/(^-|-$)/g, '');
+
+const CookieReportPage = () => {
+  const content = legalContent.cookies;
+
+  return (
+    <div className="cookie-report">
+      <header className="cookie-report-top">
+        <Link to="/" className="cookie-report-brand" aria-label="Apparent home">
+          <LogoIcon className="cookie-report-mark" />
+          <img src="/apparent-wordmark.png" alt="Apparent" />
+        </Link>
+        <nav className="cookie-report-nav" aria-label="Legal pages">
+          <Link to="/privacy">Privacy</Link>
+          <Link to="/terms">Terms</Link>
+          <Link to="/cookies" aria-current="page">Cookies</Link>
+        </nav>
+      </header>
+
+      <main className="cookie-report-main">
+        <section className="cookie-report-hero">
+          <div>
+            <p className="cookie-kicker">{content.eyebrow}</p>
+            <h1>{content.title}</h1>
+          </div>
+          <div>
+            <p className="cookie-hero-copy">{content.intro}</p>
+            <p className="cookie-updated">Last updated May 25 2026</p>
+          </div>
+        </section>
+
+        <section className="cookie-doc-layout" aria-label="Cookie policy">
+          <aside className="cookie-rail">
+            <div className="cookie-section-head">
+              <p>At a glance</p>
+            </div>
+            <div className="cookie-summary-list">
+              {cookieSummary.map(([label, body]) => (
+                <article key={label}>
+                  <h2>{label}</h2>
+                  <p>{body}</p>
+                </article>
+              ))}
+            </div>
+
+            <nav className="cookie-contents" aria-label="Cookie policy contents">
+              <p>Contents</p>
+              {content.sections.map((section, index) => (
+                <a key={section.title} href={`#${cookieSectionId(section.title)}`}>
+                  <span>{String(index + 1).padStart(2, '0')}</span>
+                  {section.title}
+                </a>
+              ))}
+            </nav>
+          </aside>
+
+          <section className="cookie-policy-table" aria-label="Full cookie policy">
+            <div className="cookie-section-head">
+              <p>Full policy</p>
+            </div>
+            <div className="cookie-policy-rows">
+              {content.sections.map((section, index) => (
+                <article key={section.title} id={cookieSectionId(section.title)}>
+                  <span>{String(index + 1).padStart(2, '0')}</span>
+                  <div>
+                    <h2>{section.title}</h2>
+                    <p>{section.body}</p>
+                  </div>
+                </article>
+              ))}
+            </div>
+          </section>
+        </section>
+
+        <footer className="cookie-report-foot">
+          <p>
+            Last updated: May 25, 2026. These policies describe Apparent&apos;s current practices and contractual rules. They should be reviewed by qualified counsel for your company structure, jurisdictions, data flows, and launch plan.
+          </p>
+          <Link to="/contact">Contact Apparent</Link>
+        </footer>
+      </main>
+    </div>
+  );
+};
+
 export const PrivacyPolicy = () => <LegalPage type="privacy" />;
 export const TermsOfService = () => <LegalPage type="terms" />;
-export const CookiePolicy = () => <LegalPage type="cookies" />;
+export const CookiePolicy = () => <CookieReportPage />;
