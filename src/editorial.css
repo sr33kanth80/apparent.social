@@ -1401,25 +1401,21 @@
 .ed-pillar .ed-pl { font-size: 10px; letter-spacing: .14em; text-transform: uppercase; color: var(--ed-smoke); }
 .ed-pillar b { display: block; margin-top: 8px; font-size: 16px; font-weight: 500; }
 .ed-pillar p { margin-top: 6px; font-size: 12px; line-height: 1.5; color: var(--ed-graphite); }
-.ed-auth-card { background: var(--ed-paper); border: 1px solid var(--ed-fog); border-radius: var(--ed-r-feature); padding: 32px; }
+.ed-auth-card { background: var(--ed-paper); border: 1px solid var(--ed-fog); border-radius: var(--ed-r-feature); padding: 32px 28px 28px; }
 .ed-seg { display: grid; grid-auto-flow: column; gap: 4px; background: var(--ed-canvas); border: 1px solid var(--ed-fog); border-radius: 999px; padding: 4px; }
 .ed-seg button { font-family: var(--ed-font); font-size: 13px; font-weight: 500; color: var(--ed-graphite); background: transparent; border: 0; border-radius: 999px; height: 36px; cursor: pointer; transition: background .15s, color .15s; }
 .ed-seg button.is-on { background: var(--ed-ink); color: var(--ed-paper); }
-.ed-auth-card h2 { margin-top: 20px; font-size: 20px; font-weight: 600; letter-spacing: -0.02em; }
-.ed-auth-card .ed-desc { margin-top: 6px; font-size: 13px; line-height: 1.5; color: var(--ed-smoke); }
-.ed-auth-ctx { margin-top: 16px; border-top: 1px solid var(--ed-fog); padding-top: 14px; }
-.ed-auth-ctx p { display: flex; gap: 10px; align-items: flex-start; font-size: 13px; line-height: 1.4; color: var(--ed-graphite); }
-.ed-auth-ctx p + p { margin-top: 8px; }
-.ed-auth-ctx p i { width: 5px; height: 5px; border-radius: 50%; background: var(--ed-ash); margin-top: 6px; flex-shrink: 0; }
-.ed-auth-methods { margin-top: 18px; display: grid; gap: 10px; }
-.ed-btn.ed-block { width: 100%; justify-content: center; height: 46px; }
-.ed-btn.ed-gh { background: var(--ed-canvas); color: var(--ed-ink); border-color: var(--ed-fog); }
-.ed-btn.ed-gh:hover { background: var(--ed-fog); }
-.ed-auth-or { display: flex; align-items: center; gap: 12px; font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--ed-smoke); }
+.ed-auth-card h2 { font-size: 18px; font-weight: 600; letter-spacing: -0.02em; }
+.ed-auth-methods { margin-top: 24px; display: grid; gap: 10px; }
+.ed-btn.ed-block { width: 100%; justify-content: center; height: 44px; font-size: 14px; border-radius: 10px; }
+.ed-btn.ed-gh { background: var(--ed-ink); color: var(--ed-paper); border-color: var(--ed-ink); }
+.ed-btn.ed-gh:hover { opacity: .88; }
+.ed-btn.ed-gh svg { width: 16px; height: 16px; }
+.ed-auth-or { display: flex; align-items: center; gap: 12px; font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--ed-smoke); }
 .ed-auth-or::before, .ed-auth-or::after { content: ""; flex: 1; height: 1px; background: var(--ed-fog); }
-.ed-auth-foot { margin-top: 18px; font-size: 13px; color: var(--ed-graphite); text-align: center; }
-.ed-auth-foot button { font-weight: 600; color: var(--ed-ink); background: none; border: 0; cursor: pointer; font-family: var(--ed-font); font-size: 13px; padding: 0; }
-.ed-auth-fine { margin-top: 12px; font-size: 11px; line-height: 1.5; color: var(--ed-smoke); text-align: center; }
+.ed-auth-toggle { margin-top: 20px; font-size: 13px; color: var(--ed-smoke); text-align: center; }
+.ed-auth-toggle button { font-weight: 600; color: var(--ed-ink); background: none; border: 0; cursor: pointer; font-family: var(--ed-font); font-size: 13px; padding: 0; text-decoration: underline; text-underline-offset: 2px; }
+.ed-auth-toggle button:hover { opacity: .7; }
 .ed-authed { margin-top: 18px; display: flex; gap: 10px; flex-wrap: wrap; }
 
 /* Project / profile panels */

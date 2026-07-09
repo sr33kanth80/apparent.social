@@ -97,7 +97,7 @@ export const Login = () => {
               </div>
 
               {isKindeConfigured ? (
-                <KindeAuthPanel role={activeRole} contextItems={contextItems} />
+                <KindeAuthPanel role={activeRole} />
               ) : (
                 <div className="ed-auth-card">
                   <h2>Sign in is not configured</h2>
@@ -113,7 +113,7 @@ export const Login = () => {
   );
 };
 
-const KindeAuthPanel = ({ role, contextItems }: { role: DashboardRole; contextItems: string[] }) => {
+const KindeAuthPanel = ({ role }: { role: DashboardRole }) => {
   const navigate = useNavigate();
   const { isLoading, isAuthenticated, login, register, logout, user: kindeUser } = useKindeAuth();
   const [authMode, setAuthMode] = useState<'signin' | 'signup'>('signup');
@@ -142,26 +142,18 @@ const KindeAuthPanel = ({ role, contextItems }: { role: DashboardRole; contextIt
   const legacyRegister = async () => { handleAuthClick(); await register(); };
 
   const verb = isSignup ? 'Sign up' : 'Sign in';
-  const title = isSignup ? (isInvestor ? 'Create investor profile' : 'Create founder profile') : 'Welcome back';
-  const emailPlaceholder = isInvestor ? 'partner@fund.com' : 'founder@startup.com';
+  const title = isSignup
+    ? (isInvestor ? 'Create investor profile' : 'Create founder profile')
+    : (isInvestor ? 'Sign in as investor' : 'Sign in as founder');
 
   return (
     <div className="ed-auth-card">
       <h2>{title}</h2>
-      <p className="ed-desc">{isInvestor ? 'Publish your thesis and discover builders.' : 'Build your profile and get discovered by investors.'}</p>
 
       {!isAuthenticated && (
         <>
           {hasAnyKindeConnection ? (
             <div className="ed-auth-methods">
-              <div className="ed-seg">
-                {(['signup', 'signin'] as const).map((mode) => (
-                  <button key={mode} type="button" aria-pressed={authMode === mode} className={authMode === mode ? 'is-on' : ''} onClick={() => setAuthMode(mode)}>
-                    {mode === 'signup' ? 'Sign up' : 'Sign in'}
-                  </button>
-                ))}
-              </div>
-
               {kindeConnectionIds.google && (
                 <button type="button" className="ed-btn ed-block ed-gh" disabled={isLoading} onClick={() => continueWith(kindeConnectionIds.google!)}>
                   <GoogleMark className="" /> {isLoading ? 'Loading...' : `${verb} with Google`}
@@ -173,7 +165,7 @@ const KindeAuthPanel = ({ role, contextItems }: { role: DashboardRole; contextIt
               )}
 
               {kindeConnectionIds.email && (
-                <button type="button" className="ed-btn ed-block ed-btn-filled" disabled={isLoading} onClick={() => continueWith(kindeConnectionIds.email!)}>
+                <button type="button" className="ed-btn ed-block ed-btn-outline" disabled={isLoading} onClick={() => continueWith(kindeConnectionIds.email!)}>
                   <AtSign style={{ width: 16, height: 16 }} /> {isLoading ? 'Loading...' : `${verb} with email`}
                 </button>
               )}
@@ -183,18 +175,20 @@ const KindeAuthPanel = ({ role, contextItems }: { role: DashboardRole; contextIt
                   <UserRound style={{ width: 16, height: 16 }} /> {isLoading ? 'Loading...' : `${verb} with username`}
                 </button>
               )}
-
-              <p className="ed-auth-fine">
-                {isInvestor ? 'Investor profiles are bound to the email used here.' : 'Founder profiles are bound to the email used here.'} Suggested: {emailPlaceholder}
-              </p>
             </div>
           ) : (
             <div className="ed-auth-methods">
               <button type="button" className="ed-btn ed-block ed-btn-filled" disabled={isLoading} onClick={() => continueWith('')}>{isLoading ? 'Loading...' : 'Sign in'}</button>
               <button type="button" className="ed-btn ed-block ed-btn-outline" disabled={isLoading} onClick={legacyRegister}>Create account</button>
-              <p className="ed-auth-fine">Suggested email: {emailPlaceholder}</p>
             </div>
           )}
+
+          <p className="ed-auth-toggle">
+            {isSignup ? 'Already have an account?' : 'New here?'}{' '}
+            <button type="button" onClick={() => setAuthMode(isSignup ? 'signin' : 'signup')}>
+              {isSignup ? 'Sign in' : 'Create account'}
+            </button>
+          </p>
         </>
       )}
 
