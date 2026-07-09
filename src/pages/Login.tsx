@@ -148,11 +148,7 @@ const KindeAuthPanel = ({ role, contextItems }: { role: DashboardRole; contextIt
   return (
     <div className="ed-auth-card">
       <h2>{title}</h2>
-      <p className="ed-desc">{isInvestor ? 'Publish your thesis, discover builders, and follow founder activity.' : 'Build your profile, publish launches, and get discovered by investors.'}</p>
-
-      <div className="ed-auth-ctx">
-        {contextItems.map((item) => (<p key={item}><i />{item}</p>))}
-      </div>
+      <p className="ed-desc">{isInvestor ? 'Publish your thesis and discover builders.' : 'Build your profile and get discovered by investors.'}</p>
 
       {!isAuthenticated && (
         <>
