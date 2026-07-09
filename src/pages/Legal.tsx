@@ -1,7 +1,5 @@
-import { Link } from 'react-router-dom';
 import { EditorialNavbar } from '../components/editorial/EditorialNavbar';
 import { EditorialFooter } from '../components/editorial/EditorialFooter';
-import { LogoIcon } from '../components/LogoIcon';
 
 type LegalSection = {
   title: string;
@@ -225,20 +223,9 @@ const CookieReportPage = () => {
   const content = legalContent.cookies;
 
   return (
-    <div className="cookie-report">
-      <header className="cookie-report-top">
-        <Link to="/" className="cookie-report-brand" aria-label="Apparent home">
-          <LogoIcon className="cookie-report-mark" />
-          <img src="/apparent-wordmark.png" alt="Apparent" />
-        </Link>
-        <nav className="cookie-report-nav" aria-label="Legal pages">
-          <Link to="/privacy">Privacy</Link>
-          <Link to="/terms">Terms</Link>
-          <Link to="/cookies" aria-current="page">Cookies</Link>
-        </nav>
-      </header>
-
-      <main className="cookie-report-main">
+    <div className="cookie-shell">
+      <EditorialNavbar />
+      <main className="cookie-report">
         <section className="cookie-report-hero">
           <div>
             <p className="cookie-kicker">{content.eyebrow}</p>
@@ -292,14 +279,8 @@ const CookieReportPage = () => {
             </div>
           </section>
         </section>
-
-        <footer className="cookie-report-foot">
-          <p>
-            Last updated: May 25, 2026. These policies describe Apparent&apos;s current practices and contractual rules. They should be reviewed by qualified counsel for your company structure, jurisdictions, data flows, and launch plan.
-          </p>
-          <Link to="/contact">Contact Apparent</Link>
-        </footer>
       </main>
+      <EditorialFooter />
     </div>
   );
 };
