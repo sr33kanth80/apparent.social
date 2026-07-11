@@ -225,8 +225,8 @@
 .ed-logo-row.row-2 .ed-logo-track { animation-direction: reverse; animation-duration: 44s; transform: translateX(-120px); }
 .ed-logo-row.row-3 .ed-logo-track { animation-duration: 40s; transform: translateX(-64px); }
 .ed-logo-cloud:hover .ed-logo-track { animation-play-state: paused; }
-.ed-vc-logo { display: inline-flex; align-items: center; gap: 8px; min-height: 36px; border: 0; border-radius: 999px; background: transparent; padding: 7px 12px 7px 8px; color: var(--ed-ash); filter: grayscale(1); opacity: .66; transition: filter .16s, opacity .16s, color .16s; }
-.ed-vc-logo:hover { filter: none; opacity: 1; color: var(--ed-ink); }
+.ed-vc-logo { display: inline-flex; align-items: center; gap: 8px; min-height: 36px; border: 0; border-radius: 999px; background: transparent; padding: 7px 12px 7px 8px; color: var(--ed-graphite); transition: color .16s; }
+.ed-vc-logo:hover { color: var(--ed-ink); }
 .ed-vc-logo img { width: 20px; height: 20px; border-radius: 5px; background: transparent; object-fit: contain; }
 .ed-vc-logo span { font-size: 13px; font-weight: 450; letter-spacing: -.005em; white-space: nowrap; }
 @keyframes ed-logo-scroll { from { transform: translateX(0); } to { transform: translateX(calc(-50% - 5px)); } }
