@@ -202,7 +202,7 @@
 .ed-trust b { color: var(--ed-ink); font-weight: 600; }
 .ed-trust .ed-d { width: 4px; height: 4px; border-radius: 50%; background: var(--ed-ash); }
 .ed-trust-verified { display: inline-flex; align-items: center; gap: 6px; }
-.ed-vb { display: inline-block; width: 18px; height: 18px; color: var(--ed-ink); flex: 0 0 auto; vertical-align: middle; }
+.ed-vb { display: inline-block; width: 18px; height: 18px; color: #1d9bf0; flex: 0 0 auto; vertical-align: middle; }
 .ed-vb-sm { width: 16px; height: 16px; }
 .ed-logos { display: grid; justify-items: center; gap: 14px; margin-top: 36px; overflow: hidden; }
 .ed-logos .ed-lbl { font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: var(--ed-smoke); }
@@ -680,8 +680,8 @@
 .ed-card .ed-ch b { font-size: 15px; font-weight: 600; }
 .ed-card .ed-ch span { display: block; font-size: 12px; color: var(--ed-smoke); }
 .ed-badge { font-size: 10px; font-weight: 600; padding: 3px 7px; border-radius: var(--ed-r-badge); background: var(--ed-ink); color: var(--ed-paper); margin-left: auto; }
-.ed-badge-icon { display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; padding: 0; border-radius: 50%; background: transparent; color: var(--ed-ink); }
-.ed-card .ed-ch .ed-badge-icon { color: var(--ed-ink); }
+.ed-badge-icon { display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; padding: 0; border-radius: 50%; background: transparent; color: #1d9bf0; }
+.ed-card .ed-ch .ed-badge-icon { color: #1d9bf0; }
 .ed-badge-icon .ed-vb { width: 22px; height: 22px; }
 .ed-card p.ed-desc { margin-top: 16px; font-size: 14px; line-height: 1.6; color: var(--ed-graphite); }
 .ed-card .ed-meta { margin-top: 18px; display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }

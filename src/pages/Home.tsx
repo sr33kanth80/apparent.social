@@ -234,7 +234,8 @@ export const Home = () => {
         <section className="ed-hero">
           <div className="ed-inner">
             <h1 className="ed-display">
-              Where traction meets <em>conviction</em>
+              Where <span className="ed-hero-keep">traction 📈</span> meets{' '}
+              <em className="ed-hero-keep">conviction💸</em>
             </h1>
             <p className="ed-sub">Apparent connects founders who&apos;ve shipped with investors who are actively writing cheques. Founders turn proof into intros; investors source startups that fit their thesis, ranked by proof, stage, and freshness.</p>
             <div className="ed-cta">
