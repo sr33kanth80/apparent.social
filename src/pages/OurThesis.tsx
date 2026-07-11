@@ -301,8 +301,8 @@ export const OurThesis = () => (
           <h2>Show the work. Declare the thesis. Let Apparent connect the fit.</h2>
           <p>Start with the side of the marketplace you are on. Apparent keeps the rest of the workflow attached.</p>
           <div className="ed-cta" style={{ marginTop: 32 }}>
-            <Link className="ed-btn ed-btn-filled" style={{ background: 'var(--ed-paper)', color: 'var(--ed-ink)' }} to="/login?role=founder">Start as founder</Link>
-            <Link className="ed-btn ed-btn-outline" style={{ borderColor: 'var(--ed-paper)', color: 'var(--ed-paper)' }} to="/login?role=investor">Start as investor</Link>
+            <Link className="ed-btn ed-btn-filled" to="/login?role=founder">Start as founder</Link>
+            <Link className="ed-btn ed-btn-outline" style={{ borderColor: 'var(--ed-ember)', color: 'var(--ed-ember)' }} to="/login?role=investor">Start as investor</Link>
           </div>
         </div>
       </section>

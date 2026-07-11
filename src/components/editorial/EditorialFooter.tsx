@@ -38,7 +38,7 @@ export const EditorialFooter = () => (
           </div>
         </div>
       </div>
-      <img className="ed-bf-word" src="/apparent-wordmark-white.png" alt="Apparent" />
+      <img className="ed-bf-word" src="/apparent-wordmark.png" alt="Apparent" />
       <div className="ed-bf-bottom">
         <span>&copy; 2026 Apparent. Verified dealflow for investors.</span>
         <span className="ed-bf-legal">

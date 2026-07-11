@@ -124,7 +124,7 @@ const renderBullet = (bullet: string) => {
   if (!website) {
     return (
       <div className="grid gap-3 md:grid-cols-[1.25rem,1fr] md:items-start">
-        <span className="mt-1 h-2.5 w-2.5 rounded-full bg-[#cfdaf5]" />
+        <span className="mt-1 h-2.5 w-2.5 rounded-full bg-[#fbe1d1]" />
         <div>
           <p className="text-lg font-normal leading-tight tracking-[-0.03em] text-black" style={serifDisplay}>
             {title}
@@ -145,7 +145,7 @@ const renderBullet = (bullet: string) => {
         href={href}
         target="_blank"
         rel="noreferrer"
-        className="flex h-12 w-12 items-center justify-center rounded-[16px] bg-[#f6f3f1] transition-colors hover:bg-[#cfdaf5]"
+        className="flex h-12 w-12 items-center justify-center rounded-[16px] bg-[#f2f2f3] transition-colors hover:bg-[#fbe1d1]"
       >
         <img
           src={getLogoUrl(website)}
@@ -174,7 +174,7 @@ const renderBullet = (bullet: string) => {
         href={href}
         target="_blank"
         rel="noreferrer"
-        className="inline-flex items-center gap-2 text-sm font-semibold text-[#242424] underline-offset-4 transition-opacity hover:opacity-70 md:justify-self-end"
+        className="inline-flex items-center gap-2 text-sm font-semibold text-[#17191c] underline-offset-4 transition-opacity hover:opacity-70 md:justify-self-end"
       >
         {domainLabel}
         <ExternalLink className="h-4 w-4" />
@@ -184,9 +184,9 @@ const renderBullet = (bullet: string) => {
 };
 
 const renderInsightCard = (bullets: string[]) => (
-  <div className="mt-8 overflow-hidden rounded-[28px] border border-[#cfdaf5]/18 bg-[#242424] p-5 shadow-[0_24px_80px_rgba(0,0,0,0.18)] sm:p-6">
+  <div className="mt-8 overflow-hidden rounded-[28px] border border-[#fbe1d1]/18 bg-[#17191c] p-5 shadow-[0_24px_80px_rgba(0,0,0,0.18)] sm:p-6">
     <div className="border-b border-white/10 pb-5">
-      <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#cfdaf5]/70">Seattle fundraising filter</p>
+      <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#fbe1d1]/70">Seattle fundraising filter</p>
       <p className="mt-2 text-2xl font-normal leading-tight tracking-[-0.035em] text-white" style={serifDisplay}>
         What actually moves the list
       </p>
@@ -196,9 +196,9 @@ const renderInsightCard = (bullets: string[]) => (
         const [title, description = ''] = bullet.split(' | ');
 
         return (
-          <div key={bullet} className="bg-[#242424] p-5">
+          <div key={bullet} className="bg-[#17191c] p-5">
             <div className="flex items-start gap-4">
-              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#cfdaf5] text-sm font-semibold text-black">
+              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#fbe1d1] text-sm font-semibold text-black">
                 {index + 1}
               </span>
               <div>
