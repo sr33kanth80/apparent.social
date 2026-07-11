@@ -1400,6 +1400,8 @@
 @media (max-width: 940px) { .ed-auth { grid-template-columns: 1fr; } .ed-auth-pitch { display: none; } }
 .ed-auth-pitch h1 { font-family: var(--ed-serif); font-weight: 400; font-size: clamp(2.4rem, 4.6vw, 56px); line-height: 1.2; letter-spacing: -0.015em; }
 .ed-auth-pitch h1 em { font-style: italic; color: var(--ed-smoke); }
+.ed-auth-pitch.is-founder h1 em { color: var(--ed-blue); }
+.ed-auth-pitch.is-investor h1 em { color: var(--ed-green); }
 .ed-auth-pitch .ed-lede { margin-top: 24px; max-width: 46ch; }
 .ed-auth-list { margin-top: 32px; border-block: 1px solid var(--ed-fog); padding-block: 8px; }
 .ed-auth-list .ed-it { display: grid; grid-template-columns: 40px 1fr; gap: 12px; padding: 14px 0; }
