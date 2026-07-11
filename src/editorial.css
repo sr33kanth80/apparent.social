@@ -170,12 +170,12 @@
 .ed-page main > section:nth-of-type(even):not(.ed-band):not(.ed-hero) { background: var(--ed-fogband); }
 .ed-cta { display: flex; gap: 12px; flex-wrap: wrap; }
 
-/* Hero (centered, oversized serif that breathes across lines) */
+/* Hero (centered oversized serif — the headline always stays on ONE line) */
 .ed-hero { padding-top: clamp(48px, 9vw, 112px); padding-bottom: clamp(24px, 4vw, 48px); text-align: center; }
-.ed-hero .ed-display { max-width: min(100%, 15ch); margin: 0 auto; font-size: clamp(2.8rem, 6.6vw, 90px); }
+.ed-hero .ed-inner { max-width: 1320px; }
+.ed-hero .ed-display { max-width: 100%; margin: 0 auto; font-size: clamp(1.1rem, 4.6vw, 62px); white-space: nowrap; }
 .ed-hero .ed-display em { white-space: nowrap; }
 .ed-hero .ed-hero-keep { white-space: nowrap; }
-@media (max-width: 760px) { .ed-hero .ed-display { max-width: min(100%, 680px); font-size: clamp(2.2rem, 9.2vw, 3.2rem); } }
 .ed-hero .ed-sub { margin: 28px auto 0; max-width: 60ch; }
 .ed-hero .ed-cta { justify-content: center; margin-top: 32px; }
 
