@@ -239,10 +239,10 @@ export const Home = () => {
             </h1>
             <p className="ed-sub">Apparent connects founders who&apos;ve shipped with investors who are actively writing cheques. Founders turn proof into intros; investors source startups that fit their thesis, ranked by proof, stage, and freshness.</p>
             <div className="ed-cta">
-              <Link className="ed-btn ed-btn-filled" to="/login?role=investor">Source your deal flow
+              <Link className="ed-btn ed-btn-green" to="/login?role=investor">Source your deal flow
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M7 17 17 7M9 7h8v8" /></svg>
               </Link>
-              <Link className="ed-btn ed-btn-ember" to="/for-founders">I&apos;m a founder</Link>
+              <Link className="ed-btn ed-btn-outline-blue" to="/for-founders">I&apos;m a founder</Link>
             </div>
             <div className="ed-trust">
               <span><b>1,800+</b> investors on Apparent</span><span className="ed-d" />
@@ -322,7 +322,7 @@ export const Home = () => {
             <div>
               <h2 className="ed-sec-title">See the sourcing picture earlier.</h2>
               <p className="ed-lead">Apparent turns builder proof, public signals, local density, and your thesis into one repeatable sourcing workflow.</p>
-              <Link className="ed-btn ed-btn-filled" to="/for-vcs" style={{ marginTop: 28 }}>Build your thesis</Link>
+              <Link className="ed-btn ed-btn-green" to="/for-vcs" style={{ marginTop: 28 }}>Build your thesis</Link>
             </div>
             <div className="ed-steps">
               <div className="ed-step"><span className="ed-n">01</span><div><h3>Define thesis</h3><p>Capture sectors, stages, geographies, check size, the founder signals you back, and the ones you pass on.</p></div></div>
@@ -374,7 +374,7 @@ export const Home = () => {
                   <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6"><circle cx="12" cy="12" r="9" /><path d="M9 12l2 2 4-4" /></svg>Investor matching by thesis, stage, sector, and geography.</li>
                   <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6"><circle cx="12" cy="12" r="9" /><path d="M9 12l2 2 4-4" /></svg>An AI founder agent that drafts focused, fit-based outreach.</li>
                 </ul>
-                <Link className="ed-btn ed-btn-ember" to="/for-founders">Create founder profile</Link>
+                <Link className="ed-btn ed-btn-blue" to="/for-founders">Create founder profile</Link>
               </div>
               <div className="ed-acard">
                 <div className="ed-acard-head">
@@ -387,7 +387,7 @@ export const Home = () => {
                   <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6"><circle cx="12" cy="12" r="9" /><circle cx="12" cy="12" r="2.5" /></svg>Ranking that separates active signal from stale fundraising lists.</li>
                   <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6"><circle cx="12" cy="12" r="9" /><circle cx="12" cy="12" r="2.5" /></svg>AI-suggested outreach grounded in why the founder fits.</li>
                 </ul>
-                <Link className="ed-btn ed-btn-filled" to="/for-vcs">Create investor profile</Link>
+                <Link className="ed-btn ed-btn-green" to="/for-vcs">Create investor profile</Link>
               </div>
             </div>
           </div>
@@ -428,7 +428,7 @@ export const Home = () => {
           <div className="ed-inner">
             <div className="ed-verified-head">
               <h2 className="ed-sec-title">Verified builders, with proof attached.</h2>
-              <Link className="ed-btn ed-btn-outline" to="/for-founders">Create founder profile</Link>
+              <Link className="ed-btn ed-btn-outline-blue" to="/for-founders">Create founder profile</Link>
             </div>
             <div className="ed-cards">
               {[
@@ -458,7 +458,7 @@ export const Home = () => {
             <h2>Build your private sourcing desk.</h2>
             <p>Capture your thesis once, then let Apparent keep surfacing relevant builders with proof attached.</p>
             <div className="ed-cta">
-              <Link className="ed-btn ed-btn-filled" to="/login?role=investor">Source your deal flow</Link>
+              <Link className="ed-btn ed-btn-green" to="/login?role=investor">Source your deal flow</Link>
               <Link className="ed-btn ed-btn-outline" to="/contact">Book a walkthrough</Link>
             </div>
           </div>

@@ -21,7 +21,7 @@ export const ForFounders = () => (
           </h1>
           <p className="ed-lede">Most launches disappear. On Apparent you launch in front of investors who are actively writing cheques, so the right ones DM you, matched by thesis, proof, and stage. Run <code style={{ fontFamily: 'var(--ed-mono)', fontSize: '0.92em' }}>npx apparent</code> and your shipped work becomes the proof that earns the intro. No warm intro required.</p>
           <div className="ed-cta">
-            <Link className="ed-btn ed-btn-filled" to="/login?role=founder">Launch to active investors
+            <Link className="ed-btn ed-btn-blue" to="/login?role=founder">Launch to active investors
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M7 17 17 7M9 7h8v8" /></svg>
             </Link>
             <Link className="ed-btn ed-btn-outline" to="/our-thesis">How it works</Link>
@@ -69,7 +69,7 @@ export const ForFounders = () => (
           <div>
             <h2 className="ed-sec-title">Show what investors need to see.</h2>
             <p className="ed-lead">Apparent is built around the evidence you already have: code, launches, customers, press, product velocity, and where you are building.</p>
-            <Link className="ed-btn ed-btn-filled" to="/login?role=founder" style={{ marginTop: 28 }}>Start building your profile</Link>
+            <Link className="ed-btn ed-btn-blue" to="/login?role=founder" style={{ marginTop: 28 }}>Start building your profile</Link>
           </div>
           <div className="ed-steps">
             <div className="ed-step"><span className="ed-n">01</span><div><h3>Verify in seconds</h3><p>Run npx apparent and your GitHub, shipped products, traction, and launches become a verified proof profile.</p></div></div>
@@ -141,7 +141,7 @@ export const ForFounders = () => (
           <h2>Put your proof in front of capital.</h2>
           <p>Verify in one command, launch your build, and let active investors come to you.</p>
           <div className="ed-cta">
-            <Link className="ed-btn ed-btn-filled" to="/login?role=founder">Launch to active investors</Link>
+            <Link className="ed-btn ed-btn-blue" to="/login?role=founder">Launch to active investors</Link>
             <Link className="ed-btn ed-btn-outline" to="/our-thesis">See the thesis</Link>
           </div>
         </div>

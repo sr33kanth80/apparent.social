@@ -136,8 +136,8 @@ export const OurThesis = () => (
         <h1 className="ed-display">How Apparent <em>works.</em></h1>
         <p className="ed-lede">Apparent turns founder proof and investor thesis into a usable match: profile, fit reason, map context, outreach, and deal flow.</p>
         <div className="ed-cta">
-          <Link className="ed-btn ed-btn-filled" to="/login?role=founder">I&apos;m a founder</Link>
-          <Link className="ed-btn ed-btn-outline" to="/login?role=investor">I&apos;m an investor</Link>
+          <Link className="ed-btn ed-btn-blue" to="/login?role=founder">I&apos;m a founder</Link>
+          <Link className="ed-btn ed-btn-green" to="/login?role=investor">I&apos;m an investor</Link>
         </div>
       </section>
 
@@ -301,8 +301,8 @@ export const OurThesis = () => (
           <h2>Show the work. Declare the thesis. Let Apparent connect the fit.</h2>
           <p>Start with the side of the marketplace you are on. Apparent keeps the rest of the workflow attached.</p>
           <div className="ed-cta" style={{ marginTop: 32 }}>
-            <Link className="ed-btn ed-btn-filled" to="/login?role=founder">Start as founder</Link>
-            <Link className="ed-btn ed-btn-outline" style={{ borderColor: 'var(--ed-ember)', color: 'var(--ed-ember)' }} to="/login?role=investor">Start as investor</Link>
+            <Link className="ed-btn ed-btn-blue" to="/login?role=founder">Start as founder</Link>
+            <Link className="ed-btn ed-btn-green" to="/login?role=investor">Start as investor</Link>
           </div>
         </div>
       </section>

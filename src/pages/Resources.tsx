@@ -72,8 +72,8 @@ export const Resources = () => (
           <h2>Learn it inside the product.</h2>
           <p>The best resource is the workspace itself. Start as a founder or investor and let the product guide the next move.</p>
           <div className="ed-cta">
-            <Link className="ed-btn ed-btn-filled" to="/login?role=founder">Create founder profile</Link>
-            <Link className="ed-btn ed-btn-outline" to="/login?role=investor">Create investor profile</Link>
+            <Link className="ed-btn ed-btn-blue" to="/login?role=founder">Create founder profile</Link>
+            <Link className="ed-btn ed-btn-green" to="/login?role=investor">Create investor profile</Link>
           </div>
         </div>
       </section>

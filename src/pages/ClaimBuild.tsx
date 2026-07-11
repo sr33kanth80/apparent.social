@@ -91,7 +91,7 @@ export const ClaimBuild = () => {
                   <p className="ed-desc" style={{ marginTop: 8, fontSize: 14 }}>
                     Sign in or create your founder account, and your <span style={{ fontFamily: 'var(--ed-mono)' }}>npx apparent</span> build attaches to your Apparent profile automatically.
                   </p>
-                  <Link className="ed-btn ed-btn-filled" to="/login?role=founder" style={{ marginTop: 20 }}>
+                  <Link className="ed-btn ed-btn-blue" to="/login?role=founder" style={{ marginTop: 20 }}>
                     <Sparkles style={{ width: 16, height: 16 }} /> Sign in to claim
                   </Link>
                   <p style={{ marginTop: 12, fontSize: 12, color: 'var(--ed-smoke)' }}>Your code is saved. Finish signing in and it&apos;ll attach itself.</p>

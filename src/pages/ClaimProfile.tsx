@@ -92,7 +92,7 @@ export const ClaimProfile = () => {
             )}
 
             <div className="ed-cta" style={{ marginTop: 32 }}>
-              <Link className="ed-btn ed-btn-filled" to={`/login?role=founder${signalId ? `&claim=${encodeURIComponent(signalId)}` : ''}`}>
+              <Link className="ed-btn ed-btn-blue" to={`/login?role=founder${signalId ? `&claim=${encodeURIComponent(signalId)}` : ''}`}>
                 Claim my profile <ArrowUpRight style={{ width: 16, height: 16 }} />
               </Link>
               <Link className="ed-btn ed-btn-outline" to="/for-founders">What is Apparent?</Link>

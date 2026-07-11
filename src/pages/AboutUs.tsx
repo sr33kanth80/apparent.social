@@ -64,8 +64,8 @@ export const AboutUs = () => (
           <h2>Join before the obvious round.</h2>
           <p>Create the profile, declare the thesis, and let Apparent turn proof into discovery.</p>
           <div className="ed-cta">
-            <Link className="ed-btn ed-btn-filled" to="/login?role=founder">Create founder profile</Link>
-            <Link className="ed-btn ed-btn-outline" to="/login?role=investor">Create investor profile</Link>
+            <Link className="ed-btn ed-btn-blue" to="/login?role=founder">Create founder profile</Link>
+            <Link className="ed-btn ed-btn-green" to="/login?role=investor">Create investor profile</Link>
           </div>
         </div>
       </section>

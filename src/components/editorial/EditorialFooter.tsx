@@ -12,8 +12,8 @@ export const EditorialFooter = () => (
             thesis, proof, and timing.
           </p>
           <div className="ed-cta">
-            <Link className="ed-btn ed-btn-filled ed-bf-btn" to="/login">Source your deal flow</Link>
-            <Link className="ed-btn ed-bf-btn ed-bf-ghost" to="/for-founders">Launch on Apparent</Link>
+            <Link className="ed-btn ed-btn-green ed-bf-btn" to="/login?role=investor">Source your deal flow</Link>
+            <Link className="ed-btn ed-bf-btn ed-btn-outline-blue" to="/for-founders">Launch on Apparent</Link>
           </div>
         </div>
         <div className="ed-bf-cols">

@@ -15,6 +15,8 @@
   --ed-ash: #a3a6af;
   --ed-ember: #5d2a1a;
   --ed-peach: #fbe1d1;
+  --ed-blue: #1d9bf0;   /* founder accent — matches the verified check */
+  --ed-green: #16a34a;  /* investor accent — money green */
   --ed-font: 'Sohne', 'Inter', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   --ed-serif: 'Signifier', 'Source Serif 4', Georgia, ui-serif, serif;
   --ed-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
@@ -72,6 +74,15 @@
 .ed-page .ed-btn-outline:hover { background: var(--ed-ink); color: var(--ed-white); }
 .ed-page .ed-btn-ember { background: transparent; color: var(--ed-ink); border-color: var(--ed-ink); }
 .ed-page .ed-btn-ember:hover { background: var(--ed-ink); color: var(--ed-white); }
+/* Audience accents: blue = founders (verified-check blue), green = investors */
+.ed-page .ed-btn-blue { background: var(--ed-blue); color: var(--ed-white); }
+.ed-page .ed-btn-blue:hover { opacity: .88; }
+.ed-page .ed-btn-green { background: var(--ed-green); color: var(--ed-white); }
+.ed-page .ed-btn-green:hover { opacity: .88; }
+.ed-page .ed-btn-outline-blue { background: transparent; color: var(--ed-blue); border-color: var(--ed-blue); }
+.ed-page .ed-btn-outline-blue:hover { background: var(--ed-blue); color: var(--ed-white); }
+.ed-page .ed-btn-outline-green { background: transparent; color: var(--ed-green); border-color: var(--ed-green); }
+.ed-page .ed-btn-outline-green:hover { background: var(--ed-green); color: var(--ed-white); }
 
 /* ---------- Top nav (morphs to a centered floating pill on scroll) ---------- */
 .ed-nav { position: sticky; top: 0; z-index: 50; background: var(--ed-canvas); transition: background-color .35s ease; }
