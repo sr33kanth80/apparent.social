@@ -65,7 +65,7 @@ export const Login = () => {
         <section className="ed-subhero ed-inner">
           <div className="ed-auth">
             <div className={`ed-auth-pitch ${isInvestor ? 'is-investor' : 'is-founder'}`}>
-              <h1>{isInvestor ? <>Define thesis. <em>Find cracked builders.</em></> : <>Build proof. <em>Meet capital.</em></>}</h1>
+              <h1>{isInvestor ? <>Define thesis.<em className="ed-auth-headline-line">Find startups worth investing.</em></> : <>Build proof. <em>Meet capital.</em></>}</h1>
               <p className="ed-lede">{bodyCopy}</p>
               <div className="ed-auth-list">
                 {contextItems.map((item, index) => (
