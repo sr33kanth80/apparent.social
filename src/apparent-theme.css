@@ -481,9 +481,9 @@ body {
   background: #07513d !important;
 }
 
-/* VC landing page: preserve the split hero, then switch to a focused
-   investment-memo reading column for every section that follows. */
-.ed-vc-page main > .ed-sec > .ed-inner {
+/* Audience landing pages: preserve the split hero, then switch to a focused
+   editorial reading column for every section that follows. */
+:is(.ed-vc-page, .ed-founder-page) main > .ed-sec > .ed-inner {
   max-width: 900px;
 }
 
@@ -491,33 +491,33 @@ body {
   font-size: clamp(2.65rem, 5.2vw, 68px);
 }
 
-.ed-vc-page .ed-work {
+:is(.ed-vc-page, .ed-founder-page) .ed-work {
   grid-template-columns: minmax(0, 1fr);
   gap: clamp(40px, 6vw, 72px);
 }
 
-.ed-vc-page .ed-lead {
+:is(.ed-vc-page, .ed-founder-page) .ed-lead {
   max-width: 65ch;
 }
 
-.ed-vc-page :where(.ed-benefits, .ed-infocards) {
+:is(.ed-vc-page, .ed-founder-page) :where(.ed-benefits, .ed-infocards) {
   max-width: 820px;
   grid-template-columns: minmax(0, 1fr);
   gap: 0;
 }
 
-.ed-vc-page :where(.ed-benefit, .ed-infocard) {
+:is(.ed-vc-page, .ed-founder-page) :where(.ed-benefit, .ed-infocard) {
   border-top: 1px solid var(--color-hairline-gray);
   border-radius: 0;
   background: transparent;
   padding: 30px 0;
 }
 
-.ed-vc-page :where(.ed-benefit, .ed-infocard):last-child {
+:is(.ed-vc-page, .ed-founder-page) :where(.ed-benefit, .ed-infocard):last-child {
   border-bottom: 1px solid var(--color-hairline-gray);
 }
 
-.ed-vc-page .ed-benefit .ed-ic {
+:is(.ed-vc-page, .ed-founder-page) .ed-benefit .ed-ic {
   margin-bottom: 18px;
 }
 

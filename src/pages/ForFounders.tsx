@@ -5,7 +5,7 @@ import { LogoIcon } from '../components/LogoIcon';
 import { CLI_CARD_HTML } from '../components/cliCardHtml';
 
 export const ForFounders = () => (
-  <div className="ed-page">
+  <div className="ed-page ed-founder-page">
     <EditorialNavbar />
     <main>
       {/* HERO */}
