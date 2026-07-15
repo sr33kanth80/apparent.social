@@ -487,6 +487,10 @@ body {
   max-width: 900px;
 }
 
+.ed-vc-page .ed-subhero .ed-display {
+  font-size: clamp(2.65rem, 5.2vw, 68px);
+}
+
 .ed-vc-page .ed-work {
   grid-template-columns: minmax(0, 1fr);
   gap: clamp(40px, 6vw, 72px);
