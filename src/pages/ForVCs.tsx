@@ -7,7 +7,7 @@ type VcSignal = {
   company: string;
   founder: string;
   relevance: number;
-  column: 'Inbox' | 'Reviewing' | 'Drafted';
+  column: 'New' | 'Screening' | 'Outreach ready';
   detail: string;
   source: string;
   freshness: string;
@@ -20,8 +20,8 @@ const VC_SIGNALS: VcSignal[] = [
     company: 'Edge runtime for agents',
     founder: 'Ari Kaplan',
     relevance: 96,
-    column: 'Reviewing',
-    detail: '412 commits in 90 days, GitHub-verified. Ships weekly against a dev-tools thesis you starred twice.',
+    column: 'Screening',
+    detail: 'High shipping velocity: 412 commits in 90 days, GitHub-verified. Strong fit for your pre-seed developer tools thesis.',
     source: 'npx apparent',
     freshness: 'Updated 2h ago',
     stage: 'Pre-seed',
@@ -31,9 +31,9 @@ const VC_SIGNALS: VcSignal[] = [
     company: 'Local-first sync engine',
     founder: 'Nia Lassiter',
     relevance: 92,
-    column: 'Inbox',
-    detail: 'Open-source usage up 38% in 30 days. Actively collecting seed conversations this month.',
-    source: 'Founder signal',
+    column: 'New',
+    detail: 'Open-source adoption is up 38% month over month. The founder is opening a seed round this month.',
+    source: 'Founder update',
     freshness: 'Fresh today',
     stage: 'Seed',
     location: 'Remote',
@@ -42,9 +42,9 @@ const VC_SIGNALS: VcSignal[] = [
     company: 'Eval harness for LLMs',
     founder: 'Rae Shirota',
     relevance: 89,
-    column: 'Drafted',
-    detail: 'New enterprise pilot attached. Category maps to two of your last three passes-turned-funds.',
-    source: 'Product launch',
+    column: 'Outreach ready',
+    detail: 'New enterprise pilot. The wedge and buyer profile match two companies already in your portfolio.',
+    source: 'Launch signal',
     freshness: 'Yesterday',
     stage: 'Pre-seed',
     location: 'NYC',
@@ -63,9 +63,9 @@ const InvestorSourcingPreview = () => {
       <div className="ed-vc-dash-head">
         <div className="ed-vc-dash-title">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" aria-hidden><circle cx="11" cy="11" r="7" /><path d="m21 21-4.3-4.3" /></svg>
-          <h3>Signal inbox</h3>
+          <h3>New deals</h3>
         </div>
-        <span className="ed-vc-dash-meta">Avg relevance {avgRelevance}%</span>
+        <span className="ed-vc-dash-meta">Avg thesis fit {avgRelevance}%</span>
       </div>
 
       <div className="ed-vc-dash-thesis" aria-label="Your thesis">
@@ -92,9 +92,9 @@ const InvestorSourcingPreview = () => {
               </div>
             </div>
             <div className="ed-vc-dash-actions">
-              <span className="ed-vc-dash-pill">Profile</span>
-              <span className="ed-vc-dash-pill">Source</span>
-              <span className="ed-vc-dash-pill is-primary">Draft</span>
+              <span className="ed-vc-dash-pill">Company</span>
+              <span className="ed-vc-dash-pill">Add to pipeline</span>
+              <span className="ed-vc-dash-pill is-primary">Draft intro</span>
             </div>
           </li>
         ))}
@@ -111,19 +111,19 @@ export const ForVCs = () => (
       <section className="ed-subhero ed-inner ed-split">
         <div>
           <h1 className="ed-display">
-            Source your next deal before <span className="ed-emoji-keep"><em>consensus.</em><span className="ed-display-emoji">🔎</span></span>
+            Find your next outlier before the round gets <span className="ed-emoji-keep"><em>crowded.</em><span className="ed-display-emoji">🔎</span></span>
           </h1>
-          <p className="ed-lede">Apparent is a private sourcing desk for VCs, GPs, and angels. Capture your <span className="ed-emoji-keep">thesis once <span className="ed-copy-emoji">🧭</span></span> and an AI agent surfaces investable startups that fit, ranked by proof, stage, and <span className="ed-emoji-keep">freshness <span className="ed-copy-emoji">📈</span></span>, then drafts the outreach.</p>
+          <p className="ed-lede">Apparent gives emerging managers, GPs, and investment teams a private sourcing workspace. Set your <span className="ed-emoji-keep">thesis once <span className="ed-copy-emoji">🧭</span></span> and get a prioritized pipeline of companies worth a first look. Every match includes the reason to lean in, recent traction, founder proof, and a <span className="ed-emoji-keep">draft intro <span className="ed-copy-emoji">📈</span></span>.</p>
           <div className="ed-cta">
-            <Link className="ed-btn ed-btn-green" to="/login?role=investor">Source your deal flow
+            <Link className="ed-btn ed-btn-green" to="/login?role=investor">Build your pipeline
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M7 17 17 7M9 7h8v8" /></svg>
             </Link>
-            <Link className="ed-btn ed-btn-outline" to="/our-thesis">How it works</Link>
+            <Link className="ed-btn ed-btn-outline" to="/our-thesis">See how Apparent sources</Link>
           </div>
           <div className="ed-trust">
             <span className="ed-emoji-keep"><b>1,800+</b> investors on Apparent <span className="ed-copy-emoji">💸</span></span><span className="ed-d" />
-            <span className="ed-emoji-keep">Verified proof, not pitches <span className="ed-copy-emoji">✅</span></span><span className="ed-d" />
-            <span className="ed-emoji-keep">No warm intro required <span className="ed-copy-emoji">🤝</span></span>
+            <span className="ed-emoji-keep">Proof behind every match <span className="ed-copy-emoji">✅</span></span><span className="ed-d" />
+            <span className="ed-emoji-keep">Get in before consensus <span className="ed-copy-emoji">🤝</span></span>
           </div>
         </div>
         <InvestorSourcingPreview />
@@ -133,15 +133,15 @@ export const ForVCs = () => (
       <section className="ed-sec ed-divider">
         <div className="ed-inner ed-work">
           <div>
-            <h2 className="ed-sec-title">See the sourcing picture earlier.</h2>
-            <p className="ed-lead">Apparent turns builder proof, public signals, local density, and your thesis into a repeatable sourcing workflow.</p>
-            <Link className="ed-btn ed-btn-green" to="/login?role=investor" style={{ marginTop: 28 }}>Build your thesis</Link>
+            <h2 className="ed-sec-title">Build a pipeline your partnership can act on.</h2>
+            <p className="ed-lead">Go from thesis to first meeting without living in spreadsheets, scattered bookmarks, and half-remembered founder updates.</p>
+            <Link className="ed-btn ed-btn-green" to="/login?role=investor" style={{ marginTop: 28 }}>Set your thesis</Link>
           </div>
           <div className="ed-steps">
-            <div className="ed-step"><span className="ed-n">01</span><div><h3>Define thesis</h3><p>Capture sectors, stages, geographies, check size, founder signals, pass signals, and examples.</p></div></div>
-            <div className="ed-step"><span className="ed-n">02</span><div><h3>Let your agent source</h3><p>Your AI investor agent works 24/7, ranking verified founders against your thesis by proof, freshness, and fit.</p></div></div>
-            <div className="ed-step"><span className="ed-n">03</span><div><h3>Map builder density</h3><p>Drop a place, locate projects nearby, and see Apparent builders around that focus.</p></div></div>
-            <div className="ed-step"><span className="ed-n">04</span><div><h3>Move through deal flow</h3><p>Save a builder, let the agent draft outreach, and drag opportunities through a Kanban pipeline.</p></div></div>
+            <div className="ed-step"><span className="ed-n">01</span><div><h3>Set your investment thesis</h3><p>Capture the sectors, stages, geographies, check size, must-have signals, pass reasons, and companies that define your taste.</p></div></div>
+            <div className="ed-step"><span className="ed-n">02</span><div><h3>Keep the top of funnel moving</h3><p>Apparent continuously screens verified founders against your thesis and ranks the deals most worth a first pass.</p></div></div>
+            <div className="ed-step"><span className="ed-n">03</span><div><h3>See where talent is clustering</h3><p>Search a city or neighborhood to find builders and new companies forming around your areas of focus.</p></div></div>
+            <div className="ed-step"><span className="ed-n">04</span><div><h3>Work the pipeline</h3><p>Save a company, draft the intro, and move the opportunity from screening to first meeting, diligence, and partner review.</p></div></div>
           </div>
         </div>
       </section>
@@ -149,12 +149,12 @@ export const ForVCs = () => (
       {/* BENEFITS */}
       <section className="ed-sec ed-divider">
         <div className="ed-inner">
-          <h2 className="ed-sec-title">Source from proof, not noise.</h2>
+          <h2 className="ed-sec-title">Spend your time on deals worth underwriting.</h2>
           <div className="ed-benefits">
-            <div className="ed-benefit"><svg className="ed-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="12" cy="12" r="9" /><circle cx="12" cy="12" r="5" /><circle cx="12" cy="12" r="1" /></svg><h3>Private thesis workspace</h3><p>Turn your taste into criteria your AI agent can source against, repeatedly.</p></div>
-            <div className="ed-benefit"><svg className="ed-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="11" cy="11" r="7" /><path d="m21 21-4.3-4.3" /></svg><h3>Agent-sourced signal inbox</h3><p>Your agent surfaces verified founders with source links, proof, and relevance, fresh every day.</p></div>
-            <div className="ed-benefit"><svg className="ed-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="3" y="4" width="5" height="16" rx="1" /><rect x="10" y="4" width="5" height="11" rx="1" /><rect x="17" y="4" width="4" height="7" rx="1" /></svg><h3>Deal-flow Kanban</h3><p>Move saved builders through sourcing, meeting, diligence, and partner review.</p></div>
-            <div className="ed-benefit"><svg className="ed-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9" /><path d="M13.7 21a2 2 0 0 1-3.4 0" /></svg><h3>Digest and alerts</h3><p>Keep the highest-signal founder updates from disappearing between meetings.</p></div>
+            <div className="ed-benefit"><svg className="ed-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="12" cy="12" r="9" /><circle cx="12" cy="12" r="5" /><circle cx="12" cy="12" r="1" /></svg><h3>Your thesis, operationalized</h3><p>Turn the way you evaluate a deal into clear criteria Apparent can source against every day.</p></div>
+            <div className="ed-benefit"><svg className="ed-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="11" cy="11" r="7" /><path d="m21 21-4.3-4.3" /></svg><h3>Thesis-matched deal flow</h3><p>Get verified companies with source links, recent traction, and a clear explanation of why each one fits.</p></div>
+            <div className="ed-benefit"><svg className="ed-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="3" y="4" width="5" height="16" rx="1" /><rect x="10" y="4" width="5" height="11" rx="1" /><rect x="17" y="4" width="4" height="7" rx="1" /></svg><h3>One shared pipeline</h3><p>Track every company from first screen through meeting, diligence, and partner review.</p></div>
+            <div className="ed-benefit"><svg className="ed-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9" /><path d="M13.7 21a2 2 0 0 1-3.4 0" /></svg><h3>Deal monitoring</h3><p>Stay on top of the founder updates and traction changes that can turn a pass into a second look.</p></div>
           </div>
         </div>
       </section>
@@ -162,19 +162,19 @@ export const ForVCs = () => (
       {/* DARK BAND */}
       <section className="ed-band">
         <div className="ed-inner">
-          <h2>By the time it&apos;s consensus, the round is full.</h2>
-          <p>Apparent surfaces founders who fit your thesis while they&apos;re still building, not after the deal turns competitive.</p>
+          <h2>When everyone sees the deal, allocation gets hard.</h2>
+          <p>Apparent helps you form conviction while the company is still emerging, before the round gets competitive and the cap table fills up.</p>
         </div>
       </section>
 
       {/* SIGNAL TO DEAL ROOM */}
       <section className="ed-sec ed-divider">
         <div className="ed-inner">
-          <h2 className="ed-sec-title">From signal to deal room.</h2>
+          <h2 className="ed-sec-title">From first signal to partner meeting.</h2>
           <div className="ed-infocards" style={{ marginTop: 'clamp(32px,5vw,56px)' }}>
-            <div className="ed-infocard"><b>Inbox</b><p>Your agent ranks founder and company signals by thesis, proof, freshness, and geography.</p></div>
-            <div className="ed-infocard"><b>Outreach</b><p>The agent drafts first messages from your thesis and the founder signal that triggered the match.</p></div>
-            <div className="ed-infocard"><b>Pipeline</b><p>Drag saved builders through a clean venture CRM-style board.</p></div>
+            <div className="ed-infocard"><b>First pass</b><p>Quickly screen each company for thesis fit, founder-market fit, traction, stage, and timing.</p></div>
+            <div className="ed-infocard"><b>First meeting</b><p>Start with the signal that caught your attention and a drafted intro you can make your own.</p></div>
+            <div className="ed-infocard"><b>Partner review</b><p>Keep the opportunity, supporting proof, and current stage together as the deal moves forward.</p></div>
           </div>
         </div>
       </section>
@@ -183,9 +183,9 @@ export const ForVCs = () => (
       <section className="ed-sec">
         <div className="ed-inner">
           <div className="ed-infocards">
-            <div className="ed-infocard"><b>Meetups</b><p>Announce rooms, office hours, and founder gatherings around your thesis.</p></div>
-            <div className="ed-infocard"><b>Terms</b><p>Keep term review and plain-language notes connected to the company context.</p></div>
-            <div className="ed-infocard"><b>Alerts</b><p>Persist digest and Slack alert preferences for fresh founder signals.</p></div>
+            <div className="ed-infocard"><b>Network</b><p>Run office hours, small founder dinners, and thesis-led gatherings where strong referrals begin.</p></div>
+            <div className="ed-infocard"><b>Terms</b><p>Keep term review and plain-language notes connected to the company and round context.</p></div>
+            <div className="ed-infocard"><b>Monitoring</b><p>Use digest and Slack alerts to catch new traction, launches, and founder updates while they are fresh.</p></div>
           </div>
         </div>
       </section>
@@ -195,10 +195,10 @@ export const ForVCs = () => (
         <div className="ed-inner">
           <h2 className="ed-sec-title">Questions, answered.</h2>
           <div className="ed-faq">
-            <div className="ed-q"><h3>Is this just another investor database?</h3><p>No. A database lists everyone. Apparent sources against your thesis and ranks investable startups by proof, stage, and freshness, so your list gets sharper, not longer.</p></div>
-            <div className="ed-q"><h3>Where does the proof come from?</h3><p>Founders verify GitHub, shipped products, traction, and launches in one command. You source from evidence, not decks.</p></div>
-            <div className="ed-q"><h3>Do I have to write the outreach?</h3><p>No. Your agent drafts the first message from your thesis and the signal that triggered the match. You review and send.</p></div>
-            <div className="ed-q"><h3>How early are these companies?</h3><p>Apparent surfaces founders while they&apos;re still building, before the round turns competitive, so you see fit before consensus.</p></div>
+            <div className="ed-q"><h3>Is this another startup database?</h3><p>No. A database gives you names. Apparent gives you thesis-matched deal flow, the reason each company deserves a first pass, and the proof to decide whether to lean in.</p></div>
+            <div className="ed-q"><h3>What can I screen before taking a meeting?</h3><p>Each match can include source links, shipping activity, traction, launch recency, stage, geography, and the thesis-fit rationale behind the recommendation.</p></div>
+            <div className="ed-q"><h3>Does Apparent replace due diligence?</h3><p>No. It makes sourcing and the first pass faster. Your team still owns founder references, customer calls, market work, cap-table review, and legal and financial diligence.</p></div>
+            <div className="ed-q"><h3>Do I have to write the first message?</h3><p>No. Apparent drafts an intro from your thesis and the signal that triggered the match. You add your point of view, review it, and send.</p></div>
           </div>
         </div>
       </section>
@@ -207,11 +207,11 @@ export const ForVCs = () => (
       <section className="ed-sec ed-divider ed-final">
         <div className="ed-inner">
           <LogoIcon className="ed-mark" />
-          <h2>Build your private sourcing desk.</h2>
-          <p>Capture your thesis once, then let Apparent keep surfacing investable startups with proof attached.</p>
+          <h2>Bring better deals to the partner meeting.</h2>
+          <p>Turn your thesis into a living pipeline, make the first pass faster, and reach the right founders before the round crowds up.</p>
           <div className="ed-cta">
-            <Link className="ed-btn ed-btn-green" to="/login?role=investor">Source your deal flow</Link>
-            <Link className="ed-btn ed-btn-outline" to="/our-thesis">See the thesis</Link>
+            <Link className="ed-btn ed-btn-green" to="/login?role=investor">Build your pipeline</Link>
+            <Link className="ed-btn ed-btn-outline" to="/our-thesis">See how it works</Link>
           </div>
         </div>
       </section>
