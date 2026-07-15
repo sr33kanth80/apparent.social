@@ -1,5 +1,9 @@
+import { useKindeAuth } from '@kinde-oss/kinde-auth-react';
 import { useEffect, useState } from 'react';
 import { Link, NavLink } from 'react-router-dom';
+import type { AppUser } from '@/lib/apparent-types';
+import { getCurrentAppUser } from '@/lib/auth-service';
+import { isKindeConfigured, resolveKindeRole } from '@/lib/kinde-auth';
 import { LogoIcon } from '../LogoIcon';
 
 const NAV_LINKS: [string, string][] = [
@@ -11,8 +15,57 @@ const NAV_LINKS: [string, string][] = [
   ['/about', 'About'],
 ];
 
+const AuthActionPlaceholder = () => (
+  <span aria-hidden="true" className="ed-btn ed-btn-blue ed-nav-auth-placeholder">Dashboard</span>
+);
+
+const SignedOutAction = () => <Link className="ed-btn ed-btn-blue" to="/login">Get Started</Link>;
+
+const KindeAuthAction = () => {
+  const { isAuthenticated, isLoading, user } = useKindeAuth();
+
+  if (isLoading) return <AuthActionPlaceholder />;
+
+  if (isAuthenticated && user) {
+    const role = resolveKindeRole(user.id, 'founder');
+    return <Link className="ed-btn ed-btn-blue" to={`/dashboard/${role}`}>Dashboard</Link>;
+  }
+
+  return <SignedOutAction />;
+};
+
+const LegacyAuthAction = () => {
+  const [authChecked, setAuthChecked] = useState(false);
+  const [user, setUser] = useState<AppUser | null>(null);
+
+  useEffect(() => {
+    let mounted = true;
+
+    getCurrentAppUser()
+      .then((currentUser) => {
+        if (mounted) setUser(currentUser);
+      })
+      .catch(() => {
+        if (mounted) setUser(null);
+      })
+      .finally(() => {
+        if (mounted) setAuthChecked(true);
+      });
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  if (!authChecked) return <AuthActionPlaceholder />;
+  if (user) return <Link className="ed-btn ed-btn-blue" to={`/dashboard/${user.role}`}>Dashboard</Link>;
+  return <SignedOutAction />;
+};
+
+const NavbarAuthAction = () => (isKindeConfigured ? <KindeAuthAction /> : <LegacyAuthAction />);
+
 // Top nav for the redesigned public site. Shrinks into a centered floating
-// pill once the page is scrolled. Real routes; auth goes to /login.
+// pill once the page is scrolled and keeps its primary action session-aware.
 export const EditorialNavbar = () => {
   const [scrolled, setScrolled] = useState(false);
 
@@ -38,7 +91,7 @@ export const EditorialNavbar = () => {
           ))}
         </nav>
         <div className="ed-nav-actions">
-          <Link className="ed-btn ed-btn-blue" to="/login">Get Started</Link>
+          <NavbarAuthAction />
         </div>
       </div>
     </header>

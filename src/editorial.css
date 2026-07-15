@@ -131,6 +131,7 @@
   opacity: 1;
 }
 .ed-nav-actions { display: flex; align-items: center; gap: 14px; margin-left: auto; }
+.ed-nav-auth-placeholder { visibility: hidden; pointer-events: none; }
 .ed-nav-login { font-size: 14px; font-weight: 400; opacity: .75; cursor: pointer; white-space: nowrap; }
 .ed-nav-login:hover { opacity: 1; }
 @media (max-width: 920px) { .ed-nav-links { display: none; } }
