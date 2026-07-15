@@ -8842,7 +8842,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
     <div className="monad-app ed-dashboard min-h-screen text-ink" data-role={role}>
       <SessionNavBar role={role} user={user} activated={profileSaved} unreadMessages={totalUnreadMessages} />
 
-      <main className="ed-dashboard-main min-h-screen pl-[15rem]">
+      <main className="ed-dashboard-main min-h-screen pl-[16.25rem]">
         <div className={isVCHeatMapView ? 'min-h-screen' : isMessagesView ? 'ed-dashboard-frame relative mx-auto flex h-screen w-full max-w-[1440px] flex-col overflow-hidden px-6 pt-6' : showWorkspaceHeader ? 'ed-dashboard-frame mx-auto max-w-[1440px] px-6 py-6' : 'ed-dashboard-frame relative mx-auto max-w-[1440px] px-6 pb-6 pt-6'}>
           {/* Overview + For You: full header with the workspace/For-You toggle +
               global search + bell. Other section pages drop it — the toggle's

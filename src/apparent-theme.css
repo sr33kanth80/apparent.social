@@ -12,10 +12,18 @@
   --color-faded-pencil: #6e7673;
   --color-hairline-gray: #d6d6d6;
   --color-mid-gray: #a6a6a6;
+  --color-sidebar-cream: #f7f2ee;
   --color-investor-gold: #b79a5b;
 
-  --font-apparent-display: 'Inter Tight', 'PP Mori', 'Avenir Next', ui-sans-serif, system-ui, sans-serif;
+  --font-apparent-display: 'DM Serif Display', 'Source Serif 4', Georgia, ui-serif, serif;
   --font-apparent-body: 'Inter', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-apparent-meta: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+
+  --radius-button: 8px;
+  --radius-input: 10px;
+  --radius-card: 12px;
+  --radius-panel: 16px;
+  --radius-pill: 999px;
 
   --background: var(--color-cream-canvas);
   --foreground: var(--color-ink-black);
@@ -34,7 +42,7 @@
   --border: var(--color-hairline-gray);
   --input: var(--color-mid-gray);
   --ring: var(--color-vivid-emerald);
-  --radius: 0px;
+  --radius: var(--radius-card);
 }
 
 html {
@@ -78,9 +86,9 @@ body {
   --ed-green: var(--color-forest-ink);
   --ed-font: var(--font-apparent-body);
   --ed-serif: var(--font-apparent-display);
-  --ed-r: 0px;
-  --ed-r-feature: 0px;
-  --ed-r-artifact: 0px;
+  --ed-r: var(--radius-card);
+  --ed-r-feature: var(--radius-panel);
+  --ed-r-artifact: var(--radius-card);
   --ed-shadow-artifact: none;
   --ed-shadow-overlay: none;
   background: var(--color-cream-canvas);
@@ -95,16 +103,16 @@ body {
 .ed-page :where(h1, h2, h3, h4, .ed-display, .ed-sec-title) {
   color: var(--color-forest-ink);
   font-family: var(--font-apparent-display);
-  font-weight: 600;
-  letter-spacing: -0.045em;
+  font-weight: 400;
+  letter-spacing: -0.035em;
 }
 
 .ed-display {
-  line-height: 0.98;
+  line-height: 1.04;
 }
 
 .ed-sec-title {
-  line-height: 1.02;
+  line-height: 1.1;
 }
 
 .ed-page :where(p, li, .ed-sub, .ed-lede, .ed-lead) {
@@ -118,9 +126,13 @@ body {
 
 .ed-page :where(.ed-card, .ed-feature, .ed-artifact, .ed-auth-card, .ed-pillar, .ed-pp-panel, .ap-profile-card, .ap-profile-facts, .ap-profile-connect--light) {
   border-color: var(--color-hairline-gray);
-  border-radius: 0;
+  border-radius: var(--radius-card);
   background: var(--color-pure-paper);
   box-shadow: none;
+}
+
+.ed-page :where(.ed-artifact, .ed-auth-card, .ed-pp-panel, .ap-profile-facts, .ap-profile-connect) {
+  border-radius: var(--radius-panel);
 }
 
 .ed-page :where([class*="shadow-"]) {
@@ -150,8 +162,9 @@ body {
 
 .ed-nav-links a.is-active {
   border-color: var(--color-forest-ink);
-  background: transparent;
-  color: var(--color-forest-ink);
+  border-radius: var(--radius-button);
+  background: var(--color-forest-ink);
+  color: var(--color-cream-canvas);
 }
 
 .ed-nav-links a:hover,
@@ -173,15 +186,15 @@ body {
   color: var(--color-forest-ink);
 }
 
-.ed-btn,
-.ed-page :where(button.rounded-full, a.rounded-full) {
-  border-radius: 800px;
-  box-shadow: none;
+.ed-btn {
+  border-radius: var(--radius-button);
+  box-shadow: inset 0 1px rgb(255 255 255 / 12%), 0 1px 0 rgb(0 63 46 / 18%);
   font-weight: 500;
-  letter-spacing: -0.03em;
-  transition: background-color 180ms ease, border-color 180ms ease, color 180ms ease, transform 180ms ease;
+  letter-spacing: -0.02em;
+  transition: background-color 180ms ease, border-color 180ms ease, color 180ms ease, box-shadow 180ms ease, transform 180ms ease;
 }
 
+.ed-btn:hover { transform: translateY(-1px); }
 .ed-btn:active,
 .ed-page :where(button, a):active {
   transform: translateY(1px);
@@ -189,24 +202,36 @@ body {
 
 .ed-page .ed-btn-filled,
 .ed-page .ed-btn-blue,
-.ed-page .ed-btn-outline-blue,
-.ed-page .ed-btn-ember,
-.ed-page .ed-btn-outline {
-  border: 1px solid var(--color-vivid-emerald);
-  background: transparent;
-  color: var(--color-vivid-emerald);
+.ed-page .ed-btn-ember {
+  border: 1px solid var(--color-forest-ink);
+  background: var(--color-forest-ink);
+  color: var(--color-cream-canvas);
 }
 
-.ed-page :where(.ed-btn-filled, .ed-btn-blue, .ed-btn-outline-blue, .ed-btn-ember, .ed-btn-outline):hover {
-  border-color: var(--color-forest-ink);
-  background: var(--color-forest-ink);
+.ed-page :where(.ed-btn-filled, .ed-btn-blue, .ed-btn-ember):hover {
+  border-color: #07513d;
+  background: #07513d;
   color: var(--color-cream-canvas);
   opacity: 1;
 }
 
+.ed-page .ed-btn-outline-blue,
+.ed-page .ed-btn-outline-green,
+.ed-page .ed-btn-outline {
+  border: 1px solid var(--color-hairline-gray);
+  background: var(--color-pure-paper);
+  color: var(--color-forest-ink);
+  box-shadow: none;
+}
+
+.ed-page :where(.ed-btn-outline-blue, .ed-btn-outline-green, .ed-btn-outline):hover {
+  border-color: var(--color-forest-ink);
+  background: #edf5f1;
+  color: var(--color-forest-ink);
+}
+
 /* Investor actions are the one filled exception requested for Apparent. */
-.ed-page .ed-btn-green,
-.ed-page .ed-btn-outline-green {
+.ed-page .ed-btn-green {
   border: 1px solid var(--color-investor-gold);
   background: var(--color-forest-ink);
   color: var(--color-cream-canvas);
@@ -222,7 +247,7 @@ body {
 
 .ed-page :where(input, textarea, select) {
   border: 1px solid var(--color-hairline-gray);
-  border-radius: 0;
+  border-radius: var(--radius-input);
   background: var(--color-pure-paper);
   color: var(--color-ink-black);
   box-shadow: none;
@@ -256,10 +281,29 @@ body {
   color: var(--color-cream-canvas);
 }
 
+.ed-page :where(.ed-lbl, .ap-profile-label, .ap-profile-micro, .ap-profile-connect-label, [class*="uppercase"]) {
+  font-family: var(--font-apparent-meta);
+  letter-spacing: 0.1em;
+}
+
+.ed-hero .ed-inner {
+  max-width: 760px;
+}
+
+.ed-hero .ed-display {
+  white-space: normal;
+}
+
+.ed-surface {
+  max-width: 900px;
+}
+
 /* Product and dashboard */
 .ed-dashboard {
   --dashboard-accent: var(--color-vivid-emerald);
+  height: 100dvh;
   min-height: 100dvh;
+  overflow: hidden;
   background: var(--color-cream-canvas);
   color: var(--color-ink-black);
   font-family: var(--font-apparent-body);
@@ -275,6 +319,12 @@ body {
   background: transparent;
 }
 
+.ed-dashboard-main {
+  height: 100dvh;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
 .ed-dashboard :where(h1, h2, h3, h4) {
   color: var(--color-forest-ink);
   letter-spacing: -0.035em;
@@ -282,18 +332,23 @@ body {
 
 .ed-dashboard :where(h1, h2, .font-serif) {
   font-family: var(--font-apparent-display) !important;
-  font-weight: 600;
+  font-weight: 400;
+}
+
+.ed-dashboard :where([class*="uppercase"], [class*="tracking-wide"], [class*="tracking-[0."]) {
+  font-family: var(--font-apparent-meta);
+  letter-spacing: 0.08em;
 }
 
 .ed-dashboard :where(section[class*="rounded"], article[class*="rounded"], [role="dialog"]) {
   border-color: var(--color-hairline-gray) !important;
-  border-radius: 0 !important;
+  border-radius: var(--radius-card) !important;
   background-color: var(--color-pure-paper) !important;
   box-shadow: none !important;
 }
 
 .ed-dashboard :where([class*="rounded-[20px]"], [class*="rounded-2xl"], [class*="rounded-3xl"]) {
-  border-radius: 0 !important;
+  border-radius: var(--radius-card) !important;
 }
 
 .ed-dashboard :where([class*="shadow-"]) {
@@ -322,7 +377,7 @@ body {
 
 .ed-dashboard :where(input, textarea, select) {
   border-color: var(--color-hairline-gray) !important;
-  border-radius: 0 !important;
+  border-radius: var(--radius-input) !important;
   background: var(--color-pure-paper);
   color: var(--color-ink-black);
   box-shadow: none !important;
@@ -335,8 +390,20 @@ body {
   outline: none;
 }
 
-.ed-dashboard :where(button.rounded-full, a.rounded-full, .ed-dashboard-workspace-pill) {
-  border-radius: 800px !important;
+.ed-dashboard :where(button.rounded-full[class*="text-sm"], a.rounded-full[class*="text-sm"], .ed-dashboard-workspace-pill) {
+  border-radius: var(--radius-button) !important;
+}
+
+.ed-dashboard :where(button, a)[class*="bg-[#003f2e]"],
+.ed-dashboard :where(button, a)[class*="bg-[#039861]"] {
+  border-radius: var(--radius-button) !important;
+  box-shadow: inset 0 1px rgb(255 255 255 / 12%), 0 1px 0 rgb(0 63 46 / 18%);
+  transition: background-color 180ms ease, border-color 180ms ease, box-shadow 180ms ease, transform 180ms ease;
+}
+
+.ed-dashboard :where(button, a)[class*="bg-[#003f2e]"]:hover,
+.ed-dashboard :where(button, a)[class*="bg-[#039861]"]:hover {
+  transform: translateY(-1px);
 }
 
 .ed-dashboard[data-role="investor"] :where(button, a)[class*="bg-[#003f2e]"] {
@@ -353,16 +420,16 @@ body {
 
 .ed-dashboard-sidebar {
   border-color: var(--color-hairline-gray) !important;
-  background: var(--color-pure-paper);
+  background: var(--color-sidebar-cream);
 }
 
 .ed-dashboard-sidebar > div {
-  background: var(--color-pure-paper) !important;
+  background: var(--color-sidebar-cream) !important;
   color: var(--color-faded-pencil);
 }
 
 .ed-dashboard-sidebar :where(a, button) {
-  border-radius: 800px;
+  border-radius: var(--radius-button);
 }
 
 .ed-dashboard-sidebar[data-role="investor"] a[class*="bg-[#003f2e]"],
@@ -376,6 +443,17 @@ body {
 .ed-dashboard-sidebar button:hover {
   background: #edf5f1 !important;
   color: var(--color-forest-ink) !important;
+}
+
+.ed-dashboard-sidebar :where(a, button)[class*="bg-[#003f2e]"]:hover,
+.ed-dashboard-sidebar :where(a, button)[class*="bg-[#039861]"]:hover {
+  background: var(--color-forest-ink) !important;
+  color: var(--color-cream-canvas) !important;
+}
+
+.ed-dashboard-sidebar[data-role="investor"] :where(a, button)[class*="bg-[#003f2e]"]:hover {
+  border-color: #d0b878 !important;
+  background: #07513d !important;
 }
 
 /* Authenticated public profile and project surfaces. */
@@ -431,7 +509,7 @@ body {
     width: calc(100% - 32px);
     max-width: none;
     flex-wrap: wrap;
-    border-radius: 0;
+    border-radius: var(--radius-card);
   }
 
   .ed-tabbar button {

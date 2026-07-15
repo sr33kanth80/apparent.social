@@ -81,7 +81,7 @@ const SIDEBAR_PIN_STORAGE_KEY = 'apparent-sidebar-pinned';
 
 const sidebarVariants = {
   open: {
-    width: '15rem',
+    width: '16.25rem',
   },
   closed: {
     width: '3.05rem',

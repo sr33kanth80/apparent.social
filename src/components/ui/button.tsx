@@ -5,15 +5,15 @@ import * as React from 'react';
 import { cn } from '@/lib/utils';
 
 const buttonVariants = cva(
-  'inline-flex cursor-pointer items-center justify-center whitespace-nowrap rounded-full border border-transparent text-sm font-medium transition-[background-color,border-color,color,transform] outline-offset-2 active:translate-y-px focus-visible:outline focus-visible:outline-2 focus-visible:outline-ring/70 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0',
+  'inline-flex cursor-pointer items-center justify-center whitespace-nowrap rounded-[8px] border border-transparent text-sm font-medium tracking-[-0.02em] transition-[background-color,border-color,color,box-shadow,transform] outline-offset-2 hover:-translate-y-px active:translate-y-px focus-visible:outline focus-visible:outline-2 focus-visible:outline-ring/70 disabled:pointer-events-none disabled:translate-y-0 disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0',
   {
     variants: {
       variant: {
-        default: 'bg-primary text-primary-foreground hover:bg-primary/90',
+        default: 'bg-primary text-primary-foreground shadow-[inset_0_1px_rgba(255,255,255,0.12),0_1px_0_rgba(0,63,46,0.2)] hover:bg-[#07513d]',
         destructive:
-          'bg-destructive text-destructive-foreground hover:bg-destructive/90',
+          'bg-destructive text-destructive-foreground shadow-[inset_0_1px_rgba(255,255,255,0.12)] hover:bg-destructive/90',
         outline:
-          'border-input bg-background hover:border-primary hover:bg-accent hover:text-accent-foreground',
+          'border-input bg-card hover:border-primary hover:bg-accent hover:text-accent-foreground',
         secondary:
           'bg-secondary text-secondary-foreground hover:bg-secondary/80',
         ghost: 'hover:bg-accent hover:text-accent-foreground',

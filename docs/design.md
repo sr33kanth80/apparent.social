@@ -13,27 +13,28 @@ colors:
   on-surface-muted: "#6E7673"
   border: "#D6D6D6"
   border-strong: "#A6A6A6"
+  sidebar: "#F7F2EE"
   investor-gold: "#B79A5B"
   error: "#B42318"
   success: "#039861"
   warning: "#9A6700"
 typography:
   display:
-    fontFamily: "Inter Tight, PP Mori, Avenir Next, ui-sans-serif, system-ui, sans-serif"
+    fontFamily: "DM Serif Display, Source Serif 4, Georgia, ui-serif, serif"
     fontSize: 4.125rem
-    fontWeight: 600
-    lineHeight: 0.95
-    letterSpacing: -0.045em
+    fontWeight: 400
+    lineHeight: 1.04
+    letterSpacing: -0.035em
   heading:
-    fontFamily: "Inter Tight, PP Mori, Avenir Next, ui-sans-serif, system-ui, sans-serif"
+    fontFamily: "DM Serif Display, Source Serif 4, Georgia, ui-serif, serif"
     fontSize: 3.25rem
-    fontWeight: 600
-    lineHeight: 1
-    letterSpacing: -0.04em
+    fontWeight: 400
+    lineHeight: 1.1
+    letterSpacing: -0.035em
   heading-sm:
-    fontFamily: "Inter Tight, PP Mori, Avenir Next, ui-sans-serif, system-ui, sans-serif"
+    fontFamily: "DM Serif Display, Source Serif 4, Georgia, ui-serif, serif"
     fontSize: 1.5rem
-    fontWeight: 600
+    fontWeight: 400
     lineHeight: 1.2
     letterSpacing: -0.03em
   body-lg:
@@ -54,10 +55,18 @@ typography:
     fontWeight: 500
     lineHeight: 1.3
     letterSpacing: -0.02em
+  metadata:
+    fontFamily: "JetBrains Mono, ui-monospace, SFMono-Regular, Menlo, Consolas, monospace"
+    fontSize: 0.75rem
+    fontWeight: 500
+    lineHeight: 1.3
+    letterSpacing: 0.08em
 rounded:
-  none: 0px
-  control: 800px
-  full: 9999px
+  button: 8px
+  input: 10px
+  card: 12px
+  panel: 16px
+  pill: 999px
 spacing:
   1: 4px
   2: 8px
@@ -74,39 +83,39 @@ components:
     backgroundColor: "{colors.primary}"
     textColor: "{colors.on-primary}"
     typography: "{typography.label}"
-    rounded: "{rounded.control}"
+    rounded: "{rounded.button}"
     padding: 10px 20px
   button-ghost:
     backgroundColor: "{colors.surface}"
     textColor: "{colors.accent}"
     typography: "{typography.label}"
-    rounded: "{rounded.control}"
+    rounded: "{rounded.button}"
     padding: 10px 20px
   button-investor:
     backgroundColor: "{colors.primary}"
     textColor: "{colors.on-primary}"
     typography: "{typography.label}"
-    rounded: "{rounded.control}"
+    rounded: "{rounded.button}"
     padding: 10px 20px
   card:
     backgroundColor: "{colors.surface-raised}"
     textColor: "{colors.on-surface}"
     typography: "{typography.body}"
-    rounded: "{rounded.none}"
-    padding: 20px
+    rounded: "{rounded.card}"
+    padding: 24px
   input:
     backgroundColor: "{colors.surface-raised}"
     textColor: "{colors.on-surface}"
     typography: "{typography.body}"
-    rounded: "{rounded.none}"
-    padding: 10px 12px
+    rounded: "{rounded.input}"
+    padding: 12px 14px
 ---
 
 # Apparent Parchment Design System
 
 ## Overview
 
-Apparent should feel like a well-typeset investment letter that also happens to be a working product. Warm paper, deep green ink, compact display typography, and quiet structure create the premium tone. The system is visually bold without becoming ornamental. Public pages can use more scale and white space, while dashboards keep the same materials at a denser working rhythm.
+Apparent should feel like a well-typeset investment letter that also happens to be a working product. Warm paper, deep green ink, elegant serif display typography, and quiet structure create the premium tone. The system is visually bold without becoming ornamental. Public pages can use more scale and white space, while dashboards keep the same materials at a denser working rhythm.
 
 ## Colors
 
@@ -114,11 +123,11 @@ Cream Canvas is the default page surface and Pure Paper is reserved for working 
 
 ## Typography
 
-The supplied reference uses PP Mori for display work. Because the licensed files are not in the repository, the implementation uses Inter Tight as the production-safe geometric substitute and keeps PP Mori in the fallback stack for a future licensed font drop. Inter remains the body and interface face, tightened to `-0.03em` so it reads as editorial copy rather than browser-default UI. Display line heights stay compact, while dashboard labels use conventional spacing for scan speed.
+DM Serif Display carries large headlines, brand moments, section titles, and editorial page headings. Inter remains the body and interface face, tightened to `-0.03em` so it reads as considered product copy rather than browser-default UI. JetBrains Mono is reserved for compact metadata, statuses, technical details, and uppercase labels. Display line heights stay compact; body copy keeps generous leading for comfortable reading.
 
 ## Layout
 
-The spacing system follows a four-pixel base and gives public sections generous vertical rhythm. Public reading copy should usually stay below 640px, while product workspaces can expand to the existing 1440px dashboard frame. Marketing surfaces may be asymmetric, but dashboard grids retain their established information architecture. Mobile layouts collapse to a single readable column without changing content order.
+The spacing system follows a four-pixel base and gives public sections generous vertical rhythm. Focused landing workflows should stay near 680px, active reading and chat work near 900px, and larger dashboard compositions can expand within the existing frame. Authenticated desktop layouts use a fixed 260px navigation rail while the main pane scrolls independently. Marketing surfaces may be asymmetric, but dashboard grids retain their established information architecture. Mobile layouts collapse the rail and stack content into one readable column without changing content order.
 
 ## Elevation & Depth
 
@@ -126,14 +135,14 @@ The system is intentionally flat. Depth comes from Cream Canvas against Pure Pap
 
 ## Shapes
 
-Cards, panels, inputs, and dialogs use square corners. Buttons, compact filters, badges, and segmented controls use the capsule radius. This mixed rule is semantic and must stay consistent: paper objects are square, interactive tokens are pills. Avatars and identity marks may remain circular where the content itself requires it.
+Buttons use an 8px crafted corner, inputs 10px, working cards 12px, and prominent editorial panels or dialogs 16px. Capsule shapes are reserved for tags, filters, statuses, compact metadata, and toggles. Avatars and identity marks may remain circular where the content itself requires it.
 
 ## Components
 
-Primary investor buttons use `button-investor` with a gold border applied in CSS. Founder and neutral public actions default to restrained ghost or emerald treatments. Cards and inputs use hairline borders with no shadows. Hover states change ink, border, or paper tone only, and active controls move down by one pixel for tactile feedback.
+Primary buttons use Forest Ink with warm-white text, a quiet inset highlight, and a subtle one-pixel base edge. Investor primaries add the restrained gold border. Secondary actions use paper-white surfaces and hairline borders. Cards use generous internal padding and clear editorial hierarchy without drop shadows. Inputs are spacious and gain a subtle Emerald focus ring. Hover states change ink, border, or paper tone and may lift by one pixel; active controls settle back down for tactile feedback.
 
 ## Do's and Don'ts
 
 Do use Forest Ink for display hierarchy, preserve generous whitespace, and keep repeated dashboard information separated by hairlines. Do use Emerald sparingly for interactive feedback and keep investor gold to thin borders. Do preserve current route names, field order, behavior, and accessibility semantics.
 
-Do not reintroduce orange, lavender, blue, or generic black as competing brand accents. Do not add gradients, glows, glass cards, or soft drop shadows. Do not round paper panels or square off capsule actions. Do not change product functionality to make a layout easier to style.
+Do not reintroduce orange, lavender, blue, or generic black as competing brand accents. Do not add gradients, glows, glass cards, or heavy drop shadows. Do not use pill shapes for ordinary buttons or navigation, and do not flatten cards back into square boxes. Do not change product functionality to make a layout easier to style.

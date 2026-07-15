@@ -50,7 +50,7 @@ export const PublicPageShell = ({ children }: { children: ReactNode }) => {
 
   return (
     <div
-      className={user ? 'min-h-screen bg-[#fdf9f7] pl-[15rem]' : 'ed-page min-h-screen'}
+      className={user ? 'min-h-screen bg-[#fdf9f7] pl-[16.25rem]' : 'ed-page min-h-screen'}
       data-role={user?.role}
     >
       {user ? (
@@ -65,7 +65,7 @@ export const PublicPageShell = ({ children }: { children: ReactNode }) => {
           <button
             type="button"
             onClick={handleBack}
-            className="inline-flex items-center gap-1.5 rounded-full border border-black/10 bg-white px-3.5 py-1.5 text-sm font-medium text-black/70 shadow-sm transition-colors hover:bg-black/5 hover:text-black"
+            className="inline-flex items-center gap-1.5 rounded-[8px] border border-black/10 bg-white px-3.5 py-1.5 text-sm font-medium text-black/70 shadow-none transition-colors hover:bg-black/5 hover:text-black"
           >
             <ArrowLeft className="h-4 w-4" />
             Back
