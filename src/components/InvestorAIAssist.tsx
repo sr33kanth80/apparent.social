@@ -1,10 +1,9 @@
 import { ArrowRight, Paperclip } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { useEffect, useState, type KeyboardEvent, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type KeyboardEvent, type ReactNode } from 'react';
 
 import { LogoIcon } from '@/components/LogoIcon';
 import { Textarea } from '@/components/ui/textarea';
-import { useAutoResizeTextarea } from '@/hooks/use-auto-resize-textarea';
 import { cn } from '@/lib/utils';
 
 type AIPromptProps = {
@@ -72,10 +71,7 @@ export const InvestorAIPrompt = ({
   toolbarExtras,
 }: AIPromptProps) => {
   const [value, setValue] = useState('');
-  const { textareaRef, adjustHeight } = useAutoResizeTextarea({
-    minHeight: 72,
-    maxHeight: 300,
-  });
+  const textareaRef = useRef<HTMLTextAreaElement | null>(null);
 
   useEffect(() => {
     if (autoFocus) textareaRef.current?.focus();
@@ -85,7 +81,7 @@ export const InvestorAIPrompt = ({
     if (!value.trim()) return;
     onSubmit?.(value);
     setValue('');
-    adjustHeight(true);
+    if (textareaRef.current) textareaRef.current.scrollTop = 0;
   };
 
   const handleKeyDown = (event: KeyboardEvent<HTMLTextAreaElement>) => {
@@ -108,13 +104,10 @@ export const InvestorAIPrompt = ({
               <Textarea
                 aria-label={placeholder}
                 className={cn(
-                  'min-h-[72px] w-full resize-none rounded-xl rounded-b-none border-none bg-white/5 px-4 py-3 text-white placeholder:text-white/70 focus-visible:ring-0 focus-visible:ring-offset-0',
+                  'h-28 min-h-28 max-h-28 w-full resize-none overflow-y-auto overscroll-contain rounded-xl rounded-b-none border-none bg-white/5 px-4 py-3 text-white placeholder:text-white/70 focus-visible:ring-0 focus-visible:ring-offset-0',
                 )}
                 id="ai-input-15"
-                onChange={(event) => {
-                  setValue(event.target.value);
-                  adjustHeight();
-                }}
+                onChange={(event) => setValue(event.target.value)}
                 onKeyDown={handleKeyDown}
                 ref={textareaRef}
                 value={value}

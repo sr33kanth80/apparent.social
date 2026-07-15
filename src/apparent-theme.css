@@ -372,35 +372,35 @@ body {
   box-shadow: none !important;
 }
 
-.ed-dashboard :where([class*="rounded-[20px]"], [class*="rounded-2xl"], [class*="rounded-3xl"]) {
+.ed-dashboard :where([class*="rounded-[20px]"], [class*="rounded-2xl"], [class*="rounded-3xl"]):not(:where(.ed-agent-chat-scope, .ed-agent-chat-scope *)) {
   border-radius: var(--radius-card) !important;
 }
 
-.ed-dashboard :where([class*="shadow-"]) {
+.ed-dashboard :where([class*="shadow-"]):not(:where(.ed-agent-chat-scope, .ed-agent-chat-scope *)) {
   box-shadow: none !important;
 }
 
-.ed-dashboard :where([class*="bg-white"], [class*="bg-[#fbfaf7]"], [class*="bg-[#f6f3f1]"]) {
+.ed-dashboard :where([class*="bg-white"], [class*="bg-[#fbfaf7]"], [class*="bg-[#f6f3f1]"]):not(:where(.ed-agent-chat-scope, .ed-agent-chat-scope *)) {
   background-color: var(--color-pure-paper) !important;
 }
 
-.ed-dashboard :where([class*="bg-gray-50"], [class*="bg-[#f4f1eb]"]) {
+.ed-dashboard :where([class*="bg-gray-50"], [class*="bg-[#f4f1eb]"]):not(:where(.ed-agent-chat-scope, .ed-agent-chat-scope *)) {
   background-color: #f6f1ed !important;
 }
 
-.ed-dashboard :where([class*="border-black/"], [class*="divide-black/"]) {
+.ed-dashboard :where([class*="border-black/"], [class*="divide-black/"]):not(:where(.ed-agent-chat-scope, .ed-agent-chat-scope *)) {
   border-color: var(--color-hairline-gray) !important;
 }
 
-.ed-dashboard :where([class*="text-gray-400"], [class*="text-gray-500"], [class*="text-gray-600"], [class*="text-black/"]) {
+.ed-dashboard :where([class*="text-gray-400"], [class*="text-gray-500"], [class*="text-gray-600"], [class*="text-black/"]):not(:where(.ed-agent-chat-scope, .ed-agent-chat-scope *)) {
   color: var(--color-faded-pencil) !important;
 }
 
-.ed-dashboard :where([class*="text-gray-700"], [class*="text-gray-800"], [class*="text-black"]) {
+.ed-dashboard :where([class*="text-gray-700"], [class*="text-gray-800"], [class*="text-black"]):not(:where(.ed-agent-chat-scope, .ed-agent-chat-scope *)) {
   color: var(--color-ink-black) !important;
 }
 
-.ed-dashboard :where(input, textarea, select) {
+.ed-dashboard :where(input, textarea, select):not(:where(.ed-agent-chat-scope, .ed-agent-chat-scope *)) {
   border-color: var(--color-hairline-gray) !important;
   border-radius: var(--radius-input) !important;
   background: var(--color-pure-paper);
@@ -409,7 +409,7 @@ body {
   font-family: var(--font-apparent-body);
 }
 
-.ed-dashboard :where(input, textarea, select):focus {
+.ed-dashboard :where(input, textarea, select):focus:not(:where(.ed-agent-chat-scope, .ed-agent-chat-scope *)) {
   border-color: var(--dashboard-accent) !important;
   box-shadow: 0 0 0 2px rgb(3 152 97 / 12%) !important;
   outline: none;
