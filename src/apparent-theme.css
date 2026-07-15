@@ -87,7 +87,9 @@ body {
   color: var(--color-ink-black);
   font-family: var(--font-apparent-body);
   letter-spacing: -0.03em;
-  overflow-x: hidden;
+  /* `hidden` creates a scroll container and prevents the sticky navbar from
+     tracking the viewport. `clip` contains wide artwork without breaking it. */
+  overflow-x: clip;
 }
 
 .ed-page :where(h1, h2, h3, h4, .ed-display, .ed-sec-title) {
@@ -138,7 +140,7 @@ body {
 .ed-nav.is-scrolled .ed-nav-row {
   border-color: var(--color-hairline-gray);
   background: color-mix(in srgb, var(--color-pure-paper) 95%, transparent);
-  box-shadow: none;
+  box-shadow: 0 14px 34px rgb(0 63 46 / 10%);
 }
 
 .ed-brand .ed-mark,
@@ -156,6 +158,19 @@ body {
 .ed-nav-links a:focus-visible {
   background: transparent;
   color: var(--color-vivid-emerald);
+}
+
+.ed-vc-logo {
+  border: 1px solid var(--color-hairline-gray);
+  background: color-mix(in srgb, var(--color-pure-paper) 72%, transparent);
+  transition: border-color 160ms ease, background-color 160ms ease, color 160ms ease;
+}
+
+.ed-vc-logo:hover,
+.ed-vc-logo:focus-visible {
+  border-color: var(--color-mid-gray);
+  background: var(--color-pure-paper);
+  color: var(--color-forest-ink);
 }
 
 .ed-btn,
