@@ -481,6 +481,42 @@ body {
   background: #07513d !important;
 }
 
+/* VC landing page: preserve the split hero, then switch to a focused
+   investment-memo reading column for every section that follows. */
+.ed-vc-page main > .ed-sec > .ed-inner {
+  max-width: 900px;
+}
+
+.ed-vc-page .ed-work {
+  grid-template-columns: minmax(0, 1fr);
+  gap: clamp(40px, 6vw, 72px);
+}
+
+.ed-vc-page .ed-lead {
+  max-width: 65ch;
+}
+
+.ed-vc-page :where(.ed-benefits, .ed-infocards) {
+  max-width: 820px;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0;
+}
+
+.ed-vc-page :where(.ed-benefit, .ed-infocard) {
+  border-top: 1px solid var(--color-hairline-gray);
+  border-radius: 0;
+  background: transparent;
+  padding: 30px 0;
+}
+
+.ed-vc-page :where(.ed-benefit, .ed-infocard):last-child {
+  border-bottom: 1px solid var(--color-hairline-gray);
+}
+
+.ed-vc-page .ed-benefit .ed-ic {
+  margin-bottom: 18px;
+}
+
 /* Authenticated public profile and project surfaces. */
 [data-role] > :where(main, .apparent-profile) {
   color: var(--color-ink-black);
