@@ -1045,7 +1045,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
     }
   }, [dashboardBasePath, location.hash, location.pathname, navigate]);
 
-  const accentSurface = isInvestor ? 'bg-[#222222]' : 'bg-[#fa5d29]';
+  const accentSurface = isInvestor ? 'bg-[#003f2e]' : 'bg-[#039861]';
   const accentForeground = 'text-white';
   const accentSwitchForeground = 'text-white fill-white';
   const accentIconForeground = 'text-white/90';
@@ -8839,7 +8839,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
   );
 
   return (
-    <div className="monad-app ed-dashboard min-h-screen text-ink">
+    <div className="monad-app ed-dashboard min-h-screen text-ink" data-role={role}>
       <SessionNavBar role={role} user={user} activated={profileSaved} unreadMessages={totalUnreadMessages} />
 
       <main className="ed-dashboard-main min-h-screen pl-[15rem]">

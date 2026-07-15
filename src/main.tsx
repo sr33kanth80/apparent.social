@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client'
 import { KindeProvider } from '@kinde-oss/kinde-auth-react'
 import './index.css'
 import './editorial.css'
+import './apparent-theme.css'
 import App from './App.tsx'
 import {
   getKindeDomain,

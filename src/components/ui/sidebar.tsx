@@ -129,8 +129,8 @@ const roleConfig = {
     account: 'Founder Account',
     email: 'founder@apparent.test',
     initials: 'F',
-    accent: 'text-[#fa5d29]',
-    active: 'bg-[#fa5d29] text-white',
+    accent: 'text-[#039861]',
+    active: 'bg-[#039861] text-white',
     basePath: '/dashboard/founder',
     groups: [
       [
@@ -156,8 +156,8 @@ const roleConfig = {
     account: 'Investor Account',
     email: 'partner@apparent.test',
     initials: 'VC',
-    accent: 'text-[#222222]',
-    active: 'bg-[#222222] text-white',
+    accent: 'text-[#003f2e]',
+    active: 'bg-[#003f2e] text-white',
     basePath: '/dashboard/investor',
     groups: [
       [
@@ -303,6 +303,7 @@ function BaseSessionNavBar({
   return (
     <motion.div
       className="sidebar ed-dashboard-sidebar fixed left-0 top-0 z-40 h-screen shrink-0 border-r border-black/10"
+      data-role={role}
       initial={isCollapsed ? 'closed' : 'open'}
       animate={isCollapsed ? 'closed' : 'open'}
       variants={sidebarVariants}

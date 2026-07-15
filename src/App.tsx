@@ -60,7 +60,7 @@ const ScrollToHash = () => {
 function App() {
   return (
     <Router>
-      <div className="bg-white min-h-screen">
+      <div className="min-h-screen bg-background text-foreground">
         <ScrollToHash />
         <Routes>
           <Route path="/login" element={<Login />} />
