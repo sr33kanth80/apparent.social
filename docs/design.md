@@ -1,7 +1,7 @@
 ---
 version: alpha
 name: Apparent Parchment
-description: A premium editorial product system built from warm paper, forest ink, emerald signals, and role-aware investor gold.
+description: A premium editorial product system built from warm paper, forest ink, emerald signals, and restrained sage edges.
 colors:
   primary: "#003F2E"
   on-primary: "#FDF9F7"
@@ -14,7 +14,7 @@ colors:
   border: "#D6D6D6"
   border-strong: "#A6A6A6"
   sidebar: "#F7F2EE"
-  investor-gold: "#B79A5B"
+  investor-edge: "#6FA38F"
   error: "#B42318"
   success: "#039861"
   warning: "#9A6700"
@@ -119,7 +119,7 @@ Apparent should feel like a well-typeset investment letter that also happens to 
 
 ## Colors
 
-Cream Canvas is the default page surface and Pure Paper is reserved for working surfaces layered above it. Forest Ink carries brand authority across headlines, navigation, and high-priority controls. Vivid Emerald is a signal color for focus, links, and founder actions. Investor actions are the deliberate exception: they use Forest Ink fills with a one-pixel Investor Gold edge. Gold is never a fill, large surface, or decorative gradient.
+Cream Canvas is the default page surface and Pure Paper is reserved for working surfaces layered above it. Forest Ink carries brand authority across headlines, navigation, and high-priority controls. Vivid Emerald is a signal color for focus, links, and active feedback. Investor actions use Forest Ink fills with a one-pixel desaturated Sage edge, keeping them distinct without introducing a separate accent family.
 
 ## Typography
 
@@ -139,10 +139,10 @@ Buttons use an 8px crafted corner, inputs 10px, working cards 12px, and prominen
 
 ## Components
 
-Primary buttons use Forest Ink with warm-white text, a quiet inset highlight, and a subtle one-pixel base edge. Investor primaries add the restrained gold border. Secondary actions use paper-white surfaces and hairline borders. Cards use generous internal padding and clear editorial hierarchy without drop shadows. Inputs are spacious and gain a subtle Emerald focus ring. Hover states change ink, border, or paper tone and may lift by one pixel; active controls settle back down for tactile feedback.
+Primary buttons use Forest Ink with warm-white text, a quiet inset highlight, and a subtle one-pixel base edge. Investor primaries add the restrained Sage border. Secondary actions use paper-white surfaces and hairline borders. Cards use generous internal padding and clear editorial hierarchy without drop shadows. Inputs are spacious and gain a subtle Emerald focus ring. Dark footer links retain warm-white text and gain a faint cream border and translucent surface on hover. Active controls settle back down for tactile feedback.
 
 ## Do's and Don'ts
 
-Do use Forest Ink for display hierarchy, preserve generous whitespace, and keep repeated dashboard information separated by hairlines. Do use Emerald sparingly for interactive feedback and keep investor gold to thin borders. Do preserve current route names, field order, behavior, and accessibility semantics.
+Do use Forest Ink for display hierarchy, preserve generous whitespace, and keep repeated dashboard information separated by hairlines. Do use Emerald sparingly for interactive feedback and keep Sage edges to thin borders. Do maintain warm-white contrast for links placed on Forest Ink surfaces. Do preserve current route names, field order, behavior, and accessibility semantics.
 
 Do not reintroduce orange, lavender, blue, or generic black as competing brand accents. Do not add gradients, glows, glass cards, or heavy drop shadows. Do not use pill shapes for ordinary buttons or navigation, and do not flatten cards back into square boxes. Do not change product functionality to make a layout easier to style.
