@@ -111,7 +111,7 @@ export const ForVCs = () => (
       <section className="ed-subhero ed-inner ed-split">
         <div>
           <h1 className="ed-display">
-            Find your next outlier before the round gets <span className="ed-emoji-keep"><em>crowded.</em><span className="ed-display-emoji">🔎</span></span>
+            Get early access to startups already proving <em>commercial demand.</em>
           </h1>
           <p className="ed-lede">Apparent gives emerging managers, GPs, and investment teams a private pipeline of companies pre-vetted for thesis fit. Prioritize <span className="ed-emoji-keep">revenue-generating startups <span className="ed-copy-emoji">🧭</span></span>, early traction, or exceptional founder proof, then take the strongest deals from first look to <span className="ed-emoji-keep">partner meeting <span className="ed-copy-emoji">📈</span></span>.</p>
           <div className="ed-cta">
