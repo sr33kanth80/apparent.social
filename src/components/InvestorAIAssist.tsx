@@ -14,6 +14,10 @@ type AIPromptProps = {
   autoFocus?: boolean;
   /** Extra controls rendered in the bottom toolbar, next to the attach button. */
   toolbarExtras?: ReactNode;
+  /** Turn off the animated multilingual placeholder for focused agent pages. */
+  animatePlaceholder?: boolean;
+  /** Hide the attachment affordance until a caller wires file context through. */
+  showAttachment?: boolean;
 };
 
 const promptPlaceholders = [
@@ -69,6 +73,8 @@ export const InvestorAIPrompt = ({
   className,
   autoFocus = false,
   toolbarExtras,
+  animatePlaceholder = true,
+  showAttachment = true,
 }: AIPromptProps) => {
   const [value, setValue] = useState('');
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
@@ -100,7 +106,7 @@ export const InvestorAIPrompt = ({
         <div className="relative">
           <div className="relative flex flex-col">
             <div className="relative overflow-y-auto" style={{ maxHeight: '400px' }}>
-              <DynamicPromptPlaceholder active={!value} fallbackText={placeholder} />
+              <DynamicPromptPlaceholder active={animatePlaceholder && !value} fallbackText={placeholder} />
               <Textarea
                 aria-label={placeholder}
                 className={cn(
@@ -109,6 +115,7 @@ export const InvestorAIPrompt = ({
                 id="ai-input-15"
                 onChange={(event) => setValue(event.target.value)}
                 onKeyDown={handleKeyDown}
+                placeholder={animatePlaceholder ? undefined : placeholder}
                 ref={textareaRef}
                 value={value}
               />
@@ -121,18 +128,22 @@ export const InvestorAIPrompt = ({
                     <LogoIcon className="h-4 w-4 opacity-70" />
                     Apparent AI
                   </div>
-                  <div className="mx-0.5 h-4 w-px bg-white/10" />
-                  <label
-                    aria-label="Attach file"
-                    className={cn(
-                      'cursor-pointer rounded-lg bg-white/5 p-2',
-                      'hover:bg-white/10 focus-visible:ring-1 focus-visible:ring-blue-500 focus-visible:ring-offset-0',
-                      'text-white/40 hover:text-white',
-                    )}
-                  >
-                    <input className="hidden" type="file" />
-                    <Paperclip className="h-4 w-4 transition-colors" />
-                  </label>
+                  {showAttachment && (
+                    <>
+                      <div className="mx-0.5 h-4 w-px bg-white/10" />
+                      <label
+                        aria-label="Attach file"
+                        className={cn(
+                          'cursor-pointer rounded-lg bg-white/5 p-2',
+                          'hover:bg-white/10 focus-visible:ring-1 focus-visible:ring-blue-500 focus-visible:ring-offset-0',
+                          'text-white/40 hover:text-white',
+                        )}
+                      >
+                        <input className="hidden" type="file" />
+                        <Paperclip className="h-4 w-4 transition-colors" />
+                      </label>
+                    </>
+                  )}
                   {toolbarExtras && (
                     <>
                       <div className="mx-0.5 h-4 w-px bg-white/10" />

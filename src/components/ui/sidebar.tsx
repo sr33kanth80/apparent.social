@@ -22,6 +22,7 @@ import {
   Search,
   Send,
   Settings,
+  Sparkles,
   Target,
   UserCircle,
 } from 'lucide-react';
@@ -135,6 +136,7 @@ const roleConfig = {
     groups: [
       [
         { label: 'Overview', path: '/dashboard/founder', icon: LayoutDashboard },
+        { label: 'Apparent Agent', path: '/dashboard/founder/agent', icon: Sparkles, badge: 'AI' },
         { label: 'Your Profile', path: '/dashboard/founder/profile', icon: UserCircle },
         { label: 'Products', path: '/dashboard/founder/products', icon: Rocket },
         { label: 'Investor Matches', path: '/dashboard/founder/matches', icon: Search, badge: 'AI' },
@@ -162,6 +164,7 @@ const roleConfig = {
     groups: [
       [
         { label: 'Overview', path: '/dashboard/investor', icon: LayoutDashboard },
+        { label: 'Apparent Agent', path: '/dashboard/investor/agent', icon: Sparkles, badge: 'AI' },
         { label: 'Daily', path: '/dashboard/investor/daily', icon: Sunrise, badge: 'New' },
         { label: 'Your Thesis', path: '/dashboard/investor/profile', icon: Target },
         { label: 'Discover', path: '/dashboard/investor/discover', icon: Layers, badge: 'New' },

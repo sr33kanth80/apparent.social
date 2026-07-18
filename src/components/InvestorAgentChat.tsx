@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { Check, Copy, ExternalLink, Loader2, Mail, Maximize2, Minimize2, Send, Trash2, X } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 
+import { AgentConversationShell } from '@/components/AgentConversationShell';
 import { AgentProfilePatchCard } from '@/components/AgentProfilePatchCard';
 import { InvestorAIPrompt } from '@/components/InvestorAIAssist';
 import { LogoIcon } from '@/components/LogoIcon';
@@ -117,6 +118,7 @@ interface InvestorAgentChatProps {
   onPersistMessages: (messages: AgentChatHistoryMessage[]) => Promise<void>;
   onClearPersistedMessages: () => Promise<void>;
   onRememberConversation: (userMessage: string, assistantReply: string) => Promise<void>;
+  pageMode?: boolean;
   className?: string;
 }
 
@@ -154,6 +156,7 @@ export const InvestorAgentChat = ({
   onPersistMessages,
   onClearPersistedMessages,
   onRememberConversation,
+  pageMode = false,
   className,
 }: InvestorAgentChatProps) => {
   const authHeaders = useAgentAuthHeaders();
@@ -224,7 +227,7 @@ export const InvestorAgentChat = ({
 
   // Fullscreen chat: lock the page scroll behind the overlay and close on Escape.
   useEffect(() => {
-    if (!expanded) return;
+    if (!expanded || pageMode) return;
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') setExpanded(false);
     };
@@ -235,7 +238,7 @@ export const InvestorAgentChat = ({
       window.removeEventListener('keydown', onKeyDown);
       document.body.style.overflow = previousOverflow;
     };
-  }, [expanded]);
+  }, [expanded, pageMode]);
 
   // Patch a single proposal's status inside a specific assistant message.
   const patchProposal = (messageIndex: number, proposalIndex: number, patch: Partial<ProposalState>) => {
@@ -275,7 +278,7 @@ export const InvestorAgentChat = ({
     if (!trimmed || loadingRef.current) return;
 
     loadingRef.current = true;
-    setExpanded(true);
+    if (!pageMode) setExpanded(true);
     setError('');
     const conversation: ChatMessage[] = [...messages, { role: 'user', content: trimmed }];
     setMessages(conversation);
@@ -542,6 +545,96 @@ export const InvestorAgentChat = ({
       />
     </motion.div>
   );
+
+  if (pageMode) {
+    const pageTranscript = (
+      <div className="space-y-10">
+        {messages.map((message, index) => (
+          <motion.article
+            key={index}
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.2, ease: 'easeOut' }}
+            className="border-b border-black/5 pb-10 last:border-b-0"
+          >
+            {message.role === 'user' ? (
+              <div>
+                <p className="mb-3 text-[11px] font-semibold uppercase tracking-[0.16em] text-gray-400">You</p>
+                <h2 className="whitespace-pre-wrap text-2xl font-semibold leading-tight tracking-[-0.025em] text-black sm:text-[30px]">
+                  {message.content}
+                </h2>
+              </div>
+            ) : (
+              <div>
+                <div className="mb-4 flex items-center gap-2.5 text-sm font-semibold text-black">
+                  <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-charcoal text-white">
+                    <LogoIcon className="h-3.5 w-3.5" />
+                  </div>
+                  Apparent
+                </div>
+                <div className="whitespace-pre-wrap text-[15px] leading-7 text-gray-800 sm:text-base">{message.content}</div>
+
+                {message.proposals && message.proposals.length > 0 && (
+                  <div className="mt-5 grid gap-3">{message.proposals.map((proposal, pi) => renderProposal(index, proposal, pi))}</div>
+                )}
+
+                {message.emailDrafts && message.emailDrafts.length > 0 && (
+                  <div className="mt-5 grid gap-3">
+                    {message.emailDrafts.map((draft, di) => (
+                      <EmailDraftCard key={`${draft.toEmail || draft.founderName}-${di}`} draft={draft} />
+                    ))}
+                  </div>
+                )}
+
+                {message.profilePatches && message.profilePatches.length > 0 && (
+                  <div className="mt-5 grid gap-3">
+                    {message.profilePatches.map((patch, pi) => (
+                      <AgentProfilePatchCard
+                        key={`${patch.role}-${pi}-${patch.fields.map((field) => field.field).join('-')}`}
+                        onApply={onApplyProfilePatch}
+                        patch={patch}
+                      />
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+          </motion.article>
+        ))}
+
+        {isLoading && (
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="flex items-center gap-3 text-sm text-gray-500"
+          >
+            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-charcoal text-white">
+              <LogoIcon className="h-3.5 w-3.5" />
+            </div>
+            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            Researching and working across your Apparent workspace…
+          </motion.div>
+        )}
+
+        {error && <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>}
+      </div>
+    );
+
+    return (
+      <AgentConversationShell
+        className={className}
+        hasConversation={hasConversation}
+        isLoading={isLoading}
+        onNewConversation={clear}
+        onSubmit={send}
+        role="investor"
+        suggestions={SUGGESTIONS}
+        toolbarExtras={autonomySwitch('text-white/60')}
+        transcript={pageTranscript}
+        transcriptRef={transcriptRef}
+      />
+    );
+  }
 
   return (
     <div className={className}>

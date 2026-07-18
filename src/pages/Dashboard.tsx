@@ -138,7 +138,7 @@ import { signOut } from '@/lib/auth-service';
 type DashboardRole = 'founder' | 'investor';
 type ActionMode = 'profile' | 'launch' | 'thesis' | 'meetup';
 type FieldKind = 'input' | 'textarea' | 'select';
-type ViewMode = 'overview' | 'profile' | 'products' | 'matches' | 'messages' | 'deals' | 'terms' | 'knowledge' | 'feedback' | 'settings' | 'for-you' | 'vc-heatmap' | 'discover' | 'outreach' | 'daily';
+type ViewMode = 'overview' | 'agent' | 'profile' | 'products' | 'matches' | 'messages' | 'deals' | 'terms' | 'knowledge' | 'feedback' | 'settings' | 'for-you' | 'vc-heatmap' | 'discover' | 'outreach' | 'daily';
 type InvestorDealStage = 'New' | 'Reviewing' | 'Reached Out' | 'Meeting' | 'Watchlist';
 
 interface DashboardProps {
@@ -404,6 +404,7 @@ const EmptyState = ({
 // All dashboard sections that have a canonical URL path. Order matters only
 // for documentation — the lookup is O(1).
 const PATH_TO_VIEW: Record<string, ViewMode> = {
+  agent: 'agent',
   profile: 'profile',
   products: 'products',
   launches: 'products', // legacy
@@ -444,6 +445,10 @@ const viewFromLocation = (pathname: string, hash: string): ViewMode => {
 };
 
 const viewFromSectionId = (id: string): ViewMode => {
+  if (id === 'agent') {
+    return 'agent';
+  }
+
   if (id === 'profile') {
     return 'profile';
   }
@@ -504,6 +509,10 @@ const viewFromSectionId = (id: string): ViewMode => {
 };
 
 const sectionIdFromView = (view: ViewMode) => {
+  if (view === 'agent') {
+    return 'agent';
+  }
+
   if (view === 'vc-heatmap') {
     return 'vc-heatmap';
   }
@@ -6550,43 +6559,6 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
       >
         {renderOnboardingChecklist()}
         <div id="overview" className="mx-auto max-w-[1292px] scroll-mt-24 space-y-6">
-          <div className="ed-agent-chat-scope mx-auto max-w-4xl">
-            <InvestorAgentChat
-              user={user}
-              criteria={intakeValues}
-              memories={agentMemories}
-              persistedMessages={agentChatMessages}
-              persistedMessagesLoaded={agentChatLoaded}
-              autonomy={agentAutonomy}
-              onAutonomyChange={handleAgentAutonomyChange}
-              contactedFounderIds={contactedFounderIds}
-              onApplyProfilePatch={handleApplyAgentProfilePatch}
-              onPersistMessages={handlePersistAgentChat}
-              onClearPersistedMessages={handleClearAgentChat}
-              onRememberConversation={handleRememberAgentConversation}
-              onSendOutreach={handleAgentOutreach}
-            />
-
-            {agentActions.length > 0 && (
-              <div className="mt-3 rounded-2xl border border-black/10 bg-white p-4 shadow-[0_10px_34px_rgba(0,0,0,0.04)]">
-                <div className="mb-2 flex items-center gap-2 text-sm font-semibold text-black">
-                  <History className="h-4 w-4 text-ink" />
-                  Agent activity
-                </div>
-                <ul className="space-y-1.5">
-                  {agentActions.map((action) => (
-                    <li key={action.id} className="flex items-center justify-between gap-3 text-sm text-gray-700">
-                      <span className="truncate">
-                        {action.type} to <span className="font-medium text-black">{action.name || 'a founder'}</span>
-                      </span>
-                      <span className="shrink-0 text-xs text-gray-400">{formatRelativeTime(action.at)}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-          </div>
-
           <section className="overflow-hidden rounded-[20px] border border-black/10 bg-white shadow-[0_10px_34px_rgba(0,0,0,0.04)]">
             <div className="grid gap-0 xl:grid-cols-[minmax(0,1fr)_360px]">
               <div className="px-5 py-5 sm:px-6">
@@ -8640,7 +8612,91 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
     );
   };
 
+  const renderAgentPage = () => (
+    <motion.div
+      key="agent-main"
+      id="agent"
+      initial={{ opacity: 0, y: 8, filter: 'blur(2px)' }}
+      animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+      exit={{ opacity: 0, y: -8, filter: 'blur(2px)' }}
+      transition={{ duration: 0.22, ease: 'easeOut' }}
+      className="grid h-full min-h-0 gap-4 xl:grid-cols-[minmax(0,1fr)_280px]"
+    >
+      {isInvestor ? (
+        <InvestorAgentChat
+          className="h-full min-h-0"
+          user={user}
+          criteria={intakeValues}
+          memories={agentMemories}
+          persistedMessages={agentChatMessages}
+          persistedMessagesLoaded={agentChatLoaded}
+          autonomy={agentAutonomy}
+          onAutonomyChange={handleAgentAutonomyChange}
+          contactedFounderIds={contactedFounderIds}
+          onApplyProfilePatch={handleApplyAgentProfilePatch}
+          onPersistMessages={handlePersistAgentChat}
+          onClearPersistedMessages={handleClearAgentChat}
+          onRememberConversation={handleRememberAgentConversation}
+          onSendOutreach={handleAgentOutreach}
+          pageMode
+        />
+      ) : (
+        <FounderAgentChat
+          className="h-full min-h-0 xl:col-span-2"
+          user={user}
+          founder={founderAgentContext}
+          memories={agentMemories}
+          persistedMessages={agentChatMessages}
+          persistedMessagesLoaded={agentChatLoaded}
+          contactedInvestorIds={contactedInvestorIds}
+          onApplyProfilePatch={handleApplyAgentProfilePatch}
+          onPersistMessages={handlePersistAgentChat}
+          onClearPersistedMessages={handleClearAgentChat}
+          onRememberConversation={handleRememberAgentConversation}
+          onSendIntro={handleFounderIntro}
+          onAmplify={handleFounderAmplify}
+          pageMode
+        />
+      )}
+
+      {isInvestor && (
+        <aside className="hidden min-h-0 flex-col overflow-hidden rounded-[24px] border border-black/10 bg-white xl:flex">
+          <div className="border-b border-black/5 px-4 py-4">
+            <div className="flex items-center gap-2 text-sm font-semibold text-black">
+              <History className="h-4 w-4 text-ink" />
+              Recent agent actions
+            </div>
+            <p className="mt-1 text-[11px] leading-4 text-gray-400">Outreach Apparent completed from this workspace.</p>
+          </div>
+          <div className="min-h-0 flex-1 overflow-y-auto p-3">
+            {agentActions.length > 0 ? (
+              <ul className="space-y-2">
+                {agentActions.map((action) => (
+                  <li key={action.id} className="rounded-2xl bg-[#f8f6f2] p-3">
+                    <p className="text-xs leading-5 text-gray-700">
+                      {action.type} to <span className="font-semibold text-black">{action.name || 'a founder'}</span>
+                    </p>
+                    <p className="mt-1 text-[10px] text-gray-400">{formatRelativeTime(action.at)}</p>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <div className="flex h-full min-h-48 flex-col items-center justify-center px-4 text-center">
+                <div className="mb-3 flex h-9 w-9 items-center justify-center rounded-xl bg-[#f4f1eb]">
+                  <History className="h-4 w-4 text-gray-500" />
+                </div>
+                <p className="text-xs font-semibold text-black">No actions yet</p>
+                <p className="mt-1 text-[11px] leading-4 text-gray-400">Approved outreach and autonomous actions will appear here.</p>
+              </div>
+            )}
+          </div>
+        </aside>
+      )}
+    </motion.div>
+  );
+
   const isMessagesView = activeView === 'messages';
+  const isAgentView = activeView === 'agent';
   const isVCHeatMapView = activeView === 'vc-heatmap';
   // The full header (workspace/For-You toggle + global search + bell) shows on
   // the two top-level feed views — Overview and For You.
@@ -8843,7 +8899,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
       <SessionNavBar role={role} user={user} activated={profileSaved} unreadMessages={totalUnreadMessages} />
 
       <main className="ed-dashboard-main min-h-screen pl-[16.25rem]">
-        <div className={isVCHeatMapView ? 'min-h-screen' : isMessagesView ? 'ed-dashboard-frame relative mx-auto flex h-screen w-full max-w-[1440px] flex-col overflow-hidden px-6 pt-6' : showWorkspaceHeader ? 'ed-dashboard-frame mx-auto max-w-[1440px] px-6 py-6' : 'ed-dashboard-frame relative mx-auto max-w-[1440px] px-6 pb-6 pt-6'}>
+        <div className={isVCHeatMapView ? 'min-h-screen' : isAgentView ? 'ed-dashboard-frame relative mx-auto flex h-screen w-full max-w-[1440px] flex-col overflow-hidden px-4 py-4 sm:px-6 sm:py-6' : isMessagesView ? 'ed-dashboard-frame relative mx-auto flex h-screen w-full max-w-[1440px] flex-col overflow-hidden px-6 pt-6' : showWorkspaceHeader ? 'ed-dashboard-frame mx-auto max-w-[1440px] px-6 py-6' : 'ed-dashboard-frame relative mx-auto max-w-[1440px] px-6 pb-6 pt-6'}>
           {/* Overview + For You: full header with the workspace/For-You toggle +
               global search + bell. Other section pages drop it — the toggle's
               targets are both reachable here, and sections carry their own
@@ -8993,7 +9049,9 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
           ) : (
           <>
           <AnimatePresence mode="wait" initial={false}>
-            {activeView === 'profile' ? (
+            {activeView === 'agent' ? (
+              renderAgentPage()
+            ) : activeView === 'profile' ? (
               renderProfilePage()
             ) : activeView === 'products' ? (
               renderProductsPage()
@@ -9073,22 +9131,6 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
                   {renderOnboardingChecklist()}
                   {!isInvestor && (
                     <div className="mx-auto mt-6 max-w-[1292px] space-y-4">
-                      <div className="ed-agent-chat-scope mx-auto max-w-4xl">
-                        <FounderAgentChat
-                          user={user}
-                          founder={founderAgentContext}
-                          memories={agentMemories}
-                          persistedMessages={agentChatMessages}
-                          persistedMessagesLoaded={agentChatLoaded}
-                          contactedInvestorIds={contactedInvestorIds}
-                          onApplyProfilePatch={handleApplyAgentProfilePatch}
-                          onPersistMessages={handlePersistAgentChat}
-                          onClearPersistedMessages={handleClearAgentChat}
-                          onRememberConversation={handleRememberAgentConversation}
-                          onSendIntro={handleFounderIntro}
-                          onAmplify={handleFounderAmplify}
-                        />
-                      </div>
                       <FounderDossierCard user={user} />
                     </div>
                   )}
