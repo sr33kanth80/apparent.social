@@ -5,6 +5,7 @@ import test, { after, before } from 'node:test';
 import { exportJWK, generateKeyPair, SignJWT } from 'jose';
 
 let baseUrl;
+let agentHandler;
 let bindKindeRole;
 const kindeRoleBindings = new Map();
 let kindeProfileHandler;
@@ -57,8 +58,9 @@ before(async () => {
     throw new Error(`Unexpected fetch in agent guard test: ${href}`);
   };
 
-  ({ bindKindeRole, normalizeKindeIssuer, requireAgentAccess } = await import(`./_agent-guard.js?test=${Date.now()}`));
-  ({ default: kindeProfileHandler } = await import(`./kinde-profile.js?test=${Date.now()}`));
+  ({ bindKindeRole, normalizeKindeIssuer, requireAgentAccess } = await import(`../server/agent/agent-guard.js?test=${Date.now()}`));
+  ({ default: kindeProfileHandler } = await import(`../server/agent/kinde-profile.js?test=${Date.now()}`));
+  ({ default: agentHandler } = await import(`../api/agent.js?test=${Date.now()}`));
 });
 
 after(async () => {
@@ -162,6 +164,22 @@ test('the Kinde profile endpoint provisions a verified self-service signup', asy
 
   assert.equal(res.result.statusCode, 200);
   assert.deepEqual(res.result.body, { role: 'investor' });
+});
+
+test('the consolidated agent function dispatches Kinde profile requests', async () => {
+  const token = await signKindeAccessToken({ subject: 'kp_consolidated_route', roles: [] });
+  const req = {
+    ...requestWith(token),
+    method: 'POST',
+    query: { route: 'kinde-profile' },
+    body: { role: 'founder' },
+  };
+  const res = responseRecorder();
+
+  await agentHandler(req, res);
+
+  assert.equal(res.result.statusCode, 200);
+  assert.deepEqual(res.result.body, { role: 'founder' });
 });
 
 test('requests without a session remain blocked before agent execution', async () => {

@@ -25,7 +25,7 @@ import {
   isAuthorizedResearchUrl,
   runStandardOrthogonalTool,
   standardOrthogonalTools,
-} from './_apparent-agent-runtime.js';
+} from './apparent-agent-runtime.js';
 
 const SUPABASE_URL = (process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || '').replace(/\/$/, '');
 const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || '';

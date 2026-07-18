@@ -6,8 +6,8 @@ import {
   createPublicResearchPolicy,
   isAuthorizedResearchUrl,
   runStandardOrthogonalTool,
-} from './_apparent-agent-runtime.js';
-import { createOrthogonalSession, OrthogonalError } from './_orthogonal.js';
+} from '../server/agent/apparent-agent-runtime.js';
+import { createOrthogonalSession, OrthogonalError } from '../server/agent/orthogonal.js';
 
 test('the Apparent runtime executes tools and returns the final reply', async () => {
   const completions = [

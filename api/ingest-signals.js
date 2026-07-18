@@ -35,14 +35,14 @@
 // freshness_at and pin the same rows atop the investor Daily list.
 // Scheduled by .github/workflows/ingest-dealflow.yml (daily cron).
 
-import { fetchShowHN, fetchProductHunt, fetchGitHubRising, fetchYCRecent } from './_ingest-sources.js';
+import { fetchShowHN, fetchProductHunt, fetchGitHubRising, fetchYCRecent } from '../server/agent/ingest-sources.js';
 import {
   createApparentAgentRuntime,
   createPublicResearchPolicy,
   isAuthorizedResearchUrl,
   runStandardOrthogonalTool,
   standardOrthogonalTools,
-} from './_apparent-agent-runtime.js';
+} from '../server/agent/apparent-agent-runtime.js';
 
 const SUPABASE_URL = (process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL || '').replace(/\/$/, '');
 const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || '';

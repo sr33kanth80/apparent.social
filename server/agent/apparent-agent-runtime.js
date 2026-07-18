@@ -1,4 +1,4 @@
-import { createOrthogonalSession, OrthogonalError, orthogonalData } from './_orthogonal.js';
+import { createOrthogonalSession, OrthogonalError, orthogonalData } from './orthogonal.js';
 
 const DEFAULT_MAX_TOKENS = 4096;
 const DEFAULT_MAX_STEPS = 8;

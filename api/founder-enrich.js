@@ -18,7 +18,7 @@
 
 import { createClient } from '@supabase/supabase-js';
 import { decryptToken } from '../server/github-crypto.js';
-import { createApparentAgentRuntime } from './_apparent-agent-runtime.js';
+import { createApparentAgentRuntime } from '../server/agent/apparent-agent-runtime.js';
 
 const SUPABASE_URL = (process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || '').replace(/\/$/, '');
 const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
@@ -181,7 +181,7 @@ export default async function handler(req, res) {
   // the underscore helper (not its own routable function). Static import string
   // so node-file-trace bundles it.
   if (String(req.query?.route || '') === 'sourced') {
-    const { default: sourcedHandler } = await import('./_sourced-enrich.js');
+    const { default: sourcedHandler } = await import('../server/agent/sourced-enrich.js');
     return sourcedHandler(req, res);
   }
 

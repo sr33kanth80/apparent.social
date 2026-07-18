@@ -12,14 +12,14 @@
 //
 // Env: ORTHOGONAL_API_KEY (required), VITE_SUPABASE_URL + VITE_SUPABASE_ANON_KEY.
 
-import { requireAgentAccess, sendAgentAccessError } from './_agent-guard.js';
+import { requireAgentAccess, sendAgentAccessError } from '../server/agent/agent-guard.js';
 import {
   apparentAgentErrorResponse,
   createApparentAgentRuntime,
   createPublicResearchPolicy,
   runStandardOrthogonalTool,
   standardOrthogonalTools,
-} from './_apparent-agent-runtime.js';
+} from '../server/agent/apparent-agent-runtime.js';
 
 // The Apparent runtime owns the tool loop; inference is replaceable behind Orthogonal.
 const MAX_AGENT_STEPS = 6;

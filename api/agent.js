@@ -9,15 +9,16 @@
 // Env: ORTHOGONAL_API_KEY (required), VITE_SUPABASE_URL + VITE_SUPABASE_ANON_KEY
 // (or SUPABASE_URL / SUPABASE_ANON_KEY) for the founder search tool.
 
-import { requireAgentAccess, sendAgentAccessError } from './_agent-guard.js';
+import { requireAgentAccess, sendAgentAccessError } from '../server/agent/agent-guard.js';
 import {
   apparentAgentErrorResponse,
   createApparentAgentRuntime,
   createPublicResearchPolicy,
   runStandardOrthogonalTool,
   standardOrthogonalTools,
-} from './_apparent-agent-runtime.js';
-import { orthogonalData } from './_orthogonal.js';
+} from '../server/agent/apparent-agent-runtime.js';
+import { orthogonalData } from '../server/agent/orthogonal.js';
+import kindeProfileHandler from '../server/agent/kinde-profile.js';
 
 // Covers multi-step first-party and Orthogonal tool execution.
 const MAX_AGENT_STEPS = 12;
@@ -411,6 +412,10 @@ const readJsonBody = async (req) => {
 };
 
 export default async function handler(req, res) {
+  if (req.query?.route === 'kinde-profile') {
+    return kindeProfileHandler(req, res);
+  }
+
   if (req.method !== 'POST') {
     res.setHeader('Allow', 'POST');
     return res.status(405).json({ error: 'Method not allowed' });

@@ -5,7 +5,7 @@
 // one startup to a single bare-domain key — or the 12h re-run duplicates rows.
 import assert from 'node:assert';
 import { canonicalSourceUrl } from '../api/ingest-signals.js';
-import { parseShowHNTitle, mapHNHit, mapGitHubRepo, mapYCCompany, batchRecency } from '../api/_ingest-sources.js';
+import { parseShowHNTitle, mapHNHit, mapGitHubRepo, mapYCCompany, batchRecency } from '../server/agent/ingest-sources.js';
 
 const sameStartup = [
   'https://www.acme.com',

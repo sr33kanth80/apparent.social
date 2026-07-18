@@ -21,7 +21,7 @@ export default tseslint.config(
   js.configs.recommended,
   ...tseslint.configs.recommended,
   {
-    files: ['src/**/*.{ts,tsx}', 'api/**/*.js', 'server/**/*.js', 'scripts/**/*.{js,mjs}', '*.config.{js,ts}', 'vite.config.ts'],
+    files: ['src/**/*.{ts,tsx}', 'api/**/*.js', 'server/**/*.js', 'tests/**/*.js', 'scripts/**/*.{js,mjs}', '*.config.{js,ts}', 'vite.config.ts'],
     languageOptions: {
       ecmaVersion: 2023,
       sourceType: 'module',

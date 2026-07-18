@@ -1,4 +1,4 @@
-import { bindKindeRole, verifyKindeRequest } from './_agent-guard.js';
+import { bindKindeRole, verifyKindeRequest } from './agent-guard.js';
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {

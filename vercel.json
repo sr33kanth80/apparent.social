@@ -29,6 +29,10 @@
       "destination": "/api/founder-enrich?route=sourced"
     },
     {
+      "source": "/api/kinde-profile",
+      "destination": "/api/agent?route=kinde-profile"
+    },
+    {
       "source": "/",
       "has": [
         {
