@@ -33,11 +33,20 @@ A React + TypeScript + Vite application backed by Supabase. This repo contains t
 Copy .env.example to .env and provide the following values:
 - VITE_SUPABASE_URL — your Supabase project URL
 - VITE_SUPABASE_ANON_KEY — your Supabase anon (public) API key
+- VITE_KINDE_CLIENT_ID and VITE_KINDE_DOMAIN — your Kinde SPA application
+- VITE_KINDE_AUDIENCE — the Kinde API audience registered for Apparent's backend; set
+  KINDE_AUDIENCE to the same value for the serverless agent routes
 - VITE_NETWORK_TILE_URL — map tile URL template. Example (OpenStreetMap):
   https://tile.openstreetmap.org/{z}/{x}/{y}.png
   Note: ensure you comply with the tile provider's terms of use.
 
 The app reads these from import.meta.env (see src/lib/supabase.ts and map components).
+
+Run the Supabase migrations before deploying. Kinde proves the user's identity,
+then Apparent binds the founder/investor choice once in `kinde_identities`; later
+agent requests authorize against that server-side binding. Signed Kinde roles
+with keys `founder`, `investor`, `apparent-founder`, or `apparent-investor` are
+also accepted when the Roles additional claim is enabled.
 
 ## Project layout
 - src/ — application code

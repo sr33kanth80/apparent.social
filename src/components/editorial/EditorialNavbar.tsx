@@ -1,9 +1,9 @@
 import { useKindeAuth } from '@kinde-oss/kinde-auth-react';
 import { useEffect, useState } from 'react';
 import { Link, NavLink } from 'react-router-dom';
-import type { AppUser } from '@/lib/apparent-types';
+import type { AppUser, DashboardRole } from '@/lib/apparent-types';
 import { getCurrentAppUser } from '@/lib/auth-service';
-import { isKindeConfigured, resolveKindeRole } from '@/lib/kinde-auth';
+import { isKindeConfigured, resolveKindeAppRole } from '@/lib/kinde-auth';
 import { LogoIcon } from '../LogoIcon';
 
 const NAV_LINKS: [string, string][] = [
@@ -22,13 +22,37 @@ const AuthActionPlaceholder = () => (
 const SignedOutAction = () => <Link className="ed-btn ed-btn-blue" to="/login">Get Started</Link>;
 
 const KindeAuthAction = () => {
-  const { isAuthenticated, isLoading, user } = useKindeAuth();
+  const { getAccessToken, isAuthenticated, isLoading, user } = useKindeAuth();
+  const [role, setRole] = useState<DashboardRole | null>(null);
+  const [roleChecked, setRoleChecked] = useState(false);
 
-  if (isLoading) return <AuthActionPlaceholder />;
+  useEffect(() => {
+    let isMounted = true;
+    if (!isAuthenticated || !user) {
+      setRole(null);
+      setRoleChecked(true);
+      return () => { isMounted = false; };
+    }
+
+    setRoleChecked(false);
+    resolveKindeAppRole(getAccessToken)
+      .then((resolved) => {
+        if (isMounted) setRole(resolved);
+      })
+      .catch(() => {
+        if (isMounted) setRole(null);
+      })
+      .finally(() => {
+        if (isMounted) setRoleChecked(true);
+      });
+
+    return () => { isMounted = false; };
+  }, [getAccessToken, isAuthenticated, user]);
+
+  if (isLoading || (isAuthenticated && !roleChecked)) return <AuthActionPlaceholder />;
 
   if (isAuthenticated && user) {
-    const role = resolveKindeRole(user.id, 'founder');
-    return <Link className="ed-btn ed-btn-blue" to={`/dashboard/${role}`}>Dashboard</Link>;
+    return <Link className="ed-btn ed-btn-blue" to={role ? `/dashboard/${role}` : '/login'}>Dashboard</Link>;
   }
 
   return <SignedOutAction />;

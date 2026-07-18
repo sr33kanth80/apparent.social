@@ -16,6 +16,7 @@ const normalizeKindeDomain = (value: string) => {
 
 export const kindeClientId = import.meta.env.VITE_KINDE_CLIENT_ID as string | undefined;
 export const kindeDomain = import.meta.env.VITE_KINDE_DOMAIN as string | undefined;
+export const kindeAudience = (import.meta.env.VITE_KINDE_AUDIENCE as string | undefined)?.trim() || '';
 export const isKindeConfigured = Boolean(kindeClientId && kindeDomain);
 
 // Connection IDs from the Kinde dashboard (Settings → Authentication → Identity
@@ -62,6 +63,22 @@ const roleKey = (kindeUserId: string) => `${KINDE_ROLE_KEY}:${kindeUserId}`;
 const isDashboardRole = (value: unknown): value is DashboardRole =>
   value === 'founder' || value === 'investor';
 
+export const roleFromKindeRoles = (values: unknown): DashboardRole | null => {
+  if (!Array.isArray(values)) return null;
+  const roles = new Set(values.flatMap((value) => {
+    if (typeof value === 'string') return [value.toLowerCase()];
+    if (!value || typeof value !== 'object') return [];
+    const role = value as { id?: unknown; key?: unknown; name?: unknown };
+    return [role.key, role.name, role.id]
+      .filter((entry): entry is string => typeof entry === 'string')
+      .map((entry) => entry.toLowerCase());
+  }));
+  const isFounder = roles.has('founder') || roles.has('apparent-founder');
+  const isInvestor = roles.has('investor') || roles.has('apparent-investor');
+  if (isFounder === isInvestor) return null;
+  return isFounder ? 'founder' : 'investor';
+};
+
 export const saveRequestedKindeRole = (role: DashboardRole) => {
   try {
     window.localStorage.setItem(KINDE_ROLE_KEY, role);
@@ -85,6 +102,27 @@ export const resolveKindeRole = (kindeUserId: string, fallback: DashboardRole): 
   }
 
   return fallback;
+};
+
+export const resolveKindeAppRole = async (
+  getToken: () => Promise<string | undefined>,
+  requestedRole?: DashboardRole,
+): Promise<DashboardRole> => {
+  const token = await getToken();
+  if (!token) throw new Error('Your session expired. Sign in again.');
+  const response = await fetch('/api/kinde-profile', {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(requestedRole ? { role: requestedRole } : {}),
+  });
+  const payload = await response.json().catch(() => null);
+  if (!response.ok || !isDashboardRole(payload?.role)) {
+    throw new Error(payload?.error || 'Unable to finish Apparent account setup.');
+  }
+  return payload.role;
 };
 
 export const buildKindeAppUser = (kindeUser: KindeUserLike, role: DashboardRole): AppUser => {

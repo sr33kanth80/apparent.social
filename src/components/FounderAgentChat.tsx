@@ -4,8 +4,8 @@ import { Check, Loader2, Megaphone, Send, Sparkles, Trash2, X } from 'lucide-rea
 import { AgentProfilePatchCard } from '@/components/AgentProfilePatchCard';
 import { InvestorAIPrompt } from '@/components/InvestorAIAssist';
 import { LogoIcon } from '@/components/LogoIcon';
+import { useAgentAuthHeaders } from '@/lib/agent-auth';
 import type { AgentChatHistoryMessage, AgentMemory, AgentProfilePatch, AppUser } from '@/lib/apparent-types';
-import { isSupabaseConfigured, supabase } from '@/lib/supabase';
 
 export type IntroProposal = {
   investorId: string;
@@ -49,13 +49,6 @@ interface FounderAgentChatProps {
 
 const STORAGE_PREFIX = 'apparent:founder-agent-chat:';
 
-const authHeaders = async (): Promise<Record<string, string>> => {
-  if (!isSupabaseConfigured || !supabase) return {};
-  const { data } = await supabase.auth.getSession();
-  const token = data.session?.access_token;
-  return token ? { Authorization: `Bearer ${token}` } : {};
-};
-
 const SUGGESTIONS = [
   'Set up my founder profile from my links and pasted text',
   'Which investors on Apparent fit my thesis?',
@@ -78,6 +71,7 @@ export const FounderAgentChat = ({
   onRememberConversation,
   className,
 }: FounderAgentChatProps) => {
+  const authHeaders = useAgentAuthHeaders();
   const storageKey = `${STORAGE_PREFIX}${user.id}`;
   const [messages, setMessages] = useState<ChatMessage[]>(() => {
     try {

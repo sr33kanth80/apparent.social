@@ -7,7 +7,7 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
-    "test": "node --test api/_apparent-agent-runtime.test.js",
+    "test": "node --test api/_apparent-agent-runtime.test.js api/_agent-guard.test.js",
     "preview": "vite preview"
   },
   "dependencies": {
@@ -25,6 +25,7 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "framer-motion": "^12.39.0",
+    "jose": "^6.2.3",
     "leaflet": "^1.9.4",
     "lucide-react": "^1.17.0",
     "maplibre-gl": "^5.24.0",

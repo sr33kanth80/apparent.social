@@ -8,8 +8,8 @@ import { InvestorAIPrompt } from '@/components/InvestorAIAssist';
 import { LogoIcon } from '@/components/LogoIcon';
 import { Switch } from '@/components/ui/switch';
 import { Tooltip } from '@/components/ui/tooltip';
+import { useAgentAuthHeaders } from '@/lib/agent-auth';
 import type { AgentAutonomy, AgentChatHistoryMessage, AgentMemory, AgentProfilePatch, AppUser } from '@/lib/apparent-types';
-import { isSupabaseConfigured, supabase } from '@/lib/supabase';
 
 export type OutreachProposal = {
   founderId: string;
@@ -137,13 +137,6 @@ const AUTONOMY_OPTIONS: { value: AgentAutonomy; label: string; hint: string }[] 
 
 const isAutoMode = (autonomy: AgentAutonomy) => autonomy === 'auto_onplatform' || autonomy === 'autonomous';
 
-const authHeaders = async (): Promise<Record<string, string>> => {
-  if (!isSupabaseConfigured || !supabase) return {};
-  const { data } = await supabase.auth.getSession();
-  const token = data.session?.access_token;
-  return token ? { Authorization: `Bearer ${token}` } : {};
-};
-
 /** Spring used for the prompt box flying between its in-page spot and the fullscreen bottom dock. */
 const DOCK_TRANSITION = { type: 'spring', bounce: 0.18, duration: 0.55 } as const;
 
@@ -163,6 +156,7 @@ export const InvestorAgentChat = ({
   onRememberConversation,
   className,
 }: InvestorAgentChatProps) => {
+  const authHeaders = useAgentAuthHeaders();
   const storageKey = `${STORAGE_PREFIX}${user.id}`;
   const [messages, setMessages] = useState<ChatMessage[]>(() => {
     try {

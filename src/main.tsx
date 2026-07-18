@@ -10,6 +10,7 @@ import {
   getKindeLogoutUri,
   getKindeRedirectUri,
   isKindeConfigured,
+  kindeAudience,
   kindeClientId,
 } from './lib/kinde-auth.ts'
 
@@ -17,6 +18,7 @@ const app = isKindeConfigured ? (
   <KindeProvider
     clientId={kindeClientId!}
     domain={getKindeDomain()}
+    audience={kindeAudience || undefined}
     redirectUri={getKindeRedirectUri()}
     logoutUri={getKindeLogoutUri()}
   >

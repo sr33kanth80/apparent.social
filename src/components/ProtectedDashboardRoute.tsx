@@ -1,9 +1,10 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import { useKindeAuth } from '@kinde-oss/kinde-auth-react';
 import { Navigate } from 'react-router-dom';
+import { AgentTokenProvider } from '@/components/AgentTokenProvider';
 import type { AppUser, DashboardRole } from '@/lib/apparent-types';
 import { clearExternalAppUser, ensureProfile, getCurrentAppUser } from '@/lib/auth-service';
-import { buildKindeAppUser, isKindeConfigured, resolveKindeRole } from '@/lib/kinde-auth';
+import { buildKindeAppUser, isKindeConfigured, resolveKindeAppRole, resolveKindeRole } from '@/lib/kinde-auth';
 
 interface ProtectedDashboardRouteProps {
   role: DashboardRole;
@@ -19,9 +20,34 @@ export const ProtectedDashboardRoute = ({ role, children }: ProtectedDashboardRo
 };
 
 const KindeProtectedDashboardRoute = ({ role, children }: ProtectedDashboardRouteProps) => {
-  const { isLoading, isAuthenticated, user: kindeUser } = useKindeAuth();
+  const { getAccessToken, isLoading, isAuthenticated, user: kindeUser } = useKindeAuth();
+  const [signedRole, setSignedRole] = useState<DashboardRole | null>(null);
+  const [roleLoading, setRoleLoading] = useState(true);
+  const [roleError, setRoleError] = useState('');
 
-  if (isLoading) {
+  useEffect(() => {
+    let isMounted = true;
+    if (isLoading || !isAuthenticated || !kindeUser) return () => { isMounted = false; };
+
+    setRoleLoading(true);
+    const requestedRole = resolveKindeRole(kindeUser.id, role);
+    resolveKindeAppRole(getAccessToken, requestedRole)
+      .then((resolved) => {
+        if (!isMounted) return;
+        setSignedRole(resolved);
+        setRoleError('');
+      })
+      .catch((requestError) => {
+        if (isMounted) setRoleError(requestError instanceof Error ? requestError.message : 'Unable to verify your Apparent account role.');
+      })
+      .finally(() => {
+        if (isMounted) setRoleLoading(false);
+      });
+
+    return () => { isMounted = false; };
+  }, [getAccessToken, isAuthenticated, isLoading, kindeUser, role]);
+
+  if (isLoading || (isAuthenticated && roleLoading)) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-[#fbf8f3] text-sm text-gray-500">
         Loading Apparent workspace...
@@ -34,12 +60,26 @@ const KindeProtectedDashboardRoute = ({ role, children }: ProtectedDashboardRout
     return <Navigate to={`/login?role=${role}`} replace />;
   }
 
-  const userRole = resolveKindeRole(kindeUser.id, role);
-  if (userRole !== role) {
-    return <Navigate to={`/dashboard/${userRole}`} replace />;
+  if (roleError || !signedRole) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-[#fbf8f3] px-6 text-center">
+        <div>
+          <p className="text-sm font-medium text-red-700">Unable to authorize workspace</p>
+          <p className="mt-2 max-w-md text-sm text-gray-600">{roleError}</p>
+        </div>
+      </div>
+    );
   }
 
-  return <>{children(buildKindeAppUser(kindeUser, userRole))}</>;
+  if (signedRole !== role) {
+    return <Navigate to={`/dashboard/${signedRole}`} replace />;
+  }
+
+  return (
+    <AgentTokenProvider getToken={getAccessToken}>
+      {children(buildKindeAppUser(kindeUser, signedRole))}
+    </AgentTokenProvider>
+  );
 };
 
 const LegacyProtectedDashboardRoute = ({ role, children }: ProtectedDashboardRouteProps) => {

@@ -11,6 +11,7 @@ import {
   hasAnyKindeConnection,
   isKindeConfigured,
   kindeConnectionIds,
+  resolveKindeAppRole,
   resolveKindeRole,
   saveRequestedKindeRole,
 } from '@/lib/kinde-auth';
@@ -115,22 +116,36 @@ export const Login = () => {
 
 const KindeAuthPanel = ({ role }: { role: DashboardRole }) => {
   const navigate = useNavigate();
-  const { isLoading, isAuthenticated, login, register, logout, user: kindeUser } = useKindeAuth();
+  const { getAccessToken, isLoading, isAuthenticated, login, register, logout, user: kindeUser } = useKindeAuth();
   const [authMode, setAuthMode] = useState<'signin' | 'signup'>('signup');
+  const [signedRole, setSignedRole] = useState<DashboardRole | null>(null);
+  const [roleError, setRoleError] = useState('');
   const isSignup = authMode === 'signup';
   const isInvestor = role === 'investor';
 
   useEffect(() => {
+    let isMounted = true;
     if (!isLoading && isAuthenticated && kindeUser) {
-      const targetRole = resolveKindeRole(kindeUser.id, role);
-      navigate(`/dashboard/${targetRole}`, { replace: true });
-      return;
-    }
-    if (!isLoading) {
+      const requestedRole = resolveKindeRole(kindeUser.id, role);
+      resolveKindeAppRole(getAccessToken, requestedRole)
+        .then((resolved) => {
+          if (!isMounted) return;
+          setSignedRole(resolved);
+          setRoleError('');
+          navigate(`/dashboard/${resolved}`, { replace: true });
+        })
+        .catch(() => {
+          if (isMounted) setRoleError('Unable to verify your Apparent account role. Sign in again.');
+        });
+    } else if (!isLoading) {
+      setSignedRole(null);
+      setRoleError('');
       saveRequestedKindeRole(role);
       clearExternalAppUser();
     }
-  }, [isAuthenticated, isLoading, kindeUser, navigate, role]);
+
+    return () => { isMounted = false; };
+  }, [getAccessToken, isAuthenticated, isLoading, kindeUser, navigate, role]);
 
   const handleAuthClick = () => saveRequestedKindeRole(role);
   const continueWith = async (connectionId: string) => {
@@ -193,9 +208,10 @@ const KindeAuthPanel = ({ role }: { role: DashboardRole }) => {
       )}
 
       {isAuthenticated && (
-        <div className="ed-authed">
+        <div className="ed-authed" aria-live="polite">
+          {roleError && <p className="ed-desc">{roleError}</p>}
           <button type="button" className="ed-btn ed-btn-outline" onClick={() => logout({ redirectUrl: getKindeLogoutUri() })}>Sign out</button>
-          <button type="button" className="ed-btn ed-btn-filled" onClick={() => { const targetRole = kindeUser ? resolveKindeRole(kindeUser.id, role) : role; navigate(`/dashboard/${targetRole}`); }}>Open workspace</button>
+          <button type="button" className="ed-btn ed-btn-filled" disabled={!signedRole} onClick={() => signedRole && navigate(`/dashboard/${signedRole}`)}>Open workspace</button>
         </div>
       )}
     </div>
