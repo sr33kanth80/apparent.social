@@ -81,6 +81,7 @@ export const InvestorAIPrompt = ({
 }: AIPromptProps) => {
   const [value, setValue] = useState('');
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
+  const hasValue = Boolean(value.trim());
 
   useEffect(() => {
     if (autoFocus) textareaRef.current?.focus();
@@ -103,7 +104,9 @@ export const InvestorAIPrompt = ({
   return (
     <div className={cn('w-full py-4', surface === 'charcoal' ? 'text-white' : 'text-ink', className)}>
       <div className={cn(
-        surface === 'charcoal' ? 'rounded-2xl p-1.5 pt-4' : 'border-y border-black/10 py-3',
+        surface === 'charcoal'
+          ? 'rounded-2xl p-1.5 pt-4'
+          : 'border-y border-[#8d847a] py-3 transition-colors focus-within:border-[#003f2e]',
         surface === 'charcoal'
           ? 'bg-charcoal shadow-[0_18px_60px_rgba(0,0,0,0.24)]'
           : 'bg-transparent',
@@ -117,11 +120,12 @@ export const InvestorAIPrompt = ({
               <DynamicPromptPlaceholder active={animatePlaceholder && !value} fallbackText={placeholder} />
               <Textarea
                 aria-label={placeholder}
+                data-agent-surface={surface}
                 className={cn(
-                  'h-28 min-h-28 max-h-28 w-full resize-none overflow-y-auto overscroll-contain rounded-xl rounded-b-none border-none px-4 py-3 focus-visible:ring-0 focus-visible:ring-offset-0',
+                  'h-28 min-h-28 max-h-28 w-full resize-none overflow-y-auto overscroll-contain border-none px-4 py-3 focus-visible:ring-0 focus-visible:ring-offset-0',
                   surface === 'charcoal'
-                    ? 'bg-white/5 text-white placeholder:text-white/70'
-                    : 'bg-transparent text-[#222] placeholder:text-[#6f675f]',
+                    ? 'rounded-xl rounded-b-none bg-white/5 text-white placeholder:text-white/70'
+                    : 'rounded-none bg-transparent text-[#211e1b] caret-[#003f2e] outline-none placeholder:text-[#5c554d]',
                 )}
                 id="ai-input-15"
                 onChange={(event) => setValue(event.target.value)}
@@ -136,19 +140,21 @@ export const InvestorAIPrompt = ({
               <div className="absolute bottom-3 left-3 right-3 flex w-[calc(100%-24px)] items-center justify-between">
                 <div className="flex items-center gap-2">
                   <div className={cn(
-                    'flex h-8 items-center gap-1 rounded-md px-2 text-xs',
-                    surface === 'charcoal' ? 'bg-white/5 text-white/70' : 'bg-black/[0.04] text-[#5f574f]',
+                    'flex h-8 items-center gap-1 px-2 text-xs',
+                    surface === 'charcoal'
+                      ? 'rounded-md bg-white/5 text-white/70'
+                      : 'rounded-md border border-[#aaa096] bg-[#eee8df] text-[#403a35]',
                   )}>
                     <LogoIcon className="h-4 w-4 opacity-70" />
                     Apparent AI
                   </div>
                   {showAttachment && (
                     <>
-                      <div className={cn('mx-0.5 h-4 w-px', surface === 'charcoal' ? 'bg-white/10' : 'bg-black/10')} />
+                      <div className={cn('mx-0.5 h-4 w-px', surface === 'charcoal' ? 'bg-white/10' : 'bg-[#8d847a]')} />
                       <label
                         aria-label="Attach file"
                         className={cn(
-                          'cursor-pointer rounded-lg p-2 focus-visible:ring-1 focus-visible:ring-blue-500 focus-visible:ring-offset-0',
+                          'cursor-pointer rounded-lg p-2',
                           surface === 'charcoal' ? 'bg-white/5 text-white/40 hover:bg-white/10 hover:text-white' : 'bg-black/[0.04] text-[#756d65] hover:bg-black/[0.08] hover:text-black',
                         )}
                       >
@@ -159,7 +165,7 @@ export const InvestorAIPrompt = ({
                   )}
                   {toolbarExtras && (
                     <>
-                      <div className={cn('mx-0.5 h-4 w-px', surface === 'charcoal' ? 'bg-white/10' : 'bg-black/10')} />
+                      <div className={cn('mx-0.5 h-4 w-px', surface === 'charcoal' ? 'bg-white/10' : 'bg-[#8d847a]')} />
                       {toolbarExtras}
                     </>
                   )}
@@ -167,8 +173,12 @@ export const InvestorAIPrompt = ({
                 <button
                   aria-label="Send message"
                   className={cn(
-                    'rounded-lg p-2 focus-visible:ring-1 focus-visible:ring-blue-500 focus-visible:ring-offset-0',
-                    surface === 'charcoal' ? 'bg-white/5 hover:bg-white/10' : 'bg-[#003f2e] hover:bg-[#002f22]',
+                    'rounded-lg border p-2 transition-colors disabled:cursor-not-allowed',
+                    surface === 'charcoal'
+                      ? 'border-transparent bg-white/5 hover:bg-white/10'
+                      : hasValue
+                        ? 'border-[#003f2e] bg-[#003f2e] hover:bg-[#002f22]'
+                        : 'border-[#b8aea3] bg-[#e7e0d6]',
                   )}
                   disabled={!value.trim()}
                   onClick={submitPrompt}
@@ -176,8 +186,12 @@ export const InvestorAIPrompt = ({
                 >
                   <ArrowRight
                     className={cn(
-                      'h-4 w-4 text-white transition-opacity duration-200',
-                      value.trim() ? 'opacity-100' : 'opacity-30',
+                      'h-4 w-4 transition-colors duration-200',
+                      surface === 'charcoal'
+                        ? cn('text-white', hasValue ? 'opacity-100' : 'opacity-30')
+                        : hasValue
+                          ? 'text-white'
+                          : 'text-[#756d65]',
                     )}
                   />
                 </button>

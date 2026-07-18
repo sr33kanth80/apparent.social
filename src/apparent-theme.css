@@ -69,6 +69,11 @@ body {
   outline-offset: 3px;
 }
 
+/* The flat Agent composer carries focus on its full-width parchment rule. */
+.ed-agent-chat-scope textarea[data-agent-surface="parchment"]:focus-visible {
+  outline: none;
+}
+
 /* Public website */
 .ed-page {
   --ed-ink: var(--color-forest-ink);

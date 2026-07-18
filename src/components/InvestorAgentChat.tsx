@@ -11,6 +11,7 @@ import { Switch } from '@/components/ui/switch';
 import { Tooltip } from '@/components/ui/tooltip';
 import { useAgentAuthHeaders } from '@/lib/agent-auth';
 import type { AgentAutonomy, AgentChatHistoryMessage, AgentMemory, AgentProfilePatch } from '@/lib/apparent-types';
+import { cn } from '@/lib/utils';
 
 export type OutreachProposal = {
   founderId: string;
@@ -421,16 +422,23 @@ export const InvestorAgentChat = ({
     );
   };
 
-  // `labelClass` lets the label read on both the light page and the dark prompt box.
-  const autonomySwitch = (labelClass = 'text-gray-500') => (
+  const autonomySwitch = (variant: 'default' | 'dark' | 'parchment' = 'default') => (
     <div className="flex items-center gap-2">
-      <span className={`hidden text-xs font-medium sm:inline ${labelClass}`}>Agent mode</span>
+      <span className={cn(
+        'hidden text-xs font-medium sm:inline',
+        variant === 'dark' ? 'text-white/70' : variant === 'parchment' ? 'text-[#514a43]' : 'text-gray-500',
+      )}>Agent mode</span>
       <Switch
         name="agent-autonomy"
         size="tiny"
         value={autonomy}
         onValueChange={(next) => onAutonomyChange(next as AgentAutonomy)}
-        className="border border-gray-alpha-400 bg-background-100 shadow-none"
+        className={cn(
+          'shadow-none',
+          variant === 'parchment'
+            ? 'border border-[#8d847a] bg-[#eee8df]'
+            : 'border border-gray-alpha-400 bg-background-100',
+        )}
       >
         {AUTONOMY_OPTIONS.map((option) => (
           <Tooltip key={option.value} text={option.hint} className="h-full">
@@ -439,6 +447,7 @@ export const InvestorAgentChat = ({
               size="tiny"
               label={option.label}
               value={option.value}
+              activeClassName={variant === 'parchment' ? 'bg-[#003f2e] text-white fill-white' : undefined}
             />
           </Tooltip>
         ))}
@@ -557,7 +566,7 @@ export const InvestorAgentChat = ({
         className="py-0"
         onSubmit={send}
         autoFocus={expanded}
-        toolbarExtras={expanded ? autonomySwitch('text-white/60') : undefined}
+        toolbarExtras={expanded ? autonomySwitch('dark') : undefined}
       />
     </motion.div>
   );
@@ -644,7 +653,7 @@ export const InvestorAgentChat = ({
         onSubmit={send}
         role="investor"
         suggestions={SUGGESTIONS}
-        toolbarExtras={autonomySwitch('text-gray-500')}
+        toolbarExtras={autonomySwitch('parchment')}
         transcript={pageTranscript}
         transcriptRef={transcriptRef}
       />
