@@ -48,19 +48,15 @@ export const AgentConversationShell = ({
   className,
 }: AgentConversationShellProps) => {
   const copy = roleCopy[role];
-  const startNewConversation = () => {
-    if (!window.confirm('Start a new conversation? This clears the current thread.')) return;
-    onNewConversation();
-  };
 
   return (
     <section
       className={cn(
-        'ed-agent-chat-scope flex h-full min-h-0 flex-col overflow-hidden rounded-[28px] border border-black/10 bg-[#fbfaf8] shadow-[0_20px_70px_rgba(36,31,28,0.06)]',
+        'ed-agent-chat-scope flex h-full min-h-0 flex-col overflow-hidden bg-[#fdf9f7]',
         className,
       )}
     >
-      <header className="flex shrink-0 items-center justify-between gap-4 border-b border-black/5 bg-white/80 px-5 py-3.5 backdrop-blur-xl sm:px-7">
+      <header className="flex shrink-0 items-center justify-between gap-4 border-b border-black/[0.07] bg-[#fdf9f7]/95 px-5 py-3.5 backdrop-blur-xl sm:px-8">
         <div className="flex min-w-0 items-center gap-3">
           <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-charcoal text-white shadow-sm">
             <LogoIcon className="h-4.5 w-4.5" />
@@ -77,9 +73,9 @@ export const AgentConversationShell = ({
         {hasConversation && (
           <button
             type="button"
-            onClick={startNewConversation}
-            title="Clear the current thread and start over"
-            className="inline-flex h-9 items-center gap-2 rounded-full border border-black/10 bg-white px-3.5 text-xs font-semibold text-gray-700 transition hover:border-black/20 hover:bg-[#f6f3f1] hover:text-black"
+            onClick={onNewConversation}
+            title="Start a new conversation"
+            className="inline-flex h-9 items-center gap-2 rounded-full border border-black/10 bg-[#f6f1e8] px-3.5 text-xs font-semibold text-gray-700 transition hover:border-black/20 hover:bg-[#efe7da] hover:text-black"
           >
             <Plus className="h-3.5 w-3.5" />
             <span className="hidden sm:inline">New conversation</span>
@@ -106,6 +102,7 @@ export const AgentConversationShell = ({
                 onSubmit={onSubmit}
                 placeholder={copy.placeholder}
                 showAttachment={false}
+                surface="parchment"
                 toolbarExtras={toolbarExtras}
               />
             </div>
@@ -116,7 +113,7 @@ export const AgentConversationShell = ({
                   key={suggestion}
                   type="button"
                   onClick={() => onSubmit(suggestion)}
-                  className="group flex min-h-14 items-center justify-between gap-4 rounded-2xl border border-black/10 bg-white px-4 py-3 text-left text-sm leading-5 text-gray-700 transition hover:-translate-y-0.5 hover:border-black/20 hover:shadow-[0_10px_24px_rgba(0,0,0,0.05)]"
+                  className="group flex min-h-14 items-center justify-between gap-4 rounded-2xl border border-black/10 bg-[#f6f1e8] px-4 py-3 text-left text-sm leading-5 text-gray-700 transition hover:-translate-y-0.5 hover:border-black/20 hover:bg-[#efe7da]"
                 >
                   <span>{suggestion}</span>
                   <ArrowUpRight className="h-4 w-4 shrink-0 text-gray-300 transition group-hover:text-black" />
@@ -139,7 +136,7 @@ export const AgentConversationShell = ({
             <div className="mx-auto w-full max-w-4xl px-5 py-8 sm:px-8 sm:py-10">{transcript}</div>
           </div>
 
-          <div className="relative shrink-0 border-t border-black/5 bg-gradient-to-t from-[#fbfaf8] via-[#fbfaf8] to-[#fbfaf8]/90 px-4 pb-4 pt-3 sm:px-8 sm:pb-5">
+          <div className="relative shrink-0 border-t border-black/[0.07] bg-[#fdf9f7]/95 px-4 pb-4 pt-3 backdrop-blur-xl sm:px-8 sm:pb-5">
             <div className="mx-auto w-full max-w-4xl">
               <InvestorAIPrompt
                 animatePlaceholder={false}
@@ -147,6 +144,7 @@ export const AgentConversationShell = ({
                 onSubmit={onSubmit}
                 placeholder="Ask a follow-up"
                 showAttachment={false}
+                surface="parchment"
                 toolbarExtras={toolbarExtras}
               />
               <p className="mt-2 text-center text-[10px] text-gray-400">Enter to send · Shift+Enter for a new line</p>

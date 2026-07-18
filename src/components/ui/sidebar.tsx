@@ -44,7 +44,7 @@ import {
 import { Separator } from '@/components/ui/separator';
 import { deriveUsername, signOut } from '@/lib/auth-service';
 import { getKindeLogoutUri, isKindeConfigured } from '@/lib/kinde-auth';
-import type { AppUser } from '@/lib/apparent-types';
+import type { AgentChatThread, AppUser } from '@/lib/apparent-types';
 
 type DashboardRole = 'founder' | 'investor';
 
@@ -56,6 +56,9 @@ interface SessionNavBarProps {
   activated?: boolean;
   /** Unread DM count — badged on the Messages nav item. */
   unreadMessages?: number;
+  /** Durable Apparent Agent conversations shown beneath the Agent destination. */
+  agentThreads?: AgentChatThread[];
+  activeAgentThreadId?: string | null;
 }
 
 const deriveDisplayName = (email: string): string =>
@@ -136,7 +139,7 @@ const roleConfig = {
     groups: [
       [
         { label: 'Overview', path: '/dashboard/founder', icon: LayoutDashboard },
-        { label: 'Apparent Agent', path: '/dashboard/founder/agent', icon: Sparkles, badge: 'AI' },
+        { label: 'Apparent Agent', path: '/dashboard/founder/agent', icon: Sparkles },
         { label: 'Your Profile', path: '/dashboard/founder/profile', icon: UserCircle },
         { label: 'Products', path: '/dashboard/founder/products', icon: Rocket },
         { label: 'Investor Matches', path: '/dashboard/founder/matches', icon: Search, badge: 'AI' },
@@ -164,7 +167,7 @@ const roleConfig = {
     groups: [
       [
         { label: 'Overview', path: '/dashboard/investor', icon: LayoutDashboard },
-        { label: 'Apparent Agent', path: '/dashboard/investor/agent', icon: Sparkles, badge: 'AI' },
+        { label: 'Apparent Agent', path: '/dashboard/investor/agent', icon: Sparkles },
         { label: 'Daily', path: '/dashboard/investor/daily', icon: Sunrise, badge: 'New' },
         { label: 'Your Thesis', path: '/dashboard/investor/profile', icon: Target },
         { label: 'Discover', path: '/dashboard/investor/discover', icon: Layers, badge: 'New' },
@@ -263,6 +266,8 @@ function BaseSessionNavBar({
   user,
   activated = true,
   unreadMessages = 0,
+  agentThreads = [],
+  activeAgentThreadId = null,
   onSignOut,
 }: SessionNavBarProps & { onSignOut?: () => Promise<void> }) {
   const [isHovered, setIsHovered] = useState(false);
@@ -368,16 +373,62 @@ function BaseSessionNavBar({
                       return (
                         <div key={groupIndex} className="flex flex-col gap-1">
                           {groupIndex > 0 && <Separator className="my-1 w-full" />}
-                          {group.map((item) => (
-                            <NavLinkItem
-                              key={item.label}
-                              item={item}
-                              isCollapsed={isCollapsed}
-                              isActive={activePath === item.path}
-                              activeClass={config.active}
-                              unreadCount={item.path.endsWith('/messages') ? unreadMessages : 0}
-                            />
-                          ))}
+                          {group.map((item) => {
+                            const isAgentItem = item.path.endsWith('/agent');
+                            return (
+                              <div key={item.label}>
+                                <div className="relative">
+                                  <NavLinkItem
+                                    item={item}
+                                    isCollapsed={isCollapsed}
+                                    isActive={activePath === item.path}
+                                    activeClass={config.active}
+                                    unreadCount={item.path.endsWith('/messages') ? unreadMessages : 0}
+                                  />
+                                  {isAgentItem && !isCollapsed && (
+                                    <Link
+                                      to={item.path}
+                                      aria-label="Start a new Agent conversation"
+                                      title="New conversation"
+                                      className={cn(
+                                        'absolute right-1 top-1 flex h-6 w-6 items-center justify-center rounded-md transition-colors',
+                                        activePath === item.path
+                                          ? 'text-white/70 hover:bg-white/15 hover:text-white'
+                                          : 'text-gray-400 hover:bg-black/[0.06] hover:text-black',
+                                      )}
+                                    >
+                                      <Plus className="h-3.5 w-3.5" />
+                                    </Link>
+                                  )}
+                                </div>
+
+                                {isAgentItem && !isCollapsed && agentThreads.length > 0 && (
+                                  <div className="ml-3 mt-1 space-y-0.5 border-l border-black/10 pl-2">
+                                    {agentThreads.map((thread) => {
+                                      const threadPath = `${item.path}?thread=${encodeURIComponent(thread.id)}`;
+                                      const isCurrent = activePath === item.path && activeAgentThreadId === thread.id;
+                                      return (
+                                        <Link
+                                          key={thread.id}
+                                          to={threadPath}
+                                          title={thread.title}
+                                          className={cn(
+                                            'flex h-7 min-w-0 items-center gap-2 rounded-md px-2 text-xs transition-colors',
+                                            isCurrent
+                                              ? 'bg-black/[0.07] font-semibold text-[#222]'
+                                              : 'text-gray-500 hover:bg-black/[0.04] hover:text-[#222]',
+                                          )}
+                                        >
+                                          <MessageSquareText className="h-3 w-3 shrink-0 opacity-60" />
+                                          <span className="truncate">{thread.title}</span>
+                                        </Link>
+                                      );
+                                    })}
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          })}
                         </div>
                       );
                     })}

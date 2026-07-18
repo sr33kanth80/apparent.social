@@ -6,7 +6,7 @@ import { AgentProfilePatchCard } from '@/components/AgentProfilePatchCard';
 import { InvestorAIPrompt } from '@/components/InvestorAIAssist';
 import { LogoIcon } from '@/components/LogoIcon';
 import { useAgentAuthHeaders } from '@/lib/agent-auth';
-import type { AgentChatHistoryMessage, AgentMemory, AgentProfilePatch, AppUser } from '@/lib/apparent-types';
+import type { AgentChatHistoryMessage, AgentMemory, AgentProfilePatch } from '@/lib/apparent-types';
 
 export type IntroProposal = {
   investorId: string;
@@ -29,10 +29,10 @@ type ChatMessage = {
 };
 
 interface FounderAgentChatProps {
-  user: AppUser;
   /** Founder context (profile fields + dossier summary) for thesis-aware matching. */
   founder: Record<string, string>;
   memories: AgentMemory[];
+  threadId: string | null;
   persistedMessages: AgentChatHistoryMessage[];
   persistedMessagesLoaded: boolean;
   /** Investor ids already messaged — the agent won't re-propose them. */
@@ -42,14 +42,16 @@ interface FounderAgentChatProps {
   /** Push the founder to thesis-matched investors. Returns how many were notified. */
   onAmplify: () => Promise<number>;
   onApplyProfilePatch: (patch: AgentProfilePatch, fields: string[]) => Promise<IntroResult>;
-  onPersistMessages: (messages: AgentChatHistoryMessage[]) => Promise<void>;
-  onClearPersistedMessages: () => Promise<void>;
+  onPersistMessages: (
+    messages: AgentChatHistoryMessage[],
+    suggestedTitle?: string,
+    threadId?: string | null,
+  ) => Promise<string>;
+  onStartNewConversation: () => void;
   onRememberConversation: (userMessage: string, assistantReply: string) => Promise<void>;
   pageMode?: boolean;
   className?: string;
 }
-
-const STORAGE_PREFIX = 'apparent:founder-agent-chat:';
 
 const SUGGESTIONS = [
   'Set up my founder profile from my links and pasted text',
@@ -59,9 +61,9 @@ const SUGGESTIONS = [
 ];
 
 export const FounderAgentChat = ({
-  user,
   founder,
   memories,
+  threadId,
   persistedMessages,
   persistedMessagesLoaded,
   contactedInvestorIds,
@@ -69,27 +71,18 @@ export const FounderAgentChat = ({
   onAmplify,
   onApplyProfilePatch,
   onPersistMessages,
-  onClearPersistedMessages,
+  onStartNewConversation,
   onRememberConversation,
   pageMode = false,
   className,
 }: FounderAgentChatProps) => {
   const authHeaders = useAgentAuthHeaders();
-  const storageKey = `${STORAGE_PREFIX}${user.id}`;
-  const [messages, setMessages] = useState<ChatMessage[]>(() => {
-    try {
-      const raw = window.localStorage.getItem(storageKey);
-      const parsed = raw ? JSON.parse(raw) : [];
-      return Array.isArray(parsed) ? (parsed as ChatMessage[]) : [];
-    } catch {
-      return [];
-    }
-  });
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const transcriptRef = useRef<HTMLDivElement>(null);
   const loadingRef = useRef(false);
-  const hasHydratedPersistedRef = useRef(false);
+  const activeThreadRef = useRef<string | null>(threadId);
 
   const toHistoryMessages = (items: ChatMessage[]): AgentChatHistoryMessage[] =>
     items.map((item) => ({
@@ -111,28 +104,24 @@ export const FounderAgentChat = ({
       amplified: item.payload?.amplified as ChatMessage['amplified'],
     }));
 
-  const persistTranscript = (nextMessages: ChatMessage[]) => {
-    void onPersistMessages(toHistoryMessages(nextMessages));
-  };
+  const persistTranscript = (
+    nextMessages: ChatMessage[],
+    suggestedTitle?: string,
+    targetThreadId: string | null = threadId,
+  ) => onPersistMessages(toHistoryMessages(nextMessages), suggestedTitle, targetThreadId);
+
+  useEffect(() => {
+    activeThreadRef.current = threadId;
+  }, [threadId]);
 
   useEffect(() => {
     if (!persistedMessagesLoaded) return;
     if (persistedMessages.length > 0) {
-      hasHydratedPersistedRef.current = true;
       setMessages(fromHistoryMessages(persistedMessages));
       return;
     }
-    hasHydratedPersistedRef.current = true;
     setMessages([]);
   }, [persistedMessages, persistedMessagesLoaded]);
-
-  useEffect(() => {
-    try {
-      window.localStorage.setItem(storageKey, JSON.stringify(messages.slice(-20)));
-    } catch {
-      /* quota — ignore */
-    }
-  }, [messages, storageKey]);
 
   useEffect(() => {
     transcriptRef.current?.scrollTo({ top: transcriptRef.current.scrollHeight, behavior: 'smooth' });
@@ -147,7 +136,7 @@ export const FounderAgentChat = ({
           proposals: message.proposals.map((proposal, pi) => (pi === proposalIndex ? { ...proposal, ...patch } : proposal)),
         };
       });
-      persistTranscript(next);
+      void persistTranscript(next);
       return next;
     });
   };
@@ -170,10 +159,11 @@ export const FounderAgentChat = ({
     setError('');
     const conversation: ChatMessage[] = [...messages, { role: 'user', content: trimmed }];
     setMessages(conversation);
-    persistTranscript(conversation);
     setIsLoading(true);
 
     try {
+      const conversationThreadId = await persistTranscript(conversation, trimmed);
+      if (activeThreadRef.current === threadId) activeThreadRef.current = conversationThreadId;
       const res = await fetch('/api/founder-agent', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', ...(await authHeaders()) },
@@ -192,40 +182,36 @@ export const FounderAgentChat = ({
       const profilePatches: AgentProfilePatch[] = Array.isArray(data.profilePatches) ? data.profilePatches : [];
       const proposalStates: ProposalState[] = rawProposals.map((p) => ({ ...p, status: 'pending' }));
 
-      let assistantIndex = -1;
-      let nextConversation: ChatMessage[] = [];
-      setMessages((current) => {
-        assistantIndex = current.length;
-        nextConversation = [
-          ...current,
-          {
-            role: 'assistant',
-            content: assistantReply,
-            proposals: proposalStates.length ? proposalStates : undefined,
-            profilePatches: profilePatches.length ? profilePatches : undefined,
-          },
-        ];
-        return nextConversation;
-      });
-      persistTranscript(nextConversation);
+      const assistantIndex = conversation.length;
+      let nextConversation: ChatMessage[] = [
+        ...conversation,
+        {
+          role: 'assistant',
+          content: assistantReply,
+          proposals: proposalStates.length ? proposalStates : undefined,
+          profilePatches: profilePatches.length ? profilePatches : undefined,
+        },
+      ];
+      if (activeThreadRef.current === conversationThreadId) setMessages(nextConversation);
+      void persistTranscript(nextConversation, undefined, conversationThreadId);
 
       // The agent requested amplification — run it and record the outcome.
       if (data.amplify && assistantIndex >= 0) {
         try {
           const count = await onAmplify();
-          setMessages((current) => {
-            const next = current.map((m, i) => (i === assistantIndex ? { ...m, amplified: { count } } : m));
-            persistTranscript(next);
-            return next;
-          });
+          nextConversation = nextConversation.map((message, index) => (
+            index === assistantIndex ? { ...message, amplified: { count } } : message
+          ));
+          if (activeThreadRef.current === conversationThreadId) setMessages(nextConversation);
+          void persistTranscript(nextConversation, undefined, conversationThreadId);
         } catch (err) {
-          setMessages((current) => {
-            const next = current.map((m, i) =>
-              i === assistantIndex ? { ...m, amplified: { error: err instanceof Error ? err.message : 'Amplify failed' } } : m,
-            );
-            persistTranscript(next);
-            return next;
-          });
+          nextConversation = nextConversation.map((message, index) => (
+            index === assistantIndex
+              ? { ...message, amplified: { error: err instanceof Error ? err.message : 'Amplify failed' } }
+              : message
+          ));
+          if (activeThreadRef.current === conversationThreadId) setMessages(nextConversation);
+          void persistTranscript(nextConversation, undefined, conversationThreadId);
         }
       }
 
@@ -241,12 +227,7 @@ export const FounderAgentChat = ({
   const clear = () => {
     setMessages([]);
     setError('');
-    void onClearPersistedMessages();
-    try {
-      window.localStorage.removeItem(storageKey);
-    } catch {
-      /* ignore */
-    }
+    onStartNewConversation();
   };
 
   const hasConversation = messages.length > 0;

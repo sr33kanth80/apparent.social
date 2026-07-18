@@ -10,7 +10,7 @@ import { LogoIcon } from '@/components/LogoIcon';
 import { Switch } from '@/components/ui/switch';
 import { Tooltip } from '@/components/ui/tooltip';
 import { useAgentAuthHeaders } from '@/lib/agent-auth';
-import type { AgentAutonomy, AgentChatHistoryMessage, AgentMemory, AgentProfilePatch, AppUser } from '@/lib/apparent-types';
+import type { AgentAutonomy, AgentChatHistoryMessage, AgentMemory, AgentProfilePatch } from '@/lib/apparent-types';
 
 export type OutreachProposal = {
   founderId: string;
@@ -102,10 +102,10 @@ const EmailDraftCard = ({ draft }: { draft: EmailDraft }) => {
 };
 
 interface InvestorAgentChatProps {
-  user: AppUser;
   /** The investor's saved criteria (intakeValues) — passed to the agent for thesis-aware sourcing. */
   criteria: Record<string, string>;
   memories: AgentMemory[];
+  threadId: string | null;
   persistedMessages: AgentChatHistoryMessage[];
   persistedMessagesLoaded: boolean;
   autonomy: AgentAutonomy;
@@ -115,14 +115,16 @@ interface InvestorAgentChatProps {
   /** Performs the actual RLS-authenticated send (and guardrail enforcement). */
   onSendOutreach: (proposal: OutreachProposal) => Promise<OutreachResult>;
   onApplyProfilePatch: (patch: AgentProfilePatch, fields: string[]) => Promise<OutreachResult>;
-  onPersistMessages: (messages: AgentChatHistoryMessage[]) => Promise<void>;
-  onClearPersistedMessages: () => Promise<void>;
+  onPersistMessages: (
+    messages: AgentChatHistoryMessage[],
+    suggestedTitle?: string,
+    threadId?: string | null,
+  ) => Promise<string>;
+  onStartNewConversation: () => void;
   onRememberConversation: (userMessage: string, assistantReply: string) => Promise<void>;
   pageMode?: boolean;
   className?: string;
 }
-
-const STORAGE_PREFIX = 'apparent:agent-chat:';
 
 const SUGGESTIONS = [
   'Set up my investor profile from links I paste',
@@ -143,9 +145,9 @@ const isAutoMode = (autonomy: AgentAutonomy) => autonomy === 'auto_onplatform' |
 const DOCK_TRANSITION = { type: 'spring', bounce: 0.18, duration: 0.55 } as const;
 
 export const InvestorAgentChat = ({
-  user,
   criteria,
   memories,
+  threadId,
   persistedMessages,
   persistedMessagesLoaded,
   autonomy,
@@ -154,29 +156,20 @@ export const InvestorAgentChat = ({
   onSendOutreach,
   onApplyProfilePatch,
   onPersistMessages,
-  onClearPersistedMessages,
+  onStartNewConversation,
   onRememberConversation,
   pageMode = false,
   className,
 }: InvestorAgentChatProps) => {
   const authHeaders = useAgentAuthHeaders();
-  const storageKey = `${STORAGE_PREFIX}${user.id}`;
-  const [messages, setMessages] = useState<ChatMessage[]>(() => {
-    try {
-      const raw = window.localStorage.getItem(storageKey);
-      const parsed = raw ? JSON.parse(raw) : [];
-      return Array.isArray(parsed) ? (parsed as ChatMessage[]) : [];
-    } catch {
-      return [];
-    }
-  });
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   // Fullscreen chat mode — entered automatically on send, exited via minimize/Esc.
   const [expanded, setExpanded] = useState(false);
   const transcriptRef = useRef<HTMLDivElement>(null);
   const loadingRef = useRef(false);
-  const hasHydratedPersistedRef = useRef(false);
+  const activeThreadRef = useRef<string | null>(threadId);
 
   const toHistoryMessages = (items: ChatMessage[]): AgentChatHistoryMessage[] =>
     items.map((item) => ({
@@ -198,28 +191,24 @@ export const InvestorAgentChat = ({
       profilePatches: Array.isArray(item.payload?.profilePatches) ? (item.payload.profilePatches as AgentProfilePatch[]) : undefined,
     }));
 
-  const persistTranscript = (nextMessages: ChatMessage[]) => {
-    void onPersistMessages(toHistoryMessages(nextMessages));
-  };
+  const persistTranscript = (
+    nextMessages: ChatMessage[],
+    suggestedTitle?: string,
+    targetThreadId: string | null = threadId,
+  ) => onPersistMessages(toHistoryMessages(nextMessages), suggestedTitle, targetThreadId);
+
+  useEffect(() => {
+    activeThreadRef.current = threadId;
+  }, [threadId]);
 
   useEffect(() => {
     if (!persistedMessagesLoaded) return;
     if (persistedMessages.length > 0) {
-      hasHydratedPersistedRef.current = true;
       setMessages(fromHistoryMessages(persistedMessages));
       return;
     }
-    hasHydratedPersistedRef.current = true;
     setMessages([]);
   }, [persistedMessages, persistedMessagesLoaded]);
-
-  useEffect(() => {
-    try {
-      window.localStorage.setItem(storageKey, JSON.stringify(messages.slice(-20)));
-    } catch {
-      /* quota — ignore */
-    }
-  }, [messages, storageKey]);
 
   useEffect(() => {
     transcriptRef.current?.scrollTo({ top: transcriptRef.current.scrollHeight, behavior: 'smooth' });
@@ -241,7 +230,12 @@ export const InvestorAgentChat = ({
   }, [expanded, pageMode]);
 
   // Patch a single proposal's status inside a specific assistant message.
-  const patchProposal = (messageIndex: number, proposalIndex: number, patch: Partial<ProposalState>) => {
+  const patchProposal = (
+    messageIndex: number,
+    proposalIndex: number,
+    patch: Partial<ProposalState>,
+    targetThreadId: string | null = threadId,
+  ) => {
     setMessages((current) => {
       const next = current.map((message, mi) => {
         if (mi !== messageIndex || !message.proposals) return message;
@@ -252,24 +246,29 @@ export const InvestorAgentChat = ({
           ),
         };
       });
-      persistTranscript(next);
+      void persistTranscript(next, undefined, targetThreadId);
       return next;
     });
   };
 
-  const executeProposal = async (messageIndex: number, proposalIndex: number, proposal: ProposalState) => {
-    patchProposal(messageIndex, proposalIndex, { status: 'sending' });
+  const executeProposal = async (
+    messageIndex: number,
+    proposalIndex: number,
+    proposal: ProposalState,
+    targetThreadId: string | null = threadId,
+  ) => {
+    patchProposal(messageIndex, proposalIndex, { status: 'sending' }, targetThreadId);
     try {
       const result = await onSendOutreach(proposal);
       patchProposal(messageIndex, proposalIndex, {
         status: result.ok ? 'sent' : 'skipped',
         reason: result.reason,
-      });
+      }, targetThreadId);
     } catch (err) {
       patchProposal(messageIndex, proposalIndex, {
         status: 'error',
         reason: err instanceof Error ? err.message : 'Send failed',
-      });
+      }, targetThreadId);
     }
   };
 
@@ -282,10 +281,11 @@ export const InvestorAgentChat = ({
     setError('');
     const conversation: ChatMessage[] = [...messages, { role: 'user', content: trimmed }];
     setMessages(conversation);
-    persistTranscript(conversation);
     setIsLoading(true);
 
     try {
+      const conversationThreadId = await persistTranscript(conversation, trimmed);
+      if (activeThreadRef.current === threadId) activeThreadRef.current = conversationThreadId;
       const res = await fetch('/api/agent', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', ...(await authHeaders()) },
@@ -312,28 +312,49 @@ export const InvestorAgentChat = ({
         status: auto ? 'sending' : 'pending',
       }));
 
-      let assistantIndex = -1;
-      let nextConversation: ChatMessage[] = [];
-      setMessages((current) => {
-        assistantIndex = current.length;
-        nextConversation = [
-          ...current,
-          {
-            role: 'assistant',
-            content: assistantReply,
-            proposals: proposalStates.length ? proposalStates : undefined,
-            emailDrafts: emailDrafts.length ? emailDrafts : undefined,
-            profilePatches: profilePatches.length ? profilePatches : undefined,
-          },
-        ];
-        return nextConversation;
-      });
-      persistTranscript(nextConversation);
+      const assistantIndex = conversation.length;
+      let nextConversation: ChatMessage[] = [
+        ...conversation,
+        {
+          role: 'assistant',
+          content: assistantReply,
+          proposals: proposalStates.length ? proposalStates : undefined,
+          emailDrafts: emailDrafts.length ? emailDrafts : undefined,
+          profilePatches: profilePatches.length ? profilePatches : undefined,
+        },
+      ];
+      if (activeThreadRef.current === conversationThreadId) setMessages(nextConversation);
+      void persistTranscript(nextConversation, undefined, conversationThreadId);
 
       // Auto modes send immediately; manual mode waits for the investor to approve.
       if (auto && proposalStates.length && assistantIndex >= 0) {
         for (let i = 0; i < proposalStates.length; i += 1) {
-          await executeProposal(assistantIndex, i, proposalStates[i]);
+          nextConversation = nextConversation.map((message, messageIndex) => (
+            messageIndex === assistantIndex && message.proposals
+              ? { ...message, proposals: message.proposals.map((proposal, proposalIndex) => (
+                  proposalIndex === i ? { ...proposal, status: 'sending' } : proposal
+                )) }
+              : message
+          ));
+          if (activeThreadRef.current === conversationThreadId) setMessages(nextConversation);
+          void persistTranscript(nextConversation, undefined, conversationThreadId);
+
+          let outcome: Partial<ProposalState>;
+          try {
+            const result = await onSendOutreach(proposalStates[i]);
+            outcome = { status: result.ok ? 'sent' : 'skipped', reason: result.reason };
+          } catch (err) {
+            outcome = { status: 'error', reason: err instanceof Error ? err.message : 'Send failed' };
+          }
+          nextConversation = nextConversation.map((message, messageIndex) => (
+            messageIndex === assistantIndex && message.proposals
+              ? { ...message, proposals: message.proposals.map((proposal, proposalIndex) => (
+                  proposalIndex === i ? { ...proposal, ...outcome } : proposal
+                )) }
+              : message
+          ));
+          if (activeThreadRef.current === conversationThreadId) setMessages(nextConversation);
+          void persistTranscript(nextConversation, undefined, conversationThreadId);
         }
       }
 
@@ -349,12 +370,7 @@ export const InvestorAgentChat = ({
   const clear = () => {
     setMessages([]);
     setError('');
-    void onClearPersistedMessages();
-    try {
-      window.localStorage.removeItem(storageKey);
-    } catch {
-      /* ignore */
-    }
+    onStartNewConversation();
   };
 
   const hasConversation = messages.length > 0;
@@ -629,7 +645,7 @@ export const InvestorAgentChat = ({
         onSubmit={send}
         role="investor"
         suggestions={SUGGESTIONS}
-        toolbarExtras={autonomySwitch('text-white/60')}
+        toolbarExtras={autonomySwitch('text-gray-500')}
         transcript={pageTranscript}
         transcriptRef={transcriptRef}
       />

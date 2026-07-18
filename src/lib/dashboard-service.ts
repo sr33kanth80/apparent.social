@@ -12,6 +12,7 @@ import type {
   AgentProfilePatch,
   AgentMemory,
   AgentChatHistoryMessage,
+  AgentChatThread,
   BuilderDiscoveryState,
   BuilderMapCluster,
   BuilderNode,
@@ -3427,15 +3428,111 @@ export const saveAgentActionMemory = async (
   }
 };
 
-const agentChatStorageKey = (user: AppUser, role: DashboardRole) =>
+const legacyAgentChatStorageKey = (user: AppUser, role: DashboardRole) =>
   storageKey(user, role === 'investor' ? 'agent-chat-history' : 'founder-agent-chat-history');
+
+const agentThreadStorageKey = (user: AppUser, role: DashboardRole) =>
+  storageKey(user, `${role}-agent-threads`);
+
+const agentThreadMessagesStorageKey = (user: AppUser, role: DashboardRole, threadId: string) =>
+  storageKey(user, `${role}-agent-thread:${threadId}`);
+
+const agentThreadTitle = (value: string) => {
+  const normalized = value.replace(/\s+/g, ' ').trim();
+  if (!normalized) return 'New conversation';
+  return normalized.length > 72 ? `${normalized.slice(0, 69).trimEnd()}...` : normalized;
+};
+
+export const loadAgentChatThreads = async (
+  user: AppUser,
+  role: DashboardRole,
+): Promise<AgentChatThread[]> => {
+  if (!isSupabaseConfigured || !supabase || user.isDev) {
+    const threadKey = agentThreadStorageKey(user, role);
+    const stored = readLocal<AgentChatThread[]>(threadKey, []);
+    if (stored.length > 0) return stored.sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
+
+    const legacyMessages = readLocal<AgentChatHistoryMessage[]>(legacyAgentChatStorageKey(user, role), []);
+    if (legacyMessages.length === 0) return [];
+
+    const stampedAt = legacyMessages.at(-1)?.createdAt || new Date().toISOString();
+    const firstPrompt = legacyMessages.find((message) => message.role === 'user')?.content || 'Previous conversation';
+    const migrated: AgentChatThread = {
+      id: localId('agent-thread'),
+      role,
+      title: agentThreadTitle(firstPrompt),
+      createdAt: legacyMessages[0]?.createdAt || stampedAt,
+      updatedAt: stampedAt,
+    };
+    writeLocal(threadKey, [migrated]);
+    writeLocal(agentThreadMessagesStorageKey(user, role, migrated.id), legacyMessages);
+    window.localStorage.removeItem(legacyAgentChatStorageKey(user, role));
+    return [migrated];
+  }
+
+  try {
+    const { data, error } = await supabase
+      .from('agent_chat_threads')
+      .select('id,role,title,created_at,updated_at')
+      .eq('user_id', user.id)
+      .eq('role', role)
+      .order('updated_at', { ascending: false });
+    if (error || !data) return [];
+    return data.map((row) => ({
+      id: String(row.id),
+      role: row.role === 'investor' ? 'investor' : 'founder',
+      title: String(row.title || 'New conversation'),
+      createdAt: String(row.created_at || ''),
+      updatedAt: String(row.updated_at || ''),
+    }));
+  } catch {
+    return [];
+  }
+};
+
+export const createAgentChatThread = async (
+  user: AppUser,
+  role: DashboardRole,
+  title: string,
+): Promise<AgentChatThread> => {
+  const stampedAt = new Date().toISOString();
+  const nextTitle = agentThreadTitle(title);
+
+  if (!isSupabaseConfigured || !supabase || user.isDev) {
+    const thread: AgentChatThread = {
+      id: localId('agent-thread'),
+      role,
+      title: nextTitle,
+      createdAt: stampedAt,
+      updatedAt: stampedAt,
+    };
+    const key = agentThreadStorageKey(user, role);
+    writeLocal(key, [thread, ...readLocal<AgentChatThread[]>(key, [])]);
+    return thread;
+  }
+
+  const { data, error } = await supabase
+    .from('agent_chat_threads')
+    .insert({ user_id: user.id, role, title: nextTitle })
+    .select('id,role,title,created_at,updated_at')
+    .single();
+  if (error || !data) throw new Error(error?.message || 'Unable to create an agent conversation.');
+  return {
+    id: String(data.id),
+    role: data.role === 'investor' ? 'investor' : 'founder',
+    title: String(data.title || nextTitle),
+    createdAt: String(data.created_at || stampedAt),
+    updatedAt: String(data.updated_at || stampedAt),
+  };
+};
 
 export const loadAgentChatMessages = async (
   user: AppUser,
   role: DashboardRole,
+  threadId: string,
 ): Promise<AgentChatHistoryMessage[]> => {
   if (!isSupabaseConfigured || !supabase || user.isDev) {
-    return readLocal<AgentChatHistoryMessage[]>(agentChatStorageKey(user, role), []);
+    return readLocal<AgentChatHistoryMessage[]>(agentThreadMessagesStorageKey(user, role, threadId), []);
   }
 
   try {
@@ -3444,6 +3541,7 @@ export const loadAgentChatMessages = async (
       .select('id,message_role,content,payload,created_at')
       .eq('user_id', user.id)
       .eq('role', role)
+      .eq('thread_id', threadId)
       .order('created_at', { ascending: true })
       .limit(80);
     if (error || !data) return [];
@@ -3464,6 +3562,7 @@ export const loadAgentChatMessages = async (
 export const saveAgentChatMessages = async (
   user: AppUser,
   role: DashboardRole,
+  threadId: string,
   messages: AgentChatHistoryMessage[],
 ): Promise<void> => {
   const trimmed = messages
@@ -3471,40 +3570,32 @@ export const saveAgentChatMessages = async (
     .slice(-80);
 
   if (!isSupabaseConfigured || !supabase || user.isDev) {
-    writeLocal(agentChatStorageKey(user, role), trimmed);
+    writeLocal(agentThreadMessagesStorageKey(user, role, threadId), trimmed);
+    const key = agentThreadStorageKey(user, role);
+    const stampedAt = new Date().toISOString();
+    writeLocal(key, readLocal<AgentChatThread[]>(key, []).map((thread) => (
+      thread.id === threadId ? { ...thread, updatedAt: stampedAt } : thread
+    )).sort((a, b) => b.updatedAt.localeCompare(a.updatedAt)));
     return;
   }
 
   try {
-    await supabase.from('agent_chat_messages').delete().eq('user_id', user.id).eq('role', role);
+    await supabase.from('agent_chat_messages').delete().eq('user_id', user.id).eq('role', role).eq('thread_id', threadId);
     if (trimmed.length === 0) return;
     await supabase.from('agent_chat_messages').insert(
       trimmed.map((message, index) => ({
         user_id: user.id,
         role,
+        thread_id: threadId,
         message_role: message.role,
         content: message.content,
         payload: message.payload ?? {},
         created_at: message.createdAt || new Date(Date.now() + index).toISOString(),
       })),
     );
+    await supabase.from('agent_chat_threads').update({ updated_at: new Date().toISOString() }).eq('id', threadId).eq('user_id', user.id);
   } catch {
     // Transcript persistence should never break the live agent interaction.
-  }
-};
-
-export const clearAgentChatMessages = async (
-  user: AppUser,
-  role: DashboardRole,
-): Promise<void> => {
-  if (!isSupabaseConfigured || !supabase || user.isDev) {
-    writeLocal(agentChatStorageKey(user, role), []);
-    return;
-  }
-  try {
-    await supabase.from('agent_chat_messages').delete().eq('user_id', user.id).eq('role', role);
-  } catch {
-    /* non-fatal */
   }
 };
 

@@ -136,6 +136,14 @@ export type AgentChatHistoryMessage = {
   createdAt?: string;
 };
 
+export type AgentChatThread = {
+  id: string;
+  role: DashboardRole;
+  title: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
 export interface UserSettings {
   dailyDigestEnabled: boolean;
   slackAlertsEnabled: boolean;

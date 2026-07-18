@@ -65,6 +65,7 @@ import type {
   AgentAutonomy,
   AgentMemory,
   AgentChatHistoryMessage,
+  AgentChatThread,
   AgentProfilePatch,
   AppUser,
   BuilderDiscoveryState,
@@ -95,6 +96,7 @@ import {
   loadDashboardData,
   loadFounderInterest,
   loadAgentMemories,
+  loadAgentChatThreads,
   loadAgentChatMessages,
   loadFounderVCContacts,
   loadLaunchAuthors,
@@ -105,8 +107,8 @@ import {
   saveBuilderDiscoveryState,
   saveAgentConversationMemory,
   saveAgentActionMemory,
+  createAgentChatThread,
   saveAgentChatMessages,
-  clearAgentChatMessages,
   saveFeedAction,
   saveInvestorMatchBookmark,
   saveIntakeValues,
@@ -908,8 +910,17 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
   const [dailyDigestEnabled, setDailyDigestEnabled] = useState(true);
   const [agentAutonomy, setAgentAutonomy] = useState<AgentAutonomy>('manual');
   const [agentMemories, setAgentMemories] = useState<AgentMemory[]>([]);
+  const [agentChatThreads, setAgentChatThreads] = useState<AgentChatThread[]>([]);
+  const [agentThreadsLoaded, setAgentThreadsLoaded] = useState(false);
+  const [activeAgentThreadId, setActiveAgentThreadId] = useState<string | null>(null);
+  const activeAgentThreadIdRef = useRef<string | null>(null);
   const [agentChatMessages, setAgentChatMessages] = useState<AgentChatHistoryMessage[]>([]);
   const [agentChatLoaded, setAgentChatLoaded] = useState(false);
+  const requestedAgentThreadId = new URLSearchParams(location.search).get('thread');
+  const selectedAgentThreadId = requestedAgentThreadId
+    && agentChatThreads.some((thread) => thread.id === requestedAgentThreadId)
+    ? requestedAgentThreadId
+    : null;
   const [draggedSignalCompany, setDraggedSignalCompany] = useState<string | null>(null);
   const [dragOverStage, setDragOverStage] = useState<InvestorDealStage | null>(null);
   const [pointerDrag, setPointerDrag] = useState<{ company: string; label: string; x: number; y: number } | null>(null);
@@ -1544,18 +1555,48 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
 
   useEffect(() => {
     let cancelled = false;
-    setAgentChatLoaded(false);
-    Promise.all([loadAgentMemories(user, role), loadAgentChatMessages(user, role)])
-      .then(([memoryRows, chatRows]) => {
+    setAgentThreadsLoaded(false);
+    Promise.all([loadAgentMemories(user, role), loadAgentChatThreads(user, role)])
+      .then(([memoryRows, threadRows]) => {
         if (!cancelled) {
           setAgentMemories(memoryRows);
-          setAgentChatMessages(chatRows);
-          setAgentChatLoaded(true);
+          setAgentChatThreads(threadRows);
+          setAgentThreadsLoaded(true);
         }
       })
       .catch(() => {
         if (!cancelled) {
           setAgentMemories([]);
+          setAgentChatThreads([]);
+          setAgentThreadsLoaded(true);
+        }
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [role, user]);
+
+  useEffect(() => {
+    if (!agentThreadsLoaded) return;
+    activeAgentThreadIdRef.current = selectedAgentThreadId;
+    setActiveAgentThreadId(selectedAgentThreadId);
+    if (!selectedAgentThreadId) {
+      setAgentChatMessages([]);
+      setAgentChatLoaded(true);
+      return;
+    }
+
+    let cancelled = false;
+    setAgentChatLoaded(false);
+    loadAgentChatMessages(user, role, selectedAgentThreadId)
+      .then((messages) => {
+        if (!cancelled) {
+          setAgentChatMessages(messages);
+          setAgentChatLoaded(true);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
           setAgentChatMessages([]);
           setAgentChatLoaded(true);
         }
@@ -1563,7 +1604,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
     return () => {
       cancelled = true;
     };
-  }, [role, user]);
+  }, [agentThreadsLoaded, role, selectedAgentThreadId, user]);
 
   // Founder side: load the VCs who liked/superliked this founder (Discover deck).
   useEffect(() => {
@@ -2966,14 +3007,43 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
     setAgentMemories((current) => [memory, ...current].slice(0, 40));
   };
 
-  const handlePersistAgentChat = async (nextMessages: AgentChatHistoryMessage[]): Promise<void> => {
-    setAgentChatMessages(nextMessages);
-    await saveAgentChatMessages(user, role, nextMessages);
+  const handlePersistAgentChat = async (
+    nextMessages: AgentChatHistoryMessage[],
+    suggestedTitle = 'New conversation',
+    targetThreadId: string | null = activeAgentThreadId,
+  ): Promise<string> => {
+    let threadId = targetThreadId;
+    let createdThread = false;
+    if (!threadId) {
+      const thread = await createAgentChatThread(user, role, suggestedTitle);
+      threadId = thread.id;
+      createdThread = true;
+      activeAgentThreadIdRef.current = thread.id;
+      setActiveAgentThreadId(thread.id);
+      setAgentChatThreads((current) => [thread, ...current.filter((item) => item.id !== thread.id)]);
+    }
+
+    if (activeAgentThreadIdRef.current === threadId) {
+      setAgentChatMessages(nextMessages);
+    }
+    await saveAgentChatMessages(user, role, threadId, nextMessages);
+    const stampedAt = new Date().toISOString();
+    setAgentChatThreads((current) => current.map((thread) => (
+      thread.id === threadId ? { ...thread, updatedAt: stampedAt } : thread
+    )).sort((a, b) => b.updatedAt.localeCompare(a.updatedAt)));
+
+    if (createdThread && !new URLSearchParams(window.location.search).get('thread')) {
+      navigate(`${dashboardBasePath}/agent?thread=${encodeURIComponent(threadId)}`, { replace: true });
+    }
+    return threadId;
   };
 
-  const handleClearAgentChat = async (): Promise<void> => {
+  const handleStartNewAgentConversation = (): void => {
+    activeAgentThreadIdRef.current = null;
+    setActiveAgentThreadId(null);
     setAgentChatMessages([]);
-    await clearAgentChatMessages(user, role);
+    setAgentChatLoaded(true);
+    navigate(`${dashboardBasePath}/agent`);
   };
 
   const rememberAgentAction = async (key: string, value: string): Promise<void> => {
@@ -8620,14 +8690,14 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
       animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
       exit={{ opacity: 0, y: -8, filter: 'blur(2px)' }}
       transition={{ duration: 0.22, ease: 'easeOut' }}
-      className="grid h-full min-h-0 gap-4 xl:grid-cols-[minmax(0,1fr)_280px]"
+      className="grid h-full min-h-0 xl:grid-cols-[minmax(0,1fr)_280px]"
     >
       {isInvestor ? (
         <InvestorAgentChat
           className="h-full min-h-0"
-          user={user}
           criteria={intakeValues}
           memories={agentMemories}
+          threadId={activeAgentThreadId}
           persistedMessages={agentChatMessages}
           persistedMessagesLoaded={agentChatLoaded}
           autonomy={agentAutonomy}
@@ -8635,7 +8705,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
           contactedFounderIds={contactedFounderIds}
           onApplyProfilePatch={handleApplyAgentProfilePatch}
           onPersistMessages={handlePersistAgentChat}
-          onClearPersistedMessages={handleClearAgentChat}
+          onStartNewConversation={handleStartNewAgentConversation}
           onRememberConversation={handleRememberAgentConversation}
           onSendOutreach={handleAgentOutreach}
           pageMode
@@ -8643,15 +8713,15 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
       ) : (
         <FounderAgentChat
           className="h-full min-h-0 xl:col-span-2"
-          user={user}
           founder={founderAgentContext}
           memories={agentMemories}
+          threadId={activeAgentThreadId}
           persistedMessages={agentChatMessages}
           persistedMessagesLoaded={agentChatLoaded}
           contactedInvestorIds={contactedInvestorIds}
           onApplyProfilePatch={handleApplyAgentProfilePatch}
           onPersistMessages={handlePersistAgentChat}
-          onClearPersistedMessages={handleClearAgentChat}
+          onStartNewConversation={handleStartNewAgentConversation}
           onRememberConversation={handleRememberAgentConversation}
           onSendIntro={handleFounderIntro}
           onAmplify={handleFounderAmplify}
@@ -8660,8 +8730,8 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
       )}
 
       {isInvestor && (
-        <aside className="hidden min-h-0 flex-col overflow-hidden rounded-[24px] border border-black/10 bg-white xl:flex">
-          <div className="border-b border-black/5 px-4 py-4">
+        <aside className="hidden min-h-0 flex-col overflow-hidden border-l border-black/[0.07] bg-[#f6f1e8] xl:flex">
+          <div className="border-b border-black/[0.07] px-4 py-4">
             <div className="flex items-center gap-2 text-sm font-semibold text-black">
               <History className="h-4 w-4 text-ink" />
               Recent agent actions
@@ -8672,7 +8742,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
             {agentActions.length > 0 ? (
               <ul className="space-y-2">
                 {agentActions.map((action) => (
-                  <li key={action.id} className="rounded-2xl bg-[#f8f6f2] p-3">
+                  <li key={action.id} className="rounded-2xl border border-black/[0.06] bg-[#fdf9f7] p-3">
                     <p className="text-xs leading-5 text-gray-700">
                       {action.type} to <span className="font-semibold text-black">{action.name || 'a founder'}</span>
                     </p>
@@ -8896,10 +8966,17 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
 
   return (
     <div className="monad-app ed-dashboard min-h-screen text-ink" data-role={role}>
-      <SessionNavBar role={role} user={user} activated={profileSaved} unreadMessages={totalUnreadMessages} />
+      <SessionNavBar
+        role={role}
+        user={user}
+        activated={profileSaved}
+        unreadMessages={totalUnreadMessages}
+        agentThreads={agentChatThreads}
+        activeAgentThreadId={activeAgentThreadId}
+      />
 
       <main className="ed-dashboard-main min-h-screen pl-[16.25rem]">
-        <div className={isVCHeatMapView ? 'min-h-screen' : isAgentView ? 'ed-dashboard-frame relative mx-auto flex h-screen w-full max-w-[1440px] flex-col overflow-hidden px-4 py-4 sm:px-6 sm:py-6' : isMessagesView ? 'ed-dashboard-frame relative mx-auto flex h-screen w-full max-w-[1440px] flex-col overflow-hidden px-6 pt-6' : showWorkspaceHeader ? 'ed-dashboard-frame mx-auto max-w-[1440px] px-6 py-6' : 'ed-dashboard-frame relative mx-auto max-w-[1440px] px-6 pb-6 pt-6'}>
+        <div className={isVCHeatMapView ? 'min-h-screen' : isAgentView ? 'ed-dashboard-frame relative mx-auto flex h-screen w-full max-w-[1440px] flex-col overflow-hidden bg-[#fdf9f7]' : isMessagesView ? 'ed-dashboard-frame relative mx-auto flex h-screen w-full max-w-[1440px] flex-col overflow-hidden px-6 pt-6' : showWorkspaceHeader ? 'ed-dashboard-frame mx-auto max-w-[1440px] px-6 py-6' : 'ed-dashboard-frame relative mx-auto max-w-[1440px] px-6 pb-6 pt-6'}>
           {/* Overview + For You: full header with the workspace/For-You toggle +
               global search + bell. Other section pages drop it — the toggle's
               targets are both reachable here, and sections carry their own
