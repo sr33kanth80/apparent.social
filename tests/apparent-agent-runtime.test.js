@@ -242,6 +242,71 @@ test('Orthogonal reserves the catalog price when run responses omit billing meta
   assert.deepEqual(paths, ['/v1/details', '/v1/run']);
 });
 
+test('Orthogonal permits explicitly approved usage-priced inference and records its reported cost', async () => {
+  const paths = [];
+  const session = createOrthogonalSession({
+    apiKey: 'test',
+    allowedApis: ['baseten'],
+    dynamicPricingEndpoints: [{ api: 'baseten', path: '/v1/chat/completions' }],
+    dynamicPriceEstimateCents: 10,
+    maxSpendCents: 100,
+    fetchImpl: async (url) => {
+      const path = new URL(url).pathname;
+      paths.push(path);
+      if (path === '/v1/details') {
+        return new Response(JSON.stringify({ success: true, endpoint: { price: null, hasDynamicPricing: true } }));
+      }
+      return new Response(JSON.stringify({ success: true, priceCents: 3.5, data: { ok: true } }));
+    },
+  });
+
+  const result = await session.run({ api: 'baseten', path: '/v1/chat/completions', body: { turn: 1 } });
+
+  assert.deepEqual(result.data, { ok: true });
+  assert.equal(session.usage().spentCents, 3.5);
+  assert.deepEqual(paths, ['/v1/details', '/v1/run']);
+});
+
+test('Orthogonal still blocks dynamic pricing outside the explicitly approved inference endpoint', async () => {
+  const paths = [];
+  const session = createOrthogonalSession({
+    apiKey: 'test',
+    allowedApis: ['baseten'],
+    dynamicPricingEndpoints: [{ api: 'baseten', path: '/v1/chat/completions' }],
+    fetchImpl: async (url) => {
+      paths.push(new URL(url).pathname);
+      return new Response(JSON.stringify({ success: true, endpoint: { price: null, hasDynamicPricing: true } }));
+    },
+  });
+
+  await assert.rejects(
+    session.run({ api: 'baseten', path: '/v1/embeddings', body: {} }),
+    (error) => error instanceof OrthogonalError && error.code === 'orthogonal_unbounded_price',
+  );
+  assert.deepEqual(paths, ['/v1/details']);
+});
+
+test('Orthogonal enforces the dynamic price reservation before a usage-priced call', async () => {
+  const paths = [];
+  const session = createOrthogonalSession({
+    apiKey: 'test',
+    allowedApis: ['baseten'],
+    dynamicPricingEndpoints: [{ api: 'baseten', path: '/v1/chat/completions' }],
+    dynamicPriceEstimateCents: 25,
+    maxSpendCents: 20,
+    fetchImpl: async (url) => {
+      paths.push(new URL(url).pathname);
+      return new Response(JSON.stringify({ success: true, endpoint: { price: null, hasDynamicPricing: true } }));
+    },
+  });
+
+  await assert.rejects(
+    session.run({ api: 'baseten', path: '/v1/chat/completions', body: {} }),
+    (error) => error instanceof OrthogonalError && error.code === 'orthogonal_budget_reached',
+  );
+  assert.deepEqual(paths, ['/v1/details']);
+});
+
 test('inference requests omit empty tool fields for endpoints that reject them', async () => {
   const previousApi = process.env.ORTHOGONAL_INFERENCE_API;
   const previousPath = process.env.ORTHOGONAL_INFERENCE_PATH;

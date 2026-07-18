@@ -251,7 +251,10 @@ export const createApparentAgentRuntime = ({ session, complete } = {}) => {
   }
 
   const allowedApis = [...EXTERNAL_APIS, inferenceApi];
-  const orthogonal = session || createOrthogonalSession({ allowedApis });
+  const orthogonal = session || createOrthogonalSession({
+    allowedApis,
+    dynamicPricingEndpoints: [{ api: inferenceApi, path: resolvedInference.path }],
+  });
 
   const callInference = complete || (async ({ messages, tools, maxTokens }) => {
     const target = resolvedInference;

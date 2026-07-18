@@ -36,6 +36,10 @@ Copy .env.example to .env and provide the following values:
 - VITE_KINDE_CLIENT_ID and VITE_KINDE_DOMAIN — your Kinde SPA application
 - VITE_KINDE_AUDIENCE — the Kinde API audience registered for Apparent's backend; set
   KINDE_AUDIENCE to the same value for the serverless agent routes
+- ORTHOGONAL_API_KEY — server-only key for Apparent's inference and agent tools. Usage-priced
+  inference reserves `ORTHOGONAL_DYNAMIC_PRICE_ESTIMATE_CENTS` (10 cents by default) against
+  the per-request `ORTHOGONAL_AGENT_MAX_SPEND_CENTS` budget before each call, then records
+  Orthogonal's reported final price.
 - VITE_NETWORK_TILE_URL — map tile URL template. Example (OpenStreetMap):
   https://tile.openstreetmap.org/{z}/{x}/{y}.png
   Note: ensure you comply with the tile provider's terms of use.

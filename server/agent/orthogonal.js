@@ -24,6 +24,8 @@ export const createOrthogonalSession = ({
   fetchImpl = globalThis.fetch,
   maxCalls = positiveInt(process.env.ORTHOGONAL_AGENT_MAX_CALLS, 20),
   maxSpendCents = positiveInt(process.env.ORTHOGONAL_AGENT_MAX_SPEND_CENTS, 100),
+  dynamicPriceEstimateCents = positiveInt(process.env.ORTHOGONAL_DYNAMIC_PRICE_ESTIMATE_CENTS, 10),
+  dynamicPricingEndpoints = [],
   timeoutMs = positiveInt(process.env.ORTHOGONAL_TIMEOUT_MS, 45_000),
   allowedApis = [],
 } = {}) => {
@@ -38,6 +40,11 @@ export const createOrthogonalSession = ({
   }
 
   const allowed = new Set(allowedApis.map((value) => String(value).trim().toLowerCase()).filter(Boolean));
+  const dynamicPricingAllowed = new Set(dynamicPricingEndpoints.map(({ api, path }) => {
+    const normalizedApi = String(api ?? '').trim().toLowerCase();
+    const normalizedPath = String(path ?? '').trim();
+    return normalizedApi && normalizedPath.startsWith('/') ? `${normalizedApi}:${normalizedPath}` : '';
+  }).filter(Boolean));
   let callCount = 0;
   let spentCents = 0;
   const detailsCache = new Map();
@@ -138,13 +145,18 @@ export const createOrthogonalSession = ({
       }
       const endpoint = details?.endpoint ?? details?.data?.endpoint;
       const priceUsd = Number(endpoint?.price);
-      if (endpoint?.hasDynamicPricing === true || !Number.isFinite(priceUsd) || priceUsd < 0) {
+      const usesDynamicPricing = endpoint?.hasDynamicPricing === true || !Number.isFinite(priceUsd) || priceUsd < 0;
+      const dynamicPricingKey = `${normalizedApi}:${normalizedPath}`;
+      if (usesDynamicPricing && !dynamicPricingAllowed.has(dynamicPricingKey)) {
         throw new OrthogonalError(`Orthogonal endpoint '${normalizedApi}${normalizedPath}' does not publish a fixed price, so Apparent will not execute it automatically.`, {
           status: 402,
           code: 'orthogonal_unbounded_price',
         });
       }
-      const estimatedCostCents = priceUsd * 100;
+      // Usage-priced inference cannot publish an exact pre-call price. Reserve a
+      // conservative amount against the session budget, then replace it with the
+      // authoritative priceCents Orthogonal includes in the run response.
+      const estimatedCostCents = usesDynamicPricing ? dynamicPriceEstimateCents : priceUsd * 100;
       const result = await request(
         '/v1/run',
         { api: normalizedApi, path: normalizedPath, body, query },
