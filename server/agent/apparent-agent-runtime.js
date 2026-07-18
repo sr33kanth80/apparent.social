@@ -349,8 +349,27 @@ export const apparentAgentErrorResponse = (error) => {
       orthogonal_not_configured: 'The Apparent agent needs ORTHOGONAL_API_KEY configured on the server.',
       orthogonal_insufficient_credits: 'The Apparent agent has run out of Orthogonal credits.',
       orthogonal_inference_not_found: 'Apparent could not find a compatible non-Anthropic inference service in the Orthogonal catalog. Configure the approved inference endpoint and try again.',
+      orthogonal_timeout: 'Apparent took longer than expected to answer. Please retry your message.',
+      orthogonal_rate_limited: 'Apparent is handling unusually high demand. Please retry your message in a moment.',
     }[error.code] || (error.retryable ? 'The Apparent agent is temporarily unavailable. Please try again.' : error.message);
     return { status: error.status >= 500 ? 503 : error.status, error: userMessage, code: error.code };
   }
   return { status: 500, error: `Agent error: ${str(error?.message || 'unknown').slice(0, 500)}`, code: 'agent_error' };
+};
+
+export const logApparentAgentError = (error, context = 'agent') => {
+  const details = error instanceof OrthogonalError && error.details && typeof error.details === 'object'
+    ? {
+        requestId: str(error.details.requestId).slice(0, 120) || undefined,
+        priceCents: Number.isFinite(Number(error.details.priceCents)) ? Number(error.details.priceCents) : undefined,
+        attempts: Number.isFinite(Number(error.details.attempts)) ? Number(error.details.attempts) : undefined,
+      }
+    : undefined;
+  console.error(`[${context}] request failed`, {
+    name: str(error?.name || 'Error').slice(0, 80),
+    code: str(error?.code || 'agent_error').slice(0, 120),
+    status: Number.isFinite(Number(error?.status)) ? Number(error.status) : 500,
+    retryable: error?.retryable === true,
+    details,
+  });
 };

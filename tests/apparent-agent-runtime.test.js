@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 
 import {
+  apparentAgentErrorResponse,
   createApparentAgentRuntime,
   createPublicResearchPolicy,
   isAuthorizedResearchUrl,
@@ -265,6 +266,103 @@ test('Orthogonal permits explicitly approved usage-priced inference and records 
   assert.deepEqual(result.data, { ok: true });
   assert.equal(session.usage().spentCents, 3.5);
   assert.deepEqual(paths, ['/v1/details', '/v1/run']);
+});
+
+test('Orthogonal retries a transient paid upstream response with one idempotency key', async () => {
+  const paths = [];
+  const runIdempotencyKeys = [];
+  let runAttempts = 0;
+  const session = createOrthogonalSession({
+    apiKey: 'test',
+    allowedApis: ['baseten'],
+    dynamicPricingEndpoints: [{ api: 'baseten', path: '/v1/chat/completions' }],
+    maxRetries: 1,
+    retryBaseDelayMs: 1,
+    fetchImpl: async (url, init) => {
+      const path = new URL(url).pathname;
+      paths.push(path);
+      if (path === '/v1/details') {
+        return new Response(JSON.stringify({ success: true, endpoint: { price: null, hasDynamicPricing: true } }));
+      }
+      runAttempts += 1;
+      runIdempotencyKeys.push(init.headers['Idempotency-Key']);
+      if (runAttempts === 1) {
+        return new Response(JSON.stringify({ success: false, error: 'temporary provider failure' }), { status: 503 });
+      }
+      return new Response(JSON.stringify({ success: true, priceCents: 2, data: { ok: true } }));
+    },
+  });
+
+  const result = await session.run({ api: 'baseten', path: '/v1/chat/completions', body: { turn: 1 } });
+
+  assert.deepEqual(result.data, { ok: true });
+  assert.deepEqual(paths, ['/v1/details', '/v1/run', '/v1/run']);
+  assert.equal(runIdempotencyKeys.length, 2);
+  assert.equal(runIdempotencyKeys[0], runIdempotencyKeys[1]);
+  assert.equal(session.usage().spentCents, 2);
+});
+
+test('Orthogonal retries a transport failure with one idempotency key', async () => {
+  const idempotencyKeys = [];
+  let attempts = 0;
+  const session = createOrthogonalSession({
+    apiKey: 'test',
+    maxRetries: 1,
+    retryBaseDelayMs: 1,
+    fetchImpl: async (_url, init) => {
+      attempts += 1;
+      idempotencyKeys.push(init.headers['Idempotency-Key']);
+      if (attempts === 1) throw new TypeError('temporary network failure');
+      return new Response(JSON.stringify({ success: true, data: { ok: true } }));
+    },
+  });
+
+  const result = await session.search('developer tools');
+
+  assert.deepEqual(result.data, { ok: true });
+  assert.equal(attempts, 2);
+  assert.equal(idempotencyKeys[0], idempotencyKeys[1]);
+});
+
+test('Orthogonal does not retry a non-transient paid response', async () => {
+  const paths = [];
+  const session = createOrthogonalSession({
+    apiKey: 'test',
+    allowedApis: ['baseten'],
+    dynamicPricingEndpoints: [{ api: 'baseten', path: '/v1/chat/completions' }],
+    maxRetries: 1,
+    retryBaseDelayMs: 1,
+    fetchImpl: async (url) => {
+      const path = new URL(url).pathname;
+      paths.push(path);
+      if (path === '/v1/details') {
+        return new Response(JSON.stringify({ success: true, endpoint: { price: null, hasDynamicPricing: true } }));
+      }
+      return new Response(JSON.stringify({ success: false, error: 'invalid model request' }), { status: 400 });
+    },
+  });
+
+  await assert.rejects(
+    session.run({ api: 'baseten', path: '/v1/chat/completions', body: {} }),
+    (error) => error instanceof OrthogonalError && error.retryable === false,
+  );
+  assert.deepEqual(paths, ['/v1/details', '/v1/run']);
+});
+
+test('Apparent returns actionable messages for Orthogonal timeouts and rate limits', () => {
+  const timeout = apparentAgentErrorResponse(new OrthogonalError('timed out', {
+    status: 504,
+    code: 'orthogonal_timeout',
+    retryable: true,
+  }));
+  const rateLimited = apparentAgentErrorResponse(new OrthogonalError('busy', {
+    status: 429,
+    code: 'orthogonal_rate_limited',
+    retryable: true,
+  }));
+
+  assert.match(timeout.error, /longer than expected/i);
+  assert.match(rateLimited.error, /high demand/i);
 });
 
 test('Orthogonal still blocks dynamic pricing outside the explicitly approved inference endpoint', async () => {

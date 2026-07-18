@@ -5,6 +5,28 @@ const positiveInt = (value, fallback) => {
   return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
 };
 
+const nonNegativeInt = (value, fallback) => {
+  const parsed = Number.parseInt(String(value ?? ''), 10);
+  return Number.isFinite(parsed) && parsed >= 0 ? parsed : fallback;
+};
+
+const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+const retryDelay = (response, attempt, baseDelayMs) => {
+  const retryAfter = response?.headers?.get?.('retry-after');
+  const retryAfterSeconds = retryAfter == null || String(retryAfter).trim() === ''
+    ? Number.NaN
+    : Number(retryAfter);
+  if (Number.isFinite(retryAfterSeconds) && retryAfterSeconds >= 0) {
+    return Math.min(retryAfterSeconds * 1000, 5_000);
+  }
+  const retryAfterDate = Date.parse(String(retryAfter ?? ''));
+  if (Number.isFinite(retryAfterDate)) {
+    return Math.min(Math.max(retryAfterDate - Date.now(), 0), 5_000);
+  }
+  return Math.min(baseDelayMs * (2 ** attempt), 5_000);
+};
+
 const compactText = (value, max = 500) => String(value ?? '').replace(/\s+/g, ' ').trim().slice(0, max);
 
 export class OrthogonalError extends Error {
@@ -26,7 +48,9 @@ export const createOrthogonalSession = ({
   maxSpendCents = positiveInt(process.env.ORTHOGONAL_AGENT_MAX_SPEND_CENTS, 100),
   dynamicPriceEstimateCents = positiveInt(process.env.ORTHOGONAL_DYNAMIC_PRICE_ESTIMATE_CENTS, 10),
   dynamicPricingEndpoints = [],
-  timeoutMs = positiveInt(process.env.ORTHOGONAL_TIMEOUT_MS, 45_000),
+  timeoutMs = positiveInt(process.env.ORTHOGONAL_TIMEOUT_MS, 90_000),
+  maxRetries = nonNegativeInt(process.env.ORTHOGONAL_MAX_RETRIES, 1),
+  retryBaseDelayMs = positiveInt(process.env.ORTHOGONAL_RETRY_BASE_DELAY_MS, 300),
   allowedApis = [],
 } = {}) => {
   if (!apiKey) {
@@ -51,64 +75,92 @@ export const createOrthogonalSession = ({
   const runCache = new Map();
 
   const request = async (path, body, { paid = false, estimatedCostCents = 0 } = {}) => {
-    if (callCount >= maxCalls) {
-      throw new OrthogonalError(`Orthogonal call limit reached (${maxCalls}).`, {
-        status: 429,
-        code: 'orthogonal_call_limit',
-      });
-    }
-    if (paid && spentCents + estimatedCostCents > maxSpendCents) {
-      throw new OrthogonalError(`Orthogonal request budget would be exceeded (${maxSpendCents} cents).`, {
-        status: 402,
-        code: 'orthogonal_budget_reached',
-      });
-    }
+    const idempotencyKey = globalThis.crypto?.randomUUID?.() || `orth_${Date.now()}_${Math.random().toString(36).slice(2)}`;
 
-    callCount += 1;
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), timeoutMs);
-    let response;
-    try {
-      response = await fetchImpl(`${String(baseUrl).replace(/\/$/, '')}${path}`, {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${apiKey}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(body),
-        signal: controller.signal,
-      });
-    } catch (error) {
-      const timedOut = error?.name === 'AbortError';
-      throw new OrthogonalError(timedOut ? 'Orthogonal request timed out.' : 'Orthogonal request failed.', {
-        status: timedOut ? 504 : 502,
-        code: timedOut ? 'orthogonal_timeout' : 'orthogonal_network_error',
-        retryable: true,
-        details: compactText(error?.message),
-      });
-    } finally {
-      clearTimeout(timer);
-    }
+    for (let attempt = 0; attempt <= maxRetries; attempt += 1) {
+      if (callCount >= maxCalls) {
+        throw new OrthogonalError(`Orthogonal call limit reached (${maxCalls}).`, {
+          status: 429,
+          code: 'orthogonal_call_limit',
+        });
+      }
+      if (paid && spentCents + estimatedCostCents > maxSpendCents) {
+        throw new OrthogonalError(`Orthogonal request budget would be exceeded (${maxSpendCents} cents).`, {
+          status: 402,
+          code: 'orthogonal_budget_reached',
+        });
+      }
 
-    const payload = await response.json().catch(async () => ({ error: compactText(await response.text().catch(() => '')) }));
-    const reportedPrice = payload?.priceCents ?? payload?.usage?.priceCents;
-    const parsedReportedPrice = Number(reportedPrice);
-    const priceCents = reportedPrice == null || !Number.isFinite(parsedReportedPrice)
-      ? estimatedCostCents
-      : Math.max(parsedReportedPrice, 0);
-    if (paid && priceCents > 0) spentCents += priceCents;
+      callCount += 1;
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), timeoutMs);
+      let response;
+      try {
+        response = await fetchImpl(`${String(baseUrl).replace(/\/$/, '')}${path}`, {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${apiKey}`,
+            'Content-Type': 'application/json',
+            'Idempotency-Key': idempotencyKey,
+          },
+          body: JSON.stringify(body),
+          signal: controller.signal,
+        });
+      } catch (error) {
+        const timedOut = error?.name === 'AbortError';
+        if (attempt < maxRetries) {
+          await wait(retryDelay(null, attempt, retryBaseDelayMs));
+          continue;
+        }
+        throw new OrthogonalError(timedOut ? 'Orthogonal request timed out.' : 'Orthogonal request failed.', {
+          status: timedOut ? 504 : 502,
+          code: timedOut ? 'orthogonal_timeout' : 'orthogonal_network_error',
+          retryable: true,
+          details: { message: compactText(error?.message), attempts: attempt + 1 },
+        });
+      } finally {
+        clearTimeout(timer);
+      }
 
-    if (!response.ok || payload?.success === false) {
+      const rawPayload = await response.text().catch(() => '');
+      let payload;
+      try {
+        payload = rawPayload ? JSON.parse(rawPayload) : {};
+      } catch {
+        payload = { error: compactText(rawPayload) };
+      }
+
       const status = response.status || 502;
-      throw new OrthogonalError(compactText(payload?.error || payload?.message || `Orthogonal returned ${status}.`), {
-        status,
-        code: status === 402 ? 'orthogonal_insufficient_credits' : 'orthogonal_upstream_error',
-        retryable: status === 408 || status === 429 || status >= 500,
-        details: { requestId: payload?.requestId, priceCents },
-      });
+      const retryable = status === 408 || status === 429 || status >= 500;
+      if ((!response.ok || payload?.success === false) && retryable && attempt < maxRetries) {
+        await wait(retryDelay(response, attempt, retryBaseDelayMs));
+        continue;
+      }
+
+      const reportedPrice = payload?.priceCents ?? payload?.usage?.priceCents;
+      const parsedReportedPrice = Number(reportedPrice);
+      const priceCents = reportedPrice == null || !Number.isFinite(parsedReportedPrice)
+        ? estimatedCostCents
+        : Math.max(parsedReportedPrice, 0);
+      if (paid && priceCents > 0) spentCents += priceCents;
+
+      if (!response.ok || payload?.success === false) {
+        throw new OrthogonalError(compactText(payload?.error || payload?.message || `Orthogonal returned ${status}.`), {
+          status,
+          code: status === 402 ? 'orthogonal_insufficient_credits' : status === 429 ? 'orthogonal_rate_limited' : 'orthogonal_upstream_error',
+          retryable,
+          details: { requestId: payload?.requestId, priceCents, attempts: attempt + 1 },
+        });
+      }
+
+      return payload;
     }
 
-    return payload;
+    throw new OrthogonalError('Orthogonal request failed.', {
+      status: 502,
+      code: 'orthogonal_upstream_error',
+      retryable: true,
+    });
   };
 
   const assertAllowed = (api) => {

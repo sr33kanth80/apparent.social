@@ -14,6 +14,7 @@ import {
   apparentAgentErrorResponse,
   createApparentAgentRuntime,
   createPublicResearchPolicy,
+  logApparentAgentError,
   runStandardOrthogonalTool,
   standardOrthogonalTools,
 } from '../server/agent/apparent-agent-runtime.js';
@@ -479,7 +480,7 @@ export default async function handler(req, res) {
       messages,
       tools: TOOLS,
       maxSteps: MAX_AGENT_STEPS,
-      maxTokens: 8192,
+      maxTokens: 4096,
       authorizeTool: (name) => {
         if (name === 'search_public_web' || name === 'fetch_public_url') return publicResearchIntent;
         if (name === 'propose_investor_profile_update') return sourceAnalysis.asksProfileSetup && !actionDenied;
@@ -561,6 +562,7 @@ export default async function handler(req, res) {
       profilePatches,
     });
   } catch (err) {
+    logApparentAgentError(err, 'investor-agent');
     const failure = apparentAgentErrorResponse(err);
     return res.status(failure.status).json({ error: failure.error, code: failure.code });
   }
