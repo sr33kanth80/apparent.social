@@ -4,6 +4,7 @@ import { Check, Copy, ExternalLink, Loader2, Mail, Maximize2, Minimize2, Send, T
 import { AnimatePresence, motion } from 'framer-motion';
 
 import { AgentConversationShell } from '@/components/AgentConversationShell';
+import { AgentMarkdown } from '@/components/AgentMarkdown';
 import { AgentProfilePatchCard } from '@/components/AgentProfilePatchCard';
 import { InvestorAIPrompt } from '@/components/InvestorAIAssist';
 import { LogoIcon } from '@/components/LogoIcon';
@@ -166,6 +167,11 @@ export const InvestorAgentChat = ({
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  // Live progress labels streamed from the agent while it researches ("Searching…").
+  const [statusSteps, setStatusSteps] = useState<string[]>([]);
+  // Typewriter reveal: how many chars of the newest assistant reply are visible (null = all).
+  const [reveal, setReveal] = useState<number | null>(null);
+  const revealTimerRef = useRef<number | null>(null);
   // Fullscreen chat mode — entered automatically on send, exited via minimize/Esc.
   const [expanded, setExpanded] = useState(false);
   const transcriptRef = useRef<HTMLDivElement>(null);
@@ -204,6 +210,7 @@ export const InvestorAgentChat = ({
 
   useEffect(() => {
     if (!persistedMessagesLoaded) return;
+    stopReveal();
     if (persistedMessages.length > 0) {
       setMessages(fromHistoryMessages(persistedMessages));
       return;
@@ -211,9 +218,36 @@ export const InvestorAgentChat = ({
     setMessages([]);
   }, [persistedMessages, persistedMessagesLoaded]);
 
+  const stopReveal = () => {
+    if (revealTimerRef.current !== null) {
+      window.clearInterval(revealTimerRef.current);
+      revealTimerRef.current = null;
+    }
+    setReveal(null);
+  };
+
+  /** Progressively reveal the newest assistant reply, Perplexity-style. */
+  const startReveal = (length: number) => {
+    stopReveal();
+    if (length < 120) return; // short replies just appear
+    setReveal(0);
+    const step = Math.max(4, Math.round(length / 110)); // ~1.8s total at 16ms ticks
+    let shown = 0;
+    revealTimerRef.current = window.setInterval(() => {
+      shown += step;
+      if (shown >= length) {
+        stopReveal();
+        return;
+      }
+      setReveal(shown);
+    }, 16);
+  };
+
+  useEffect(() => () => stopReveal(), []);
+
   useEffect(() => {
     transcriptRef.current?.scrollTo({ top: transcriptRef.current.scrollHeight, behavior: 'smooth' });
-  }, [messages, isLoading, expanded]);
+  }, [messages, isLoading, expanded, statusSteps, reveal]);
 
   // Fullscreen chat: lock the page scroll behind the overlay and close on Escape.
   useEffect(() => {
@@ -280,6 +314,8 @@ export const InvestorAgentChat = ({
     loadingRef.current = true;
     if (!pageMode) setExpanded(true);
     setError('');
+    stopReveal();
+    setStatusSteps([]);
     const conversation: ChatMessage[] = [...messages, { role: 'user', content: trimmed }];
     setMessages(conversation);
     setIsLoading(true);
@@ -296,11 +332,49 @@ export const InvestorAgentChat = ({
           memories,
           autonomy,
           contacted: contactedFounderIds,
+          stream: true,
         }),
       });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok || data?.error) {
-        throw new Error(data?.error || `Request failed (${res.status})`);
+
+      let data: Record<string, unknown>;
+      if (res.ok && res.body && (res.headers.get('content-type') || '').includes('text/event-stream')) {
+        // SSE: status events while the agent researches, then one final done/error event.
+        const reader = res.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = '';
+        let doneEvent: Record<string, unknown> | null = null;
+        let errorEvent: Record<string, unknown> | null = null;
+        for (;;) {
+          const { value, done: finished } = await reader.read();
+          if (finished) break;
+          buffer += decoder.decode(value, { stream: true });
+          const events = buffer.split('\n\n');
+          buffer = events.pop() ?? '';
+          for (const event of events) {
+            const dataLine = event.split('\n').find((line) => line.startsWith('data: '));
+            if (!dataLine) continue;
+            try {
+              const payload = JSON.parse(dataLine.slice(6));
+              if (payload.type === 'status' && typeof payload.label === 'string') {
+                setStatusSteps((steps) => (steps[steps.length - 1] === payload.label ? steps : [...steps, payload.label].slice(-8)));
+              } else if (payload.type === 'done') {
+                doneEvent = payload;
+              } else if (payload.type === 'error') {
+                errorEvent = payload;
+              }
+            } catch {
+              /* ignore malformed events */
+            }
+          }
+        }
+        if (errorEvent) throw new Error(String(errorEvent.error || 'The agent is unavailable right now.'));
+        if (!doneEvent) throw new Error('The agent connection dropped — please retry.');
+        data = doneEvent;
+      } else {
+        data = await res.json().catch(() => ({}));
+        if (!res.ok || data?.error) {
+          throw new Error(String(data?.error || `Request failed (${res.status})`));
+        }
       }
 
       const assistantReply = String(data.reply ?? '');
@@ -324,7 +398,10 @@ export const InvestorAgentChat = ({
           profilePatches: profilePatches.length ? profilePatches : undefined,
         },
       ];
-      if (activeThreadRef.current === conversationThreadId) setMessages(nextConversation);
+      if (activeThreadRef.current === conversationThreadId) {
+        setMessages(nextConversation);
+        startReveal(assistantReply.length);
+      }
       void persistTranscript(nextConversation, undefined, conversationThreadId);
 
       // Auto modes send immediately; manual mode waits for the investor to approve.
@@ -364,6 +441,7 @@ export const InvestorAgentChat = ({
       setError(err instanceof Error ? err.message : 'The agent is unavailable right now.');
     } finally {
       setIsLoading(false);
+      setStatusSteps([]);
       loadingRef.current = false;
     }
   };
@@ -375,6 +453,28 @@ export const InvestorAgentChat = ({
   };
 
   const hasConversation = messages.length > 0;
+
+  // The newest assistant reply is revealed progressively; older messages show in full.
+  const visibleAssistantText = (message: ChatMessage, index: number) =>
+    reveal !== null && index === messages.length - 1 ? message.content.slice(0, reveal) : message.content;
+
+  // Perplexity-style research trail: finished steps get a check, the current one spins.
+  const statusTrail = (
+    <div className="space-y-1.5">
+      {(statusSteps.length ? statusSteps : ['Working…']).map((label, index, all) => {
+        const current = index === all.length - 1;
+        return (
+          <div
+            key={`${index}-${label}`}
+            className={cn('flex items-center gap-2 text-sm', current ? 'text-gray-600' : 'text-gray-400')}
+          >
+            {current ? <Loader2 className="h-3.5 w-3.5 shrink-0 animate-spin" /> : <Check className="h-3.5 w-3.5 shrink-0" />}
+            {label}
+          </div>
+        );
+      })}
+    </div>
+  );
 
   const renderProposal = (messageIndex: number, proposal: ProposalState, proposalIndex: number) => {
     const statusBadge = () => {
@@ -473,8 +573,8 @@ export const InvestorAgentChat = ({
   // Assistant bubbles sit on white in the compact card, but on the cream page
   // background in fullscreen — swap surfaces so they stay visible in both.
   const assistantBubbleClass = expanded
-    ? 'max-w-[85%] whitespace-pre-wrap rounded-2xl rounded-bl-sm border border-black/5 bg-white px-3.5 py-2.5 text-sm leading-relaxed text-gray-800 shadow-[0_4px_16px_rgba(0,0,0,0.03)]'
-    : 'max-w-[85%] whitespace-pre-wrap rounded-2xl rounded-bl-sm bg-[#f6f3f1] px-3.5 py-2.5 text-sm leading-relaxed text-gray-800';
+    ? 'max-w-[85%] rounded-2xl rounded-bl-sm border border-black/5 bg-white px-3.5 py-2.5 text-sm leading-relaxed text-gray-800 shadow-[0_4px_16px_rgba(0,0,0,0.03)]'
+    : 'max-w-[85%] rounded-2xl rounded-bl-sm bg-[#f6f3f1] px-3.5 py-2.5 text-sm leading-relaxed text-gray-800';
 
   const transcript = (
     <>
@@ -499,7 +599,9 @@ export const InvestorAgentChat = ({
                   : assistantBubbleClass
               }
             >
-              {message.content}
+              {message.role === 'assistant'
+                ? <AgentMarkdown>{visibleAssistantText(message, index)}</AgentMarkdown>
+                : message.content}
             </div>
           </div>
 
@@ -542,12 +644,11 @@ export const InvestorAgentChat = ({
             <LogoIcon className="h-3.5 w-3.5 text-ink" />
           </div>
           <div
-            className={`flex items-center gap-2 rounded-2xl rounded-bl-sm px-3.5 py-2.5 text-sm text-gray-500 ${
+            className={`rounded-2xl rounded-bl-sm px-3.5 py-2.5 ${
               expanded ? 'border border-black/5 bg-white' : 'bg-[#f6f3f1]'
             }`}
           >
-            <Loader2 className="h-3.5 w-3.5 animate-spin" />
-            Working…
+            {statusTrail}
           </div>
         </motion.div>
       )}
@@ -597,7 +698,9 @@ export const InvestorAgentChat = ({
                   </div>
                   Apparent
                 </div>
-                <div className="whitespace-pre-wrap text-[15px] leading-7 text-gray-800 sm:text-base">{message.content}</div>
+                <AgentMarkdown className="text-[15px] leading-7 text-gray-800 sm:text-base">
+                  {visibleAssistantText(message, index)}
+                </AgentMarkdown>
 
                 {message.proposals && message.proposals.length > 0 && (
                   <div className="mt-5 grid gap-3">{message.proposals.map((proposal, pi) => renderProposal(index, proposal, pi))}</div>
@@ -631,13 +734,12 @@ export const InvestorAgentChat = ({
           <motion.div
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
-            className="flex items-center gap-3 text-sm text-gray-500"
+            className="flex items-start gap-3"
           >
-            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-charcoal text-white">
+            <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-charcoal text-white">
               <LogoIcon className="h-3.5 w-3.5" />
             </div>
-            <Loader2 className="h-3.5 w-3.5 animate-spin" />
-            Researching and working across your Apparent workspace…
+            <div className="pt-1">{statusTrail}</div>
           </motion.div>
         )}
 

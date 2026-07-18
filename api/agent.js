@@ -393,13 +393,37 @@ const buildSystemPrompt = (criteria, autonomy, contactedIds, memories, sourceBri
     "- Some on-platform founders have a `dossier` field — a GitHub-grounded profile written by the founder's own agent. When present, treat it as high-signal and lean on it (and `github_summary` / `github_verified`) when explaining fit and writing outreach.",
     '- Default to on-platform founders first; reach to the web when the investor asks to go broader or for founders not yet on Apparent.',
     '- When ranking, explain fit against thesis/sectors/stage/geography and real proof (traction, launches, GitHub, raising intent).',
-    '- Be concise and scannable. Prefer short call-outs (name — company — one-line why-it-fits) over long prose.',
+    '- Format every reply in GitHub-flavored markdown. Lead with one short sentence, then bullet lists with founder names in bold (e.g. "- **Jane Doe** — Acme: one-line why-it-fits"). Use ### headings only when a reply has distinct sections, and markdown links instead of raw URLs. Be concise and scannable — no walls of prose.',
     '- If a search returns nothing, say so plainly and suggest loosening a filter. Never fabricate founders, metrics, emails, or links.',
   ];
   return lines.join('\n');
 };
 
 // ---------- Handler ----------
+
+// Vercel Node functions buffer responses unless streaming is opted into.
+export const config = { supportsResponseStreaming: true };
+
+/** Human-readable progress label for a tool call, streamed to the client. */
+const toolStatusLabel = (name, input) => {
+  if (name === 'search_apparent_founders') {
+    const q = str(input?.query).trim();
+    return q ? `Searching Apparent founders for “${q.slice(0, 60)}”…` : 'Searching founders on Apparent…';
+  }
+  if (name === 'search_public_web') return `Searching the web for “${str(input?.query).trim().slice(0, 60)}”…`;
+  if (name === 'fetch_public_url') {
+    try {
+      return `Reading ${new URL(str(input?.url)).hostname}…`;
+    } catch {
+      return 'Reading a source…';
+    }
+  }
+  if (name === 'enrich_contact') return `Finding contact details${input?.name ? ` for ${str(input.name)}` : ''}…`;
+  if (name === 'propose_outreach') return `Drafting outreach to ${str(input?.founder_name) || 'a founder'}…`;
+  if (name === 'prepare_mailto') return `Drafting an intro email${input?.founder_name ? ` to ${str(input.founder_name)}` : ''}…`;
+  if (name === 'propose_investor_profile_update') return 'Drafting profile updates…';
+  return 'Working…';
+};
 
 const readJsonBody = async (req) => {
   if (req.body && typeof req.body === 'object') return req.body;
@@ -473,6 +497,25 @@ export default async function handler(req, res) {
   const seenProposalFounders = new Set();
   const seenEmailKeys = new Set();
 
+  // SSE progress streaming, opted into by the client. Validation errors above
+  // stay plain JSON; the stream only starts once the agent loop is about to run.
+  let streaming = false;
+  const emit = (payload) => {
+    if (!streaming) return;
+    res.write(`data: ${JSON.stringify(payload)}\n\n`);
+  };
+  if (body.stream === true) {
+    streaming = true;
+    res.writeHead(200, {
+      'Content-Type': 'text/event-stream; charset=utf-8',
+      'Cache-Control': 'no-cache, no-transform',
+      Connection: 'keep-alive',
+      'X-Accel-Buffering': 'no',
+    });
+    res.flushHeaders?.();
+    emit({ type: 'status', label: 'Thinking…' });
+  }
+
   try {
     const runtime = createApparentAgentRuntime();
     const runtimeResult = await runtime.run({
@@ -489,6 +532,7 @@ export default async function handler(req, res) {
         return true;
       },
       executeTool: async (name, input, { session }) => {
+        emit({ type: 'status', label: toolStatusLabel(name, input) });
         const external = await runStandardOrthogonalTool(session, name, input, publicResearchPolicy);
         if (external !== null) return external;
         let result;
@@ -555,15 +599,24 @@ export default async function handler(req, res) {
       if (!reply.includes(sourceNote)) reply = `${reply ? `${reply}\n\n` : ''}${sourceNote}`;
     }
 
-    return res.status(200).json({
+    const responsePayload = {
       reply: reply || "I couldn't find anything to say about that — try rephrasing your question.",
       proposals,
       emailDrafts,
       profilePatches,
-    });
+    };
+    if (streaming) {
+      emit({ type: 'done', ...responsePayload });
+      return res.end();
+    }
+    return res.status(200).json(responsePayload);
   } catch (err) {
     logApparentAgentError(err, 'investor-agent');
     const failure = apparentAgentErrorResponse(err);
+    if (streaming) {
+      emit({ type: 'error', error: failure.error, code: failure.code });
+      return res.end();
+    }
     return res.status(failure.status).json({ error: failure.error, code: failure.code });
   }
 }
