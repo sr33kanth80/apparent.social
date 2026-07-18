@@ -10,7 +10,6 @@ import {
   FileText,
   Flame,
   Globe,
-  History,
   Image,
   LocateFixed,
   ListFilter,
@@ -3347,26 +3346,6 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
     void runAutonomousFollowups();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isInvestor, agentAutonomy, messages]);
-
-  // Recent agent actions for the audit view.
-  const agentActions = useMemo(
-    () =>
-      messages
-        .filter(
-          (message) =>
-            message.ownerId === user.id &&
-            (message.context === 'agent-outreach' || message.context === 'agent-followup'),
-        )
-        .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
-        .slice(0, 8)
-        .map((message) => ({
-          id: message.id,
-          type: message.context === 'agent-followup' ? 'Followed up' : 'Reached out',
-          name: message.recipient,
-          at: message.updatedAt,
-        })),
-    [messages, user.id],
-  );
 
   const handleSignOut = async () => {
     try {
@@ -8690,7 +8669,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
       animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
       exit={{ opacity: 0, y: -8, filter: 'blur(2px)' }}
       transition={{ duration: 0.22, ease: 'easeOut' }}
-      className="grid h-full min-h-0 xl:grid-cols-[minmax(0,1fr)_280px]"
+      className="h-full min-h-0"
     >
       {isInvestor ? (
         <InvestorAgentChat
@@ -8712,7 +8691,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
         />
       ) : (
         <FounderAgentChat
-          className="h-full min-h-0 xl:col-span-2"
+          className="h-full min-h-0"
           founder={founderAgentContext}
           memories={agentMemories}
           threadId={activeAgentThreadId}
@@ -8729,39 +8708,6 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
         />
       )}
 
-      {isInvestor && (
-        <aside className="hidden min-h-0 flex-col overflow-hidden border-l border-black/[0.07] bg-[#f6f1e8] xl:flex">
-          <div className="border-b border-black/[0.07] px-4 py-4">
-            <div className="flex items-center gap-2 text-sm font-semibold text-black">
-              <History className="h-4 w-4 text-ink" />
-              Recent agent actions
-            </div>
-            <p className="mt-1 text-[11px] leading-4 text-gray-400">Outreach Apparent completed from this workspace.</p>
-          </div>
-          <div className="min-h-0 flex-1 overflow-y-auto p-3">
-            {agentActions.length > 0 ? (
-              <ul className="space-y-2">
-                {agentActions.map((action) => (
-                  <li key={action.id} className="rounded-2xl border border-black/[0.06] bg-[#fdf9f7] p-3">
-                    <p className="text-xs leading-5 text-gray-700">
-                      {action.type} to <span className="font-semibold text-black">{action.name || 'a founder'}</span>
-                    </p>
-                    <p className="mt-1 text-[10px] text-gray-400">{formatRelativeTime(action.at)}</p>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <div className="flex h-full min-h-48 flex-col items-center justify-center px-4 text-center">
-                <div className="mb-3 flex h-9 w-9 items-center justify-center rounded-xl bg-[#f4f1eb]">
-                  <History className="h-4 w-4 text-gray-500" />
-                </div>
-                <p className="text-xs font-semibold text-black">No actions yet</p>
-                <p className="mt-1 text-[11px] leading-4 text-gray-400">Approved outreach and autonomous actions will appear here.</p>
-              </div>
-            )}
-          </div>
-        </aside>
-      )}
     </motion.div>
   );
 
@@ -8973,10 +8919,11 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
         unreadMessages={totalUnreadMessages}
         agentThreads={agentChatThreads}
         activeAgentThreadId={activeAgentThreadId}
+        onStartNewAgentConversation={handleStartNewAgentConversation}
       />
 
       <main className="ed-dashboard-main min-h-screen pl-[16.25rem]">
-        <div className={isVCHeatMapView ? 'min-h-screen' : isAgentView ? 'ed-dashboard-frame relative mx-auto flex h-screen w-full max-w-[1440px] flex-col overflow-hidden bg-[#fdf9f7]' : isMessagesView ? 'ed-dashboard-frame relative mx-auto flex h-screen w-full max-w-[1440px] flex-col overflow-hidden px-6 pt-6' : showWorkspaceHeader ? 'ed-dashboard-frame mx-auto max-w-[1440px] px-6 py-6' : 'ed-dashboard-frame relative mx-auto max-w-[1440px] px-6 pb-6 pt-6'}>
+        <div className={isVCHeatMapView ? 'min-h-screen' : isAgentView ? 'ed-dashboard-frame relative flex h-screen w-full flex-col overflow-hidden bg-[#fdf9f7]' : isMessagesView ? 'ed-dashboard-frame relative mx-auto flex h-screen w-full max-w-[1440px] flex-col overflow-hidden px-6 pt-6' : showWorkspaceHeader ? 'ed-dashboard-frame mx-auto max-w-[1440px] px-6 py-6' : 'ed-dashboard-frame relative mx-auto max-w-[1440px] px-6 pb-6 pt-6'}>
           {/* Overview + For You: full header with the workspace/For-You toggle +
               global search + bell. Other section pages drop it — the toggle's
               targets are both reachable here, and sections carry their own

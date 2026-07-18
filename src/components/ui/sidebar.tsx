@@ -59,6 +59,7 @@ interface SessionNavBarProps {
   /** Durable Apparent Agent conversations shown beneath the Agent destination. */
   agentThreads?: AgentChatThread[];
   activeAgentThreadId?: string | null;
+  onStartNewAgentConversation?: () => void;
 }
 
 const deriveDisplayName = (email: string): string =>
@@ -268,6 +269,7 @@ function BaseSessionNavBar({
   unreadMessages = 0,
   agentThreads = [],
   activeAgentThreadId = null,
+  onStartNewAgentConversation,
   onSignOut,
 }: SessionNavBarProps & { onSignOut?: () => Promise<void> }) {
   const [isHovered, setIsHovered] = useState(false);
@@ -385,25 +387,30 @@ function BaseSessionNavBar({
                                     activeClass={config.active}
                                     unreadCount={item.path.endsWith('/messages') ? unreadMessages : 0}
                                   />
-                                  {isAgentItem && !isCollapsed && (
-                                    <Link
-                                      to={item.path}
-                                      aria-label="Start a new Agent conversation"
-                                      title="New conversation"
-                                      className={cn(
-                                        'absolute right-1 top-1 flex h-6 w-6 items-center justify-center rounded-md transition-colors',
-                                        activePath === item.path
-                                          ? 'text-white/70 hover:bg-white/15 hover:text-white'
-                                          : 'text-gray-400 hover:bg-black/[0.06] hover:text-black',
-                                      )}
-                                    >
-                                      <Plus className="h-3.5 w-3.5" />
-                                    </Link>
-                                  )}
                                 </div>
 
-                                {isAgentItem && !isCollapsed && agentThreads.length > 0 && (
+                                {isAgentItem && !isCollapsed && (
                                   <div className="ml-3 mt-1 space-y-0.5 border-l border-black/10 pl-2">
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        if (onStartNewAgentConversation) {
+                                          onStartNewAgentConversation();
+                                        } else {
+                                          navigate(item.path);
+                                        }
+                                      }}
+                                      title="Start a new conversation"
+                                      className={cn(
+                                        'flex h-7 min-w-0 items-center gap-2 rounded-md px-2 text-xs transition-colors',
+                                        activePath === item.path && !activeAgentThreadId
+                                          ? 'bg-black/[0.07] font-semibold text-[#222]'
+                                          : 'text-gray-500 hover:bg-black/[0.04] hover:text-[#222]',
+                                      )}
+                                    >
+                                      <Plus className="h-3 w-3 shrink-0 opacity-70" />
+                                      <span>New chat</span>
+                                    </button>
                                     {agentThreads.map((thread) => {
                                       const threadPath = `${item.path}?thread=${encodeURIComponent(thread.id)}`;
                                       const isCurrent = activePath === item.path && activeAgentThreadId === thread.id;

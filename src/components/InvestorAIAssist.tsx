@@ -103,12 +103,12 @@ export const InvestorAIPrompt = ({
   return (
     <div className={cn('w-full py-4', surface === 'charcoal' ? 'text-white' : 'text-ink', className)}>
       <div className={cn(
-        'rounded-2xl p-1.5 pt-4',
+        surface === 'charcoal' ? 'rounded-2xl p-1.5 pt-4' : 'border-y border-black/10 py-3',
         surface === 'charcoal'
           ? 'bg-charcoal shadow-[0_18px_60px_rgba(0,0,0,0.24)]'
-          : 'border border-black/10 bg-[#f6f1e8] shadow-[0_14px_40px_rgba(64,48,34,0.08)]',
+          : 'bg-transparent',
       )}>
-        <div className="mx-2 mb-2.5 flex items-center">
+        <div className={cn('mb-2.5 flex items-center', surface === 'charcoal' ? 'mx-2' : 'mx-3')}>
           <LogoIcon className={cn('h-3.5 w-3.5', surface === 'charcoal' ? 'text-white/90' : 'text-[#003f2e]')} />
         </div>
         <div className="relative">
@@ -121,7 +121,7 @@ export const InvestorAIPrompt = ({
                   'h-28 min-h-28 max-h-28 w-full resize-none overflow-y-auto overscroll-contain rounded-xl rounded-b-none border-none px-4 py-3 focus-visible:ring-0 focus-visible:ring-offset-0',
                   surface === 'charcoal'
                     ? 'bg-white/5 text-white placeholder:text-white/70'
-                    : 'bg-white/35 text-[#222] placeholder:text-[#6f675f]',
+                    : 'bg-transparent text-[#222] placeholder:text-[#6f675f]',
                 )}
                 id="ai-input-15"
                 onChange={(event) => setValue(event.target.value)}
@@ -132,7 +132,7 @@ export const InvestorAIPrompt = ({
               />
             </div>
 
-            <div className={cn('flex h-14 items-center rounded-b-xl', surface === 'charcoal' ? 'bg-white/5' : 'bg-white/35')}>
+            <div className={cn('flex h-14 items-center rounded-b-xl', surface === 'charcoal' ? 'bg-white/5' : 'bg-transparent')}>
               <div className="absolute bottom-3 left-3 right-3 flex w-[calc(100%-24px)] items-center justify-between">
                 <div className="flex items-center gap-2">
                   <div className={cn(

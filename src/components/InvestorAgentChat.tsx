@@ -641,7 +641,6 @@ export const InvestorAgentChat = ({
         className={className}
         hasConversation={hasConversation}
         isLoading={isLoading}
-        onNewConversation={clear}
         onSubmit={send}
         role="investor"
         suggestions={SUGGESTIONS}
