@@ -1,24 +1,25 @@
 // Apparent investor agent — Phase 0 ("deal-flow copilot over your own data").
 //
-// Server-side so the Anthropic API key never touches the browser. Runs a manual
-// tool-use loop with a single tool, `search_apparent_founders`, that queries the
-// public Apparent founder/launch data in Supabase. Later phases add web sourcing,
-// contact enrichment, drafting, and in-app DM tools to this same loop.
+// Server-side Apparent agent. Apparent owns orchestration, memory, permissions,
+// and actions; Orthogonal supplies replaceable inference and external data.
 //
 // Request:  POST { messages: [{role:'user'|'assistant', content:string}], criteria }
 // Response: { reply: string }  |  { error: string }
 //
-// Env: ANTHROPIC_API_KEY (required), VITE_SUPABASE_URL + VITE_SUPABASE_ANON_KEY
+// Env: ORTHOGONAL_API_KEY (required), VITE_SUPABASE_URL + VITE_SUPABASE_ANON_KEY
 // (or SUPABASE_URL / SUPABASE_ANON_KEY) for the founder search tool.
 
-import Anthropic from '@anthropic-ai/sdk';
 import { requireAgentAccess, sendAgentAccessError } from './_agent-guard.js';
+import {
+  apparentAgentErrorResponse,
+  createApparentAgentRuntime,
+  createPublicResearchPolicy,
+  runStandardOrthogonalTool,
+  standardOrthogonalTools,
+} from './_apparent-agent-runtime.js';
+import { orthogonalData } from './_orthogonal.js';
 
-// Sonnet 4.6 is the right-sized default for chat + web search + thesis-fit
-// reasoning (cheaper/faster than Opus, same 1M context). Override with AGENT_MODEL.
-const MODEL = process.env.AGENT_MODEL || 'claude-sonnet-4-6';
-const MAX_TOKENS = 8192;
-// Covers both client tool rounds and server web-search continuations (pause_turn).
+// Covers multi-step first-party and Orthogonal tool execution.
 const MAX_AGENT_STEPS = 12;
 
 const SUPABASE_URL = (process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL || '').replace(/\/$/, '');
@@ -212,56 +213,29 @@ const searchApparentFounders = async (input) => {
 };
 
 // ---------- Tool: enrich_contact (off-platform, hybrid) ----------
-// Vendor adapter when a key is configured (Hunter.io email-finder); otherwise
-// returns guidance so the model falls back to web_search/web_fetch.
+// Contact enrichment is routed through Orthogonal's Tomba adapter.
 
-const enrichContact = async (input) => {
+const enrichContact = async (input, session) => {
   const name = str(input?.name).trim();
   const company = str(input?.company).trim();
   const domain = str(input?.domain).trim().replace(/^https?:\/\//, '').replace(/\/.*$/, '');
-  const hunterKey = process.env.HUNTER_API_KEY || '';
+  if (!domain) return { status: 'domain_required', guidance: 'Research the company domain first, then retry contact enrichment.' };
 
-  if (hunterKey && domain) {
-    try {
-      const [first, ...rest] = name.split(/\s+/);
-      const last = rest.join(' ');
-      const params = new URLSearchParams({ domain, api_key: hunterKey });
-      if (first) params.set('first_name', first);
-      if (last) params.set('last_name', last);
-      const res = await fetch(`https://api.hunter.io/v2/email-finder?${params.toString()}`);
-      if (res.ok) {
-        const json = await res.json();
-        const email = str(json?.data?.email);
-        const score = json?.data?.score ?? null;
-        if (email) return { provider: 'hunter', email, confidence: score, name, company };
-      }
-    } catch {
-      /* fall through to guidance */
-    }
-    return {
-      provider: 'hunter',
-      status: 'not_found',
-      guidance: 'The vendor returned no email. Use web_search/web_fetch to find a public contact (company contact page, or the founder\'s X/LinkedIn), then call prepare_mailto.',
-      name,
-      company,
-    };
-  }
-
-  return {
-    provider: 'none',
-    status: 'no_vendor',
-    guidance:
-      "No enrichment vendor is configured. Use web_search and web_fetch to find a public contact email or the founder's X/LinkedIn handle, then call prepare_mailto with whatever public contact you found (leave to_email empty if only a social handle is available, and mention the handle in the body).",
-    name,
-    company,
-    domain,
-  };
+  const [firstName, ...lastParts] = name.split(/\s+/).filter(Boolean);
+  const query = { domain };
+  if (firstName) query.first_name = firstName;
+  if (lastParts.length) query.last_name = lastParts.join(' ');
+  const data = orthogonalData(await session.run({ api: 'tomba', path: '/v1/email-finder', query }));
+  const record = data?.data?.email ?? data?.email ?? data?.data ?? data;
+  const email = str(record?.email).trim();
+  return email
+    ? { provider: 'tomba-via-orthogonal', email, confidence: record?.score ?? record?.confidence ?? null, name, company }
+    : { provider: 'tomba-via-orthogonal', status: 'not_found', name, company, domain };
 };
 
 const TOOLS = [
-  // Anthropic server-side tools — used to source founders who are NOT on Apparent.
-  { type: 'web_search_20260209', name: 'web_search' },
-  { type: 'web_fetch_20260209', name: 'web_fetch' },
+  // Orthogonal-backed public tools source founders who are not on Apparent.
+  ...standardOrthogonalTools,
   {
     name: 'search_apparent_founders',
     description:
@@ -360,9 +334,9 @@ const TOOLS = [
   },
 ];
 
-const runTool = async (name, input) => {
+const runTool = async (name, input, session) => {
   if (name === 'search_apparent_founders') return searchApparentFounders(input);
-  if (name === 'enrich_contact') return enrichContact(input);
+  if (name === 'enrich_contact') return enrichContact(input, session);
   return { error: `Unknown tool: ${name}` };
 };
 
@@ -408,12 +382,12 @@ const buildSystemPrompt = (criteria, autonomy, contactedIds, memories, sourceBri
     '- To reach out, call propose_outreach (one per founder), only for founders that are open_to_contact and not already-contacted. These become in-app DMs, sent per the outreach mode above.',
     '',
     'OFF-PLATFORM founders (out on the web, not on Apparent):',
-    '- When the investor wants founders beyond Apparent ("not on Apparent", "from the web", "find more like this", broad sourcing), use web_search to find real startups/founders matching the thesis, and web_fetch to read their site/profile for detail. Only surface real, verifiable results — cite the source URL.',
-    '- To get a contact, call enrich_contact (it uses a vendor if configured, otherwise tells you to keep using web_search/web_fetch). Never invent an email — only use one you actually found.',
+    '- When the investor wants founders beyond Apparent ("not on Apparent", "from the web", "find more like this", broad sourcing), use search_public_web to find real startups/founders matching the thesis, and fetch_public_url to read their site/profile for detail. Only surface real, verifiable results and cite the source URL.',
+    '- To get a contact, call enrich_contact. Never invent an email; only use one returned by the tool.',
     '- To reach out, call prepare_mailto. OFF-PLATFORM outreach is ALWAYS a draft the investor sends from their own inbox — it is NEVER auto-sent, regardless of the autonomy setting. If you only found a social handle, leave to_email empty and put the handle in the body.',
     '',
     'General rules:',
-    '- When the investor asks you to set up, import, complete, or update their Apparent profile from links or pasted text, use web_fetch/web_search where helpful, then call propose_investor_profile_update with a structured patch. Do not claim LinkedIn or any source was read if it was not; list inaccessible URLs as unavailable sources and ask for alternate links or pasted text when needed.',
+    '- When the investor asks you to set up, import, complete, or update their Apparent profile from links or pasted text, use fetch_public_url/search_public_web where helpful, then call propose_investor_profile_update with a structured patch. Do not claim LinkedIn or any source was read if it was not; list inaccessible URLs as unavailable sources and ask for alternate links or pasted text when needed.',
     "- Some on-platform founders have a `dossier` field — a GitHub-grounded profile written by the founder's own agent. When present, treat it as high-signal and lean on it (and `github_summary` / `github_verified`) when explaining fit and writing outreach.",
     '- Default to on-platform founders first; reach to the web when the investor asks to go broader or for founders not yet on Apparent.',
     '- When ranking, explain fit against thesis/sectors/stage/geography and real proof (traction, launches, GitHub, raising intent).',
@@ -442,10 +416,9 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  if (!process.env.ANTHROPIC_API_KEY) {
+  if (!process.env.ORTHOGONAL_API_KEY) {
     return res.status(200).json({
-      reply:
-        "The agent isn't switched on yet — an ANTHROPIC_API_KEY needs to be set in the deployment environment. Once that's added, I can start sourcing founders against your thesis.",
+      reply: "The Apparent agent isn't switched on yet — ORTHOGONAL_API_KEY needs to be set in the deployment environment.",
     });
   }
 
@@ -459,7 +432,7 @@ export default async function handler(req, res) {
   const autonomy = body.autonomy === 'auto_onplatform' || body.autonomy === 'autonomous' ? body.autonomy : 'manual';
   const contactedIds = Array.isArray(body.contacted) ? body.contacted.map(String).slice(0, 200) : [];
 
-  // Normalize to Anthropic message shape; keep only role + string content.
+  // Keep a bounded, text-only history. The Apparent runtime owns provider conversion.
   const messages = incoming
     .filter((m) => m && (m.role === 'user' || m.role === 'assistant') && typeof m.content === 'string' && m.content.trim())
     .slice(-20)
@@ -469,8 +442,24 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'Expected a non-empty conversation ending with a user message.' });
   }
 
-  const client = new Anthropic();
   const sourceAnalysis = analyzeSourceIngestion(messages[messages.length - 1]?.content || '');
+  const latestUserMessage = messages[messages.length - 1].content;
+  const publicResearchPolicy = createPublicResearchPolicy({
+    publicContext: [latestUserMessage, ...sourceAnalysis.urls].join(' '),
+  });
+  const publicResearchIntent = /\b(?:off[- ]platform|outside apparent|public (?:web|source)|web search|research online|look up|source (?:founders|startups)|not on apparent)\b/i.test(latestUserMessage) ||
+    (sourceAnalysis.asksProfileSetup && (sourceAnalysis.urls.length > 0 || /\b(?:public|web|website|source|look up|research)\b/i.test(latestUserMessage)));
+  const priorAssistantMessage = [...messages].reverse().find((message) => message.role === 'assistant')?.content || '';
+  const confirmsPriorAction = /^\s*(?:yes|approved?|confirm(?:ed)?|do it|go ahead|proceed|send (?:it|them)|make it happen)\b/i.test(latestUserMessage);
+  const actionDenied = /\b(?:do not|don't|dont|never|not yet|hold off|without (?:sending|contacting|messaging)|research only|just research)\b/i.test(latestUserMessage);
+  const sendPattern = /\b(?:reach out to|introduce me to|connect me with|write to)\b|\b(?:contact|message|dm|e-?mail)\s+(?!list\b|details\b|info(?:rmation)?\b|history\b|summary\b)\w+|\bsend\b.{0,50}\b(?:message|dm|e-?mail|intro|outreach)\s+to\b|\bsend\s+(?:them|him|her|these founders|those founders|the founder)\b/i;
+  const draftPattern = /\b(?:draft|write|prepare|compose)\b.{0,40}\b(?:outreach|message|dm|e-?mail|intro)\b/i;
+  const asksOnly = /\b(?:who|which|should|could|would|can)\b.{0,40}\b(?:contact|message|e-?mail|reach out)\b[^.!]*\?/i.test(latestUserMessage);
+  const sendsToSelf = /\b(?:send|message|dm|e-?mail)\b[\s\S]*\b(?:me|myself)\b/i.test(latestUserMessage);
+  const explicitFounderOutreach = /\b(?:reach out to|contact|message|dm|e-?mail|write to)\s+(?:(?:these|those|the|all|each|our)\s+)?(?:founder|founders|builder|builders|them|him|her)\b|\bsend\b.{0,50}\b(?:message|dm|e-?mail|intro|outreach)\s+to\s+(?:(?:these|those|the|all|each|our)\s+)?(?:founder|founders|builder|builders|them|him|her)\b|\bsend\s+(?:them|him|her|these founders|those founders|the founder)\b/i.test(latestUserMessage);
+  const confirmedOutreach = confirmsPriorAction && /\b(?:send|reach out|contact)\b/i.test(priorAssistantMessage);
+  const sendIntent = !actionDenied && !asksOnly && !sendsToSelf && sendPattern.test(latestUserMessage);
+  const draftIntent = !actionDenied && (draftPattern.test(latestUserMessage) || confirmedOutreach);
   const system = buildSystemPrompt(criteria, autonomy, contactedIds, memories, sourceAnalysis.brief);
   const proposals = []; // on-platform DM proposals
   const emailDrafts = []; // off-platform mailto drafts
@@ -478,54 +467,39 @@ export default async function handler(req, res) {
   const seenProposalFounders = new Set();
   const seenEmailKeys = new Set();
 
-  const callModel = () =>
-    client.messages.create({
-      model: MODEL,
-      max_tokens: MAX_TOKENS,
-      thinking: { type: 'adaptive' },
-      output_config: { effort: 'medium' },
-      system,
-      tools: TOOLS,
-      messages,
-    });
-
   try {
-    let response = await callModel();
-
-    let steps = 0;
-    while (steps < MAX_AGENT_STEPS && (response.stop_reason === 'tool_use' || response.stop_reason === 'pause_turn')) {
-      steps += 1;
-
-      // Preserve the assistant turn verbatim (thinking, server web-search blocks,
-      // and tool_use blocks) so the loop stays coherent across steps.
-      messages.push({ role: 'assistant', content: response.content });
-
-      // pause_turn = Anthropic's server-side web search hit its step limit; just
-      // re-send to let it resume. No client tool results to add.
-      if (response.stop_reason === 'pause_turn') {
-        response = await callModel();
-        continue;
-      }
-
-      const toolResults = [];
-      for (const block of response.content) {
-        if (block.type !== 'tool_use') continue; // skip server_tool_use (web_search/web_fetch)
-
+    const runtime = createApparentAgentRuntime();
+    const runtimeResult = await runtime.run({
+      system,
+      messages,
+      tools: TOOLS,
+      maxSteps: MAX_AGENT_STEPS,
+      maxTokens: 8192,
+      authorizeTool: (name) => {
+        if (name === 'search_public_web' || name === 'fetch_public_url') return publicResearchIntent;
+        if (name === 'propose_investor_profile_update') return sourceAnalysis.asksProfileSetup && !actionDenied;
+        if (name === 'propose_outreach') return autonomy === 'manual' ? sendIntent || draftIntent : sendIntent && explicitFounderOutreach;
+        if (name === 'prepare_mailto') return sendIntent || draftIntent;
+        return true;
+      },
+      executeTool: async (name, input, { session }) => {
+        const external = await runStandardOrthogonalTool(session, name, input, publicResearchPolicy);
+        if (external !== null) return external;
         let result;
-        if (block.name === 'propose_investor_profile_update') {
-          const patch = buildInvestorProfilePatch(block.input, criteria);
+        if (name === 'propose_investor_profile_update') {
+          const patch = buildInvestorProfilePatch(input, criteria);
           if (patch.fields.length > 0) {
             profilePatches.push(patch);
             result = { status: 'drafted', fields: patch.fields.map((field) => field.field) };
           } else {
             result = { status: 'skipped', reason: 'No supported profile fields were proposed.' };
           }
-        } else if (block.name === 'propose_outreach') {
+        } else if (name === 'propose_outreach') {
           // On-platform DM — side-effect-free; the client performs the RLS-safe send.
-          const founderId = str(block.input?.founder_id);
-          const founderName = str(block.input?.founder_name);
-          const subject = str(block.input?.subject);
-          const messageBody = str(block.input?.body);
+          const founderId = str(input?.founder_id);
+          const founderName = str(input?.founder_name);
+          const subject = str(input?.subject);
+          const messageBody = str(input?.body);
           if (founderId && messageBody && !seenProposalFounders.has(founderId) && !contactedIds.includes(founderId)) {
             seenProposalFounders.add(founderId);
             proposals.push({ founderId, founderName, subject, body: messageBody });
@@ -533,13 +507,13 @@ export default async function handler(req, res) {
           } else {
             result = { status: 'skipped', reason: 'duplicate, already-contacted, or missing fields' };
           }
-        } else if (block.name === 'prepare_mailto') {
+        } else if (name === 'prepare_mailto') {
           // Off-platform email — always a draft for the investor's own inbox.
-          const founderName = str(block.input?.founder_name);
-          const company = str(block.input?.company);
-          const toEmail = str(block.input?.to_email);
-          const subject = str(block.input?.subject);
-          const draftBody = str(block.input?.body);
+          const founderName = str(input?.founder_name);
+          const company = str(input?.company);
+          const toEmail = str(input?.to_email);
+          const subject = str(input?.subject);
+          const draftBody = str(input?.body);
           const key = (toEmail || `${founderName}|${company}`).toLowerCase();
           if (draftBody && !seenEmailKeys.has(key)) {
             seenEmailKeys.add(key);
@@ -549,7 +523,7 @@ export default async function handler(req, res) {
               toEmail,
               subject,
               body: draftBody,
-              sourceUrl: str(block.input?.source_url),
+              sourceUrl: str(input?.source_url),
             });
             result = { status: 'drafted', note: 'Shown to the investor to send from their own inbox.' };
           } else {
@@ -557,29 +531,16 @@ export default async function handler(req, res) {
           }
         } else {
           try {
-            result = await runTool(block.name, block.input);
+            result = await runTool(name, input, session);
           } catch (err) {
             result = { error: `Tool failed: ${err?.message ?? 'unknown error'}` };
           }
         }
+        return result;
+      },
+    });
 
-        toolResults.push({
-          type: 'tool_result',
-          tool_use_id: block.id,
-          content: JSON.stringify(result),
-        });
-      }
-
-      if (toolResults.length === 0) break; // nothing to fulfill — avoid a stuck loop
-      messages.push({ role: 'user', content: toolResults });
-      response = await callModel();
-    }
-
-    let reply = response.content
-      .filter((b) => b.type === 'text')
-      .map((b) => b.text)
-      .join('\n')
-      .trim();
+    let reply = runtimeResult.reply.trim();
 
     if (sourceAnalysis.asksProfileSetup && profilePatches.length === 0) {
       const sourceNote = sourceAnalysis.likelyLimited.length
@@ -595,9 +556,7 @@ export default async function handler(req, res) {
       profilePatches,
     });
   } catch (err) {
-    if (err instanceof Anthropic.APIError) {
-      return res.status(200).json({ reply: `The agent hit an API error (${err.status}). Please try again in a moment.` });
-    }
-    return res.status(500).json({ error: `Agent error: ${err?.message ?? 'unknown'}` });
+    const failure = apparentAgentErrorResponse(err);
+    return res.status(failure.status).json({ error: failure.error, code: failure.code });
   }
 }

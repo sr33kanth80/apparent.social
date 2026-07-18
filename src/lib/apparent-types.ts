@@ -340,7 +340,7 @@ export interface SourcedStartup {
 
 /**
  * The on-demand agent deep dive for a sourced startup, built by
- * /api/sourced-enrich via Claude web research and cached on the source_signals
+ * /api/sourced-enrich via Apparent/Orthogonal research and cached on the source_signals
  * row. Stored in jsonb in this exact (camelCase) shape so the client reads it
  * back without remapping.
  */

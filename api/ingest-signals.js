@@ -1,6 +1,6 @@
 // Proactive deal-flow ingestion — the scheduled counterpart to the investor
 // agent's ad-hoc web sourcing (see api/agent.js, which uses the same
-// web_search/web_fetch tools per chat). This runs on a schedule (a Claude Code
+// Orthogonal search/fetch tools per chat). This runs on a schedule (an automation
 // Routine POSTs it every 12h), discovers recently-launched startups across the
 // web that match the sectors the platform's investors actually care about, and
 // upserts them into public.source_signals so every investor gets a fresh,
@@ -20,13 +20,13 @@
 //
 // SAFETY: disabled by default. Runs only when AGENT_CRON_SECRET (caller must
 // present it as x-agent-cron-secret), SUPABASE_SERVICE_ROLE_KEY, and
-// ANTHROPIC_API_KEY are all set. The service role lets the upsert bypass RLS.
+// ORTHOGONAL_API_KEY are all set. The service role lets the upsert bypass RLS.
 //
 // SOURCES: POST /api/ingest-signals?source=<name> with header
 //   x-agent-cron-secret: <AGENT_CRON_SECRET>
 // where <name> is one of:
-//   web         (default) Claude agent with web_search/web_fetch — the long-tail
-//               scout. Needs ANTHROPIC_API_KEY. Refreshes freshness_at on re-runs.
+//   web         (default) Apparent agent with Orthogonal search/fetch — the long-tail
+//               scout. Needs ORTHOGONAL_API_KEY. Refreshes freshness_at on re-runs.
 //   hn          Show HN stories via Algolia (free, no key)
 //   producthunt Product Hunt launches (needs PRODUCTHUNT_TOKEN)
 //   github      Fast-rising new repos via GitHub search (GITHUB_INGEST_TOKEN optional)
@@ -35,15 +35,18 @@
 // freshness_at and pin the same rows atop the investor Daily list.
 // Scheduled by .github/workflows/ingest-dealflow.yml (daily cron).
 
-import Anthropic from '@anthropic-ai/sdk';
 import { fetchShowHN, fetchProductHunt, fetchGitHubRising, fetchYCRecent } from './_ingest-sources.js';
+import {
+  createApparentAgentRuntime,
+  createPublicResearchPolicy,
+  isAuthorizedResearchUrl,
+  runStandardOrthogonalTool,
+  standardOrthogonalTools,
+} from './_apparent-agent-runtime.js';
 
 const SUPABASE_URL = (process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL || '').replace(/\/$/, '');
 const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
 const CRON_SECRET = process.env.AGENT_CRON_SECRET || '';
-const MODEL = process.env.INGEST_MODEL || process.env.AGENT_MODEL || 'claude-sonnet-4-6';
-
-const MAX_TOKENS = 8192;
 const MAX_AGENT_STEPS = 22; // more targets need more web_search/web_fetch headroom
 // Per-run scrape volume. Default 24, env-tunable up to 60. Each run upserts into
 // source_signals (deduped), so the investor Daily list grows run over run rather
@@ -153,7 +156,7 @@ const logScrapeRun = async (fields) => {
     await fetch(`${SUPABASE_URL}/rest/v1/scrape_runs`, {
       method: 'POST',
       headers: { ...sbHeaders(), Prefer: 'return=minimal' },
-      body: JSON.stringify([{ source_name: 'claude-web-discovery', ...fields }]),
+      body: JSON.stringify([{ source_name: 'apparent-orthogonal-discovery', ...fields }]),
     });
   } catch {
     /* observability only — never fail the run on a logging error */
@@ -163,8 +166,7 @@ const logScrapeRun = async (fields) => {
 // ---------- Discovery tool ----------
 
 const TOOLS = [
-  { type: 'web_search_20260209', name: 'web_search' },
-  { type: 'web_fetch_20260209', name: 'web_fetch' },
+  ...standardOrthogonalTools,
   {
     name: 'record_startup',
     description:
@@ -195,8 +197,8 @@ const buildSystemPrompt = (sectors, sinceLabel) =>
     `  ${sectors}`,
     '',
     'How to work:',
-    '- Use web_search to find recently-launched startups in these sectors (Launch HN, Product Hunt, YC batches, launch coverage, "raising seed/pre-seed" posts).',
-    '- Use web_fetch to open a candidate\'s homepage/launch post and confirm it is a real, live company before recording it.',
+    '- Use search_public_web to find recently-launched startups in these sectors (Launch HN, Product Hunt, YC batches, launch coverage, "raising seed/pre-seed" posts).',
+    '- Use fetch_public_url to open a candidate\'s homepage/launch post and confirm it is a real, live company before recording it.',
     '- Call record_startup once per distinct startup you verified, with its canonical homepage URL.',
     '',
     'Hard rules:',
@@ -308,62 +310,46 @@ export default async function handler(req, res) {
     return runStructuredSource(source, res);
   }
 
-  if (!process.env.ANTHROPIC_API_KEY) {
-    return res.status(200).json({ skipped: 'web scout needs ANTHROPIC_API_KEY — structured sources (?source=hn|producthunt|github|yc) still work.' });
+  if (!process.env.ORTHOGONAL_API_KEY) {
+    return res.status(200).json({ skipped: 'web scout needs ORTHOGONAL_API_KEY — structured sources (?source=hn|producthunt|github|yc) still work.' });
   }
 
   const startedAt = new Date().toISOString();
   const sectors = await loadTargetSectors();
   const sinceLabel = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
 
-  const client = new Anthropic();
   const system = buildSystemPrompt(sectors, sinceLabel);
   const messages = [{ role: 'user', content: `Source fresh thesis-fit startups for our investors. Target sectors: ${sectors}.` }];
+  const publicResearchPolicy = createPublicResearchPolicy({ publicContext: messages[0].content });
 
   // Collected server-side as the model calls record_startup. Keyed by canonical
   // URL so duplicates within a single run collapse before we ever hit the DB.
   const byUrl = new Map();
 
-  const callModel = () =>
-    client.messages.create({
-      model: MODEL,
-      max_tokens: MAX_TOKENS,
-      thinking: { type: 'adaptive' },
-      output_config: { effort: 'medium' },
-      system,
-      tools: TOOLS,
-      messages,
-    });
-
   try {
-    let response = await callModel();
-    let steps = 0;
+    const runtime = createApparentAgentRuntime();
+    await runtime.run({
+      system,
+      messages,
+      tools: TOOLS,
+      maxSteps: MAX_AGENT_STEPS,
+      maxTokens: 8192,
+      executeTool: async (name, rawInput, { session }) => {
+        const external = await runStandardOrthogonalTool(session, name, rawInput, publicResearchPolicy);
+        if (external !== null) return external;
+        if (name !== 'record_startup') return { error: `Unknown tool: ${name}` };
 
-    while (steps < MAX_AGENT_STEPS && (response.stop_reason === 'tool_use' || response.stop_reason === 'pause_turn')) {
-      steps += 1;
-      messages.push({ role: 'assistant', content: response.content });
-
-      if (response.stop_reason === 'pause_turn') {
-        response = await callModel();
-        continue;
-      }
-
-      const toolResults = [];
-      for (const block of response.content) {
-        if (block.type !== 'tool_use') continue; // skip server_tool_use (web_search/web_fetch)
-        if (block.name !== 'record_startup') {
-          toolResults.push({ type: 'tool_result', tool_use_id: block.id, content: JSON.stringify({ error: `Unknown tool: ${block.name}` }) });
-          continue;
-        }
-
-        const input = block.input || {};
+        const input = rawInput || {};
         const canonical = canonicalSourceUrl(input.homepage_url);
         const company = str(input.company).trim();
         const detail = str(input.detail).trim();
+        const hasFetchedProvenance =
+          isAuthorizedResearchUrl(publicResearchPolicy, input.homepage_url, { fetchedOnly: true, sameOrigin: true }) ||
+          isAuthorizedResearchUrl(publicResearchPolicy, input.source_url, { fetchedOnly: true, sameOrigin: true });
 
         let result;
-        if (!canonical || !company || !detail) {
-          result = { status: 'skipped', reason: 'missing company, detail, or a valid homepage_url' };
+        if (!canonical || !company || !detail || !hasFetchedProvenance) {
+          result = { status: 'skipped', reason: 'missing fields or no fetched, authorized source provenance' };
         } else if (byUrl.has(canonical)) {
           result = { status: 'skipped', reason: 'already recorded this startup this run' };
         } else {
@@ -383,13 +369,9 @@ export default async function handler(req, res) {
           });
           result = { status: 'recorded', company, count_so_far: byUrl.size };
         }
-        toolResults.push({ type: 'tool_result', tool_use_id: block.id, content: JSON.stringify(result) });
-      }
-
-      if (toolResults.length === 0) break;
-      messages.push({ role: 'user', content: toolResults });
-      response = await callModel();
-    }
+        return result;
+      },
+    });
 
     const rows = Array.from(byUrl.values());
     const upserted = await upsertSignals(rows);
@@ -399,7 +381,7 @@ export default async function handler(req, res) {
       item_count: upserted,
       started_at: startedAt,
       finished_at: new Date().toISOString(),
-      input_json: { sectors, target: TARGET_COUNT, since: sinceLabel, model: MODEL },
+      input_json: { sectors, target: TARGET_COUNT, since: sinceLabel, provider: 'orthogonal' },
     });
 
     return res.status(200).json({ ok: true, discovered: rows.length, upserted, sectors });
@@ -411,11 +393,8 @@ export default async function handler(req, res) {
       started_at: startedAt,
       finished_at: new Date().toISOString(),
       error_text: String(message).slice(0, 500),
-      input_json: { sectors, target: TARGET_COUNT, since: sinceLabel, model: MODEL },
+      input_json: { sectors, target: TARGET_COUNT, since: sinceLabel, provider: 'orthogonal' },
     });
-    if (err instanceof Anthropic.APIError) {
-      return res.status(200).json({ error: `ingest hit an API error (${err.status})`, upserted: 0 });
-    }
     return res.status(500).json({ error: `ingest-signals failed: ${message}` });
   }
 }

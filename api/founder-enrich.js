@@ -2,7 +2,7 @@
 //
 // Pulls the founder's PUBLIC GitHub (profile, top repos, languages, stars, top
 // READMEs) using their stored, encrypted OAuth token (service-role read only),
-// then synthesizes a concise investor-facing dossier with Claude and saves it
+// then synthesizes a concise investor-facing dossier through the Apparent runtime and saves it
 // onto the public founder_profiles row — where the investor agent reads it.
 //
 // Auth: the caller must present their Supabase access token (Authorization:
@@ -13,20 +13,17 @@
 // Response: { ok, dossier, summary, githubSummary, updatedAt } | { ok:false, error }
 //
 // Env: SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, GITHUB_OAUTH_SECRET (token
-// decrypt), ANTHROPIC_API_KEY (narrative; falls back to a deterministic summary
-// when unset), FOUNDER_ENRICH_MODEL (default claude-sonnet-4-6).
+// decrypt), ORTHOGONAL_API_KEY (narrative; falls back to a deterministic summary
+// when unset).
 
 import { createClient } from '@supabase/supabase-js';
-import Anthropic from '@anthropic-ai/sdk';
 import { decryptToken } from '../server/github-crypto.js';
+import { createApparentAgentRuntime } from './_apparent-agent-runtime.js';
 
 const SUPABASE_URL = (process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || '').replace(/\/$/, '');
 const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
 const ANON_KEY = process.env.VITE_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY || '';
 const GITHUB_SECRET = process.env.GITHUB_OAUTH_SECRET || '';
-// Founders are free, so keep enrichment on a cheaper model by default. Swappable.
-const ENRICH_MODEL = process.env.FOUNDER_ENRICH_MODEL || 'claude-sonnet-4-6';
-
 const CACHE_TTL_MS = 12 * 60 * 60 * 1000; // don't re-burn the GitHub token / credits within 12h
 
 const str = (v) => (v == null ? '' : String(v));
@@ -91,7 +88,6 @@ const buildGithubDossier = async (token) => {
   const readmeTargets = publicRepos.slice(0, 4).filter((r) => r.full_name);
   const readmes = [];
   for (const r of readmeTargets) {
-    // eslint-disable-next-line no-await-in-loop
     const text = await gh(`/repos/${r.full_name}/readme`, token, 'application/vnd.github.raw+json');
     if (text && typeof text === 'string') {
       readmes.push({ repo: str(r.name), excerpt: text.slice(0, 1800) });
@@ -125,13 +121,12 @@ const deterministicGithubSummary = (d) => {
 // ---------- LLM narrative ----------
 
 const synthesizeNarrative = async (profile, launches, gd) => {
-  if (!process.env.ANTHROPIC_API_KEY) {
+  if (!process.env.ORTHOGONAL_API_KEY) {
     // No key — fall back to a deterministic blurb so the dossier still populates.
     const lead = str(profile.headline) || str(profile.current_build) || 'Building on Apparent.';
     return `${lead} ${deterministicGithubSummary(gd)}`.trim();
   }
 
-  const client = new Anthropic();
   const facts = {
     apparent: {
       name: str(profile.profile_name),
@@ -161,23 +156,16 @@ const synthesizeNarrative = async (profile, launches, gd) => {
     "Be specific and grounded; if signal is thin, say so plainly rather than padding.";
 
   try {
-    const res = await client.messages.create({
-      model: ENRICH_MODEL,
-      max_tokens: 1024,
-      thinking: { type: 'disabled' },
+    const runtime = createApparentAgentRuntime();
+    const result = await runtime.run({
       system,
-      messages: [
-        {
-          role: 'user',
-          content: `Write the dossier from these facts:\n\n${JSON.stringify(facts, null, 2)}`,
-        },
-      ],
+      messages: [{ role: 'user', content: `Write the dossier from these facts:\n\n${JSON.stringify(facts, null, 2)}` }],
+      tools: [],
+      maxSteps: 1,
+      maxTokens: 1024,
+      executeTool: async () => ({ error: 'No tools are available for this factual synthesis.' }),
     });
-    const text = res.content
-      .filter((b) => b.type === 'text')
-      .map((b) => b.text)
-      .join('\n')
-      .trim();
+    const text = result.reply.trim();
     return text || `${str(profile.headline)} ${deterministicGithubSummary(gd)}`.trim();
   } catch {
     return `${str(profile.headline) || str(profile.current_build)} ${deterministicGithubSummary(gd)}`.trim();
@@ -188,7 +176,7 @@ const synthesizeNarrative = async (profile, launches, gd) => {
 
 export default async function handler(req, res) {
   // The sourced-startup deep dive shares this function to stay under Vercel's
-  // 12-function cap (same JWT auth + Anthropic/Supabase deps). It's mounted at
+  // 12-function cap (same JWT auth + Apparent runtime/Supabase deps). It's mounted at
   // /api/sourced-enrich via a vercel.json rewrite → ?route=sourced and lives in
   // the underscore helper (not its own routable function). Static import string
   // so node-file-trace bundles it.

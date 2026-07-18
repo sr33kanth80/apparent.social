@@ -4,7 +4,7 @@
  * "For You" feed already renders.
  *
  * Pipeline (write side, NOT in this repo):
- *   A Claude Code Routine (scheduled cron job) sources external launches and
+ *   An Apparent scheduled ingestion job sources external launches and
  *   writes two files to the R2 bucket via the S3 API (see scripts/upload-feed.mjs):
  *     - feeds/external-launches.json  → broad discovery feed (Idea 1)
  *     - feeds/daily-digest.json       → curated daily VC deal flow (Idea 2)
@@ -130,7 +130,7 @@ export const loadExternalLaunches = async (
 };
 
 /**
- * Curated daily VC deal flow (Idea 2). Refreshed by the Claude Code Routine
+ * Curated daily VC deal flow (Idea 2). Refreshed by the Apparent scheduler
  * (scheduled cron job); surfaced on the investor "Daily" tab.
  */
 export const loadDailyDigest = async (

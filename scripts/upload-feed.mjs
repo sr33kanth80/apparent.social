@@ -3,7 +3,7 @@
  * upload-feed.mjs — push a local JSON file to the Apparent Cloudflare R2 bucket.
  *
  * Zero dependencies: native node:crypto SigV4 signing + global fetch (Node 18+).
- * Built for the Claude Code Routine (scheduled cron job) that sources external
+ * Built for the Apparent scheduled ingestion job that sources external
  * launches and publishes the daily feeds the dashboard reads.
  *
  * ── Usage ───────────────────────────────────────────────────────────────────
@@ -38,7 +38,7 @@ const FEEDS = {
 };
 
 // Load R2 secrets from a gitignored .env file at the repo root if env vars
-// aren't already set. Lets a locally-scheduled run (Claude routine / cron) pick
+// aren't already set. Lets a locally-scheduled run (scheduler / cron) pick
 // up credentials without them being exported in the shell or baked into a
 // task prompt. Looked-up files, in order: .env.r2.local, .env.local, .env
 const loadLocalEnv = () => {

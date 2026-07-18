@@ -1,4 +1,4 @@
-// Structured deal-flow fetchers — the high-volume counterpart to the Claude
+// Structured deal-flow fetchers — the high-volume counterpart to the Apparent
 // web-discovery scout in api/ingest-signals.js. Each fetcher pulls a machine-
 // readable launch/startup feed and returns normalized candidates:
 //   { company, founder?, detail, homepage_url, stage?, location?, github_url?, sector?, found_via? }

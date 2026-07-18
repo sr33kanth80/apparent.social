@@ -1,5 +1,5 @@
 // Off-hours autonomous follow-up sweep — the server-side counterpart to the
-// in-app sweep, meant to be triggered on a schedule by a Claude Code Routine
+// in-app sweep, meant to be triggered on a schedule by an authenticated automation
 // (cron) so warm outreach gets nudged even when the investor isn't in the app.
 //
 // For every investor in 'autonomous' mode, it finds agent outreach that went

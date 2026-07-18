@@ -1,96 +1,92 @@
 # Apparent — Go-Live Checklist
 
-Everything operational (not code) that must be in place before testing the full
-two-sided product + the `npx apparent` CLI. Do these in order.
+Operational steps for testing the full two-sided product and the `npx apparent` CLI.
 
-## 1. Supabase migrations (run in the SQL editor, in order)
+## 1. Supabase migrations
 
-| Migration | Adds | Status |
-|---|---|---|
-| `202606080001_message_read_state.sql` | DM unread state + `mark_thread_read` | ✅ applied |
-| `202606080002_notifications.sql` | notifications inbox + `notify_investors_of_launch` + realtime | ✅ applied |
-| `202606080003_agent_autonomy.sql` | `agent_autonomy` on user_settings | ✅ applied |
-| `202606080004_founder_dossier.sql` | founder dossier columns (GitHub enrichment) | ⏳ run it |
-| `202606080005_notify_investors_of_founder.sql` | founder amplification RPC | ⏳ run it |
-| `202606080006_cli_build_claim.sql` | `cli_build_submissions` + `claim_cli_build` (npx apparent) | ⏳ run it |
+Run the migrations in the SQL editor in filename order. They are idempotent. In particular, verify the founder dossier columns, founder amplification RPC, CLI build submissions, durable agent memories/transcripts, and agent rate-limit migrations have been applied.
 
-> Each is idempotent — safe to re-run. Quick verify after running the last three:
-> ```sql
-> select to_regclass('public.cli_build_submissions') as cli_table,
->        (select count(*) from pg_proc where proname='notify_investors_of_founder') as has_founder_push,
->        (select count(*) from pg_proc where proname='claim_cli_build') as has_claim,
->        (select count(*) from information_schema.columns
->          where table_name='founder_profiles' and column_name='agent_dossier') as has_dossier;
-> ```
-> All four should be non-null / non-zero.
+Quick verification for the original launch-critical objects:
 
-## 2. Environment variables (Vercel → Project → Settings → Env)
+```sql
+select to_regclass('public.cli_build_submissions') as cli_table,
+       (select count(*) from pg_proc where proname='notify_investors_of_founder') as has_founder_push,
+       (select count(*) from pg_proc where proname='claim_cli_build') as has_claim,
+       (select count(*) from information_schema.columns
+         where table_name='founder_profiles' and column_name='agent_dossier') as has_dossier;
+```
 
-**Required**
-- `ANTHROPIC_API_KEY` — both agents, founder enrichment. ✅ set (⚠️ **fund credits** — nothing responds on an empty balance).
-- `SUPABASE_SERVICE_ROLE_KEY` — founder enrichment, CLI ingest, GitHub contributions. (Confirm it's set — several server routes need it.)
-- `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY` — ✅ already set.
-- `GITHUB_OAUTH_SECRET` — GitHub token decrypt for the dossier. ✅ already set.
+## 2. Environment variables
 
-**Optional (features degrade gracefully if absent)**
-- `HUNTER_API_KEY` — verified emails for off-platform contact enrichment (else the agent uses web search).
-- `FOUNDER_ENRICH_MODEL` — override the founder-enrichment model (default `claude-sonnet-4-6`).
-- `AGENT_CRON_SECRET` (+ service role) — enables the off-hours follow-up endpoint `/api/agent-followups` for a Claude Code Routine to call.
+Set these in Vercel under Project → Settings → Environment Variables.
 
-After adding/changing env vars: **redeploy**.
+Required:
+
+- `ORTHOGONAL_API_KEY` — server-only key for Apparent inference and external research. Never prefix it with `VITE_`.
+- `SUPABASE_SERVICE_ROLE_KEY` — founder enrichment, CLI ingest, scheduled ingestion, and other privileged server routes.
+- `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY` — Supabase client and authenticated API access.
+- `GITHUB_OAUTH_SECRET` — GitHub token decryption for founder dossiers.
+
+Verified Apparent agent defaults (optional overrides):
+
+- `ORTHOGONAL_INFERENCE_API=baseten`
+- `ORTHOGONAL_INFERENCE_PATH=/v1/chat/completions`
+- `APPARENT_AGENT_MODEL=zai-org/GLM-5.2`
+- `ORTHOGONAL_AGENT_MAX_CALLS=20`
+- `ORTHOGONAL_AGENT_MAX_SPEND_CENTS=100`
+- `ORTHOGONAL_TIMEOUT_MS=45000`
+
+The runtime rejects Anthropic, Claude, and OpenAI inference slugs. It also checks fixed catalog pricing before paid calls, bounds agent context, and keeps the Orthogonal key server-side.
+
+Optional:
+
+- `AGENT_CRON_SECRET` — authenticates scheduled ingestion and follow-up endpoints.
+- `INGEST_TARGET_COUNT` — web-ingestion target count (default 24, maximum 60).
+
+Redeploy after any environment change.
 
 ## 3. `npx apparent` CLI
 
-- [ ] Confirm `https://apparent.social` serves THIS deployment (where `/api/cli-ingest` lives).
-      If not, either attach the domain in Vercel **or** change `BASE_URL` in `cli/lib/config.js`
-      to the live production URL before publishing.
-- [ ] Publish:
-      ```cmd
-      cd /d D:\SocialVC\apparent\cli
-      npm publish --access public
-      ```
-      (version is `0.2.0`; bump it for each subsequent publish.)
+- Confirm `https://apparent.social` serves the deployment containing `/api/cli-ingest`. Otherwise attach the domain in Vercel or update `BASE_URL` in `cli/lib/config.js` before publishing.
+- Bump the CLI package version for a new release, then publish from `D:\SocialVC\apparent\cli` with `npm publish --access public`.
 
-## 3b. Investor deal-flow ingestion (`/api/ingest-signals`)
+## 4. Investor deal-flow ingestion
 
-Keeps the investor dashboard populated with fresh, deduped "Sourced" startups
-even before native founders onboard. Same web_search/web_fetch the investor
-agent already uses, but run on a schedule and persisted to `source_signals`.
+`/api/ingest-signals` keeps the investor dashboard populated with fresh, deduplicated sourced startups before native founders onboard.
 
-- **Env (all required to enable; degrades to a no-op skip otherwise):**
-  `ANTHROPIC_API_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `VITE_SUPABASE_URL`,
-  and `AGENT_CRON_SECRET`. Optional tuning: `INGEST_MODEL` (default
-  `claude-sonnet-4-6`), `INGEST_TARGET_COUNT` (default 18, max 40).
-- **Trigger — Claude Code Routine, every 12h:**
-  ```
-  POST https://apparent.social/api/ingest-signals
-  header  x-agent-cron-secret: <AGENT_CRON_SECRET>
-  ```
-  Discovery targets the union of sectors from real `investor_criteria` rows
-  (falls back to a default sector set when none exist yet).
-- **Dedup is automatic** — upsert on the `(source_type, source_url)` unique
-  index; re-runs refresh `freshness_at` instead of duplicating. Each startup
-  is keyed by its canonical bare-domain homepage (see `canonicalSourceUrl`).
-- **Provenance:** ingested rows render as **Sourced** (source `Web`, no GitHub
-  verification) — distinct from GitHub-verified Apparent builders. Do not let
-  them wear the verified badge.
-- **Verify after a run:** `select count(*) from source_signals where source_type='web';`
-  and check `scrape_runs` for the latest `claude-web-discovery` row.
+Required environment variables are `ORTHOGONAL_API_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `VITE_SUPABASE_URL`, and `AGENT_CRON_SECRET`.
 
-## 4. End-to-end smoke test
+Run every 12 hours:
 
-1. **Investor agent** — sign in as an investor with a thesis set; open the overview chat; ask
-   "show me founders raising now that fit my thesis." Flip the autonomy toggle; try
-   "find founders not on Apparent and prep intros."
-2. **Founder dossier** — sign in as a founder, connect GitHub, confirm the dossier card builds.
-3. **Founder agent** — "which investors fit me," draft an intro, "put me in front of investors."
-4. **Launch push** — publish a public launch; confirm matched investors get the first-dibs
-   notification (live, no refresh = realtime is wired).
-5. **`npx apparent`** — run it in a repo, type `y` at the consent prompt, follow the claim link,
-   sign in, confirm the build lands on the founder profile.
+```text
+POST https://apparent.social/api/ingest-signals
+x-agent-cron-secret: <AGENT_CRON_SECRET>
+```
 
-## 5. Known honest limits (by design, for later)
-- Off-hours autonomous follow-ups need the Routine + `AGENT_CRON_SECRET` wired (optional).
-- Sourced deal flow is AI-discovered and unverified — labeled "Sourced", never "Verified". Investors should treat it as leads, not vetted founders.
-- Off-platform email is always draft-to-inbox (no send backend — intentional).
-- Git line counts feed the brag card, not investor underwriting.
+Discovery targets the union of sectors in real `investor_criteria` rows and falls back to a default sector set. Rows are deduplicated on `(source_type, source_url)` and remain labeled `Sourced`, never `Verified`.
+
+Verify with:
+
+```sql
+select count(*) from source_signals where source_type='web';
+```
+
+Then check `scrape_runs` for `apparent-orthogonal-discovery`.
+
+## 5. End-to-end smoke test
+
+1. Investor agent: sign in with a thesis, ask for matching founders, then ask for off-platform sourcing and draft outreach. Verify auto-send only occurs after direct outreach intent.
+2. Founder dossier: connect GitHub and confirm the dossier card builds.
+3. Founder agent: find matching investors, draft an intro, then explicitly ask to be amplified.
+4. Profile setup: give each agent a public profile/product URL and verify it returns a reviewable patch rather than silently editing the profile.
+5. Launch push: publish a public launch and confirm matched investors receive the realtime notification.
+6. CLI: run `npx apparent` in a repository, accept consent, claim the build, and confirm it appears on the founder profile.
+7. Security: verify a pasted webpage instruction cannot trigger outreach/amplification or cause private memory to appear in an external search query.
+
+## 6. Honest limits
+
+- Sourced deal flow is AI-discovered and unverified; investors should treat it as leads.
+- Off-platform email remains draft-to-inbox and is never sent by the backend.
+- Public research accepts only disclosure-safe search terms and exact user-supplied/search-returned URLs, so the agent may ask the user for a clearer public query or URL.
+- Off-hours follow-ups require a scheduler and `AGENT_CRON_SECRET`.
+- Git line counts are presentation metadata, not investor underwriting.

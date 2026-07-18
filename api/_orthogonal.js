@@ -1,0 +1,168 @@
+const DEFAULT_BASE_URL = 'https://api.orthogonal.com';
+
+const positiveInt = (value, fallback) => {
+  const parsed = Number.parseInt(String(value ?? ''), 10);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
+};
+
+const compactText = (value, max = 500) => String(value ?? '').replace(/\s+/g, ' ').trim().slice(0, max);
+
+export class OrthogonalError extends Error {
+  constructor(message, { status = 500, code = 'orthogonal_error', retryable = false, details } = {}) {
+    super(message);
+    this.name = 'OrthogonalError';
+    this.status = status;
+    this.code = code;
+    this.retryable = retryable;
+    this.details = details;
+  }
+}
+
+export const createOrthogonalSession = ({
+  apiKey = process.env.ORTHOGONAL_API_KEY,
+  baseUrl = process.env.ORTHOGONAL_BASE_URL || DEFAULT_BASE_URL,
+  fetchImpl = globalThis.fetch,
+  maxCalls = positiveInt(process.env.ORTHOGONAL_AGENT_MAX_CALLS, 20),
+  maxSpendCents = positiveInt(process.env.ORTHOGONAL_AGENT_MAX_SPEND_CENTS, 100),
+  timeoutMs = positiveInt(process.env.ORTHOGONAL_TIMEOUT_MS, 45_000),
+  allowedApis = [],
+} = {}) => {
+  if (!apiKey) {
+    throw new OrthogonalError('ORTHOGONAL_API_KEY is not configured.', {
+      status: 503,
+      code: 'orthogonal_not_configured',
+    });
+  }
+  if (typeof fetchImpl !== 'function') {
+    throw new TypeError('A fetch implementation is required.');
+  }
+
+  const allowed = new Set(allowedApis.map((value) => String(value).trim().toLowerCase()).filter(Boolean));
+  let callCount = 0;
+  let spentCents = 0;
+  const detailsCache = new Map();
+  const runCache = new Map();
+
+  const request = async (path, body, { paid = false, estimatedCostCents = 0 } = {}) => {
+    if (callCount >= maxCalls) {
+      throw new OrthogonalError(`Orthogonal call limit reached (${maxCalls}).`, {
+        status: 429,
+        code: 'orthogonal_call_limit',
+      });
+    }
+    if (paid && spentCents + estimatedCostCents > maxSpendCents) {
+      throw new OrthogonalError(`Orthogonal request budget would be exceeded (${maxSpendCents} cents).`, {
+        status: 402,
+        code: 'orthogonal_budget_reached',
+      });
+    }
+
+    callCount += 1;
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
+    let response;
+    try {
+      response = await fetchImpl(`${String(baseUrl).replace(/\/$/, '')}${path}`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(body),
+        signal: controller.signal,
+      });
+    } catch (error) {
+      const timedOut = error?.name === 'AbortError';
+      throw new OrthogonalError(timedOut ? 'Orthogonal request timed out.' : 'Orthogonal request failed.', {
+        status: timedOut ? 504 : 502,
+        code: timedOut ? 'orthogonal_timeout' : 'orthogonal_network_error',
+        retryable: true,
+        details: compactText(error?.message),
+      });
+    } finally {
+      clearTimeout(timer);
+    }
+
+    const payload = await response.json().catch(async () => ({ error: compactText(await response.text().catch(() => '')) }));
+    const reportedPrice = payload?.priceCents ?? payload?.usage?.priceCents;
+    const parsedReportedPrice = Number(reportedPrice);
+    const priceCents = reportedPrice == null || !Number.isFinite(parsedReportedPrice)
+      ? estimatedCostCents
+      : Math.max(parsedReportedPrice, 0);
+    if (paid && priceCents > 0) spentCents += priceCents;
+
+    if (!response.ok || payload?.success === false) {
+      const status = response.status || 502;
+      throw new OrthogonalError(compactText(payload?.error || payload?.message || `Orthogonal returned ${status}.`), {
+        status,
+        code: status === 402 ? 'orthogonal_insufficient_credits' : 'orthogonal_upstream_error',
+        retryable: status === 408 || status === 429 || status >= 500,
+        details: { requestId: payload?.requestId, priceCents },
+      });
+    }
+
+    return payload;
+  };
+
+  const assertAllowed = (api) => {
+    const normalized = String(api ?? '').trim().toLowerCase();
+    if (!normalized) throw new OrthogonalError('Orthogonal API slug is required.', { status: 400, code: 'invalid_api' });
+    if (allowed.size > 0 && !allowed.has(normalized)) {
+      throw new OrthogonalError(`Orthogonal API '${normalized}' is not allowlisted.`, {
+        status: 403,
+        code: 'orthogonal_api_not_allowed',
+      });
+    }
+    return normalized;
+  };
+
+  return {
+    async search(prompt, limit = 8) {
+      return request('/v1/search', { prompt: compactText(prompt, 1000), limit: Math.min(Math.max(Number(limit) || 8, 1), 20) });
+    },
+
+    async run({ api, path, body = {}, query = {} }) {
+      const normalizedApi = assertAllowed(api);
+      const normalizedPath = String(path ?? '').trim();
+      if (!normalizedPath.startsWith('/')) {
+        throw new OrthogonalError('Orthogonal endpoint path must start with /.', { status: 400, code: 'invalid_path' });
+      }
+      const runKey = JSON.stringify({ api: normalizedApi, path: normalizedPath, body, query });
+      if (runCache.has(runKey)) return runCache.get(runKey);
+
+      const detailsKey = `${normalizedApi}:${normalizedPath}`;
+      let details = detailsCache.get(detailsKey);
+      if (!details) {
+        details = await request('/v1/details', { api: normalizedApi, path: normalizedPath });
+        detailsCache.set(detailsKey, details);
+      }
+      const endpoint = details?.endpoint ?? details?.data?.endpoint;
+      const priceUsd = Number(endpoint?.price);
+      if (endpoint?.hasDynamicPricing === true || !Number.isFinite(priceUsd) || priceUsd < 0) {
+        throw new OrthogonalError(`Orthogonal endpoint '${normalizedApi}${normalizedPath}' does not publish a fixed price, so Apparent will not execute it automatically.`, {
+          status: 402,
+          code: 'orthogonal_unbounded_price',
+        });
+      }
+      const estimatedCostCents = priceUsd * 100;
+      const result = await request(
+        '/v1/run',
+        { api: normalizedApi, path: normalizedPath, body, query },
+        { paid: true, estimatedCostCents },
+      );
+      runCache.set(runKey, result);
+      return result;
+    },
+
+    usage() {
+      return { callCount, spentCents, maxCalls, maxSpendCents };
+    },
+  };
+};
+
+export const orthogonalData = (response) => {
+  let value = response?.data ?? response;
+  // Some gateway providers preserve their own `{ data: ... }` envelope.
+  if (value && !value.choices && value.data?.choices) value = value.data;
+  return value;
+};

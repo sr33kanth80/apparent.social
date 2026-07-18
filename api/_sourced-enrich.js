@@ -1,7 +1,7 @@
 // Sourced-startup deep dive — on-demand agent enrichment (Phase 2).
 //
 // An investor opens a /sourced/:id profile and clicks "Generate deep dive".
-// This runs Claude with web_search + web_fetch to research that one company and
+// This runs the Apparent runtime with Orthogonal search/fetch to research that company and
 // produce a structured, investor-facing dossier (summary, team, traction,
 // thesis fit, sources), then caches it onto the source_signals row so every
 // later view is instant and free. On-demand by design: we only spend credits on
@@ -16,15 +16,20 @@
 // Response: { ok, dossier, cached } | { ok:false, error }
 //
 // Env: SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, VITE_SUPABASE_ANON_KEY (auth),
-// ANTHROPIC_API_KEY, SOURCED_ENRICH_MODEL (default claude-sonnet-4-6).
+// ORTHOGONAL_API_KEY.
 
 import { createClient } from '@supabase/supabase-js';
-import Anthropic from '@anthropic-ai/sdk';
+import {
+  createApparentAgentRuntime,
+  createPublicResearchPolicy,
+  isAuthorizedResearchUrl,
+  runStandardOrthogonalTool,
+  standardOrthogonalTools,
+} from './_apparent-agent-runtime.js';
 
 const SUPABASE_URL = (process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || '').replace(/\/$/, '');
 const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
 const ANON_KEY = process.env.VITE_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY || '';
-const ENRICH_MODEL = process.env.SOURCED_ENRICH_MODEL || 'claude-sonnet-4-6';
 
 // Sourced facts change slowly — a long cache keeps the bill down. force bypasses.
 const CACHE_TTL_MS = 14 * 24 * 60 * 60 * 1000;
@@ -44,8 +49,7 @@ const readJsonBody = async (req) => {
 };
 
 const TOOLS = [
-  { type: 'web_search_20260209', name: 'web_search' },
-  { type: 'web_fetch_20260209', name: 'web_fetch' },
+  ...standardOrthogonalTools,
   {
     name: 'record_dossier',
     description:
@@ -98,8 +102,8 @@ const buildSystemPrompt = (seed) =>
     seed.githubUrl ? `  GitHub: ${seed.githubUrl}` : '',
     '',
     'How to work:',
-    '- Use web_fetch on the homepage first to ground yourself in what they actually do.',
-    '- Use web_search to find the founders, any funding/launch coverage, customers, and real traction.',
+    '- Use fetch_public_url on the homepage first to ground yourself in what they actually do.',
+    '- Use search_public_web to find the founders, any funding/launch coverage, customers, and real traction.',
     '- Then call record_dossier ONCE with what you verified.',
     '',
     'Hard rules:',
@@ -133,7 +137,7 @@ export default async function handler(req, res) {
     res.setHeader('Allow', 'POST');
     return res.status(405).json({ ok: false, error: 'method_not_allowed' });
   }
-  if (!SUPABASE_URL || !SERVICE_KEY || !ANON_KEY || !process.env.ANTHROPIC_API_KEY) {
+  if (!SUPABASE_URL || !SERVICE_KEY || !ANON_KEY || !process.env.ORTHOGONAL_API_KEY) {
     return res.status(200).json({ ok: false, error: 'server_misconfigured' });
   }
 
@@ -177,56 +181,40 @@ export default async function handler(req, res) {
     githubUrl: str(row.github_url),
   };
 
-  const client = new Anthropic();
   const system = buildSystemPrompt(seed);
   const messages = [{ role: 'user', content: `Research ${seed.company} and record the dossier.` }];
-
-  const callModel = () =>
-    client.messages.create({
-      model: ENRICH_MODEL,
-      max_tokens: 2048,
-      thinking: { type: 'adaptive' },
-      output_config: { effort: 'medium' },
-      system,
-      tools: TOOLS,
-      messages,
-    });
+  const publicResearchPolicy = createPublicResearchPolicy({ publicContext: JSON.stringify(seed) });
 
   let dossier = null;
   try {
-    let response = await callModel();
-    let steps = 0;
-
-    while (steps < MAX_AGENT_STEPS && (response.stop_reason === 'tool_use' || response.stop_reason === 'pause_turn')) {
-      steps += 1;
-      messages.push({ role: 'assistant', content: response.content });
-
-      if (response.stop_reason === 'pause_turn') {
-        response = await callModel();
-        continue;
-      }
-
-      const toolResults = [];
-      for (const block of response.content) {
-        if (block.type !== 'tool_use') continue; // skip server_tool_use (web_search/web_fetch)
-        if (block.name !== 'record_dossier') {
-          toolResults.push({ type: 'tool_result', tool_use_id: block.id, content: JSON.stringify({ error: `Unknown tool: ${block.name}` }) });
-          continue;
-        }
-        const normalized = normalizeDossier(block.input || {});
+    const runtime = createApparentAgentRuntime();
+    await runtime.run({
+      system,
+      messages,
+      tools: TOOLS,
+      maxSteps: MAX_AGENT_STEPS,
+      maxTokens: 2048,
+      executeTool: async (name, input, { session }) => {
+        const external = await runStandardOrthogonalTool(session, name, input, publicResearchPolicy);
+        if (external !== null) return external;
+        if (name !== 'record_dossier') return { error: `Unknown tool: ${name}` };
+        const normalized = normalizeDossier(input || {});
         if (!normalized.summary) {
-          toolResults.push({ type: 'tool_result', tool_use_id: block.id, content: JSON.stringify({ status: 'rejected', reason: 'summary is required' }) });
-          continue;
+          return { status: 'rejected', reason: 'summary is required' };
+        }
+        const sourcesAuthorized = normalized.sources.length > 0 && normalized.sources.every((source) =>
+          isAuthorizedResearchUrl(publicResearchPolicy, source.url),
+        );
+        const hasFetchedSource = normalized.sources.some((source) =>
+          isAuthorizedResearchUrl(publicResearchPolicy, source.url, { fetchedOnly: true, sameOrigin: true }),
+        );
+        if (!sourcesAuthorized || !hasFetchedSource) {
+          return { status: 'rejected', reason: 'At least one fetched, authorized source is required and every cited URL must come from approved research.' };
         }
         dossier = normalized;
-        toolResults.push({ type: 'tool_result', tool_use_id: block.id, content: JSON.stringify({ status: 'recorded' }) });
-      }
-
-      if (dossier) break; // got what we need — stop spending steps
-      if (toolResults.length === 0) break;
-      messages.push({ role: 'user', content: toolResults });
-      response = await callModel();
-    }
+        return { status: 'recorded' };
+      },
+    });
   } catch (err) {
     return res.status(200).json({ ok: false, error: `enrich_failed: ${err?.message ?? 'unknown'}` });
   }

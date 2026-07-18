@@ -10,15 +10,18 @@
 // Request:  POST { messages, founder, contacted? }
 // Response: { reply, proposals, amplify }
 //
-// Env: ANTHROPIC_API_KEY (required), VITE_SUPABASE_URL + VITE_SUPABASE_ANON_KEY.
+// Env: ORTHOGONAL_API_KEY (required), VITE_SUPABASE_URL + VITE_SUPABASE_ANON_KEY.
 
-import Anthropic from '@anthropic-ai/sdk';
 import { requireAgentAccess, sendAgentAccessError } from './_agent-guard.js';
+import {
+  apparentAgentErrorResponse,
+  createApparentAgentRuntime,
+  createPublicResearchPolicy,
+  runStandardOrthogonalTool,
+  standardOrthogonalTools,
+} from './_apparent-agent-runtime.js';
 
-// Sonnet 4.6 is the right-sized default for chat + thesis-fit reasoning
-// (cheaper/faster than Opus, same 1M context). Override with FOUNDER_AGENT_MODEL.
-const MODEL = process.env.FOUNDER_AGENT_MODEL || 'claude-sonnet-4-6';
-const MAX_TOKENS = 8192;
+// The Apparent runtime owns the tool loop; inference is replaceable behind Orthogonal.
 const MAX_AGENT_STEPS = 6;
 
 const SUPABASE_URL = (process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL || '').replace(/\/$/, '');
@@ -214,8 +217,7 @@ const findMatchingInvestors = async (input, founder) => {
 const TOOLS = [
   // Server-side tools are only for reading the founder's own supplied/public
   // sources during profile setup. Investor targeting stays on-platform.
-  { type: 'web_search_20260209', name: 'web_search' },
-  { type: 'web_fetch_20260209', name: 'web_fetch' },
+  ...standardOrthogonalTools,
   {
     name: 'find_matching_investors',
     description:
@@ -292,7 +294,7 @@ const buildSystemPrompt = (founder, contactedIds, memories, sourceBrief) => {
   return [
     "You are Apparent's agent that works FOR a founder. Your single mission: make this founder \"Apparent\" to the venture investors who are ALREADY on Apparent.",
     'You never use the open web to hunt for investors outside Apparent. You work the on-platform investor base: find the ones whose thesis fits, draft intros, and amplify the founder to matched investors.',
-    'You may use web_fetch/web_search only when the founder asks you to set up, import, complete, or update their own Apparent profile from supplied links, public sources, or pasted text. If LinkedIn or any source cannot be read, say so plainly, list it as unavailable in the patch, and ask for another link or pasted text.',
+    'You may use fetch_public_url/search_public_web only when the founder asks you to set up, import, complete, or update their own Apparent profile from supplied links, public sources, or pasted text. If LinkedIn or any source cannot be read, say so plainly, list it as unavailable in the patch, and ask for another link or pasted text.',
     '',
     "The founder's profile:",
     `- Name: ${str(f.name) || '(not set)'}`,
@@ -341,9 +343,9 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  if (!process.env.ANTHROPIC_API_KEY) {
+  if (!process.env.ORTHOGONAL_API_KEY) {
     return res.status(200).json({
-      reply: "Your agent isn't switched on yet — an ANTHROPIC_API_KEY needs to be set. Once it is, I can find the investors who fit you and help you reach them.",
+      reply: "The Apparent agent isn't switched on yet — ORTHOGONAL_API_KEY needs to be set.",
     });
   }
 
@@ -365,62 +367,67 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'Expected a non-empty conversation ending with a user message.' });
   }
 
-  const client = new Anthropic();
   const sourceAnalysis = analyzeSourceIngestion(messages[messages.length - 1]?.content || '');
+  const latestUserMessage = messages[messages.length - 1].content;
+  const publicResearchPolicy = createPublicResearchPolicy({
+    publicContext: [latestUserMessage, ...sourceAnalysis.urls].join(' '),
+  });
+  const publicResearchIntent = sourceAnalysis.asksProfileSetup && (
+    sourceAnalysis.urls.length > 0 || /\b(?:public|web|website|github|linkedin|source|look up|research)\b/i.test(latestUserMessage)
+  );
+  const priorAssistantMessage = [...messages].reverse().find((message) => message.role === 'assistant')?.content || '';
+  const confirmsPriorAction = /^\s*(?:yes|approved?|confirm(?:ed)?|do it|go ahead|proceed|send (?:it|them)|make it happen)\b/i.test(latestUserMessage);
+  const actionDenied = /\b(?:do not|don't|dont|never|not yet|hold off|without (?:sending|contacting|messaging|notifying)|research only|just research)\b/i.test(latestUserMessage);
+  const introPattern = /\b(?:reach out to|introduce me to|connect me with|write to)\b|\b(?:contact|message|dm|e-?mail)\s+(?!list\b|details\b|info(?:rmation)?\b|history\b|summary\b)\w+|\b(?:draft|prepare|compose)\b.{0,40}\b(?:message|dm|e-?mail|intro|outreach)\b|\bsend\b.{0,50}\b(?:message|dm|e-?mail|intro|outreach)\s+to\b|\bsend\s+(?:them|him|her|these investors|those investors|the investor)\b/i;
+  const amplifyPattern = /\b(?:amplify me|make me apparent|put me in front of investors|notify (?:the )?investors|help me (?:get|be) discovered)\b/i;
+  const asksOnly = /\b(?:who|which|should|could|would|can)\b.{0,40}\b(?:contact|message|e-?mail|reach out)\b[^.!]*\?/i.test(latestUserMessage);
+  const sendsToSelf = /\bsend\s+me\b/i.test(latestUserMessage);
+  const introIntent = !actionDenied && !asksOnly && !sendsToSelf && (introPattern.test(latestUserMessage) || (confirmsPriorAction && introPattern.test(priorAssistantMessage)));
+  const amplifyIntent = !actionDenied && (amplifyPattern.test(latestUserMessage) || (confirmsPriorAction && amplifyPattern.test(priorAssistantMessage)));
   const system = buildSystemPrompt(founder, contactedIds, memories, sourceAnalysis.brief);
   const proposals = [];
   const profilePatches = [];
   const seenInvestors = new Set();
   let amplifyRequested = false;
 
-  const callModel = () =>
-    client.messages.create({
-      model: MODEL,
-      max_tokens: MAX_TOKENS,
-      thinking: { type: 'adaptive' },
-      output_config: { effort: 'medium' },
-      system,
-      tools: TOOLS,
-      messages,
-    });
-
   try {
-    let response = await callModel();
-    let steps = 0;
-
-    while (steps < MAX_AGENT_STEPS && (response.stop_reason === 'tool_use' || response.stop_reason === 'pause_turn')) {
-      steps += 1;
-      messages.push({ role: 'assistant', content: response.content });
-
-      if (response.stop_reason === 'pause_turn') {
-        response = await callModel();
-        continue;
-      }
-
-      const toolResults = [];
-      for (const block of response.content) {
-        if (block.type !== 'tool_use') continue;
-
+    const runtime = createApparentAgentRuntime();
+    const runtimeResult = await runtime.run({
+      system,
+      messages,
+      tools: TOOLS,
+      maxSteps: MAX_AGENT_STEPS,
+      maxTokens: 8192,
+      authorizeTool: (name) => {
+        if (name === 'search_public_web' || name === 'fetch_public_url') return publicResearchIntent;
+        if (name === 'propose_founder_profile_update') return sourceAnalysis.asksProfileSetup && !actionDenied;
+        if (name === 'draft_intro') return introIntent;
+        if (name === 'amplify_to_investors') return amplifyIntent;
+        return true;
+      },
+      executeTool: async (name, input, { session }) => {
+        const external = await runStandardOrthogonalTool(session, name, input, publicResearchPolicy);
+        if (external !== null) return external;
         let result;
-        if (block.name === 'find_matching_investors') {
+        if (name === 'find_matching_investors') {
           try {
-            result = await findMatchingInvestors(block.input, founder);
+            result = await findMatchingInvestors(input, founder);
           } catch (err) {
             result = { error: `lookup_failed: ${err?.message ?? 'unknown'}` };
           }
-        } else if (block.name === 'propose_founder_profile_update') {
-          const patch = buildFounderProfilePatch(block.input, founder);
+        } else if (name === 'propose_founder_profile_update') {
+          const patch = buildFounderProfilePatch(input, founder);
           if (patch.fields.length > 0) {
             profilePatches.push(patch);
             result = { status: 'drafted', fields: patch.fields.map((field) => field.field) };
           } else {
             result = { status: 'skipped', reason: 'No supported profile fields were proposed.' };
           }
-        } else if (block.name === 'draft_intro') {
-          const investorId = str(block.input?.investor_id);
-          const investorName = str(block.input?.investor_name);
-          const subject = str(block.input?.subject);
-          const messageBody = str(block.input?.body);
+        } else if (name === 'draft_intro') {
+          const investorId = str(input?.investor_id);
+          const investorName = str(input?.investor_name);
+          const subject = str(input?.subject);
+          const messageBody = str(input?.body);
           if (investorId && messageBody && !seenInvestors.has(investorId) && !contactedIds.includes(investorId)) {
             seenInvestors.add(investorId);
             proposals.push({ investorId, investorName, subject, body: messageBody });
@@ -428,26 +435,17 @@ export default async function handler(req, res) {
           } else {
             result = { status: 'skipped', reason: 'duplicate, already-messaged, or missing fields' };
           }
-        } else if (block.name === 'amplify_to_investors') {
+        } else if (name === 'amplify_to_investors') {
           amplifyRequested = true;
           result = { status: 'queued', note: 'Matched investors will be notified.' };
         } else {
-          result = { error: `Unknown tool: ${block.name}` };
+          result = { error: `Unknown tool: ${name}` };
         }
+        return result;
+      },
+    });
 
-        toolResults.push({ type: 'tool_result', tool_use_id: block.id, content: JSON.stringify(result) });
-      }
-
-      if (toolResults.length === 0) break;
-      messages.push({ role: 'user', content: toolResults });
-      response = await callModel();
-    }
-
-    let reply = response.content
-      .filter((b) => b.type === 'text')
-      .map((b) => b.text)
-      .join('\n')
-      .trim();
+    let reply = runtimeResult.reply.trim();
 
     if (sourceAnalysis.asksProfileSetup && profilePatches.length === 0) {
       const sourceNote = sourceAnalysis.likelyLimited.length
@@ -463,9 +461,7 @@ export default async function handler(req, res) {
       amplify: amplifyRequested,
     });
   } catch (err) {
-    if (err instanceof Anthropic.APIError) {
-      return res.status(200).json({ reply: `The agent hit an API error (${err.status}). Please try again in a moment.` });
-    }
-    return res.status(500).json({ error: `Agent error: ${err?.message ?? 'unknown'}` });
+    const failure = apparentAgentErrorResponse(err);
+    return res.status(failure.status).json({ error: failure.error, code: failure.code });
   }
 }

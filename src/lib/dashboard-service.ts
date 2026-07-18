@@ -1562,7 +1562,7 @@ export const loadSourceSignalDetail = async (
 /**
  * Trigger (or fetch the cached) agent deep dive for a sourced startup. POSTs to
  * /api/sourced-enrich with the caller's Supabase JWT — the server researches the
- * company with Claude web tools, caches the dossier on the row, and returns it.
+ * company through the Apparent runtime and Orthogonal tools, caches the dossier on the row, and returns it.
  * On-demand: only called when an investor clicks "Generate deep dive".
  */
 export const enrichSourcedStartup = async (
