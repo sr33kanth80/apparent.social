@@ -16,6 +16,7 @@ import {
   createApparentAgentRuntime,
   createPublicResearchPolicy,
   logApparentAgentError,
+  runEnrichmentAdapter,
   runStandardOrthogonalTool,
   standardOrthogonalTools,
   toolStatusLabel,
@@ -216,25 +217,93 @@ const searchApparentFounders = async (input) => {
   return { count: cards.length, founders: cards };
 };
 
-// ---------- Tool: enrich_contact (off-platform, hybrid) ----------
-// Contact enrichment is routed through Orthogonal's Tomba adapter.
+// ---------- Orthogonal premium-data tools (enrichment, signals, contacts) ----------
+// Candidate paths mirror each provider's own public API (the same convention as
+// the existing tomba/linkup/olostep adapters); runEnrichmentAdapter self-heals
+// via Orthogonal catalog discovery if a route is wrong.
 
+const cleanDomain = (v) => str(v).trim().toLowerCase()
+  .replace(/^https?:\/\//, '').replace(/^www\./, '').replace(/\/.*$/, '');
+
+const usableEmail = (value) => {
+  const email = str(value).trim();
+  return email.includes('@') && !/not_unlocked|no_email|unavailable/i.test(email) ? email : '';
+};
+
+const enrichCompany = async (input, session) => {
+  const domain = cleanDomain(input?.domain);
+  if (!domain) return { error: 'domain_required' };
+  return runEnrichmentAdapter(session, {
+    candidates: [
+      { api: 'apollo', path: '/api/v1/organizations/enrich', query: { domain } },
+      { api: 'peopledatalabs', path: '/v5/company/enrich', query: { website: domain } },
+    ],
+    discovery: { prompt: 'enrich company firmographics by website domain (funding, headcount, industry)', query: { domain, website: domain } },
+  });
+};
+
+const companySignals = async (input, session) => {
+  const domain = cleanDomain(input?.domain);
+  if (!domain) return { error: 'domain_required' };
+  const hiring = input?.signal === 'hiring';
+  return runEnrichmentAdapter(session, {
+    candidates: [
+      { api: 'predictleads', path: `/api/v3/companies/${domain}/${hiring ? 'job_openings' : 'financing_events'}`, query: { limit: 10 } },
+    ],
+    discovery: {
+      prompt: hiring ? 'company job openings and hiring signals by domain' : 'company financing events and funding signals by domain',
+      query: { domain, limit: 10 },
+    },
+  });
+};
+
+const enrichPerson = async (input, session) => {
+  const name = str(input?.name).trim();
+  if (!name) return { error: 'name_required' };
+  const company = str(input?.company).trim();
+  const domain = cleanDomain(input?.domain);
+  const query = { name };
+  if (company) query.company = company;
+  if (domain) query.website = domain;
+  return runEnrichmentAdapter(session, {
+    candidates: [{ api: 'peopledatalabs', path: '/v5/person/enrich', query }],
+    discovery: { prompt: 'enrich person professional profile by name and company', query },
+  });
+};
+
+// Contact lookup waterfall: Tomba email finder, then Apollo people match.
 const enrichContact = async (input, session) => {
   const name = str(input?.name).trim();
   const company = str(input?.company).trim();
-  const domain = str(input?.domain).trim().replace(/^https?:\/\//, '').replace(/\/.*$/, '');
+  const domain = cleanDomain(input?.domain);
   if (!domain) return { status: 'domain_required', guidance: 'Research the company domain first, then retry contact enrichment.' };
 
   const [firstName, ...lastParts] = name.split(/\s+/).filter(Boolean);
-  const query = { domain };
-  if (firstName) query.first_name = firstName;
-  if (lastParts.length) query.last_name = lastParts.join(' ');
-  const data = orthogonalData(await session.run({ api: 'tomba', path: '/v1/email-finder', query }));
-  const record = data?.data?.email ?? data?.email ?? data?.data ?? data;
-  const email = str(record?.email).trim();
-  return email
-    ? { provider: 'tomba-via-orthogonal', email, confidence: record?.score ?? record?.confidence ?? null, name, company }
-    : { provider: 'tomba-via-orthogonal', status: 'not_found', name, company, domain };
+  try {
+    const query = { domain };
+    if (firstName) query.first_name = firstName;
+    if (lastParts.length) query.last_name = lastParts.join(' ');
+    const data = orthogonalData(await session.run({ api: 'tomba', path: '/v1/email-finder', query }));
+    const record = data?.data?.email ?? data?.email ?? data?.data ?? data;
+    const email = usableEmail(record?.email);
+    if (email) return { provider: 'tomba-via-orthogonal', email, confidence: record?.score ?? record?.confidence ?? null, name, company };
+  } catch {
+    /* fall through to the next provider */
+  }
+
+  const apollo = await runEnrichmentAdapter(session, {
+    candidates: [
+      { api: 'apollo', path: '/api/v1/people/match', body: { name, organization_name: company, domain } },
+    ],
+    discovery: { prompt: 'find a person work email by name and company domain', query: { name, company, domain } },
+  });
+  if (!apollo.error) {
+    const person = apollo.data?.person ?? apollo.data;
+    const email = usableEmail(person?.email);
+    if (email) return { provider: apollo.provider, email, name, company };
+  }
+
+  return { provider: 'orthogonal', status: 'not_found', name, company, domain };
 };
 
 const TOOLS = [
@@ -306,9 +375,48 @@ const TOOLS = [
     },
   },
   {
+    name: 'enrich_company',
+    description:
+      "Pull structured company intelligence for a website domain — funding history, headcount, industry, socials — from premium data providers via Orthogonal. Use after identifying an interesting company (on- or off-platform) to ground fit and diligence claims in real data instead of guesses.",
+    input_schema: {
+      type: 'object',
+      properties: {
+        domain: { type: 'string', description: 'The company website domain, e.g. acme.com.' },
+      },
+      required: ['domain'],
+    },
+  },
+  {
+    name: 'company_signals',
+    description:
+      "Fetch recent momentum signals for a company domain: financing events (recent fundraises) or job openings (hiring growth). Great for checking whether a startup just raised, is about to raise, or is scaling the team — use it to answer 'who is raising / growing right now'. Find candidate domains with search_public_web first, then check each with this tool.",
+    input_schema: {
+      type: 'object',
+      properties: {
+        domain: { type: 'string', description: 'The company website domain, e.g. acme.com.' },
+        signal: { type: 'string', enum: ['financing', 'hiring'], description: 'Which signal to fetch (default financing).' },
+      },
+      required: ['domain'],
+    },
+  },
+  {
+    name: 'enrich_person',
+    description:
+      "Look up a person's professional background — roles, employment history, education, location, social profiles — from premium data providers via Orthogonal. Use to vet an off-platform founder before recommending them or drafting outreach. Provide the full name plus company or domain for accuracy.",
+    input_schema: {
+      type: 'object',
+      properties: {
+        name: { type: 'string', description: "The person's full name." },
+        company: { type: 'string', description: 'Their current company name.' },
+        domain: { type: 'string', description: 'The company website domain if known.' },
+      },
+      required: ['name'],
+    },
+  },
+  {
     name: 'enrich_contact',
     description:
-      "Find a public contact for an OFF-PLATFORM founder (one NOT on Apparent). If an enrichment vendor is configured it is queried; otherwise you'll get guidance to use web_search/web_fetch. Use this after you've identified a promising off-platform founder via web_search and want their email before drafting an intro.",
+      "Find a public work email for an OFF-PLATFORM founder (one NOT on Apparent) via a provider waterfall (Tomba, then Apollo). Use this after you've identified a promising off-platform founder and want their email before drafting an intro.",
     input_schema: {
       type: 'object',
       properties: {
@@ -340,6 +448,9 @@ const TOOLS = [
 
 const runTool = async (name, input, session) => {
   if (name === 'search_apparent_founders') return searchApparentFounders(input);
+  if (name === 'enrich_company') return enrichCompany(input, session);
+  if (name === 'company_signals') return companySignals(input, session);
+  if (name === 'enrich_person') return enrichPerson(input, session);
   if (name === 'enrich_contact') return enrichContact(input, session);
   return { error: `Unknown tool: ${name}` };
 };
@@ -386,7 +497,10 @@ const buildSystemPrompt = (criteria, autonomy, contactedIds, memories, sourceBri
     '- To reach out, call propose_outreach (one per founder), only for founders that are open_to_contact and not already-contacted. These become in-app DMs, sent per the outreach mode above.',
     '',
     'OFF-PLATFORM founders (out on the web, not on Apparent):',
-    '- When the investor wants founders beyond Apparent ("not on Apparent", "from the web", "find more like this", broad sourcing), use search_public_web to find real startups/founders matching the thesis, and fetch_public_url to read their site/profile for detail. Only surface real, verifiable results and cite the source URL.',
+    '- Use search_public_web to find real startups/founders matching the thesis, and fetch_public_url to read their site/profile (including subpages like /about or /team). Only surface real, verifiable results and cite the source URL.',
+    '- Verify and deepen with premium data: enrich_company (funding, headcount, industry for a domain), company_signals (recent fundraises or hiring growth), enrich_person (a founder\'s background and track record).',
+    '- Typical deep-sourcing flow: search_public_web to find candidates → fetch_public_url to read their site → enrich_company + company_signals to verify momentum → enrich_person to vet the founder → enrich_contact for an email → prepare_mailto to draft the intro.',
+    '- If an enrichment tool returns an error or nothing, fall back to public web research instead of giving up.',
     '- To get a contact, call enrich_contact. Never invent an email; only use one returned by the tool.',
     '- To reach out, call prepare_mailto. OFF-PLATFORM outreach is ALWAYS a draft the investor sends from their own inbox — it is NEVER auto-sent, regardless of the autonomy setting. If you only found a social handle, leave to_email empty and put the handle in the body.',
     '',
@@ -455,11 +569,18 @@ export default async function handler(req, res) {
 
   const sourceAnalysis = analyzeSourceIngestion(messages[messages.length - 1]?.content || '');
   const latestUserMessage = messages[messages.length - 1].content;
+  // Research is a read: always authorized. The policy's query allowlist is fed
+  // with the whole conversation, the saved criteria, and agent memories so the
+  // model can search with thesis terms — the sensitive-data filter still blocks
+  // emails, phones, and secrets from ever entering a public query.
   const publicResearchPolicy = createPublicResearchPolicy({
-    publicContext: [latestUserMessage, ...sourceAnalysis.urls].join(' '),
+    publicContext: [
+      ...messages.map((m) => m.content),
+      ...Object.values(criteria || {}).map(str),
+      ...memories.map((memory) => `${str(memory?.key)} ${str(memory?.value)}`),
+      ...sourceAnalysis.urls,
+    ].join(' '),
   });
-  const publicResearchIntent = /\b(?:off[- ]platform|outside apparent|public (?:web|source)|web search|research online|look up|source (?:founders|startups)|not on apparent)\b/i.test(latestUserMessage) ||
-    (sourceAnalysis.asksProfileSetup && (sourceAnalysis.urls.length > 0 || /\b(?:public|web|website|source|look up|research)\b/i.test(latestUserMessage)));
   const priorAssistantMessage = [...messages].reverse().find((message) => message.role === 'assistant')?.content || '';
   const confirmsPriorAction = /^\s*(?:yes|approved?|confirm(?:ed)?|do it|go ahead|proceed|send (?:it|them)|make it happen)\b/i.test(latestUserMessage);
   const actionDenied = /\b(?:do not|don't|dont|never|not yet|hold off|without (?:sending|contacting|messaging)|research only|just research)\b/i.test(latestUserMessage);
@@ -491,7 +612,6 @@ export default async function handler(req, res) {
       maxSteps: MAX_AGENT_STEPS,
       maxTokens: 4096,
       authorizeTool: (name) => {
-        if (name === 'search_public_web' || name === 'fetch_public_url') return publicResearchIntent;
         if (name === 'propose_investor_profile_update') return sourceAnalysis.asksProfileSetup && !actionDenied;
         if (name === 'propose_outreach') return autonomy === 'manual' ? sendIntent || draftIntent : sendIntent && explicitFounderOutreach;
         if (name === 'prepare_mailto') return sendIntent || draftIntent;

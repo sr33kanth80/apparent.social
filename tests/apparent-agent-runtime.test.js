@@ -6,6 +6,7 @@ import {
   createApparentAgentRuntime,
   createPublicResearchPolicy,
   isAuthorizedResearchUrl,
+  runEnrichmentAdapter,
   runStandardOrthogonalTool,
 } from '../server/agent/apparent-agent-runtime.js';
 import { createOrthogonalSession, OrthogonalError } from '../server/agent/orthogonal.js';
@@ -118,6 +119,72 @@ test('public research rejects private hosts, signed URLs, and unapproved query t
     'public_query_not_authorized',
   );
   assert.equal(called, false);
+});
+
+test('search results extend the query allowlist and enable same-origin fetches', async () => {
+  const policy = createPublicResearchPolicy({ publicContext: 'Find fintech startups' });
+  const session = {
+    run: async ({ api }) => (api === 'linkup'
+      ? { data: { results: [{ title: 'Acme logistics platform', url: 'https://acme.com' }] } }
+      : { data: { text: 'Team page.' } }),
+  };
+
+  // Terms discovered in search results become queryable in follow-up searches.
+  await runStandardOrthogonalTool(session, 'search_public_web', { query: 'fintech startups' }, policy);
+  const followUp = await runStandardOrthogonalTool(session, 'search_public_web', { query: 'acme logistics funding' }, policy);
+  assert.equal(followUp.error, undefined);
+
+  // Same-origin subpages of a discovered site are fetchable.
+  const subpage = await runStandardOrthogonalTool(session, 'fetch_public_url', { url: 'https://acme.com/team' }, policy);
+  assert.equal(subpage.error, undefined);
+  // Unrelated origins stay blocked.
+  const foreign = await runStandardOrthogonalTool(session, 'fetch_public_url', { url: 'https://attacker.example/team' }, policy);
+  assert.equal(foreign.error, 'public_url_not_authorized');
+});
+
+test('runEnrichmentAdapter falls through candidates and never throws', async () => {
+  const calls = [];
+  const session = {
+    run: async ({ api, path }) => {
+      calls.push(`${api}${path}`);
+      if (api === 'apollo') throw new Error('route not found');
+      return { data: { name: 'Acme', funding: '$2M' } };
+    },
+    search: async () => ({ data: [] }),
+  };
+
+  const result = await runEnrichmentAdapter(session, {
+    candidates: [
+      { api: 'apollo', path: '/api/v1/organizations/enrich', query: { domain: 'acme.com' } },
+      { api: 'peopledatalabs', path: '/v5/company/enrich', query: { website: 'acme.com' } },
+    ],
+    discovery: { prompt: 'test: company enrichment fallthrough', query: { domain: 'acme.com' } },
+  });
+
+  assert.equal(result.error, undefined);
+  assert.equal(result.provider, 'peopledatalabs/v5/company/enrich');
+  assert.deepEqual(calls, ['apollo/api/v1/organizations/enrich', 'peopledatalabs/v5/company/enrich']);
+});
+
+test('runEnrichmentAdapter self-heals via catalog discovery when candidates fail', async () => {
+  const calls = [];
+  const session = {
+    run: async ({ api, path }) => {
+      calls.push(`${api}${path}`);
+      if (api === 'discovered') return { data: { ok: true } };
+      throw new Error('route not found');
+    },
+    search: async () => ({ data: { endpoints: [{ api: 'discovered', path: '/v1/enrich' }] } }),
+  };
+
+  const result = await runEnrichmentAdapter(session, {
+    candidates: [{ api: 'apollo', path: '/wrong/path', query: { domain: 'acme.com' } }],
+    discovery: { prompt: 'test: discovery self-heal', query: { domain: 'acme.com' } },
+  });
+
+  assert.equal(result.error, undefined);
+  assert.equal(result.provider, 'discovered/v1/enrich');
+  assert.deepEqual(calls, ['apollo/wrong/path', 'discovered/v1/enrich']);
 });
 
 test('public research records deterministic fetched URL provenance', async () => {

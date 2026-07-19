@@ -376,8 +376,16 @@ export default async function handler(req, res) {
 
   const sourceAnalysis = analyzeSourceIngestion(messages[messages.length - 1]?.content || '');
   const latestUserMessage = messages[messages.length - 1].content;
+  // Feed the whole conversation, the founder's profile, and agent memories into
+  // the research policy so authorized web research can use the founder's own
+  // terms, not just words from the latest message.
   const publicResearchPolicy = createPublicResearchPolicy({
-    publicContext: [latestUserMessage, ...sourceAnalysis.urls].join(' '),
+    publicContext: [
+      ...messages.map((m) => m.content),
+      ...Object.values(founder || {}).map(str),
+      ...memories.map((memory) => `${str(memory?.key)} ${str(memory?.value)}`),
+      ...sourceAnalysis.urls,
+    ].join(' '),
   });
   const publicResearchIntent = sourceAnalysis.asksProfileSetup && (
     sourceAnalysis.urls.length > 0 || /\b(?:public|web|website|github|linkedin|source|look up|research)\b/i.test(latestUserMessage)
