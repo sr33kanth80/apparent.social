@@ -4,7 +4,14 @@ import { Check, Loader2, Megaphone, Send, Sparkles, Trash2, X } from 'lucide-rea
 import { AgentConversationShell } from '@/components/AgentConversationShell';
 import { AgentMarkdown } from '@/components/AgentMarkdown';
 import { AgentProfilePatchCard } from '@/components/AgentProfilePatchCard';
-import { AgentStatusTrail, appendStatus, postAgentStream, useTypewriterReveal } from '@/components/agent-stream';
+import {
+  AgentStatusTrail,
+  appendStatus,
+  CopyAnswerButton,
+  postAgentStream,
+  ResearchTrailDisclosure,
+  useTypewriterReveal,
+} from '@/components/agent-stream';
 import { InvestorAIPrompt } from '@/components/InvestorAIAssist';
 import { LogoIcon } from '@/components/LogoIcon';
 import { useAgentAuthHeaders } from '@/lib/agent-auth';
@@ -28,6 +35,8 @@ type ChatMessage = {
   proposals?: ProposalState[];
   profilePatches?: AgentProfilePatch[];
   amplified?: { count: number } | { error: string };
+  /** Research steps that produced this reply, kept for the collapsed trail. */
+  steps?: string[];
 };
 
 interface FounderAgentChatProps {
@@ -97,6 +106,7 @@ export const FounderAgentChat = ({
         proposals: item.proposals,
         profilePatches: item.profilePatches,
         amplified: item.amplified,
+        steps: item.steps,
       },
     }));
 
@@ -107,6 +117,7 @@ export const FounderAgentChat = ({
       proposals: Array.isArray(item.payload?.proposals) ? (item.payload.proposals as ProposalState[]) : undefined,
       profilePatches: Array.isArray(item.payload?.profilePatches) ? (item.payload.profilePatches as AgentProfilePatch[]) : undefined,
       amplified: item.payload?.amplified as ChatMessage['amplified'],
+      steps: Array.isArray(item.payload?.steps) ? (item.payload.steps as string[]) : undefined,
     }));
 
   const persistTranscript = (
@@ -172,6 +183,7 @@ export const FounderAgentChat = ({
     try {
       const conversationThreadId = await persistTranscript(conversation, trimmed);
       if (activeThreadRef.current === threadId) activeThreadRef.current = conversationThreadId;
+      const trail: string[] = [];
       const data = await postAgentStream(
         '/api/founder-agent',
         {
@@ -181,7 +193,10 @@ export const FounderAgentChat = ({
           contacted: contactedInvestorIds,
         },
         await authHeaders(),
-        (label) => setStatusSteps((steps) => appendStatus(steps, label)),
+        (label) => {
+          if (trail[trail.length - 1] !== label) trail.push(label);
+          setStatusSteps((steps) => appendStatus(steps, label));
+        },
       );
 
       const assistantReply = String(data.reply ?? '');
@@ -197,6 +212,7 @@ export const FounderAgentChat = ({
           content: assistantReply,
           proposals: proposalStates.length ? proposalStates : undefined,
           profilePatches: profilePatches.length ? profilePatches : undefined,
+          steps: trail.length ? trail : undefined,
         },
       ];
       if (activeThreadRef.current === conversationThreadId) {
@@ -247,7 +263,7 @@ export const FounderAgentChat = ({
   const visibleAssistantText = (message: ChatMessage, index: number) =>
     reveal !== null && index === messages.length - 1 ? message.content.slice(0, reveal) : message.content;
 
-  const renderProposal = (messageIndex: number, proposal: ProposalState, proposalIndex: number) => {
+  const renderProposal = (messageIndex: number, proposal: ProposalState, proposalIndex: number, flat = false) => {
     const badge = () => {
       switch (proposal.status) {
         case 'sent':
@@ -264,7 +280,10 @@ export const FounderAgentChat = ({
     };
 
     return (
-      <div key={`${proposal.investorId}-${proposalIndex}`} className="rounded-xl border border-black/10 bg-white p-3">
+      <div
+        key={`${proposal.investorId}-${proposalIndex}`}
+        className={flat ? 'rounded-2xl border border-black/10 bg-white p-4' : 'rounded-xl border border-black/10 bg-white p-3'}
+      >
         <div className="mb-1 flex items-center justify-between gap-2">
           <p className="text-xs font-semibold text-black">To {proposal.investorName || 'investor'}</p>
           {badge()}
@@ -295,34 +314,44 @@ export const FounderAgentChat = ({
 
   if (pageMode) {
     const pageTranscript = (
-      <div className="space-y-10">
+      <div>
         {messages.map((message, index) => (
-          <article key={index} className="border-b border-black/5 pb-10 last:border-b-0">
+          <article
+            key={index}
+            className={
+              message.role === 'user'
+                ? 'pb-4 pt-8 first:pt-0'
+                : 'border-b border-black/[0.07] pb-8 last:border-b-0'
+            }
+          >
             {message.role === 'user' ? (
               <div>
-                <p className="mb-3 text-[11px] font-semibold uppercase tracking-[0.16em] text-gray-400">You</p>
-                <h2 className="whitespace-pre-wrap text-2xl font-semibold leading-tight tracking-[-0.025em] text-black sm:text-[30px]">
+                <p className="mb-2 text-[11px] font-medium uppercase tracking-[0.16em] text-gray-400">You</p>
+                <h2 className="whitespace-pre-wrap text-2xl font-semibold leading-snug tracking-[-0.02em] text-black">
                   {message.content}
                 </h2>
               </div>
             ) : (
               <div>
-                <div className="mb-4 flex items-center gap-2.5 text-sm font-semibold text-black">
-                  <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-charcoal text-white">
-                    <LogoIcon className="h-3.5 w-3.5" />
+                <div className="mb-4 flex items-center gap-2 text-sm font-medium text-black">
+                  <div className="flex h-6 w-6 items-center justify-center rounded-md bg-charcoal text-white">
+                    <LogoIcon className="h-3 w-3" />
                   </div>
                   Apparent
                 </div>
+
+                <ResearchTrailDisclosure steps={message.steps} />
+
                 <AgentMarkdown className="text-[15px] leading-7 text-gray-800 sm:text-base">
                   {visibleAssistantText(message, index)}
                 </AgentMarkdown>
 
                 {message.proposals && message.proposals.length > 0 && (
-                  <div className="mt-5 grid gap-3">{message.proposals.map((proposal, pi) => renderProposal(index, proposal, pi))}</div>
+                  <div className="mt-4 grid gap-3">{message.proposals.map((proposal, pi) => renderProposal(index, proposal, pi, true))}</div>
                 )}
 
                 {message.profilePatches && message.profilePatches.length > 0 && (
-                  <div className="mt-5 grid gap-3">
+                  <div className="mt-4 grid gap-3">
                     {message.profilePatches.map((patch, pi) => (
                       <AgentProfilePatchCard
                         key={`${patch.role}-${pi}-${patch.fields.map((field) => field.field).join('-')}`}
@@ -334,7 +363,7 @@ export const FounderAgentChat = ({
                 )}
 
                 {message.amplified && (
-                  <div className="mt-5">
+                  <div className="mt-4">
                     <div className="inline-flex items-center gap-2 rounded-xl border border-lavender bg-[#eef2fb] px-3 py-2 text-xs font-medium text-ink">
                       <Megaphone className="h-3.5 w-3.5" />
                       {'count' in message.amplified
@@ -345,21 +374,24 @@ export const FounderAgentChat = ({
                     </div>
                   </div>
                 )}
+
+                {(reveal === null || index !== messages.length - 1) && (
+                  <div className="mt-4">
+                    <CopyAnswerButton text={message.content} />
+                  </div>
+                )}
               </div>
             )}
           </article>
         ))}
 
         {isLoading && (
-          <div className="flex items-start gap-3">
-            <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-charcoal text-white">
-              <LogoIcon className="h-3.5 w-3.5" />
-            </div>
-            <AgentStatusTrail className="pt-1" steps={statusSteps} />
+          <div className="mt-6 rounded-2xl border border-black/10 bg-white px-4 py-3.5">
+            <AgentStatusTrail steps={statusSteps} />
           </div>
         )}
 
-        {error && <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>}
+        {error && <div className="mt-6 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>}
       </div>
     );
 
@@ -368,6 +400,7 @@ export const FounderAgentChat = ({
         className={className}
         hasConversation={hasConversation}
         isLoading={isLoading}
+        onNewConversation={clear}
         onSubmit={send}
         role="founder"
         suggestions={SUGGESTIONS}

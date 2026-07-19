@@ -5,7 +5,14 @@ import { AnimatePresence, motion } from 'framer-motion';
 
 import { AgentConversationShell } from '@/components/AgentConversationShell';
 import { AgentMarkdown } from '@/components/AgentMarkdown';
-import { AgentStatusTrail, appendStatus, postAgentStream, useTypewriterReveal } from '@/components/agent-stream';
+import {
+  AgentStatusTrail,
+  appendStatus,
+  CopyAnswerButton,
+  postAgentStream,
+  ResearchTrailDisclosure,
+  useTypewriterReveal,
+} from '@/components/agent-stream';
 import { AgentProfilePatchCard } from '@/components/AgentProfilePatchCard';
 import { InvestorAIPrompt } from '@/components/InvestorAIAssist';
 import { LogoIcon } from '@/components/LogoIcon';
@@ -43,9 +50,11 @@ type ChatMessage = {
   proposals?: ProposalState[];
   emailDrafts?: EmailDraft[];
   profilePatches?: AgentProfilePatch[];
+  /** Research steps that produced this reply, kept for the collapsed trail. */
+  steps?: string[];
 };
 
-const EmailDraftCard = ({ draft }: { draft: EmailDraft }) => {
+const EmailDraftCard = ({ draft, flat = false }: { draft: EmailDraft; flat?: boolean }) => {
   const [copied, setCopied] = useState(false);
   const mailtoHref = `mailto:${draft.toEmail}?subject=${encodeURIComponent(draft.subject || '')}&body=${encodeURIComponent(draft.body || '')}`;
 
@@ -60,7 +69,7 @@ const EmailDraftCard = ({ draft }: { draft: EmailDraft }) => {
   };
 
   return (
-    <div className="rounded-xl border border-black/10 bg-white p-3">
+    <div className={flat ? 'rounded-2xl border border-black/10 bg-white p-4' : 'rounded-xl border border-black/10 bg-white p-3'}>
       <div className="mb-1 flex items-center justify-between gap-2">
         <p className="text-xs font-semibold text-black">
           {draft.founderName || 'Founder'}
@@ -185,6 +194,7 @@ export const InvestorAgentChat = ({
         proposals: item.proposals,
         emailDrafts: item.emailDrafts,
         profilePatches: item.profilePatches,
+        steps: item.steps,
       },
     }));
 
@@ -195,6 +205,7 @@ export const InvestorAgentChat = ({
       proposals: Array.isArray(item.payload?.proposals) ? (item.payload.proposals as ProposalState[]) : undefined,
       emailDrafts: Array.isArray(item.payload?.emailDrafts) ? (item.payload.emailDrafts as EmailDraft[]) : undefined,
       profilePatches: Array.isArray(item.payload?.profilePatches) ? (item.payload.profilePatches as AgentProfilePatch[]) : undefined,
+      steps: Array.isArray(item.payload?.steps) ? (item.payload.steps as string[]) : undefined,
     }));
 
   const persistTranscript = (
@@ -295,6 +306,7 @@ export const InvestorAgentChat = ({
     try {
       const conversationThreadId = await persistTranscript(conversation, trimmed);
       if (activeThreadRef.current === threadId) activeThreadRef.current = conversationThreadId;
+      const trail: string[] = [];
       const data = await postAgentStream(
         '/api/agent',
         {
@@ -305,7 +317,10 @@ export const InvestorAgentChat = ({
           contacted: contactedFounderIds,
         },
         await authHeaders(),
-        (label) => setStatusSteps((steps) => appendStatus(steps, label)),
+        (label) => {
+          if (trail[trail.length - 1] !== label) trail.push(label);
+          setStatusSteps((steps) => appendStatus(steps, label));
+        },
       );
 
       const assistantReply = String(data.reply ?? '');
@@ -327,6 +342,7 @@ export const InvestorAgentChat = ({
           proposals: proposalStates.length ? proposalStates : undefined,
           emailDrafts: emailDrafts.length ? emailDrafts : undefined,
           profilePatches: profilePatches.length ? profilePatches : undefined,
+          steps: trail.length ? trail : undefined,
         },
       ];
       if (activeThreadRef.current === conversationThreadId) {
@@ -391,7 +407,7 @@ export const InvestorAgentChat = ({
 
   const statusTrail = <AgentStatusTrail steps={statusSteps} />;
 
-  const renderProposal = (messageIndex: number, proposal: ProposalState, proposalIndex: number) => {
+  const renderProposal = (messageIndex: number, proposal: ProposalState, proposalIndex: number, flat = false) => {
     const statusBadge = () => {
       switch (proposal.status) {
         case 'sent':
@@ -408,7 +424,10 @@ export const InvestorAgentChat = ({
     };
 
     return (
-      <div key={`${proposal.founderId}-${proposalIndex}`} className="rounded-xl border border-black/10 bg-white p-3">
+      <div
+        key={`${proposal.founderId}-${proposalIndex}`}
+        className={flat ? 'rounded-2xl border border-black/10 bg-white p-4' : 'rounded-xl border border-black/10 bg-white p-3'}
+      >
         <div className="mb-1 flex items-center justify-between gap-2">
           <p className="text-xs font-semibold text-black">To {proposal.founderName || 'founder'}</p>
           {statusBadge()}
@@ -589,48 +608,55 @@ export const InvestorAgentChat = ({
 
   if (pageMode) {
     const pageTranscript = (
-      <div className="space-y-10">
+      <div>
         {messages.map((message, index) => (
           <motion.article
             key={index}
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.2, ease: 'easeOut' }}
-            className="border-b border-black/5 pb-10 last:border-b-0"
+            className={
+              message.role === 'user'
+                ? 'pb-4 pt-8 first:pt-0'
+                : 'border-b border-black/[0.07] pb-8 last:border-b-0'
+            }
           >
             {message.role === 'user' ? (
               <div>
-                <p className="mb-3 text-[11px] font-semibold uppercase tracking-[0.16em] text-gray-400">You</p>
-                <h2 className="whitespace-pre-wrap text-2xl font-semibold leading-tight tracking-[-0.025em] text-black sm:text-[30px]">
+                <p className="mb-2 text-[11px] font-medium uppercase tracking-[0.16em] text-gray-400">You</p>
+                <h2 className="whitespace-pre-wrap text-2xl font-semibold leading-snug tracking-[-0.02em] text-black">
                   {message.content}
                 </h2>
               </div>
             ) : (
               <div>
-                <div className="mb-4 flex items-center gap-2.5 text-sm font-semibold text-black">
-                  <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-charcoal text-white">
-                    <LogoIcon className="h-3.5 w-3.5" />
+                <div className="mb-4 flex items-center gap-2 text-sm font-medium text-black">
+                  <div className="flex h-6 w-6 items-center justify-center rounded-md bg-charcoal text-white">
+                    <LogoIcon className="h-3 w-3" />
                   </div>
                   Apparent
                 </div>
+
+                <ResearchTrailDisclosure steps={message.steps} />
+
                 <AgentMarkdown className="text-[15px] leading-7 text-gray-800 sm:text-base">
                   {visibleAssistantText(message, index)}
                 </AgentMarkdown>
 
                 {message.proposals && message.proposals.length > 0 && (
-                  <div className="mt-5 grid gap-3">{message.proposals.map((proposal, pi) => renderProposal(index, proposal, pi))}</div>
+                  <div className="mt-4 grid gap-3">{message.proposals.map((proposal, pi) => renderProposal(index, proposal, pi, true))}</div>
                 )}
 
                 {message.emailDrafts && message.emailDrafts.length > 0 && (
-                  <div className="mt-5 grid gap-3">
+                  <div className="mt-4 grid gap-3">
                     {message.emailDrafts.map((draft, di) => (
-                      <EmailDraftCard key={`${draft.toEmail || draft.founderName}-${di}`} draft={draft} />
+                      <EmailDraftCard key={`${draft.toEmail || draft.founderName}-${di}`} draft={draft} flat />
                     ))}
                   </div>
                 )}
 
                 {message.profilePatches && message.profilePatches.length > 0 && (
-                  <div className="mt-5 grid gap-3">
+                  <div className="mt-4 grid gap-3">
                     {message.profilePatches.map((patch, pi) => (
                       <AgentProfilePatchCard
                         key={`${patch.role}-${pi}-${patch.fields.map((field) => field.field).join('-')}`}
@@ -638,6 +664,12 @@ export const InvestorAgentChat = ({
                         patch={patch}
                       />
                     ))}
+                  </div>
+                )}
+
+                {(reveal === null || index !== messages.length - 1) && (
+                  <div className="mt-4">
+                    <CopyAnswerButton text={message.content} />
                   </div>
                 )}
               </div>
@@ -649,16 +681,13 @@ export const InvestorAgentChat = ({
           <motion.div
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
-            className="flex items-start gap-3"
+            className="mt-6 rounded-2xl border border-black/10 bg-white px-4 py-3.5"
           >
-            <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-charcoal text-white">
-              <LogoIcon className="h-3.5 w-3.5" />
-            </div>
-            <div className="pt-1">{statusTrail}</div>
+            {statusTrail}
           </motion.div>
         )}
 
-        {error && <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>}
+        {error && <div className="mt-6 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>}
       </div>
     );
 
@@ -667,6 +696,7 @@ export const InvestorAgentChat = ({
         className={className}
         hasConversation={hasConversation}
         isLoading={isLoading}
+        onNewConversation={clear}
         onSubmit={send}
         role="investor"
         suggestions={SUGGESTIONS}

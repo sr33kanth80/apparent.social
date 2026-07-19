@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Check, Loader2 } from 'lucide-react';
+import { Check, ChevronDown, Copy, Loader2, Sparkles } from 'lucide-react';
 
 import { cn } from '@/lib/utils';
 
@@ -110,3 +110,55 @@ export const AgentStatusTrail = ({ steps, className }: { steps: string[]; classN
 /** Appends a status label, deduping consecutive repeats and capping the trail. */
 export const appendStatus = (steps: string[], label: string) =>
   steps[steps.length - 1] === label ? steps : [...steps, label].slice(-8);
+
+/**
+ * Collapsed record of the research steps behind an answer, kept after the
+ * reply lands (Perplexity-style). Native <details> — no state needed.
+ */
+export const ResearchTrailDisclosure = ({ steps }: { steps?: string[] }) => {
+  const trail = (steps ?? []).filter(Boolean);
+  if (trail.length === 0) return null;
+  return (
+    <details className="group mb-4 rounded-xl border border-black/10 bg-white">
+      <summary className="flex cursor-pointer select-none items-center gap-2 px-3.5 py-2 text-xs text-gray-500 transition-colors hover:text-black [&::-webkit-details-marker]:hidden">
+        <Sparkles className="h-3.5 w-3.5 shrink-0" />
+        <span className="font-medium">
+          Worked {trail.length} step{trail.length === 1 ? '' : 's'}
+        </span>
+        <ChevronDown className="ml-auto h-3.5 w-3.5 shrink-0 transition-transform group-open:rotate-180" />
+      </summary>
+      <div className="space-y-1.5 border-t border-black/5 px-3.5 py-2.5">
+        {trail.map((label, index) => (
+          <div key={`${index}-${label}`} className="flex items-center gap-2 text-xs text-gray-500">
+            <Check className="h-3 w-3 shrink-0 text-gray-400" />
+            {label}
+          </div>
+        ))}
+      </div>
+    </details>
+  );
+};
+
+/** Ghost copy-to-clipboard button for an answer. */
+export const CopyAnswerButton = ({ text }: { text: string }) => {
+  const [copied, setCopied] = useState(false);
+  const copy = async () => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 1500);
+    } catch {
+      /* ignore */
+    }
+  };
+  return (
+    <button
+      type="button"
+      onClick={copy}
+      className="inline-flex items-center gap-1.5 rounded-md border border-black/10 px-2.5 py-1 text-[11px] text-gray-500 transition-colors hover:border-black/25 hover:text-black"
+    >
+      {copied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
+      {copied ? 'Copied' : 'Copy'}
+    </button>
+  );
+};
