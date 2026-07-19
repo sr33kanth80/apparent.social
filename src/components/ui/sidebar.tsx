@@ -24,6 +24,7 @@ import {
   Settings,
   Sparkles,
   Target,
+  Trash2,
   UserCircle,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
@@ -60,6 +61,7 @@ interface SessionNavBarProps {
   agentThreads?: AgentChatThread[];
   activeAgentThreadId?: string | null;
   onStartNewAgentConversation?: () => void;
+  onDeleteAgentThread?: (thread: AgentChatThread) => Promise<void>;
 }
 
 const deriveDisplayName = (email: string): string =>
@@ -270,10 +272,12 @@ function BaseSessionNavBar({
   agentThreads = [],
   activeAgentThreadId = null,
   onStartNewAgentConversation,
+  onDeleteAgentThread,
   onSignOut,
 }: SessionNavBarProps & { onSignOut?: () => Promise<void> }) {
   const [isHovered, setIsHovered] = useState(false);
   const [navExpanded, setNavExpanded] = useState(false);
+  const [deletingAgentThreadId, setDeletingAgentThreadId] = useState<string | null>(null);
   const [isPinned, setIsPinned] = useState(() => {
     if (typeof window === 'undefined') {
       return true;
@@ -415,20 +419,41 @@ function BaseSessionNavBar({
                                       const threadPath = `${item.path}?thread=${encodeURIComponent(thread.id)}`;
                                       const isCurrent = activePath === item.path && activeAgentThreadId === thread.id;
                                       return (
-                                        <Link
-                                          key={thread.id}
-                                          to={threadPath}
-                                          title={thread.title}
-                                          className={cn(
-                                            'flex h-7 min-w-0 items-center gap-2 rounded-md px-2 text-xs transition-colors',
-                                            isCurrent
-                                              ? 'bg-black/[0.07] font-semibold text-[#222]'
-                                              : 'text-gray-500 hover:bg-black/[0.04] hover:text-[#222]',
+                                        <div key={thread.id} className="group/agent-thread relative min-w-0">
+                                          <Link
+                                            to={threadPath}
+                                            title={thread.title}
+                                            className={cn(
+                                              'flex h-7 min-w-0 items-center gap-2 rounded-md py-0 pl-2 pr-8 text-xs transition-colors',
+                                              isCurrent
+                                                ? 'bg-black/[0.07] font-semibold text-[#222]'
+                                                : 'text-gray-500 hover:bg-black/[0.04] hover:text-[#222]',
+                                            )}
+                                          >
+                                            <MessageSquareText className="h-3 w-3 shrink-0 opacity-60" />
+                                            <span className="truncate">{thread.title}</span>
+                                          </Link>
+                                          {onDeleteAgentThread && (
+                                            <button
+                                              type="button"
+                                              aria-label={`Delete ${thread.title}`}
+                                              title="Delete conversation"
+                                              disabled={deletingAgentThreadId === thread.id}
+                                              onClick={(event) => {
+                                                event.preventDefault();
+                                                event.stopPropagation();
+                                                if (!window.confirm(`Delete \"${thread.title}\"? This removes its chat history and memory.`)) return;
+                                                setDeletingAgentThreadId(thread.id);
+                                                void onDeleteAgentThread(thread)
+                                                  .catch(() => undefined)
+                                                  .finally(() => setDeletingAgentThreadId(null));
+                                              }}
+                                              className="absolute right-1 top-1/2 flex h-5 w-5 -translate-y-1/2 items-center justify-center rounded text-gray-400 opacity-0 transition hover:bg-red-500/10 hover:text-red-600 focus-visible:opacity-100 disabled:cursor-wait disabled:opacity-50 group-hover/agent-thread:opacity-100 group-focus-within/agent-thread:opacity-100"
+                                            >
+                                              <Trash2 className="h-3 w-3" />
+                                            </button>
                                           )}
-                                        >
-                                          <MessageSquareText className="h-3 w-3 shrink-0 opacity-60" />
-                                          <span className="truncate">{thread.title}</span>
-                                        </Link>
+                                        </div>
                                       );
                                     })}
                                   </div>

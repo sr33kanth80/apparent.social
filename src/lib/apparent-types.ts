@@ -120,6 +120,7 @@ export type AgentProfilePatch = {
 export type AgentMemory = {
   id?: string;
   role: DashboardRole;
+  threadId?: string;
   scope: 'profile' | 'preference' | 'source' | 'action' | 'conversation_summary';
   key: string;
   value: string;

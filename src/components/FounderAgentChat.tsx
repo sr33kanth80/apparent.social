@@ -59,7 +59,7 @@ interface FounderAgentChatProps {
     threadId?: string | null,
   ) => Promise<string>;
   onStartNewConversation: () => void;
-  onRememberConversation: (userMessage: string, assistantReply: string) => Promise<void>;
+  onRememberConversation: (userMessage: string, assistantReply: string, threadId: string) => Promise<void>;
   pageMode?: boolean;
   className?: string;
 }
@@ -241,7 +241,7 @@ export const FounderAgentChat = ({
         }
       }
 
-      void onRememberConversation(trimmed, assistantReply);
+      void onRememberConversation(trimmed, assistantReply, conversationThreadId);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'The agent is unavailable right now.');
     } finally {

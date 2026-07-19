@@ -107,6 +107,7 @@ import {
   saveAgentConversationMemory,
   saveAgentActionMemory,
   createAgentChatThread,
+  deleteAgentChatThread,
   saveAgentChatMessages,
   saveFeedAction,
   saveInvestorMatchBookmark,
@@ -3000,8 +3001,12 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
     }
   };
 
-  const handleRememberAgentConversation = async (userMessage: string, assistantReply: string): Promise<void> => {
-    const memory = await saveAgentConversationMemory(user, role, userMessage, assistantReply);
+  const handleRememberAgentConversation = async (
+    userMessage: string,
+    assistantReply: string,
+    threadId: string,
+  ): Promise<void> => {
+    const memory = await saveAgentConversationMemory(user, role, userMessage, assistantReply, threadId);
     if (!memory) return;
     setAgentMemories((current) => [memory, ...current].slice(0, 40));
   };
@@ -3043,6 +3048,26 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
     setAgentChatMessages([]);
     setAgentChatLoaded(true);
     navigate(`${dashboardBasePath}/agent`);
+  };
+
+  const handleDeleteAgentConversation = async (thread: AgentChatThread): Promise<void> => {
+    setDashboardError('');
+    try {
+      await deleteAgentChatThread(user, role, thread.id);
+      setAgentChatThreads((current) => current.filter((item) => item.id !== thread.id));
+      setAgentMemories((current) => current.filter((memory) => memory.threadId !== thread.id));
+
+      if (activeAgentThreadIdRef.current === thread.id || selectedAgentThreadId === thread.id) {
+        activeAgentThreadIdRef.current = null;
+        setActiveAgentThreadId(null);
+        setAgentChatMessages([]);
+        setAgentChatLoaded(true);
+        navigate(`${dashboardBasePath}/agent`, { replace: true });
+      }
+    } catch (error) {
+      setDashboardError(error instanceof Error ? error.message : 'Unable to delete the conversation.');
+      throw error;
+    }
   };
 
   const rememberAgentAction = async (key: string, value: string): Promise<void> => {
@@ -8920,6 +8945,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
         agentThreads={agentChatThreads}
         activeAgentThreadId={activeAgentThreadId}
         onStartNewAgentConversation={handleStartNewAgentConversation}
+        onDeleteAgentThread={handleDeleteAgentConversation}
       />
 
       <main className="ed-dashboard-main min-h-screen pl-[16.25rem]">

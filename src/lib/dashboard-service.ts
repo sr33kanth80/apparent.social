@@ -3312,7 +3312,7 @@ export const loadAgentMemories = async (
   try {
     const { data, error } = await supabase
       .from('agent_memories')
-      .select('id,role,scope,key,value,source_url,confidence,updated_at')
+      .select('id,role,thread_id,scope,key,value,source_url,confidence,updated_at')
       .eq('user_id', user.id)
       .eq('role', role)
       .order('updated_at', { ascending: false })
@@ -3321,6 +3321,7 @@ export const loadAgentMemories = async (
     return data.map((row) => ({
       id: String(row.id ?? ''),
       role: role,
+      threadId: row.thread_id ? String(row.thread_id) : undefined,
       scope: String(row.scope ?? 'profile') as AgentMemory['scope'],
       key: String(row.key ?? ''),
       value: String(row.value ?? ''),
@@ -3343,12 +3344,14 @@ export const saveAgentConversationMemory = async (
   role: DashboardRole,
   userMessage: string,
   assistantReply: string,
+  threadId?: string | null,
 ): Promise<AgentMemory | null> => {
   const value = compactMemoryValue(`User asked: ${userMessage}\nAgent replied: ${assistantReply}`);
   if (!value) return null;
 
   const memory: AgentMemory = {
     role,
+    threadId: threadId || undefined,
     scope: 'conversation_summary',
     key: `chat:${Date.now()}`,
     value,
@@ -3369,6 +3372,7 @@ export const saveAgentConversationMemory = async (
       .insert({
         user_id: user.id,
         role,
+        thread_id: memory.threadId ?? null,
         scope: memory.scope,
         key: memory.key,
         value: memory.value,
@@ -3524,6 +3528,36 @@ export const createAgentChatThread = async (
     createdAt: String(data.created_at || stampedAt),
     updatedAt: String(data.updated_at || stampedAt),
   };
+};
+
+export const deleteAgentChatThread = async (
+  user: AppUser,
+  role: DashboardRole,
+  threadId: string,
+): Promise<void> => {
+  if (!isSupabaseConfigured || !supabase || user.isDev) {
+    const threadKey = agentThreadStorageKey(user, role);
+    writeLocal(
+      threadKey,
+      readLocal<AgentChatThread[]>(threadKey, []).filter((thread) => thread.id !== threadId),
+    );
+    window.localStorage.removeItem(agentThreadMessagesStorageKey(user, role, threadId));
+
+    const memoryKey = storageKey(user, 'agent-memories');
+    writeLocal(
+      memoryKey,
+      readLocal<AgentMemory[]>(memoryKey, []).filter((memory) => memory.threadId !== threadId),
+    );
+    return;
+  }
+
+  const { error } = await supabase
+    .from('agent_chat_threads')
+    .delete()
+    .eq('id', threadId)
+    .eq('user_id', user.id)
+    .eq('role', role);
+  if (error) throw new Error(error.message || 'Unable to delete the agent conversation.');
 };
 
 export const loadAgentChatMessages = async (
