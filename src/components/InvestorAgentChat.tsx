@@ -617,29 +617,27 @@ export const InvestorAgentChat = ({
             transition={{ duration: 0.2, ease: 'easeOut' }}
             className={
               message.role === 'user'
-                ? 'pb-4 pt-8 first:pt-0'
-                : 'border-b border-black/[0.07] pb-8 last:border-b-0'
+                ? `pb-3 pt-10 first:pt-0 ${index > 0 ? 'border-t border-[#d6d6d6]' : ''}`
+                : 'pb-12 pt-2'
             }
           >
             {message.role === 'user' ? (
-              <div>
-                <p className="mb-2 text-[11px] font-medium uppercase tracking-[0.16em] text-gray-400">You</p>
-                <h2 className="whitespace-pre-wrap text-2xl font-semibold leading-snug tracking-[-0.02em] text-black">
+              <header>
+                <h1 className="whitespace-pre-wrap text-[26px] font-medium leading-[1.3] text-[#333333] sm:text-[30px]">
                   {message.content}
-                </h2>
-              </div>
+                </h1>
+              </header>
             ) : (
               <div>
-                <div className="mb-4 flex items-center gap-2 text-sm font-medium text-black">
-                  <div className="flex h-6 w-6 items-center justify-center rounded-md bg-charcoal text-white">
-                    <LogoIcon className="h-3 w-3" />
-                  </div>
-                  Apparent
+                <div className="mb-5 border-b border-[#d6d6d6]">
+                  <span className="inline-flex border-b-2 border-[#003f2e] pb-2 text-sm font-medium text-[#333333]">
+                    Answer
+                  </span>
                 </div>
 
                 <ResearchTrailDisclosure steps={message.steps} />
 
-                <AgentMarkdown className="text-[15px] leading-7 text-gray-800 sm:text-base">
+                <AgentMarkdown className="max-w-[760px] text-[15px] leading-7 text-[#333333] sm:text-base">
                   {visibleAssistantText(message, index)}
                 </AgentMarkdown>
 
@@ -681,8 +679,9 @@ export const InvestorAgentChat = ({
           <motion.div
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
-            className="mt-6 rounded-2xl border border-black/10 bg-white px-4 py-3.5"
+            className="mt-2 border-t border-[#d6d6d6] pt-6"
           >
+            <p className="mb-4 text-sm font-medium text-[#333333]">Researching</p>
             {statusTrail}
           </motion.div>
         )}

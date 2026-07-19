@@ -141,11 +141,7 @@ export const AgentConversationShell = ({
           <div ref={transcriptRef} className="min-h-0 flex-1 overflow-y-auto scroll-smooth">
             <div className="mx-auto w-full max-w-[900px] px-5 py-6 sm:px-10 sm:py-8">
               {onNewConversation && (
-                <div className="mb-10 flex items-center justify-between border-b border-[#d6d6d6] pb-4">
-                  <div className="flex items-center gap-2 text-sm font-medium text-[#003f2e]">
-                    <LogoIcon className="h-4 w-4" />
-                    Apparent research
-                  </div>
+                <div className="mb-8 flex justify-end">
                   <button
                     type="button"
                     onClick={onNewConversation}
@@ -160,7 +156,7 @@ export const AgentConversationShell = ({
             </div>
           </div>
 
-          <div className="relative shrink-0 border-t border-[#d6d6d6] bg-[#fdf9f7] px-5 pb-4 pt-3 sm:px-10 sm:pb-5">
+          <div className="relative shrink-0 bg-[#fdf9f7] px-5 pb-5 pt-2 sm:px-10 sm:pb-6">
             <div className="mx-auto w-full max-w-[680px]">
               <InvestorAIPrompt
                 animatePlaceholder={false}
@@ -169,9 +165,9 @@ export const AgentConversationShell = ({
                 placeholder="Ask a follow-up"
                 showAttachment={false}
                 surface="parchment"
+                threadMode
                 toolbarExtras={toolbarExtras}
               />
-              <p className="mt-2 text-center text-[10px] text-[#a6a6a6]">Enter to send · Shift+Enter for a new line</p>
             </div>
           </div>
         </>

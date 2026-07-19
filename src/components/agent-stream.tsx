@@ -119,15 +119,15 @@ export const ResearchTrailDisclosure = ({ steps }: { steps?: string[] }) => {
   const trail = (steps ?? []).filter(Boolean);
   if (trail.length === 0) return null;
   return (
-    <details className="group mb-4 rounded-xl border border-black/10 bg-white">
-      <summary className="flex cursor-pointer select-none items-center gap-2 px-3.5 py-2 text-xs text-gray-500 transition-colors hover:text-black [&::-webkit-details-marker]:hidden">
+    <details className="group mb-5">
+      <summary className="flex cursor-pointer select-none items-center gap-2 py-1 text-xs text-[#6e7673] transition-colors hover:text-[#333333] [&::-webkit-details-marker]:hidden">
         <Sparkles className="h-3.5 w-3.5 shrink-0" />
         <span className="font-medium">
           Worked {trail.length} step{trail.length === 1 ? '' : 's'}
         </span>
         <ChevronDown className="ml-auto h-3.5 w-3.5 shrink-0 transition-transform group-open:rotate-180" />
       </summary>
-      <div className="space-y-1.5 border-t border-black/5 px-3.5 py-2.5">
+      <div className="ml-1.5 mt-2 space-y-1.5 border-l border-[#d6d6d6] py-1 pl-4">
         {trail.map((label, index) => (
           <div key={`${index}-${label}`} className="flex items-center gap-2 text-xs text-gray-500">
             <Check className="h-3 w-3 shrink-0 text-gray-400" />
