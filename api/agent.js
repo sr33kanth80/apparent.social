@@ -518,7 +518,7 @@ const buildSystemPrompt = (criteria, autonomy, contactedIds, memories, sourceBri
     "- Some on-platform founders have a `dossier` field — a GitHub-grounded profile written by the founder's own agent. When present, treat it as high-signal and lean on it (and `github_summary` / `github_verified`) when explaining fit and writing outreach.",
     '- For founder sourcing specifically, default to on-platform founders first; reach to the web when the investor asks to go broader or for founders not yet on Apparent. This sourcing preference does not restrict general informational questions.',
     '- When ranking, explain fit against thesis/sectors/stage/geography and real proof (traction, launches, GitHub, raising intent).',
-    '- Format every reply in GitHub-flavored markdown. Lead with one short sentence, then bullet lists with founder names in bold (e.g. "- **Jane Doe** — Acme: one-line why-it-fits"). Use ### headings only when a reply has distinct sections, and markdown links instead of raw URLs. Be concise and scannable — no walls of prose.',
+    '- Format replies as compact research documents in GitHub-flavored markdown. Use short descriptive headings, markdown tables for structured fields/history/comparisons, normal paragraphs for explanations, and bullets only where they improve scanning. Bold key labels and use markdown links instead of raw URLs. Be concise, but include the evidence needed to answer fully.',
     '- If a search returns nothing, say so plainly and suggest loosening a filter. Never fabricate founders, metrics, emails, or links.',
   ];
   return lines.join('\n');

@@ -108,6 +108,114 @@ body {
   letter-spacing: 0;
 }
 
+/* Thread answers are formatted as compact research documents. The markdown
+   component is shared elsewhere, so every editorial override stays beneath
+   the Agent-page research-answer hook. */
+.agent-page .agent-research-answer {
+  color: var(--color-ink-black);
+  font-family: var(--font-apparent-body);
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 1.5;
+}
+
+.agent-page .agent-research-answer :where(h3, h4) {
+  margin: 20px 0 8px;
+  color: var(--color-forest-ink);
+  font-family: var(--font-apparent-display);
+  font-size: 18px;
+  font-weight: 400;
+  line-height: 1.25;
+}
+
+.agent-page .agent-research-answer :where(h3, h4):first-child {
+  margin-top: 0;
+}
+
+.agent-page .agent-research-answer p {
+  margin: 0 0 12px;
+}
+
+.agent-page .agent-research-answer :where(strong, b) {
+  color: var(--color-forest-ink);
+  font-weight: 500;
+}
+
+.agent-page .agent-research-answer a {
+  color: var(--color-forest-ink);
+  font-weight: 500;
+  text-decoration-color: color-mix(in srgb, var(--color-forest-ink) 35%, transparent);
+}
+
+.agent-page .agent-research-answer :where(ul, ol) {
+  margin: 8px 0 16px;
+  padding-left: 22px;
+}
+
+.agent-page .agent-research-answer li {
+  margin: 4px 0;
+}
+
+.agent-page .agent-research-answer blockquote {
+  margin: 16px 0;
+  border-left: 1px solid var(--color-forest-ink);
+  color: var(--color-faded-pencil);
+  font-style: italic;
+}
+
+.agent-page .agent-research-answer > div:has(> table) {
+  margin: 8px 0 20px;
+}
+
+.agent-page .agent-research-answer table {
+  width: max-content;
+  min-width: min(420px, 100%);
+  max-width: 100%;
+  border: 1px solid var(--color-hairline-gray);
+  background: transparent;
+  font-size: 14px;
+  line-height: 1.2;
+}
+
+.agent-page .agent-research-answer th {
+  border: 0;
+  border-bottom: 1px solid var(--color-hairline-gray);
+  background: color-mix(in srgb, var(--color-pure-paper) 72%, transparent);
+  color: var(--color-faded-pencil);
+  font-size: 12px;
+  font-weight: 400;
+}
+
+.agent-page .agent-research-answer :where(th, td) {
+  padding: 8px 10px;
+  text-align: left;
+  vertical-align: top;
+}
+
+.agent-page .agent-research-answer td {
+  border: 0;
+  border-bottom: 1px solid var(--color-hairline-gray);
+}
+
+.agent-page .agent-research-answer tr:last-child td {
+  border-bottom: 0;
+}
+
+.agent-page .agent-research-answer :where(th, td) + :where(th, td) {
+  border-left: 1px solid var(--color-hairline-gray);
+}
+
+.agent-page .agent-research-answer td:first-child {
+  background: color-mix(in srgb, var(--color-pure-paper) 42%, transparent);
+  color: var(--color-forest-ink);
+  font-weight: 500;
+}
+
+.agent-page .agent-research-answer hr {
+  margin: 20px 0;
+  border-color: var(--color-hairline-gray);
+}
+
 /* Public website */
 .ed-page {
   --ed-ink: var(--color-forest-ink);

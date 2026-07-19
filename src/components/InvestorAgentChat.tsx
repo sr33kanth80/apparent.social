@@ -617,27 +617,23 @@ export const InvestorAgentChat = ({
             transition={{ duration: 0.2, ease: 'easeOut' }}
             className={
               message.role === 'user'
-                ? `pb-3 pt-10 first:pt-0 ${index > 0 ? 'border-t border-[#d6d6d6]' : ''}`
-                : 'pb-12 pt-2'
+                ? `flex justify-end pb-8 pt-10 first:pt-0 ${index > 0 ? 'border-t border-[#d6d6d6]' : ''}`
+                : 'pb-14'
             }
           >
             {message.role === 'user' ? (
-              <header>
-                <h1 className="whitespace-pre-wrap text-[26px] font-medium leading-[1.3] text-[#333333] sm:text-[30px]">
+              <div className="max-w-[85%] rounded-2xl border border-[#d6d6d6] bg-white px-4 py-3 sm:max-w-[72%]">
+                <p className="whitespace-pre-wrap text-[15px] leading-6 text-[#333333] sm:text-base">
                   {message.content}
-                </h1>
-              </header>
+                </p>
+              </div>
             ) : (
               <div>
-                <div className="mb-5 border-b border-[#d6d6d6]">
-                  <span className="inline-flex border-b-2 border-[#003f2e] pb-2 text-sm font-medium text-[#333333]">
-                    Answer
-                  </span>
-                </div>
+                <p className="mb-1.5 text-sm font-medium text-[#333333]">Apparent</p>
 
                 <ResearchTrailDisclosure steps={message.steps} />
 
-                <AgentMarkdown className="max-w-[760px] text-[15px] leading-7 text-[#333333] sm:text-base">
+                <AgentMarkdown className="agent-research-answer max-w-[800px] text-base leading-6 text-[#333333]">
                   {visibleAssistantText(message, index)}
                 </AgentMarkdown>
 
@@ -681,7 +677,7 @@ export const InvestorAgentChat = ({
             animate={{ opacity: 1, y: 0 }}
             className="mt-2 border-t border-[#d6d6d6] pt-6"
           >
-            <p className="mb-4 text-sm font-medium text-[#333333]">Researching</p>
+            <p className="mb-3 text-sm font-medium text-[#333333]">Apparent</p>
             {statusTrail}
           </motion.div>
         )}

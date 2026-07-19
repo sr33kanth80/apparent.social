@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Check, ChevronDown, Copy, Loader2, Sparkles } from 'lucide-react';
+import { Check, ChevronDown, Copy, Loader2 } from 'lucide-react';
 
 import { cn } from '@/lib/utils';
 
@@ -119,12 +119,14 @@ export const ResearchTrailDisclosure = ({ steps }: { steps?: string[] }) => {
   const trail = (steps ?? []).filter(Boolean);
   if (trail.length === 0) return null;
   return (
-    <details className="group mb-5">
-      <summary className="flex cursor-pointer select-none items-center gap-2 py-1 text-xs text-[#6e7673] transition-colors hover:text-[#333333] [&::-webkit-details-marker]:hidden">
-        <Sparkles className="h-3.5 w-3.5 shrink-0" />
+    <details className="group mb-5 w-fit max-w-full">
+      <summary className="flex cursor-pointer select-none items-center gap-1.5 rounded-full border border-[#d6d6d6] bg-white px-3 py-1 text-[11px] text-[#a6a6a6] transition-colors hover:text-[#333333] [&::-webkit-details-marker]:hidden">
+        <Check className="h-3 w-3 shrink-0 text-[#039861]" />
         <span className="font-medium">
-          Worked {trail.length} step{trail.length === 1 ? '' : 's'}
+          {trail.length} step{trail.length === 1 ? '' : 's'}
         </span>
+        <span aria-hidden="true">·</span>
+        <span>show work</span>
         <ChevronDown className="ml-auto h-3.5 w-3.5 shrink-0 transition-transform group-open:rotate-180" />
       </summary>
       <div className="ml-1.5 mt-2 space-y-1.5 border-l border-[#d6d6d6] py-1 pl-4">

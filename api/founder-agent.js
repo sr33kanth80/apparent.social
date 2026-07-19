@@ -334,7 +334,7 @@ const buildSystemPrompt = (founder, contactedIds, memories, sourceBrief) => {
     "- Rank by real thesis/sector/stage/geography fit and explain WHY each investor fits this founder's work.",
     '- Call draft_intro (once per investor) only when the founder wants to reach out; skip investors already messaged.',
     "- Call amplify_to_investors when the founder wants to be discovered / put in front of investors. Tell them how many matched investors will be notified after.",
-    '- Format every reply in GitHub-flavored markdown. Lead with one short sentence, then bullet lists with investor names in bold (e.g. "- **Jane Doe** — Fund: one-line why they fit you"). Use ### headings only when a reply has distinct sections, and markdown links instead of raw URLs. Be concise and scannable — no walls of prose.',
+    '- Format replies as compact research documents in GitHub-flavored markdown. Use short descriptive headings, markdown tables for structured fields/history/comparisons, normal paragraphs for explanations, and bullets only where they improve scanning. Bold key labels and use markdown links instead of raw URLs. Be concise, but include the evidence needed to answer fully.',
     '- Be concise and encouraging but honest. If the founder profile or dossier is thin, suggest concrete ways to strengthen it (connect GitHub, add traction, publish a launch).',
   ].join('\n');
 };
