@@ -15,12 +15,17 @@
 import { requireAgentAccess, sendAgentAccessError } from '../server/agent/agent-guard.js';
 import {
   apparentAgentErrorResponse,
+  createAgentSse,
   createApparentAgentRuntime,
   createPublicResearchPolicy,
   logApparentAgentError,
   runStandardOrthogonalTool,
   standardOrthogonalTools,
+  toolStatusLabel,
 } from '../server/agent/apparent-agent-runtime.js';
+
+// Vercel Node functions buffer responses unless streaming is opted into.
+export const config = { supportsResponseStreaming: true };
 
 // The Apparent runtime owns the tool loop; inference is replaceable behind Orthogonal.
 const MAX_AGENT_STEPS = 6;
@@ -323,6 +328,7 @@ const buildSystemPrompt = (founder, contactedIds, memories, sourceBrief) => {
     "- Rank by real thesis/sector/stage/geography fit and explain WHY each investor fits this founder's work.",
     '- Call draft_intro (once per investor) only when the founder wants to reach out; skip investors already messaged.',
     "- Call amplify_to_investors when the founder wants to be discovered / put in front of investors. Tell them how many matched investors will be notified after.",
+    '- Format every reply in GitHub-flavored markdown. Lead with one short sentence, then bullet lists with investor names in bold (e.g. "- **Jane Doe** — Fund: one-line why they fit you"). Use ### headings only when a reply has distinct sections, and markdown links instead of raw URLs. Be concise and scannable — no walls of prose.',
     '- Be concise and encouraging but honest. If the founder profile or dossier is thin, suggest concrete ways to strengthen it (connect GitHub, add traction, publish a launch).',
   ].join('\n');
 };
@@ -391,6 +397,10 @@ export default async function handler(req, res) {
   const seenInvestors = new Set();
   let amplifyRequested = false;
 
+  // SSE progress streaming, opted into by the client. Validation errors above
+  // stay plain JSON; the stream only starts once the agent loop is about to run.
+  const { streaming, emit } = createAgentSse(res, body.stream === true);
+
   try {
     const runtime = createApparentAgentRuntime();
     const runtimeResult = await runtime.run({
@@ -407,6 +417,7 @@ export default async function handler(req, res) {
         return true;
       },
       executeTool: async (name, input, { session }) => {
+        emit({ type: 'status', label: toolStatusLabel(name, input) });
         const external = await runStandardOrthogonalTool(session, name, input, publicResearchPolicy);
         if (external !== null) return external;
         let result;
@@ -455,15 +466,24 @@ export default async function handler(req, res) {
       if (!reply.includes(sourceNote)) reply = `${reply ? `${reply}\n\n` : ''}${sourceNote}`;
     }
 
-    return res.status(200).json({
+    const responsePayload = {
       reply: reply || "I couldn't find anything to say about that — try rephrasing.",
       proposals,
       profilePatches,
       amplify: amplifyRequested,
-    });
+    };
+    if (streaming) {
+      emit({ type: 'done', ...responsePayload });
+      return res.end();
+    }
+    return res.status(200).json(responsePayload);
   } catch (err) {
     logApparentAgentError(err, 'founder-agent');
     const failure = apparentAgentErrorResponse(err);
+    if (streaming) {
+      emit({ type: 'error', error: failure.error, code: failure.code });
+      return res.end();
+    }
     return res.status(failure.status).json({ error: failure.error, code: failure.code });
   }
 }

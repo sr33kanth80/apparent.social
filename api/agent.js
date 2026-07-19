@@ -12,11 +12,13 @@
 import { requireAgentAccess, sendAgentAccessError } from '../server/agent/agent-guard.js';
 import {
   apparentAgentErrorResponse,
+  createAgentSse,
   createApparentAgentRuntime,
   createPublicResearchPolicy,
   logApparentAgentError,
   runStandardOrthogonalTool,
   standardOrthogonalTools,
+  toolStatusLabel,
 } from '../server/agent/apparent-agent-runtime.js';
 import { orthogonalData } from '../server/agent/orthogonal.js';
 import kindeProfileHandler from '../server/agent/kinde-profile.js';
@@ -404,27 +406,6 @@ const buildSystemPrompt = (criteria, autonomy, contactedIds, memories, sourceBri
 // Vercel Node functions buffer responses unless streaming is opted into.
 export const config = { supportsResponseStreaming: true };
 
-/** Human-readable progress label for a tool call, streamed to the client. */
-const toolStatusLabel = (name, input) => {
-  if (name === 'search_apparent_founders') {
-    const q = str(input?.query).trim();
-    return q ? `Searching Apparent founders for “${q.slice(0, 60)}”…` : 'Searching founders on Apparent…';
-  }
-  if (name === 'search_public_web') return `Searching the web for “${str(input?.query).trim().slice(0, 60)}”…`;
-  if (name === 'fetch_public_url') {
-    try {
-      return `Reading ${new URL(str(input?.url)).hostname}…`;
-    } catch {
-      return 'Reading a source…';
-    }
-  }
-  if (name === 'enrich_contact') return `Finding contact details${input?.name ? ` for ${str(input.name)}` : ''}…`;
-  if (name === 'propose_outreach') return `Drafting outreach to ${str(input?.founder_name) || 'a founder'}…`;
-  if (name === 'prepare_mailto') return `Drafting an intro email${input?.founder_name ? ` to ${str(input.founder_name)}` : ''}…`;
-  if (name === 'propose_investor_profile_update') return 'Drafting profile updates…';
-  return 'Working…';
-};
-
 const readJsonBody = async (req) => {
   if (req.body && typeof req.body === 'object') return req.body;
   let raw = '';
@@ -499,22 +480,7 @@ export default async function handler(req, res) {
 
   // SSE progress streaming, opted into by the client. Validation errors above
   // stay plain JSON; the stream only starts once the agent loop is about to run.
-  let streaming = false;
-  const emit = (payload) => {
-    if (!streaming) return;
-    res.write(`data: ${JSON.stringify(payload)}\n\n`);
-  };
-  if (body.stream === true) {
-    streaming = true;
-    res.writeHead(200, {
-      'Content-Type': 'text/event-stream; charset=utf-8',
-      'Cache-Control': 'no-cache, no-transform',
-      Connection: 'keep-alive',
-      'X-Accel-Buffering': 'no',
-    });
-    res.flushHeaders?.();
-    emit({ type: 'status', label: 'Thinking…' });
-  }
+  const { streaming, emit } = createAgentSse(res, body.stream === true);
 
   try {
     const runtime = createApparentAgentRuntime();

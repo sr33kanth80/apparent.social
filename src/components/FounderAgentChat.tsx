@@ -2,7 +2,9 @@ import { useEffect, useRef, useState } from 'react';
 import { Check, Loader2, Megaphone, Send, Sparkles, Trash2, X } from 'lucide-react';
 
 import { AgentConversationShell } from '@/components/AgentConversationShell';
+import { AgentMarkdown } from '@/components/AgentMarkdown';
 import { AgentProfilePatchCard } from '@/components/AgentProfilePatchCard';
+import { AgentStatusTrail, appendStatus, postAgentStream, useTypewriterReveal } from '@/components/agent-stream';
 import { InvestorAIPrompt } from '@/components/InvestorAIAssist';
 import { LogoIcon } from '@/components/LogoIcon';
 import { useAgentAuthHeaders } from '@/lib/agent-auth';
@@ -80,6 +82,9 @@ export const FounderAgentChat = ({
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  // Live progress labels streamed from the agent while it researches ("Matching…").
+  const [statusSteps, setStatusSteps] = useState<string[]>([]);
+  const { reveal, startReveal, stopReveal } = useTypewriterReveal();
   const transcriptRef = useRef<HTMLDivElement>(null);
   const loadingRef = useRef(false);
   const activeThreadRef = useRef<string | null>(threadId);
@@ -116,6 +121,7 @@ export const FounderAgentChat = ({
 
   useEffect(() => {
     if (!persistedMessagesLoaded) return;
+    stopReveal();
     if (persistedMessages.length > 0) {
       setMessages(fromHistoryMessages(persistedMessages));
       return;
@@ -125,7 +131,7 @@ export const FounderAgentChat = ({
 
   useEffect(() => {
     transcriptRef.current?.scrollTo({ top: transcriptRef.current.scrollHeight, behavior: 'smooth' });
-  }, [messages, isLoading]);
+  }, [messages, isLoading, statusSteps, reveal]);
 
   const patchProposal = (messageIndex: number, proposalIndex: number, patch: Partial<ProposalState>) => {
     setMessages((current) => {
@@ -157,6 +163,8 @@ export const FounderAgentChat = ({
 
     loadingRef.current = true;
     setError('');
+    stopReveal();
+    setStatusSteps([]);
     const conversation: ChatMessage[] = [...messages, { role: 'user', content: trimmed }];
     setMessages(conversation);
     setIsLoading(true);
@@ -164,18 +172,17 @@ export const FounderAgentChat = ({
     try {
       const conversationThreadId = await persistTranscript(conversation, trimmed);
       if (activeThreadRef.current === threadId) activeThreadRef.current = conversationThreadId;
-      const res = await fetch('/api/founder-agent', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', ...(await authHeaders()) },
-        body: JSON.stringify({
+      const data = await postAgentStream(
+        '/api/founder-agent',
+        {
           messages: conversation.map((m) => ({ role: m.role, content: m.content })),
           founder,
           memories,
           contacted: contactedInvestorIds,
-        }),
-      });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok || data?.error) throw new Error(data?.error || `Request failed (${res.status})`);
+        },
+        await authHeaders(),
+        (label) => setStatusSteps((steps) => appendStatus(steps, label)),
+      );
 
       const assistantReply = String(data.reply ?? '');
       const rawProposals: IntroProposal[] = Array.isArray(data.proposals) ? data.proposals : [];
@@ -192,7 +199,10 @@ export const FounderAgentChat = ({
           profilePatches: profilePatches.length ? profilePatches : undefined,
         },
       ];
-      if (activeThreadRef.current === conversationThreadId) setMessages(nextConversation);
+      if (activeThreadRef.current === conversationThreadId) {
+        setMessages(nextConversation);
+        startReveal(assistantReply.length);
+      }
       void persistTranscript(nextConversation, undefined, conversationThreadId);
 
       // The agent requested amplification — run it and record the outcome.
@@ -220,6 +230,7 @@ export const FounderAgentChat = ({
       setError(err instanceof Error ? err.message : 'The agent is unavailable right now.');
     } finally {
       setIsLoading(false);
+      setStatusSteps([]);
       loadingRef.current = false;
     }
   };
@@ -231,6 +242,10 @@ export const FounderAgentChat = ({
   };
 
   const hasConversation = messages.length > 0;
+
+  // The newest assistant reply is revealed progressively; older messages show in full.
+  const visibleAssistantText = (message: ChatMessage, index: number) =>
+    reveal !== null && index === messages.length - 1 ? message.content.slice(0, reveal) : message.content;
 
   const renderProposal = (messageIndex: number, proposal: ProposalState, proposalIndex: number) => {
     const badge = () => {
@@ -298,7 +313,9 @@ export const FounderAgentChat = ({
                   </div>
                   Apparent
                 </div>
-                <div className="whitespace-pre-wrap text-[15px] leading-7 text-gray-800 sm:text-base">{message.content}</div>
+                <AgentMarkdown className="text-[15px] leading-7 text-gray-800 sm:text-base">
+                  {visibleAssistantText(message, index)}
+                </AgentMarkdown>
 
                 {message.proposals && message.proposals.length > 0 && (
                   <div className="mt-5 grid gap-3">{message.proposals.map((proposal, pi) => renderProposal(index, proposal, pi))}</div>
@@ -334,12 +351,11 @@ export const FounderAgentChat = ({
         ))}
 
         {isLoading && (
-          <div className="flex items-center gap-3 text-sm text-gray-500">
-            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-charcoal text-white">
+          <div className="flex items-start gap-3">
+            <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-charcoal text-white">
               <LogoIcon className="h-3.5 w-3.5" />
             </div>
-            <Loader2 className="h-3.5 w-3.5 animate-spin" />
-            Working across your Apparent workspace…
+            <AgentStatusTrail className="pt-1" steps={statusSteps} />
           </div>
         )}
 
@@ -393,10 +409,12 @@ export const FounderAgentChat = ({
                     className={
                       message.role === 'user'
                         ? 'max-w-[80%] whitespace-pre-wrap rounded-2xl rounded-br-sm bg-charcoal px-3.5 py-2.5 text-sm leading-relaxed text-white'
-                        : 'max-w-[85%] whitespace-pre-wrap rounded-2xl rounded-bl-sm bg-[#f6f3f1] px-3.5 py-2.5 text-sm leading-relaxed text-gray-800'
+                        : 'max-w-[85%] rounded-2xl rounded-bl-sm bg-[#f6f3f1] px-3.5 py-2.5 text-sm leading-relaxed text-gray-800'
                     }
                   >
-                    {message.content}
+                    {message.role === 'assistant'
+                      ? <AgentMarkdown>{visibleAssistantText(message, index)}</AgentMarkdown>
+                      : message.content}
                   </div>
                 </div>
 
@@ -438,9 +456,8 @@ export const FounderAgentChat = ({
                 <div className="mr-2 mt-1 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-lavender">
                   <LogoIcon className="h-3.5 w-3.5 text-ink" />
                 </div>
-                <div className="flex items-center gap-2 rounded-2xl rounded-bl-sm bg-[#f6f3f1] px-3.5 py-2.5 text-sm text-gray-500">
-                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                  Working…
+                <div className="rounded-2xl rounded-bl-sm bg-[#f6f3f1] px-3.5 py-2.5">
+                  <AgentStatusTrail steps={statusSteps} />
                 </div>
               </div>
             )}

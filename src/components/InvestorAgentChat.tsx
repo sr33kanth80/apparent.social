@@ -5,6 +5,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 
 import { AgentConversationShell } from '@/components/AgentConversationShell';
 import { AgentMarkdown } from '@/components/AgentMarkdown';
+import { AgentStatusTrail, appendStatus, postAgentStream, useTypewriterReveal } from '@/components/agent-stream';
 import { AgentProfilePatchCard } from '@/components/AgentProfilePatchCard';
 import { InvestorAIPrompt } from '@/components/InvestorAIAssist';
 import { LogoIcon } from '@/components/LogoIcon';
@@ -169,9 +170,7 @@ export const InvestorAgentChat = ({
   const [error, setError] = useState('');
   // Live progress labels streamed from the agent while it researches ("Searching…").
   const [statusSteps, setStatusSteps] = useState<string[]>([]);
-  // Typewriter reveal: how many chars of the newest assistant reply are visible (null = all).
-  const [reveal, setReveal] = useState<number | null>(null);
-  const revealTimerRef = useRef<number | null>(null);
+  const { reveal, startReveal, stopReveal } = useTypewriterReveal();
   // Fullscreen chat mode — entered automatically on send, exited via minimize/Esc.
   const [expanded, setExpanded] = useState(false);
   const transcriptRef = useRef<HTMLDivElement>(null);
@@ -217,33 +216,6 @@ export const InvestorAgentChat = ({
     }
     setMessages([]);
   }, [persistedMessages, persistedMessagesLoaded]);
-
-  const stopReveal = () => {
-    if (revealTimerRef.current !== null) {
-      window.clearInterval(revealTimerRef.current);
-      revealTimerRef.current = null;
-    }
-    setReveal(null);
-  };
-
-  /** Progressively reveal the newest assistant reply, Perplexity-style. */
-  const startReveal = (length: number) => {
-    stopReveal();
-    if (length < 120) return; // short replies just appear
-    setReveal(0);
-    const step = Math.max(4, Math.round(length / 110)); // ~1.8s total at 16ms ticks
-    let shown = 0;
-    revealTimerRef.current = window.setInterval(() => {
-      shown += step;
-      if (shown >= length) {
-        stopReveal();
-        return;
-      }
-      setReveal(shown);
-    }, 16);
-  };
-
-  useEffect(() => () => stopReveal(), []);
 
   useEffect(() => {
     transcriptRef.current?.scrollTo({ top: transcriptRef.current.scrollHeight, behavior: 'smooth' });
@@ -323,59 +295,18 @@ export const InvestorAgentChat = ({
     try {
       const conversationThreadId = await persistTranscript(conversation, trimmed);
       if (activeThreadRef.current === threadId) activeThreadRef.current = conversationThreadId;
-      const res = await fetch('/api/agent', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', ...(await authHeaders()) },
-        body: JSON.stringify({
+      const data = await postAgentStream(
+        '/api/agent',
+        {
           messages: conversation.map((m) => ({ role: m.role, content: m.content })),
           criteria,
           memories,
           autonomy,
           contacted: contactedFounderIds,
-          stream: true,
-        }),
-      });
-
-      let data: Record<string, unknown>;
-      if (res.ok && res.body && (res.headers.get('content-type') || '').includes('text/event-stream')) {
-        // SSE: status events while the agent researches, then one final done/error event.
-        const reader = res.body.getReader();
-        const decoder = new TextDecoder();
-        let buffer = '';
-        let doneEvent: Record<string, unknown> | null = null;
-        let errorEvent: Record<string, unknown> | null = null;
-        for (;;) {
-          const { value, done: finished } = await reader.read();
-          if (finished) break;
-          buffer += decoder.decode(value, { stream: true });
-          const events = buffer.split('\n\n');
-          buffer = events.pop() ?? '';
-          for (const event of events) {
-            const dataLine = event.split('\n').find((line) => line.startsWith('data: '));
-            if (!dataLine) continue;
-            try {
-              const payload = JSON.parse(dataLine.slice(6));
-              if (payload.type === 'status' && typeof payload.label === 'string') {
-                setStatusSteps((steps) => (steps[steps.length - 1] === payload.label ? steps : [...steps, payload.label].slice(-8)));
-              } else if (payload.type === 'done') {
-                doneEvent = payload;
-              } else if (payload.type === 'error') {
-                errorEvent = payload;
-              }
-            } catch {
-              /* ignore malformed events */
-            }
-          }
-        }
-        if (errorEvent) throw new Error(String(errorEvent.error || 'The agent is unavailable right now.'));
-        if (!doneEvent) throw new Error('The agent connection dropped — please retry.');
-        data = doneEvent;
-      } else {
-        data = await res.json().catch(() => ({}));
-        if (!res.ok || data?.error) {
-          throw new Error(String(data?.error || `Request failed (${res.status})`));
-        }
-      }
+        },
+        await authHeaders(),
+        (label) => setStatusSteps((steps) => appendStatus(steps, label)),
+      );
 
       const assistantReply = String(data.reply ?? '');
       const rawProposals: OutreachProposal[] = Array.isArray(data.proposals) ? data.proposals : [];
@@ -458,23 +389,7 @@ export const InvestorAgentChat = ({
   const visibleAssistantText = (message: ChatMessage, index: number) =>
     reveal !== null && index === messages.length - 1 ? message.content.slice(0, reveal) : message.content;
 
-  // Perplexity-style research trail: finished steps get a check, the current one spins.
-  const statusTrail = (
-    <div className="space-y-1.5">
-      {(statusSteps.length ? statusSteps : ['Working…']).map((label, index, all) => {
-        const current = index === all.length - 1;
-        return (
-          <div
-            key={`${index}-${label}`}
-            className={cn('flex items-center gap-2 text-sm', current ? 'text-gray-600' : 'text-gray-400')}
-          >
-            {current ? <Loader2 className="h-3.5 w-3.5 shrink-0 animate-spin" /> : <Check className="h-3.5 w-3.5 shrink-0" />}
-            {label}
-          </div>
-        );
-      })}
-    </div>
-  );
+  const statusTrail = <AgentStatusTrail steps={statusSteps} />;
 
   const renderProposal = (messageIndex: number, proposal: ProposalState, proposalIndex: number) => {
     const statusBadge = () => {

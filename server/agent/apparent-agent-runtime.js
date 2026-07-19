@@ -240,6 +240,56 @@ export const runStandardOrthogonalTool = async (session, name, input, policy = c
   return null;
 };
 
+/** Human-readable progress label for a tool call, streamed to the client. */
+export const toolStatusLabel = (name, input) => {
+  if (name === 'search_apparent_founders') {
+    const q = str(input?.query).trim();
+    return q ? `Searching Apparent founders for “${q.slice(0, 60)}”…` : 'Searching founders on Apparent…';
+  }
+  if (name === 'find_matching_investors') {
+    const q = str(input?.query || input?.sector).trim();
+    return q ? `Matching investors on Apparent for “${q.slice(0, 60)}”…` : 'Matching investors on Apparent…';
+  }
+  if (name === 'search_public_web') return `Searching the web for “${str(input?.query).trim().slice(0, 60)}”…`;
+  if (name === 'fetch_public_url') {
+    try {
+      return `Reading ${new URL(str(input?.url)).hostname}…`;
+    } catch {
+      return 'Reading a source…';
+    }
+  }
+  if (name === 'enrich_contact') return `Finding contact details${input?.name ? ` for ${str(input.name)}` : ''}…`;
+  if (name === 'propose_outreach') return `Drafting outreach to ${str(input?.founder_name) || 'a founder'}…`;
+  if (name === 'draft_intro') return `Drafting an intro to ${str(input?.investor_name) || 'an investor'}…`;
+  if (name === 'prepare_mailto') return `Drafting an intro email${input?.founder_name ? ` to ${str(input.founder_name)}` : ''}…`;
+  if (name === 'propose_investor_profile_update' || name === 'propose_founder_profile_update') return 'Drafting profile updates…';
+  if (name === 'amplify_to_investors') return 'Queueing amplification to matched investors…';
+  return 'Working…';
+};
+
+/**
+ * Opt-in SSE progress stream for an agent handler. When enabled, opens the
+ * event stream immediately (so validation errors beforehand stay plain JSON)
+ * and returns { streaming, emit }. emit() is a no-op when not streaming.
+ */
+export const createAgentSse = (res, enabled) => {
+  const emit = (payload) => {
+    if (!enabled) return;
+    res.write(`data: ${JSON.stringify(payload)}\n\n`);
+  };
+  if (enabled) {
+    res.writeHead(200, {
+      'Content-Type': 'text/event-stream; charset=utf-8',
+      'Cache-Control': 'no-cache, no-transform',
+      Connection: 'keep-alive',
+      'X-Accel-Buffering': 'no',
+    });
+    res.flushHeaders?.();
+    emit({ type: 'status', label: 'Thinking…' });
+  }
+  return { streaming: enabled, emit };
+};
+
 export const createApparentAgentRuntime = ({ session, complete } = {}) => {
   let resolvedInference = configuredInference();
   const inferenceApi = resolvedInference?.api;
