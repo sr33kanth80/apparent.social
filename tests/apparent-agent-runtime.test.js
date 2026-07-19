@@ -6,6 +6,7 @@ import {
   createApparentAgentRuntime,
   createPublicResearchPolicy,
   isAuthorizedResearchUrl,
+  runDynamicOrthogonalTool,
   runEnrichmentAdapter,
   runStandardOrthogonalTool,
 } from '../server/agent/apparent-agent-runtime.js';
@@ -140,6 +141,84 @@ test('search results extend the query allowlist and enable same-origin fetches',
   // Unrelated origins stay blocked.
   const foreign = await runStandardOrthogonalTool(session, 'fetch_public_url', { url: 'https://attacker.example/team' }, policy);
   assert.equal(foreign.error, 'public_url_not_authorized');
+});
+
+test('public web research accepts date/source modifiers and falls back from Linkup to Serper', async () => {
+  const policy = createPublicResearchPolicy({ publicContext: 'funding rounds June 2026' });
+  const calls = [];
+  const session = {
+    run: async ({ api, path }) => {
+      calls.push(`${api}${path}`);
+      if (api === 'linkup') throw new Error('route unavailable');
+      return { data: { organic: [{ title: 'Funding announcement', link: 'https://techcrunch.com/example' }] } };
+    },
+  };
+
+  const result = await runStandardOrthogonalTool(
+    session,
+    'search_public_web',
+    { query: 'June 2026 funding rounds TechCrunch' },
+    policy,
+  );
+
+  assert.equal(result.error, undefined);
+  assert.deepEqual(calls, ['linkup/v1/search', 'serper/search']);
+});
+
+test('public news research uses Orthogonal Serper news search', async () => {
+  const policy = createPublicResearchPolicy({ publicContext: 'funding announcements June 2026' });
+  const calls = [];
+  const session = {
+    run: async (request) => {
+      calls.push(request);
+      return { data: { news: [{ title: 'Acme raised a seed round', link: 'https://example.com/acme' }] } };
+    },
+  };
+
+  const result = await runStandardOrthogonalTool(
+    session,
+    'search_public_news',
+    { query: 'June 2026 funding announcements', limit: 12 },
+    policy,
+  );
+
+  assert.equal(result.error, undefined);
+  assert.equal(calls[0].api, 'serper');
+  assert.equal(calls[0].path, '/news');
+  assert.equal(calls[0].body.num, 12);
+});
+
+test('catalog discovery authorizes only the exact discovered Orthogonal endpoint', async () => {
+  const fetchImpl = async (url) => {
+    const path = new URL(url).pathname;
+    if (path === '/v1/search') {
+      return new Response(JSON.stringify({ results: [{ slug: 'funding-data', endpoints: [{ path: '/v1/rounds', price: 0.01 }] }] }), { status: 200 });
+    }
+    if (path === '/v1/details') {
+      return new Response(JSON.stringify({ endpoint: { path: '/v1/rounds', price: 0.01, hasDynamicPricing: false } }), { status: 200 });
+    }
+    if (path === '/v1/run') {
+      return new Response(JSON.stringify({ data: { rounds: [{ company: 'Acme' }] }, priceCents: 1 }), { status: 200 });
+    }
+    return new Response(JSON.stringify({ error: 'not found' }), { status: 404 });
+  };
+  const session = createOrthogonalSession({
+    apiKey: 'test-key',
+    fetchImpl,
+    allowedApis: ['baseten'],
+    maxSpendCents: 10,
+  });
+
+  const discovery = await runDynamicOrthogonalTool(session, 'discover_orthogonal_apis', { prompt: 'funding rounds by date' });
+  assert.equal(discovery.error, undefined);
+  const details = await runDynamicOrthogonalTool(session, 'get_orthogonal_api_details', { api: 'funding-data', path: '/v1/rounds' });
+  assert.equal(details.endpoint.path, '/v1/rounds');
+  const result = await runDynamicOrthogonalTool(session, 'run_orthogonal_api', { api: 'funding-data', path: '/v1/rounds', query: { month: '2026-06' } });
+  assert.equal(result.rounds[0].company, 'Acme');
+  await assert.rejects(
+    session.run({ api: 'funding-data', path: '/v1/people' }),
+    (error) => error instanceof OrthogonalError && error.code === 'orthogonal_api_not_allowed',
+  );
 });
 
 test('runEnrichmentAdapter falls through candidates and never throws', async () => {

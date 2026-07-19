@@ -1,7 +1,6 @@
-// Apparent founder agent — works FOR the founder to make them "Apparent" to the
-// VCs already on Apparent. It never hunts for off-platform investors; it ranks
-// on-platform investors the founder fits, drafts intros, and (via the client)
-// amplifies the founder to thesis-matched investors.
+// Apparent founder agent — general AI chat with founder workspace context.
+// Orthogonal answers external-data questions; investor targeting and outreach
+// remain on-platform, where the agent ranks fit, drafts intros, and amplifies.
 //
 // Mirrors api/agent.js: reads run server-side; actions (sending an intro DM,
 // amplifying) are returned as intents and executed client-side as the
@@ -18,7 +17,9 @@ import {
   createAgentSse,
   createApparentAgentRuntime,
   createPublicResearchPolicy,
+  dynamicOrthogonalTools,
   logApparentAgentError,
+  runDynamicOrthogonalTool,
   runStandardOrthogonalTool,
   standardOrthogonalTools,
   toolStatusLabel,
@@ -28,7 +29,7 @@ import {
 export const config = { supportsResponseStreaming: true };
 
 // The Apparent runtime owns the tool loop; inference is replaceable behind Orthogonal.
-const MAX_AGENT_STEPS = 6;
+const MAX_AGENT_STEPS = 12;
 
 const SUPABASE_URL = (process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL || '').replace(/\/$/, '');
 const SUPABASE_ANON_KEY = process.env.VITE_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY || '';
@@ -224,6 +225,7 @@ const TOOLS = [
   // Server-side tools are only for reading the founder's own supplied/public
   // sources during profile setup. Investor targeting stays on-platform.
   ...standardOrthogonalTools,
+  ...dynamicOrthogonalTools,
   {
     name: 'find_matching_investors',
     description:
@@ -298,9 +300,11 @@ const buildSystemPrompt = (founder, contactedIds, memories, sourceBrief) => {
   const f = founder || {};
   const contacted = Array.isArray(contactedIds) ? contactedIds.filter(Boolean) : [];
   return [
-    "You are Apparent's agent that works FOR a founder. Your single mission: make this founder \"Apparent\" to the venture investors who are ALREADY on Apparent.",
-    'You never use the open web to hunt for investors outside Apparent. You work the on-platform investor base: find the ones whose thesis fits, draft intros, and amplify the founder to matched investors.',
-    'You may use fetch_public_url/search_public_web only when the founder asks you to set up, import, complete, or update their own Apparent profile from supplied links, public sources, or pasted text. If LinkedIn or any source cannot be read, say so plainly, list it as unavailable in the patch, and ask for another link or pasted text.',
+    "You are Apparent Agent: a general AI chat interface with this founder's Apparent profile, fundraising context, memory, and permissions.",
+    'Help with any legitimate question the founder asks. For current facts, public-web questions, funding/news, people, companies, markets, or anything the supplied Apparent context cannot answer, use Orthogonal-backed retrieval before answering.',
+    'Prefer curated search and news tools first. If they fail or do not fit, use discover_orthogonal_apis, then get_orthogonal_api_details, then run_orthogonal_api. Never claim live data is unavailable after only one failed endpoint, and never claim a named source was attempted unless a tool result shows it was.',
+    'For investor matching and outreach, stay inside Apparent: never hunt for or contact off-platform investors. Use the on-platform investor base to find thesis fit, draft intros, and amplify the founder.',
+    'You may use fetch_public_url, search_public_web, search_public_news, and catalog tools for general answers and source-backed profile updates. If LinkedIn or any source cannot be read, say so plainly and use other available sources.',
     '',
     "The founder's profile:",
     `- Name: ${str(f.name) || '(not set)'}`,
@@ -323,6 +327,8 @@ const buildSystemPrompt = (founder, contactedIds, memories, sourceBrief) => {
       : '- The founder has not messaged any investors yet.',
     '',
     'Rules:',
+    '- Use search_public_news for date-sensitive funding announcements and current events. Use search_public_web for broad research. Cite only URLs, publication names, and dates returned by tools.',
+    '- When no curated tool fits, use Orthogonal catalog discovery, inspect endpoint details, then run a low-cost fixed-price endpoint.',
     '- For profile setup or profile edits from links/pasted text, call propose_founder_profile_update with source-backed fields. Do not claim any URL was read if it was not.',
     '- To discuss or target investors, ALWAYS call find_matching_investors and ground every claim in its results. Never invent investors, theses, or contact info.',
     "- Rank by real thesis/sector/stage/geography fit and explain WHY each investor fits this founder's work.",
@@ -387,9 +393,6 @@ export default async function handler(req, res) {
       ...sourceAnalysis.urls,
     ].join(' '),
   });
-  const publicResearchIntent = sourceAnalysis.asksProfileSetup && (
-    sourceAnalysis.urls.length > 0 || /\b(?:public|web|website|github|linkedin|source|look up|research)\b/i.test(latestUserMessage)
-  );
   const priorAssistantMessage = [...messages].reverse().find((message) => message.role === 'assistant')?.content || '';
   const confirmsPriorAction = /^\s*(?:yes|approved?|confirm(?:ed)?|do it|go ahead|proceed|send (?:it|them)|make it happen)\b/i.test(latestUserMessage);
   const actionDenied = /\b(?:do not|don't|dont|never|not yet|hold off|without (?:sending|contacting|messaging|notifying)|research only|just research)\b/i.test(latestUserMessage);
@@ -418,7 +421,6 @@ export default async function handler(req, res) {
       maxSteps: MAX_AGENT_STEPS,
       maxTokens: 4096,
       authorizeTool: (name) => {
-        if (name === 'search_public_web' || name === 'fetch_public_url') return publicResearchIntent;
         if (name === 'propose_founder_profile_update') return sourceAnalysis.asksProfileSetup && !actionDenied;
         if (name === 'draft_intro') return introIntent;
         if (name === 'amplify_to_investors') return amplifyIntent;
@@ -428,6 +430,8 @@ export default async function handler(req, res) {
         emit({ type: 'status', label: toolStatusLabel(name, input) });
         const external = await runStandardOrthogonalTool(session, name, input, publicResearchPolicy);
         if (external !== null) return external;
+        const dynamic = await runDynamicOrthogonalTool(session, name, input);
+        if (dynamic !== null) return dynamic;
         let result;
         if (name === 'find_matching_investors') {
           try {

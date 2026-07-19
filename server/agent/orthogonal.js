@@ -73,6 +73,7 @@ export const createOrthogonalSession = ({
   let spentCents = 0;
   const detailsCache = new Map();
   const runCache = new Map();
+  const discoveredEndpoints = new Set();
 
   const request = async (path, body, { paid = false, estimatedCostCents = 0 } = {}) => {
     const idempotencyKey = globalThis.crypto?.randomUUID?.() || `orth_${Date.now()}_${Math.random().toString(36).slice(2)}`;
@@ -163,41 +164,82 @@ export const createOrthogonalSession = ({
     });
   };
 
-  const assertAllowed = (api) => {
+  const normalizeEndpoint = (api, path) => {
     const normalized = String(api ?? '').trim().toLowerCase();
     if (!normalized) throw new OrthogonalError('Orthogonal API slug is required.', { status: 400, code: 'invalid_api' });
-    if (allowed.size > 0 && !allowed.has(normalized)) {
-      throw new OrthogonalError(`Orthogonal API '${normalized}' is not allowlisted.`, {
+    const normalizedPath = String(path ?? '').trim();
+    if (!normalizedPath.startsWith('/')) {
+      throw new OrthogonalError('Orthogonal endpoint path must start with /.', { status: 400, code: 'invalid_path' });
+    }
+    return { api: normalized, path: normalizedPath, key: `${normalized}:${normalizedPath}` };
+  };
+
+  const assertAllowed = (api, path) => {
+    const endpoint = normalizeEndpoint(api, path);
+    if (allowed.size > 0 && !allowed.has(endpoint.api) && !discoveredEndpoints.has(endpoint.key)) {
+      throw new OrthogonalError(`Orthogonal endpoint '${endpoint.api}${endpoint.path}' is not allowlisted or catalog-discovered.`, {
         status: 403,
         code: 'orthogonal_api_not_allowed',
       });
     }
-    return normalized;
+    return endpoint;
+  };
+
+  const rememberDiscoveredEndpoints = (payload) => {
+    const data = payload?.data ?? payload;
+    const results = Array.isArray(data) ? data : data?.results ?? data?.apis ?? data?.endpoints ?? [];
+    for (const item of Array.isArray(results) ? results.slice(0, 30) : []) {
+      const api = String(item?.slug ?? item?.api ?? item?.provider ?? '').trim().toLowerCase();
+      const endpoints = Array.isArray(item?.endpoints) ? item.endpoints : [item];
+      for (const endpoint of endpoints.slice(0, 30)) {
+        const path = String(endpoint?.path ?? endpoint?.endpoint ?? '').trim();
+        if (api && path.startsWith('/')) discoveredEndpoints.add(`${api}:${path}`);
+      }
+    }
   };
 
   return {
     async search(prompt, limit = 8) {
-      return request('/v1/search', { prompt: compactText(prompt, 1000), limit: Math.min(Math.max(Number(limit) || 8, 1), 20) });
+      const result = await request('/v1/search', { prompt: compactText(prompt, 1000), limit: Math.min(Math.max(Number(limit) || 8, 1), 20) });
+      rememberDiscoveredEndpoints(result);
+      return result;
+    },
+
+    async details({ api, path }) {
+      const endpoint = assertAllowed(api, path);
+      const detailsKey = endpoint.key;
+      let details = detailsCache.get(detailsKey);
+      if (!details) {
+        details = await request('/v1/details', { api: endpoint.api, path: endpoint.path });
+        detailsCache.set(detailsKey, details);
+      }
+      return details;
+    },
+
+    isDiscovered({ api, path }) {
+      try {
+        return discoveredEndpoints.has(normalizeEndpoint(api, path).key);
+      } catch {
+        return false;
+      }
     },
 
     async run({ api, path, body = {}, query = {} }) {
-      const normalizedApi = assertAllowed(api);
-      const normalizedPath = String(path ?? '').trim();
-      if (!normalizedPath.startsWith('/')) {
-        throw new OrthogonalError('Orthogonal endpoint path must start with /.', { status: 400, code: 'invalid_path' });
-      }
+      const endpoint = assertAllowed(api, path);
+      const normalizedApi = endpoint.api;
+      const normalizedPath = endpoint.path;
       const runKey = JSON.stringify({ api: normalizedApi, path: normalizedPath, body, query });
       if (runCache.has(runKey)) return runCache.get(runKey);
 
-      const detailsKey = `${normalizedApi}:${normalizedPath}`;
+      const detailsKey = endpoint.key;
       let details = detailsCache.get(detailsKey);
       if (!details) {
         details = await request('/v1/details', { api: normalizedApi, path: normalizedPath });
         detailsCache.set(detailsKey, details);
       }
-      const endpoint = details?.endpoint ?? details?.data?.endpoint;
-      const priceUsd = Number(endpoint?.price);
-      const usesDynamicPricing = endpoint?.hasDynamicPricing === true || !Number.isFinite(priceUsd) || priceUsd < 0;
+      const endpointDetails = details?.endpoint ?? details?.data?.endpoint;
+      const priceUsd = Number(endpointDetails?.price);
+      const usesDynamicPricing = endpointDetails?.hasDynamicPricing === true || !Number.isFinite(priceUsd) || priceUsd < 0;
       const dynamicPricingKey = `${normalizedApi}:${normalizedPath}`;
       if (usesDynamicPricing && !dynamicPricingAllowed.has(dynamicPricingKey)) {
         throw new OrthogonalError(`Orthogonal endpoint '${normalizedApi}${normalizedPath}' does not publish a fixed price, so Apparent will not execute it automatically.`, {

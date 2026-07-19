@@ -1,7 +1,8 @@
-// Apparent investor agent — Phase 0 ("deal-flow copilot over your own data").
+// Apparent investor agent — general AI chat with Apparent workspace context.
 //
 // Server-side Apparent agent. Apparent owns orchestration, memory, permissions,
-// and actions; Orthogonal supplies replaceable inference and external data.
+// and actions; Orthogonal supplies inference plus curated and dynamically
+// discovered external-data APIs for questions the workspace cannot answer.
 //
 // Request:  POST { messages: [{role:'user'|'assistant', content:string}], criteria }
 // Response: { reply: string }  |  { error: string }
@@ -15,7 +16,9 @@ import {
   createAgentSse,
   createApparentAgentRuntime,
   createPublicResearchPolicy,
+  dynamicOrthogonalTools,
   logApparentAgentError,
+  runDynamicOrthogonalTool,
   runEnrichmentAdapter,
   runStandardOrthogonalTool,
   standardOrthogonalTools,
@@ -309,6 +312,7 @@ const enrichContact = async (input, session) => {
 const TOOLS = [
   // Orthogonal-backed public tools source founders who are not on Apparent.
   ...standardOrthogonalTools,
+  ...dynamicOrthogonalTools,
   {
     name: 'search_apparent_founders',
     description:
@@ -468,10 +472,12 @@ const buildSystemPrompt = (criteria, autonomy, contactedIds, memories, sourceBri
   const c = criteria || {};
   const contacted = Array.isArray(contactedIds) ? contactedIds.filter(Boolean) : [];
   const lines = [
-    'You are Apparent\'s sourcing copilot for a venture investor (a VC or GP).',
-    'Apparent is a platform where founders publish profiles and product launches, and investors discover thesis-fit deal flow.',
+    'You are Apparent Agent: a general AI chat interface with the investor\'s Apparent workspace, thesis, deal-flow, memory, and permissions as context.',
+    'Apparent is a platform where founders publish profiles and product launches, and investors discover thesis-fit deal flow. Help with any legitimate question the investor asks; do not force general questions into a sourcing-only workflow.',
+    'For current facts, public-web questions, funding/news, people, companies, markets, or anything the supplied context cannot answer, use Orthogonal-backed tools to retrieve evidence before answering.',
+    'Prefer curated tools first. If they fail or do not fit, use discover_orthogonal_apis, then get_orthogonal_api_details, then run_orthogonal_api. Never claim live data is unavailable after only one failed endpoint; try a fallback or catalog discovery within the runtime budget. Never claim a named source was attempted unless a tool result shows it was.',
     '',
-    'Your job: help this investor explore thesis-fit founders, explain WHY each fits, and — when asked — draft and queue personalized outreach. You work two sources: founders already on Apparent, and founders out on the open web who are NOT yet on Apparent.',
+    'For sourcing requests, help the investor explore thesis-fit founders, explain why each fits, and, when asked, draft and queue personalized outreach across founders on Apparent and the public web.',
     '',
     'The investor\'s saved thesis/criteria:',
     `- Thesis: ${str(c.thesis) || '(not set)'}`,
@@ -505,9 +511,12 @@ const buildSystemPrompt = (criteria, autonomy, contactedIds, memories, sourceBri
     '- To reach out, call prepare_mailto. OFF-PLATFORM outreach is ALWAYS a draft the investor sends from their own inbox — it is NEVER auto-sent, regardless of the autonomy setting. If you only found a social handle, leave to_email empty and put the handle in the body.',
     '',
     'General rules:',
+    '- Use search_public_news for date-sensitive funding announcements and current events. Use search_public_web for broad research. Cite only URLs, publication names, and dates returned by tools.',
+    '- On the first public search, reuse the user\'s actual public terms rather than adding private profile details. Follow-up searches may use entities discovered in tool results.',
+    '- When no curated tool fits, use Orthogonal catalog discovery, inspect endpoint details, then run a low-cost fixed-price endpoint.',
     '- When the investor asks you to set up, import, complete, or update their Apparent profile from links or pasted text, use fetch_public_url/search_public_web where helpful, then call propose_investor_profile_update with a structured patch. Do not claim LinkedIn or any source was read if it was not; list inaccessible URLs as unavailable sources and ask for alternate links or pasted text when needed.',
     "- Some on-platform founders have a `dossier` field — a GitHub-grounded profile written by the founder's own agent. When present, treat it as high-signal and lean on it (and `github_summary` / `github_verified`) when explaining fit and writing outreach.",
-    '- Default to on-platform founders first; reach to the web when the investor asks to go broader or for founders not yet on Apparent.',
+    '- For founder sourcing specifically, default to on-platform founders first; reach to the web when the investor asks to go broader or for founders not yet on Apparent. This sourcing preference does not restrict general informational questions.',
     '- When ranking, explain fit against thesis/sectors/stage/geography and real proof (traction, launches, GitHub, raising intent).',
     '- Format every reply in GitHub-flavored markdown. Lead with one short sentence, then bullet lists with founder names in bold (e.g. "- **Jane Doe** — Acme: one-line why-it-fits"). Use ### headings only when a reply has distinct sections, and markdown links instead of raw URLs. Be concise and scannable — no walls of prose.',
     '- If a search returns nothing, say so plainly and suggest loosening a filter. Never fabricate founders, metrics, emails, or links.',
@@ -621,6 +630,8 @@ export default async function handler(req, res) {
         emit({ type: 'status', label: toolStatusLabel(name, input) });
         const external = await runStandardOrthogonalTool(session, name, input, publicResearchPolicy);
         if (external !== null) return external;
+        const dynamic = await runDynamicOrthogonalTool(session, name, input);
+        if (dynamic !== null) return dynamic;
         let result;
         if (name === 'propose_investor_profile_update') {
           const patch = buildInvestorProfilePatch(input, criteria);
