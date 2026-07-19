@@ -460,7 +460,7 @@ export const InvestorAgentChat = ({
     <div className="flex items-center gap-2">
       <span className={cn(
         'hidden text-xs font-medium sm:inline',
-        variant === 'dark' ? 'text-white/70' : variant === 'parchment' ? 'text-[#514a43]' : 'text-gray-500',
+        variant === 'dark' ? 'text-white/70' : variant === 'parchment' ? 'text-[#6e7673]' : 'text-gray-500',
       )}>Agent mode</span>
       <Switch
         name="agent-autonomy"
@@ -470,7 +470,7 @@ export const InvestorAgentChat = ({
         className={cn(
           'shadow-none',
           variant === 'parchment'
-            ? 'border border-[#8d847a] bg-[#eee8df]'
+            ? 'border border-[#d6d6d6] bg-[#f4efea]'
             : 'border border-gray-alpha-400 bg-background-100',
         )}
       >

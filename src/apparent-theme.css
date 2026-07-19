@@ -74,6 +74,40 @@ body {
   outline: none;
 }
 
+/* Dedicated Agent page — Perplexity-inspired research density, mapped onto
+   Apparent's existing cream/forest palette. These tokens intentionally stay
+   scoped so the rest of the dashboard keeps its current visual language. */
+.agent-page {
+  --agent-canvas: var(--color-cream-canvas);
+  --agent-paper: var(--color-pure-paper);
+  --agent-border: var(--color-hairline-gray);
+  --agent-muted: var(--color-faded-pencil);
+  --agent-text: var(--color-ink-black);
+  --agent-accent: var(--color-forest-ink);
+  --agent-accent-soft: #edf5f1;
+  --agent-radius-card: 16px;
+  --agent-radius-input: 16px;
+  --agent-radius-button: 6px;
+  --agent-shadow-subtle: rgba(0, 0, 0, 0.08) 0 1px 2px;
+  background: var(--agent-canvas);
+  color: var(--agent-text);
+  font-family: var(--font-apparent-body);
+  letter-spacing: 0;
+}
+
+.agent-page * {
+  font-family: var(--font-apparent-body);
+  letter-spacing: 0;
+}
+
+.agent-page :where(.font-semibold, .font-bold, .font-extrabold) {
+  font-weight: 500 !important;
+}
+
+.agent-page :where(button, a) {
+  letter-spacing: 0;
+}
+
 /* Public website */
 .ed-page {
   --ed-ink: var(--color-forest-ink);

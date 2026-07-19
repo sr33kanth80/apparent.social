@@ -106,14 +106,16 @@ export const InvestorAIPrompt = ({
       <div className={cn(
         surface === 'charcoal'
           ? 'rounded-2xl p-1.5 pt-4'
-          : 'border-y border-[#8d847a] py-3 transition-colors focus-within:border-[#003f2e]',
+          : 'overflow-hidden rounded-2xl border border-[#d6d6d6] p-1.5 transition-[border-color,box-shadow] focus-within:border-[#6fa38f] focus-within:shadow-[0_0_0_3px_rgba(3,152,97,0.12)]',
         surface === 'charcoal'
           ? 'bg-charcoal shadow-[0_18px_60px_rgba(0,0,0,0.24)]'
-          : 'bg-transparent',
+          : 'bg-[#fdf9f7] shadow-[0_1px_2px_rgba(0,0,0,0.08)]',
       )}>
-        <div className={cn('mb-2.5 flex items-center', surface === 'charcoal' ? 'mx-2' : 'mx-3')}>
-          <LogoIcon className={cn('h-3.5 w-3.5', surface === 'charcoal' ? 'text-white/90' : 'text-[#003f2e]')} />
-        </div>
+        {surface === 'charcoal' && (
+          <div className="mx-2 mb-2.5 flex items-center">
+            <LogoIcon className="h-3.5 w-3.5 text-white/90" />
+          </div>
+        )}
         <div className="relative">
           <div className="relative flex flex-col">
             <div className="relative overflow-y-auto" style={{ maxHeight: '400px' }}>
@@ -122,10 +124,10 @@ export const InvestorAIPrompt = ({
                 aria-label={placeholder}
                 data-agent-surface={surface}
                 className={cn(
-                  'h-28 min-h-28 max-h-28 w-full resize-none overflow-y-auto overscroll-contain border-none px-4 py-3 focus-visible:ring-0 focus-visible:ring-offset-0',
+                  'w-full resize-none overflow-y-auto overscroll-contain border-none px-4 py-3 focus-visible:ring-0 focus-visible:ring-offset-0',
                   surface === 'charcoal'
-                    ? 'rounded-xl rounded-b-none bg-white/5 text-white placeholder:text-white/70'
-                    : 'rounded-none bg-transparent text-[#211e1b] caret-[#003f2e] outline-none placeholder:text-[#5c554d]',
+                    ? 'h-28 min-h-28 max-h-28 rounded-xl rounded-b-none bg-white/5 text-white placeholder:text-white/70'
+                    : 'h-24 min-h-24 max-h-24 rounded-xl rounded-b-none bg-transparent text-base leading-6 text-[#333333] caret-[#003f2e] outline-none placeholder:text-[#6e7673]',
                 )}
                 id="ai-input-15"
                 onChange={(event) => setValue(event.target.value)}
@@ -136,21 +138,21 @@ export const InvestorAIPrompt = ({
               />
             </div>
 
-            <div className={cn('flex h-14 items-center rounded-b-xl', surface === 'charcoal' ? 'bg-white/5' : 'bg-transparent')}>
+            <div className={cn('flex items-center rounded-b-xl', surface === 'charcoal' ? 'h-14 bg-white/5' : 'h-12 bg-transparent')}>
               <div className="absolute bottom-3 left-3 right-3 flex w-[calc(100%-24px)] items-center justify-between">
                 <div className="flex items-center gap-2">
                   <div className={cn(
                     'flex h-8 items-center gap-1 px-2 text-xs',
                     surface === 'charcoal'
                       ? 'rounded-md bg-white/5 text-white/70'
-                      : 'rounded-md border border-[#aaa096] bg-[#eee8df] text-[#403a35]',
+                      : 'rounded-full bg-[#edf5f1] text-[#003f2e]',
                   )}>
                     <LogoIcon className="h-4 w-4 opacity-70" />
-                    Apparent AI
+                    Research
                   </div>
                   {showAttachment && (
                     <>
-                      <div className={cn('mx-0.5 h-4 w-px', surface === 'charcoal' ? 'bg-white/10' : 'bg-[#8d847a]')} />
+                      <div className={cn('mx-0.5 h-4 w-px', surface === 'charcoal' ? 'bg-white/10' : 'bg-[#d6d6d6]')} />
                       <label
                         aria-label="Attach file"
                         className={cn(
@@ -165,7 +167,7 @@ export const InvestorAIPrompt = ({
                   )}
                   {toolbarExtras && (
                     <>
-                      <div className={cn('mx-0.5 h-4 w-px', surface === 'charcoal' ? 'bg-white/10' : 'bg-[#8d847a]')} />
+                      <div className={cn('mx-0.5 h-4 w-px', surface === 'charcoal' ? 'bg-white/10' : 'bg-[#d6d6d6]')} />
                       {toolbarExtras}
                     </>
                   )}
@@ -177,8 +179,8 @@ export const InvestorAIPrompt = ({
                     surface === 'charcoal'
                       ? 'border-transparent bg-white/5 hover:bg-white/10'
                       : hasValue
-                        ? 'border-[#003f2e] bg-[#003f2e] hover:bg-[#002f22]'
-                        : 'border-[#b8aea3] bg-[#e7e0d6]',
+                        ? 'rounded-xl border-[#003f2e] bg-[#003f2e] hover:bg-[#002f22]'
+                        : 'rounded-xl border-[#d6d6d6] bg-[#f4efea]',
                   )}
                   disabled={!value.trim()}
                   onClick={submitPrompt}
@@ -191,7 +193,7 @@ export const InvestorAIPrompt = ({
                         ? cn('text-white', hasValue ? 'opacity-100' : 'opacity-30')
                         : hasValue
                           ? 'text-white'
-                          : 'text-[#756d65]',
+                          : 'text-[#a6a6a6]',
                     )}
                   />
                 </button>
