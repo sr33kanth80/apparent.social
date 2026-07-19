@@ -394,7 +394,7 @@ function BaseSessionNavBar({
                                 </div>
 
                                 {isAgentItem && !isCollapsed && (
-                                  <div className="ml-3 mt-1 space-y-0.5 border-l border-black/10 pl-2">
+                                  <div className="ml-3 mr-2 mt-1 space-y-0.5 border-l border-black/10 pl-2">
                                     <button
                                       type="button"
                                       onClick={() => {
@@ -419,12 +419,12 @@ function BaseSessionNavBar({
                                       const threadPath = `${item.path}?thread=${encodeURIComponent(thread.id)}`;
                                       const isCurrent = activePath === item.path && activeAgentThreadId === thread.id;
                                       return (
-                                        <div key={thread.id} className="group/agent-thread relative min-w-0">
+                                        <div key={thread.id} className="group/agent-thread flex min-w-0 items-center gap-1">
                                           <Link
                                             to={threadPath}
                                             title={thread.title}
                                             className={cn(
-                                              'flex h-7 min-w-0 items-center gap-2 rounded-md py-0 pl-2 pr-8 text-xs transition-colors',
+                                              'flex h-7 min-w-0 flex-1 items-center gap-2 rounded-md px-2 text-xs transition-colors',
                                               isCurrent
                                                 ? 'bg-black/[0.07] font-semibold text-[#222]'
                                                 : 'text-gray-500 hover:bg-black/[0.04] hover:text-[#222]',
@@ -448,7 +448,7 @@ function BaseSessionNavBar({
                                                   .catch(() => undefined)
                                                   .finally(() => setDeletingAgentThreadId(null));
                                               }}
-                                              className="absolute right-1 top-1/2 flex h-5 w-5 -translate-y-1/2 items-center justify-center rounded text-gray-400 opacity-0 transition hover:bg-red-500/10 hover:text-red-600 focus-visible:opacity-100 disabled:cursor-wait disabled:opacity-50 group-hover/agent-thread:opacity-100 group-focus-within/agent-thread:opacity-100"
+                                              className="pointer-events-none flex h-6 w-6 shrink-0 items-center justify-center rounded text-gray-400 opacity-0 transition hover:bg-red-500/10 hover:text-red-600 focus-visible:pointer-events-auto focus-visible:opacity-100 disabled:cursor-wait disabled:opacity-50 group-hover/agent-thread:pointer-events-auto group-hover/agent-thread:opacity-100 group-focus-within/agent-thread:pointer-events-auto group-focus-within/agent-thread:opacity-100"
                                             >
                                               <Trash2 className="h-3 w-3" />
                                             </button>
