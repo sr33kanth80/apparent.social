@@ -28,7 +28,9 @@
 import {
   createApparentAgentRuntime,
   createPublicResearchPolicy,
+  dynamicOrthogonalTools,
   isAuthorizedResearchUrl,
+  runDynamicOrthogonalTool,
   runStandardOrthogonalTool,
   standardOrthogonalTools,
 } from '../server/agent/apparent-agent-runtime.js';
@@ -151,6 +153,7 @@ const logScrapeRun = async (fields) => {
 
 const TOOLS = [
   ...standardOrthogonalTools,
+  ...dynamicOrthogonalTools,
   {
     name: 'record_startup',
     description:
@@ -181,8 +184,9 @@ const buildSystemPrompt = (sectors, sinceLabel) =>
     `  ${sectors}`,
     '',
     'How to work:',
-    '- Use search_public_web to find recently-launched startups in these sectors (Launch HN, Product Hunt, YC batches, launch coverage, "raising seed/pre-seed" posts).',
+    '- Use search_public_web / search_public_news to find recently-launched startups (Launch HN, Product Hunt, YC batches, launch coverage, "raising seed/pre-seed" posts).',
     '- Use fetch_public_url to open a candidate\'s homepage/launch post and confirm it is a real, live company before recording it.',
+    '- When the curated search tools cannot answer (e.g. "companies that raised seed in fintech in the last 30 days"), use discover_orthogonal_apis → get_orthogonal_api_details → run_orthogonal_api to reach a structured catalog endpoint. Discovery and details are free; run is paid, so only run when the endpoint clearly fits.',
     '- Call record_startup once per distinct startup you verified, with its canonical homepage URL.',
     '',
     'Hard rules:',
@@ -240,6 +244,8 @@ export default async function handler(req, res) {
       executeTool: async (name, rawInput, { session }) => {
         const external = await runStandardOrthogonalTool(session, name, rawInput, publicResearchPolicy);
         if (external !== null) return external;
+        const dynamic = await runDynamicOrthogonalTool(session, name, rawInput);
+        if (dynamic !== null) return dynamic;
         if (name !== 'record_startup') return { error: `Unknown tool: ${name}` };
 
         const input = rawInput || {};
