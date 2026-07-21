@@ -34,10 +34,10 @@ import {
   runStandardOrthogonalTool,
   standardOrthogonalTools,
 } from '../server/agent/apparent-agent-runtime.js';
+import { requireAgentAccess, sendAgentAccessError } from '../server/agent/agent-guard.js';
 
 const SUPABASE_URL = (process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL || '').replace(/\/$/, '');
 const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
-const ANON_KEY = process.env.VITE_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY || '';
 const CRON_SECRET = process.env.AGENT_CRON_SECRET || '';
 // Soft throttle so an investor's manual refresh can't be double-tapped into two
 // concurrent scout runs. Re-check by the freshest row's age — a successful run
@@ -224,14 +224,12 @@ export default async function handler(req, res) {
   //      For that path we verify the JWT against Supabase and throttle by the
   //      freshest source_signals row so double-taps don't stack runs.
   const cronOk = req.headers['x-agent-cron-secret'] === CRON_SECRET;
-  const authHeader = str(req.headers.authorization);
-  const jwt = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : '';
   if (!cronOk) {
-    if (!jwt || !ANON_KEY) return res.status(401).json({ error: 'unauthorized' });
-    const userRes = await fetch(`${SUPABASE_URL}/auth/v1/user`, {
-      headers: { apikey: ANON_KEY, Authorization: `Bearer ${jwt}` },
-    });
-    if (!userRes.ok) return res.status(401).json({ error: 'invalid_token' });
+    // Same Kinde-or-Supabase verifier the chat agent uses. Investor-only so a
+    // founder account can't trigger it. requireAgentAccess also rate-limits by
+    // IP + user, so the manual-refresh path picks that up for free.
+    const access = await requireAgentAccess(req, 'investor', 'ingest-signals');
+    if (!access.ok) return sendAgentAccessError(res, access);
     // Throttle: refuse if the freshest row is younger than the cooldown.
     const freshRes = await fetch(
       `${SUPABASE_URL}/rest/v1/source_signals?select=freshness_at&order=freshness_at.desc&limit=1`,

@@ -91,6 +91,7 @@ import type {
   VcOutreachStage,
 } from '@/lib/apparent-types';
 import type { ApparentInvestorRow, LaunchAuthor } from '@/lib/dashboard-service';
+import { useAgentAuthHeaders } from '@/lib/agent-auth';
 import { VerifiedAvatar } from '@/components/VerifiedAvatar';
 import { uploadFile } from '@/lib/upload';
 import {
@@ -959,6 +960,10 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
   // feedback; it clears itself a few seconds after each result.
   const [dailyRefreshing, setDailyRefreshing] = useState(false);
   const [dailyRefreshMsg, setDailyRefreshMsg] = useState<string>('');
+  // Bridges Kinde-supplied access tokens to service functions that need to
+  // authenticate against our own API routes. Supabase-session fallback is
+  // handled inside the hook.
+  const getAgentAuthHeaders = useAgentAuthHeaders();
   const [launchAuthors, setLaunchAuthors] = useState<Record<string, LaunchAuthor>>({});
   // VC list + Apparent investor list, both used to build the founder's
   // dynamic "Investor Matches" view. Loaded once per session.
@@ -7449,7 +7454,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
     if (dailyRefreshing) return;
     setDailyRefreshing(true);
     setDailyRefreshMsg('Sourcing fresh startups…');
-    const result = await triggerManualSourcing();
+    const result = await triggerManualSourcing(getAgentAuthHeaders);
     if (result.ok) {
       const fresh = await loadDailyDigestSourced();
       setDailyDigest(fresh);
