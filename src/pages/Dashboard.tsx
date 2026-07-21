@@ -7,12 +7,15 @@ import {
   ChevronLeft,
   ChevronRight,
   ChevronUp,
+  ChevronsUpDown,
   FileText,
   Flame,
   Globe,
   Image,
+  LayoutGrid,
   LocateFixed,
   ListFilter,
+  Rows3,
   MessageCircle,
   MessageSquare,
   MapPin,
@@ -940,6 +943,16 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
     stage: '',
     location: '',
   });
+  // 'cards' = curated hero grid (default); 'table' = power-user triage view.
+  // Persisted so a returning investor lands in the mode they last chose.
+  const [dailyView, setDailyView] = useState<'cards' | 'table'>(() => {
+    if (typeof window === 'undefined') return 'cards';
+    return (localStorage.getItem('apparent.dailyView') as 'cards' | 'table') || 'cards';
+  });
+  const [dailySort, setDailySort] = useState<{ key: 'name' | 'category' | 'stage' | 'location' | 'source'; dir: 'asc' | 'desc' }>({ key: 'name', dir: 'asc' });
+  useEffect(() => {
+    if (typeof window !== 'undefined') localStorage.setItem('apparent.dailyView', dailyView);
+  }, [dailyView]);
   const [launchAuthors, setLaunchAuthors] = useState<Record<string, LaunchAuthor>>({});
   // VC list + Apparent investor list, both used to build the founder's
   // dynamic "Investor Matches" view. Loaded once per session.
@@ -7473,9 +7486,29 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
                     <p className="mt-0.5 text-xs text-black/50">Newest first · fresh leads added daily at 7:00 AM PST</p>
                   </div>
                 </div>
-                <span className="rounded-full bg-[#f4f1eb] px-3 py-1.5 text-xs font-semibold text-black/60">
-                  {filtered.length} {filtered.length === 1 ? 'startup' : 'startups'}
-                </span>
+                <div className="flex items-center gap-2">
+                  <span className="rounded-full bg-[#f4f1eb] px-3 py-1.5 text-xs font-semibold text-black/60">
+                    {filtered.length} {filtered.length === 1 ? 'startup' : 'startups'}
+                  </span>
+                  <div className="inline-flex items-center rounded-full border border-black/10 bg-white p-0.5">
+                    <button
+                      type="button"
+                      onClick={() => setDailyView('cards')}
+                      aria-pressed={dailyView === 'cards'}
+                      className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-semibold transition-colors ${dailyView === 'cards' ? 'bg-charcoal text-white' : 'text-black/55 hover:text-black'}`}
+                    >
+                      <LayoutGrid className="h-3 w-3" /> Cards
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setDailyView('table')}
+                      aria-pressed={dailyView === 'table'}
+                      className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-semibold transition-colors ${dailyView === 'table' ? 'bg-charcoal text-white' : 'text-black/55 hover:text-black'}`}
+                    >
+                      <Rows3 className="h-3 w-3" /> Table
+                    </button>
+                  </div>
+                </div>
               </div>
 
               {/* Filter bar */}
@@ -7536,6 +7569,86 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
                   Clear filters
                 </button>
               </div>
+            ) : dailyView === 'table' ? (
+              (() => {
+                const sorted = [...filtered].sort((a, b) => {
+                  const av = String((a as unknown as Record<string, unknown>)[dailySort.key] ?? '').toLowerCase();
+                  const bv = String((b as unknown as Record<string, unknown>)[dailySort.key] ?? '').toLowerCase();
+                  if (av === bv) return 0;
+                  const cmp = av < bv ? -1 : 1;
+                  return dailySort.dir === 'asc' ? cmp : -cmp;
+                });
+                const toggleSort = (key: typeof dailySort.key) => setDailySort((s) => ({ key, dir: s.key === key && s.dir === 'asc' ? 'desc' : 'asc' }));
+                const th = (key: typeof dailySort.key, label: string) => (
+                  <th className="px-4 py-2.5 text-left font-semibold text-black/55">
+                    <button type="button" onClick={() => toggleSort(key)} className="inline-flex items-center gap-1 hover:text-black">
+                      {label} <ChevronsUpDown className="h-3 w-3 opacity-50" />
+                    </button>
+                  </th>
+                );
+                return (
+                  <div className="overflow-hidden rounded-[18px] border border-black/10 bg-white shadow-[0_8px_24px_rgba(0,0,0,0.04)]">
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-xs">
+                        <thead className="bg-[#fbfaf7] text-[11px] uppercase tracking-[0.08em]">
+                          <tr>
+                            {th('name', 'Startup')}
+                            {th('category', 'Sector')}
+                            {th('stage', 'Stage')}
+                            {th('location', 'Location')}
+                            <th className="px-4 py-2.5 text-left font-semibold text-black/55">Metric</th>
+                            {th('source', 'Source')}
+                            <th className="px-4 py-2.5" />
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {sorted.map((launch) => {
+                            const domain = dashboardLaunchDomain(launch.launchUrl || launch.sourceUrl || '');
+                            const href = launch.sourceUrl || launch.launchUrl || '';
+                            const internalTo = launch.projectPath;
+                            const rowCls = 'group border-t border-black/[0.06] hover:bg-[#fbfaf7] cursor-pointer';
+                            const cells = (
+                              <>
+                                <td className="px-4 py-3">
+                                  <div className="flex items-center gap-2.5">
+                                    <div className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-[#fbfaf7]">
+                                      <img
+                                        src={launch.logoUrl || `https://www.google.com/s2/favicons?domain=${domain}&sz=128`}
+                                        alt=""
+                                        className="h-5 w-5 object-contain"
+                                        onError={(e) => { e.currentTarget.style.visibility = 'hidden'; }}
+                                      />
+                                    </div>
+                                    <div className="min-w-0">
+                                      <div className="truncate font-semibold text-black">{launch.name}</div>
+                                      {launch.tagline && <div className="truncate text-[11px] text-black/50">{launch.tagline}</div>}
+                                    </div>
+                                  </div>
+                                </td>
+                                <td className="px-4 py-3 text-black/70">{launch.category || '—'}</td>
+                                <td className="px-4 py-3 text-black/70">{launch.stage || '—'}</td>
+                                <td className="px-4 py-3 text-black/70">{launch.location || '—'}</td>
+                                <td className="px-4 py-3 text-black/70">{launch.metrics || '—'}</td>
+                                <td className="px-4 py-3 text-black/60">{launch.source || '—'}</td>
+                                <td className="px-4 py-3 text-right">
+                                  <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-[#f4f1eb] text-black/60 group-hover:bg-charcoal group-hover:text-white">
+                                    <ArrowUpRight className="h-3.5 w-3.5" />
+                                  </span>
+                                </td>
+                              </>
+                            );
+                            return internalTo ? (
+                              <tr key={launch.id} className={rowCls} onClick={() => navigate(internalTo)}>{cells}</tr>
+                            ) : (
+                              <tr key={launch.id} className={rowCls} onClick={() => href && window.open(href, '_blank', 'noopener,noreferrer')}>{cells}</tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                );
+              })()
             ) : (
               // Card grid — investors scan at-a-glance instead of reading a
               // dense list. Responsive: 1 col mobile, 2 col md, 3 col xl.

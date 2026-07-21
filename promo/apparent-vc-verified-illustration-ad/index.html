@@ -1,0 +1,372 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1080, height=1920" />
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <style>
+      * { box-sizing: border-box; margin: 0; padding: 0; }
+      html, body { width: 1080px; height: 1920px; overflow: hidden; background: #070a0d; }
+      body { color: #f7f7f2; font-family: sans-serif; }
+      #root, .scene {
+        position: relative;
+        width: 1080px;
+        height: 1920px;
+        overflow: hidden;
+        background:
+          radial-gradient(circle at 18% 12%, rgba(200, 223, 170, 0.2), rgba(7, 10, 13, 0) 360px),
+          radial-gradient(circle at 88% 78%, rgba(151, 205, 229, 0.16), rgba(7, 10, 13, 0) 420px),
+          linear-gradient(90deg, rgba(247,247,242,0.035) 1px, rgba(7,10,13,0) 1px),
+          linear-gradient(180deg, rgba(247,247,242,0.035) 1px, rgba(7,10,13,0) 1px),
+          #070a0d;
+        background-size: auto, auto, 72px 72px, 72px 72px, auto;
+      }
+      .scene { position: absolute; inset: 0; }
+      #scene-1 { z-index: 1; }
+      #scene-2 { z-index: 2; opacity: 0; visibility: hidden; }
+      #scene-3 { z-index: 3; opacity: 0; visibility: hidden; }
+      #scene-4 { z-index: 4; opacity: 0; visibility: hidden; }
+      #scene-5 { z-index: 5; opacity: 0; visibility: hidden; }
+      #scene-6 { z-index: 6; opacity: 0; visibility: hidden; }
+      .frame { position: relative; width: 100%; height: 100%; padding: 86px 58px 90px; }
+      .chrome {
+        position: absolute; top: 70px; left: 58px; right: 58px; z-index: 40;
+        display: flex; align-items: center; justify-content: space-between;
+      }
+      .brand { display: flex; align-items: center; gap: 16px; }
+      .brand img:first-child { width: 54px; height: 54px; object-fit: contain; }
+      .brand img:last-child { width: 178px; height: auto; filter: invert(1) brightness(3); }
+      .tag {
+        padding: 10px 15px 11px;
+        border: 1px solid rgba(247,247,242,.14);
+        border-radius: 999px;
+        background: rgba(247,247,242,.08);
+        color: rgba(247,247,242,.78);
+        box-shadow: 0 14px 42px rgba(0,0,0,.2);
+        font-size: 18px;
+        font-weight: 820;
+        line-height: 1;
+      }
+      .hero, .stack {
+        display: flex;
+        height: 100%;
+        flex-direction: column;
+        justify-content: center;
+        gap: 34px;
+        padding-top: 86px;
+      }
+      .kicker {
+        width: max-content;
+        max-width: 100%;
+        padding: 12px 18px 13px;
+        border: 1px solid rgba(247,247,242,.14);
+        border-radius: 999px;
+        background: rgba(247,247,242,.08);
+        color: rgba(247,247,242,.72);
+        font-size: 22px;
+        font-weight: 820;
+        line-height: 1;
+      }
+      .super {
+        max-width: 940px;
+        color: #f7f7f2;
+        font-size: 126px;
+        font-weight: 870;
+        line-height: .9;
+        letter-spacing: 0;
+      }
+      .headline {
+        max-width: 930px;
+        color: #f7f7f2;
+        font-size: 84px;
+        font-weight: 860;
+        line-height: .98;
+        letter-spacing: 0;
+      }
+      .subhead {
+        max-width: 820px;
+        color: rgba(247,247,242,.68);
+        font-size: 38px;
+        font-weight: 670;
+        line-height: 1.08;
+      }
+      .green { color: #c8dfaa; }
+      .blue { color: #97cde5; }
+      .orange { color: #f5a184; }
+      .caption {
+        position: absolute; left: 58px; right: 58px; bottom: 74px; z-index: 45;
+        display: flex; min-height: 94px; align-items: center; justify-content: space-between; gap: 20px;
+        padding: 20px 25px;
+        border: 1px solid rgba(247,247,242,.14);
+        border-radius: 32px;
+        background: rgba(247,247,242,.1);
+        box-shadow: 0 24px 68px rgba(0,0,0,.28);
+        backdrop-filter: blur(12px);
+      }
+      .caption strong { color: #f7f7f2; font-size: 29px; font-weight: 800; line-height: 1.07; }
+      .caption span {
+        flex: 0 0 auto;
+        padding: 11px 16px 12px;
+        border: 1px solid rgba(200,223,170,.56);
+        border-radius: 999px;
+        background: #263719;
+        color: #f7f7f2;
+        font-size: 20px;
+        font-weight: 860;
+        line-height: 1;
+      }
+      .command {
+        display: grid; width: 936px; gap: 18px; padding: 26px;
+        border: 1px solid rgba(247,247,242,.14);
+        border-radius: 42px;
+        background: rgba(247,247,242,.08);
+        box-shadow: 0 38px 110px rgba(0,0,0,.28);
+      }
+      .cmd-row { display: flex; align-items: center; justify-content: space-between; }
+      .traffic { display: flex; gap: 9px; }
+      .dot { width: 14px; height: 14px; border-radius: 50%; }
+      .dot.a { background: #f5a184; } .dot.b { background: #e2c76d; } .dot.c { background: #c8dfaa; }
+      .cmd-text {
+        padding: 22px 25px;
+        border-radius: 24px;
+        background: #0d1117;
+        color: #f7f7f2;
+        font-family: monospace;
+        font-size: 31px;
+        font-weight: 760;
+        line-height: 1.06;
+      }
+      .cursor { display: inline-block; width: 15px; height: 32px; margin-left: 7px; border-radius: 4px; background: #c8dfaa; vertical-align: -5px; }
+      .status { display: flex; align-items: center; gap: 10px; color: rgba(247,247,242,.7); font-size: 21px; font-weight: 780; }
+      .pulse { width: 12px; height: 12px; border-radius: 50%; background: #c8dfaa; box-shadow: 0 0 0 10px rgba(200,223,170,.14); }
+      .illus-card {
+        width: 936px;
+        height: 526px;
+        overflow: hidden;
+        border: 2px solid rgba(247,247,242,.16);
+        border-radius: 36px;
+        background: #fff;
+        box-shadow: 0 30px 90px rgba(0,0,0,.3), 0 0 0 1px rgba(200,223,170,.08);
+      }
+      .illus-card.large { height: 645px; }
+      .illus-card img { display: block; width: 100%; height: 100%; object-fit: cover; }
+      .duo {
+        display: grid;
+        width: 936px;
+        grid-template-columns: 1fr;
+        gap: 18px;
+      }
+      .duo .illus-card { height: 392px; }
+      .signal-strip {
+        display: grid;
+        width: 936px;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 14px;
+      }
+      .mini {
+        min-height: 130px;
+        padding: 18px;
+        border: 1px solid rgba(247,247,242,.14);
+        border-radius: 28px;
+        background: rgba(247,247,242,.08);
+      }
+      .mini strong { display: block; color: #f7f7f2; font-size: 25px; font-weight: 840; line-height: 1.04; }
+      .mini span { display: block; margin-top: 9px; color: rgba(247,247,242,.62); font-size: 18px; font-weight: 680; line-height: 1.12; }
+      .rank-panel {
+        display: grid;
+        width: 936px;
+        grid-template-columns: 1fr;
+        gap: 14px;
+      }
+      .rank-row {
+        display: grid;
+        grid-template-columns: 64px 1fr 112px;
+        align-items: center;
+        gap: 16px;
+        min-height: 106px;
+        padding: 17px;
+        border: 1px solid rgba(247,247,242,.14);
+        border-radius: 28px;
+        background: rgba(247,247,242,.08);
+      }
+      .rank-num {
+        display: grid; width: 64px; height: 64px; place-items: center;
+        border-radius: 22px; background: #c8dfaa; color: #171717;
+        font-size: 27px; font-weight: 900;
+      }
+      .rank-copy strong { display: block; color: #f7f7f2; font-size: 29px; font-weight: 850; line-height: 1.02; }
+      .rank-copy span { display: block; margin-top: 6px; color: rgba(247,247,242,.62); font-size: 20px; font-weight: 700; }
+      .score { font-size: 30px; font-weight: 900; color: #c8dfaa; text-align: right; font-variant-numeric: tabular-nums; }
+      .close-card {
+        display: flex; width: 936px; min-height: 800px; flex-direction: column; align-items: center; justify-content: center;
+        gap: 40px; padding: 64px; border: 1px solid rgba(247,247,242,.14); border-radius: 58px;
+        background: rgba(247,247,242,.08); box-shadow: 0 44px 128px rgba(0,0,0,.3); text-align: center;
+      }
+      .close-card img:first-child { width: 118px; height: 118px; object-fit: contain; }
+      .close-card img:nth-child(2) { width: 430px; height: auto; filter: invert(1) brightness(3); }
+      .close-title { max-width: 790px; color: #f7f7f2; font-size: 78px; font-weight: 870; line-height: .98; }
+      .close-copy { max-width: 760px; color: rgba(247,247,242,.66); font-size: 34px; font-weight: 690; line-height: 1.12; }
+      .close-pills { display: flex; justify-content: center; gap: 14px; }
+      .close-pills span { padding: 16px 22px 17px; border-radius: 999px; background: #c8dfaa; color: #171717; font-size: 24px; font-weight: 850; line-height: 1; }
+      .close-pills span:nth-child(2) { background: #97cde5; }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-duration="20.8" data-width="1080" data-height="1920">
+      <audio id="music" data-start="0" data-duration="20.8" data-track-index="8" src="assets/music.wav" data-volume="0.48"></audio>
+      <audio id="narration" data-start="0.35" data-duration="19.892" data-track-index="9" src="assets/narration.wav" data-volume="1"></audio>
+
+      <section id="scene-1" class="scene">
+        <div class="chrome"><div class="brand"><img id="brand-logo-s1" class="clip" src="assets/apparent-logo.png" alt="" data-start="0" data-duration="3.25" /><img id="brand-wordmark-s1" class="clip" src="assets/apparent-wordmark.png" alt="Apparent" data-start="0" data-duration="3.25" /></div><div class="tag">investor promo</div></div>
+        <div class="frame">
+          <div class="hero" data-layout-allow-overlap>
+            <h1 class="super">Verified startups worth <span class="green">backing.</span></h1>
+            <p class="subhead">Not another noisy list. A clearer way to see founder proof.</p>
+            <div class="command">
+              <div class="cmd-row"><div class="traffic"><span class="dot a"></span><span class="dot b"></span><span class="dot c"></span></div><div class="status"><span class="pulse"></span>proof check running</div></div>
+              <div class="cmd-text">apparent verify --worth-backing<span class="cursor"></span></div>
+            </div>
+            <figure class="illus-card"><img id="illus-verified-startups" class="clip" src="assets/illustrations/01-verified-startups.svg" alt="Verified startups worth backing" data-start="0" data-duration="3.25" /></figure>
+          </div>
+          <div class="caption"><strong>Venture teams do not need another noisy list.</strong><span>verified</span></div>
+        </div>
+      </section>
+
+      <section id="scene-2" class="scene">
+        <div class="chrome"><div class="brand"><img id="brand-logo-s2" class="clip" src="assets/apparent-logo.png" alt="" data-start="3.25" data-duration="3.47" /><img id="brand-wordmark-s2" class="clip" src="assets/apparent-wordmark.png" alt="Apparent" data-start="3.25" data-duration="3.47" /></div><div class="tag">founder context</div></div>
+        <div class="frame">
+          <div class="stack" data-layout-allow-overlap>
+            <div><div class="kicker">Founder + team story</div><h2 class="headline">See who built it, why now, and what changed.</h2></div>
+            <div class="duo">
+              <figure class="illus-card"><img id="illus-founder-story" class="clip" src="assets/illustrations/02-founder-story.svg" alt="Founder and team story" data-start="3.25" data-duration="3.47" /></figure>
+              <figure class="illus-card"><img id="illus-team-caliber-story" class="clip" src="assets/illustrations/03-team-caliber.svg" alt="Team caliber" data-start="3.25" data-duration="3.47" /></figure>
+            </div>
+          </div>
+          <div class="caption"><strong>Apparent shows the founder story, team caliber, and proof behind the company.</strong><span>context</span></div>
+        </div>
+      </section>
+
+      <section id="scene-3" class="scene">
+        <div class="chrome"><div class="brand"><img id="brand-logo-s3" class="clip" src="assets/apparent-logo.png" alt="" data-start="6.72" data-duration="3.36" /><img id="brand-wordmark-s3" class="clip" src="assets/apparent-wordmark.png" alt="Apparent" data-start="6.72" data-duration="3.36" /></div><div class="tag">caliber check</div></div>
+        <div class="frame">
+          <div class="stack" data-layout-allow-overlap>
+            <div><div class="kicker">Verified signals</div><h2 class="headline">Proof, story, and team caliber become investor-ready signals.</h2></div>
+            <div class="signal-strip">
+              <div class="mini"><strong>Founder story</strong><span>Origin, market insight, why this team.</span></div>
+              <div class="mini"><strong>Team caliber</strong><span>Velocity, credibility, founder-market fit.</span></div>
+              <div class="mini"><strong>Proof trail</strong><span>Shipping, customers, revenue, trust.</span></div>
+            </div>
+            <figure class="illus-card large"><img id="illus-team-caliber-signals" class="clip" src="assets/illustrations/03-team-caliber.svg" alt="Team caliber check" data-start="6.72" data-duration="3.36" /></figure>
+          </div>
+          <div class="caption"><strong>Founder story and team caliber become readable before the first call.</strong><span>signals</span></div>
+        </div>
+      </section>
+
+      <section id="scene-4" class="scene">
+        <div class="chrome"><div class="brand"><img id="brand-logo-s4" class="clip" src="assets/apparent-logo.png" alt="" data-start="10.08" data-duration="3.44" /><img id="brand-wordmark-s4" class="clip" src="assets/apparent-wordmark.png" alt="Apparent" data-start="10.08" data-duration="3.44" /></div><div class="tag">thesis fit</div></div>
+        <div class="frame">
+          <div class="stack" data-layout-allow-overlap>
+            <div><div class="kicker">Investor thesis</div><h2 class="headline">Know why this team fits <span class="blue">your thesis</span> now.</h2></div>
+            <figure class="illus-card large"><img id="illus-thesis-fit" class="clip" src="assets/illustrations/04-thesis-fit.svg" alt="Thesis fit gate" data-start="10.08" data-duration="3.44" /></figure>
+            <div class="rank-panel">
+              <div class="rank-row"><div class="rank-num">1</div><div class="rank-copy"><strong>Stage and category fit</strong><span>Matched to the investor's actual criteria.</span></div><div class="score">96</div></div>
+              <div class="rank-row"><div class="rank-num">2</div><div class="rank-copy"><strong>Proof-backed timing</strong><span>Why this company matters right now.</span></div><div class="score">92</div></div>
+            </div>
+          </div>
+          <div class="caption"><strong>Then Apparent matches the startup to your thesis, so you know why it fits now.</strong><span>fit</span></div>
+        </div>
+      </section>
+
+      <section id="scene-5" class="scene">
+        <div class="chrome"><div class="brand"><img id="brand-logo-s5" class="clip" src="assets/apparent-logo.png" alt="" data-start="13.52" data-duration="3.4" /><img id="brand-wordmark-s5" class="clip" src="assets/apparent-wordmark.png" alt="Apparent" data-start="13.52" data-duration="3.4" /></div><div class="tag">conviction</div></div>
+        <div class="frame">
+          <div class="stack" data-layout-allow-overlap>
+            <div><div class="kicker">Conviction packet</div><h2 class="headline">Check the signals and reach out with conviction.</h2></div>
+            <figure class="illus-card large"><img id="illus-conviction-outreach" class="clip" src="assets/illustrations/05-conviction-outreach.svg" alt="Conviction to outreach" data-start="13.52" data-duration="3.4" /></figure>
+            <div class="rank-panel">
+              <div class="rank-row"><div class="rank-num">OK</div><div class="rank-copy"><strong>Verified startup</strong><span>Founder context, caliber, proof, and thesis fit.</span></div><div class="score">send</div></div>
+            </div>
+          </div>
+          <div class="caption"><strong>Open the packet, check the signals, and reach out with conviction.</strong><span>outreach</span></div>
+        </div>
+      </section>
+
+      <section id="scene-6" class="scene">
+        <div class="chrome"><div class="brand"><img id="brand-logo-s6" class="clip" src="assets/apparent-logo.png" alt="" data-start="16.92" data-duration="3.88" /><img id="brand-wordmark-s6" class="clip" src="assets/apparent-wordmark.png" alt="Apparent" data-start="16.92" data-duration="3.88" /></div><div class="tag">outro</div></div>
+        <div class="frame">
+          <div class="hero" data-layout-allow-overlap>
+            <div class="close-card">
+              <img id="outro-logo" class="clip" src="assets/apparent-logo.png" alt="" data-start="17.22" data-duration="3.2" />
+              <img id="outro-wordmark" class="clip" src="assets/apparent-wordmark.png" alt="Apparent" data-start="17.22" data-duration="3.2" />
+              <h2 class="close-title">Verified startups. Founder context. <span class="green">Thesis-fit</span> deal flow.</h2>
+              <p class="close-copy">For investors who want to find founders worth backing before the round gets loud.</p>
+              <div class="close-pills"><span>Verified startups</span><span>Thesis fit</span></div>
+            </div>
+          </div>
+          <div class="caption"><strong>Apparent: verified startups, founder context, and thesis fit deal flow for investors.</strong><span>Apparent</span></div>
+        </div>
+      </section>
+    </div>
+
+    <script>
+      window.__timelines = window.__timelines || {};
+      const tl = gsap.timeline({ paused: true });
+      const scenes = ["#scene-1", "#scene-2", "#scene-3", "#scene-4", "#scene-5", "#scene-6"];
+      function swap(fromScene, toScene, at) {
+        tl.to(fromScene, { autoAlpha: 0, scale: 1.025, filter: "blur(8px)", duration: 0.28, ease: "power4.inOut", overwrite: "auto" }, at);
+        tl.set(fromScene, { autoAlpha: 0 }, at + 0.29);
+        tl.fromTo(toScene, { autoAlpha: 0, scale: 0.975, filter: "blur(10px)" }, { autoAlpha: 1, scale: 1, filter: "blur(0px)", duration: 0.34, ease: "power4.out", overwrite: "auto" }, at + 0.06);
+      }
+      function shell(scene, at) {
+        tl.from(`${scene} .chrome`, { y: -22, opacity: 0, duration: 0.28, ease: "power3.out", overwrite: "auto" }, at);
+        tl.from(`${scene} .caption`, { y: 28, opacity: 0, duration: 0.32, ease: "power3.out", overwrite: "auto" }, at + 0.16);
+      }
+      shell(scenes[0], 0.12);
+      tl.from("#scene-1 .super", { y: 72, scale: 0.94, opacity: 0, duration: 0.46, ease: "power4.out", overwrite: "auto" }, 0.18);
+      tl.from("#scene-1 .subhead", { y: 34, opacity: 0, duration: 0.36, ease: "power3.out", overwrite: "auto" }, 0.52);
+      tl.from("#scene-1 .command", { y: 44, scale: 0.96, opacity: 0, duration: 0.38, ease: "back.out(1.7)", overwrite: "auto" }, 0.78);
+      tl.from("#scene-1 .illus-card", { y: 46, rotation: -1.5, scale: 0.94, opacity: 0, duration: 0.44, ease: "back.out(1.6)", overwrite: "auto" }, 1.1);
+      tl.to("#scene-1 .cursor", { opacity: 0, duration: 0.16, repeat: 11, yoyo: true, ease: "steps(1)", overwrite: "auto" }, 0.96);
+
+      swap(scenes[0], scenes[1], 3.25);
+      shell(scenes[1], 3.46);
+      tl.from("#scene-2 .kicker", { y: 18, opacity: 0, duration: 0.24, ease: "power3.out", overwrite: "auto" }, 3.56);
+      tl.from("#scene-2 .headline", { y: 42, opacity: 0, duration: 0.34, ease: "power4.out", overwrite: "auto" }, 3.66);
+      tl.from("#scene-2 .illus-card", { x: -36, rotation: -1.3, scale: 0.95, opacity: 0, duration: 0.34, stagger: 0.12, ease: "back.out(1.7)", overwrite: "auto" }, 4.02);
+
+      swap(scenes[1], scenes[2], 6.72);
+      shell(scenes[2], 6.92);
+      tl.from("#scene-3 .kicker", { y: 18, opacity: 0, duration: 0.24, ease: "power3.out", overwrite: "auto" }, 7.02);
+      tl.from("#scene-3 .headline", { y: 42, opacity: 0, duration: 0.34, ease: "power4.out", overwrite: "auto" }, 7.12);
+      tl.from("#scene-3 .mini", { y: 22, scale: 0.96, opacity: 0, duration: 0.26, stagger: 0.07, ease: "back.out(1.8)", overwrite: "auto" }, 7.48);
+      tl.from("#scene-3 .illus-card", { y: 46, rotation: 1.4, scale: 0.94, opacity: 0, duration: 0.4, ease: "back.out(1.7)", overwrite: "auto" }, 7.82);
+
+      swap(scenes[2], scenes[3], 10.08);
+      shell(scenes[3], 10.28);
+      tl.from("#scene-4 .kicker", { y: 18, opacity: 0, duration: 0.24, ease: "power3.out", overwrite: "auto" }, 10.38);
+      tl.from("#scene-4 .headline", { y: 42, opacity: 0, duration: 0.34, ease: "power4.out", overwrite: "auto" }, 10.48);
+      tl.from("#scene-4 .illus-card", { y: 46, rotation: -1.2, scale: 0.94, opacity: 0, duration: 0.38, ease: "back.out(1.7)", overwrite: "auto" }, 10.84);
+      tl.from("#scene-4 .rank-row", { x: 42, opacity: 0, duration: 0.28, stagger: 0.1, ease: "back.out(1.7)", overwrite: "auto" }, 11.2);
+
+      swap(scenes[3], scenes[4], 13.52);
+      shell(scenes[4], 13.72);
+      tl.from("#scene-5 .kicker", { y: 18, opacity: 0, duration: 0.24, ease: "power3.out", overwrite: "auto" }, 13.82);
+      tl.from("#scene-5 .headline", { y: 42, opacity: 0, duration: 0.34, ease: "power4.out", overwrite: "auto" }, 13.92);
+      tl.from("#scene-5 .illus-card", { y: 46, rotation: 1.2, scale: 0.94, opacity: 0, duration: 0.38, ease: "back.out(1.7)", overwrite: "auto" }, 14.28);
+      tl.from("#scene-5 .rank-row", { y: 24, opacity: 0, duration: 0.28, ease: "power3.out", overwrite: "auto" }, 14.72);
+
+      swap(scenes[4], scenes[5], 16.92);
+      shell(scenes[5], 17.12);
+      tl.from("#scene-6 .close-card", { y: 64, scale: 0.94, opacity: 0, duration: 0.46, ease: "back.out(1.6)", overwrite: "auto" }, 17.22);
+      tl.from("#scene-6 .close-card img:first-child", { y: 20, scale: 0.82, opacity: 0, duration: 0.3, ease: "back.out(2)", overwrite: "auto" }, 17.48);
+      tl.from("#scene-6 .close-card img:nth-child(2)", { y: 20, opacity: 0, duration: 0.28, ease: "power3.out", overwrite: "auto" }, 17.66);
+      tl.from("#scene-6 .close-title", { y: 36, opacity: 0, duration: 0.36, ease: "power4.out", overwrite: "auto" }, 17.86);
+      tl.from("#scene-6 .close-copy", { y: 22, opacity: 0, duration: 0.32, ease: "power3.out", overwrite: "auto" }, 18.14);
+      tl.from("#scene-6 .close-pills span", { y: 22, scale: 0.88, opacity: 0, duration: 0.24, stagger: 0.08, ease: "back.out(2.2)", overwrite: "auto" }, 18.38);
+      tl.to("#scene-6 .close-card", { scale: 1.018, duration: 0.78, ease: "sine.inOut", overwrite: "auto" }, 19.15);
+      tl.to("#scene-6", { autoAlpha: 0, duration: 0.38, ease: "power2.inOut", overwrite: "auto" }, 20.42);
+      tl.set("#scene-6", { autoAlpha: 0 }, 20.8);
+      window.__timelines["main"] = tl;
+    </script>
+  </body>
+</html>

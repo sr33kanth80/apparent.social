@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" role="img" aria-labelledby="title desc">
+  <title id="title">Verified startups worth backing</title>
+  <desc id="desc">A simple hand-drawn style illustration showing Xiaohei weighing startup proof into a verified shortlist.</desc>
+  <rect width="1600" height="900" fill="#ffffff"/>
+  <g fill="none" stroke="#171717" stroke-width="7" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M182 164c120-15 232-13 344 4"/>
+    <path d="M180 166c14 12 24 28 35 43"/>
+    <path d="M520 168c-16 9-31 24-44 42"/>
+    <path d="M284 246h244c28 0 50 23 50 51v279c0 27-22 50-50 50H284c-28 0-50-23-50-50V297c0-28 22-51 50-51z"/>
+    <path d="M330 329h156M330 383h118M330 437h144"/>
+    <path d="M262 685c120 24 239 24 361 1"/>
+    <path d="M890 190c102 11 201 9 302-2"/>
+    <path d="M970 246h250c30 0 54 24 54 54v298c0 30-24 54-54 54H970c-30 0-54-24-54-54V300c0-30 24-54 54-54z"/>
+    <path d="M998 338h144M998 392h188M998 446h130"/>
+    <path d="M1058 552c48 26 103 26 154-4"/>
+    <path d="M782 212c-14 115-14 302 0 417"/>
+    <path d="M655 616c90 51 177 51 262 1"/>
+    <path d="M640 616h287"/>
+    <path d="M420 624c70-54 137-77 205-73"/>
+    <path d="M923 548c78-6 147 13 205 74"/>
+    <path d="M730 690c-42 22-82 47-120 75"/>
+    <path d="M837 690c50 18 92 43 127 75"/>
+  </g>
+  <g>
+    <rect x="286" y="288" width="154" height="52" rx="18" fill="#c8dfaa" opacity=".9"/>
+    <text x="308" y="324" font-family="sans-serif" font-size="32" font-weight="800" fill="#171717">raw deal</text>
+    <rect x="988" y="288" width="184" height="52" rx="18" fill="#97cde5" opacity=".9"/>
+    <text x="1014" y="324" font-family="sans-serif" font-size="32" font-weight="800" fill="#171717">verified</text>
+    <rect x="1032" y="512" width="156" height="58" rx="20" fill="#f5a184" opacity=".9"/>
+    <text x="1060" y="550" font-family="sans-serif" font-size="32" font-weight="800" fill="#171717">fit 94</text>
+  </g>
+  <g fill="#171717">
+    <path d="M712 492c-32-14-53-44-50-79 4-44 35-76 80-78 47-2 83 30 90 73 7 45-16 80-55 94-19 7-44 2-65-10z"/>
+    <circle cx="720" cy="414" r="9" fill="#fff"/>
+    <circle cx="774" cy="414" r="9" fill="#fff"/>
+    <path d="M690 499c-20 29-29 59-25 88M802 499c24 28 33 57 29 87" fill="none" stroke="#171717" stroke-width="7" stroke-linecap="round"/>
+    <path d="M672 531c-35 1-67 11-95 29M821 532c39 2 72 15 99 37" fill="none" stroke="#171717" stroke-width="7" stroke-linecap="round"/>
+  </g>
+  <g fill="none" stroke="#6a8f34" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="10 18">
+    <path d="M582 382c80 28 145 31 201 5"/>
+    <path d="M825 388c57 25 93 27 148 8"/>
+  </g>
+  <g font-family="sans-serif" font-weight="800" fill="#171717">
+    <text x="105" y="118" font-size="62">verified startups</text>
+    <text x="103" y="768" font-size="38">proof in</text>
+    <text x="1175" y="762" font-size="38">worth backing</text>
+  </g>
+  <g fill="none" stroke="#97cde5" stroke-width="6" stroke-linecap="round">
+    <path d="M1265 188c30-35 61-57 94-66M1298 210c42-12 76-14 105-5"/>
+  </g>
+</svg>

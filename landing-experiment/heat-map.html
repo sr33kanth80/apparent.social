@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Apparent · Builder Radar</title>
+<meta name="description" content="The Apparent heat map plots investors and builders by geography, stage, and thesis, so capital is easier to read when it has a shape." />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@300;400;500;600&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+<main>
+  <section class="subhero inner">
+    <h1 class="display">Capital is easier to read when it has a <em>shape.</em></h1>
+    <p class="lede">Builder Radar plots investors and builders by geography, stage, and thesis instead of burying them in a spreadsheet. Drop a place and read the density before it becomes consensus.</p>
+  </section>
+
+  <section class="divider" style="padding-top:0">
+    <div class="inner">
+      <div class="map-stage">
+        <div class="map-grid"></div>
+        <svg class="map-svg" id="map" viewBox="0 0 800 360" preserveAspectRatio="xMidYMid meet" aria-label="Stylized investor density map"></svg>
+      </div>
+      <div class="legend">
+        <span><i style="background:var(--ash)"></i> Builder</span>
+        <span><i style="background:var(--graphite)"></i> Active investor</span>
+        <span><i style="background:var(--ember)"></i> Hot cluster</span>
+        <span style="margin-left:auto;color:var(--smoke)">1,800+ investors plotted by thesis, stage, and geography</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="divider">
+    <div class="inner">
+      <h2 class="sec-title">Read the room before the round.</h2>
+      <div class="infocards" style="margin-top:clamp(32px,5vw,56px)">
+        <div class="infocard"><b>By place</b><p>Search a city or venue and locate the Apparent builders and investors working around it.</p></div>
+        <div class="infocard"><b>By thesis</b><p>Filter the map by stage, sector, and check size so only relevant clusters light up.</p></div>
+        <div class="infocard"><b>By freshness</b><p>Hot clusters surface where new proof and active sourcing are concentrated right now.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="final divider">
+    <div class="inner">
+      <svg class="mark"><use href="#apparent-mark"/></svg>
+      <h2>Find the cluster that fits your thesis.</h2>
+      <p>Open the radar, drop a place, and let the map show you where the signal is dense.</p>
+      <div class="cta">
+        <a class="btn btn-filled" href="signup.html">Source your deal flow</a>
+        <a class="btn btn-outline" href="for-investors.html">For investors</a>
+      </div>
+    </div>
+  </section>
+</main>
+<script>
+  // Stylized density map: scatter dots around a few cluster centers; a couple run hot.
+  var svg = document.getElementById('map');
+  var clusters = [
+    { x: 180, y: 150, n: 26, hot: true },   // west hub
+    { x: 470, y: 120, n: 22, hot: false },  // central
+    { x: 640, y: 170, n: 30, hot: true },   // east hub
+    { x: 360, y: 250, n: 16, hot: false },  // south
+    { x: 560, y: 280, n: 14, hot: false },
+  ];
+  function rnd(seed) { var x = Math.sin(seed) * 10000; return x - Math.floor(x); }
+  var s = 1, out = '';
+  clusters.forEach(function (c) {
+    for (var i = 0; i < c.n; i++) {
+      var a = rnd(s++) * Math.PI * 2, r = rnd(s++) * 46 + 4;
+      var x = c.x + Math.cos(a) * r, y = c.y + Math.sin(a) * r * 0.7;
+      var roll = rnd(s++);
+      var cls = c.hot && roll > 0.82 ? 'hot' : roll > 0.6 ? 'on' : '';
+      var rad = cls === 'hot' ? 5 : cls === 'on' ? 3.4 : 2.4;
+      out += '<circle class="map-dot ' + cls + '" cx="' + x.toFixed(1) + '" cy="' + y.toFixed(1) + '" r="' + rad + '"/>';
+    }
+  });
+  svg.innerHTML = out;
+</script>
+<script src="site.js"></script>
+</body>
+</html>

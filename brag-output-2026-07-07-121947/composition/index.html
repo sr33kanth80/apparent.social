@@ -1,0 +1,379 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1080, height=1920" />
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <style>
+      * { box-sizing: border-box; margin: 0; padding: 0; }
+
+      @font-face {
+        font-family: 'Inter Tight';
+        font-style: normal;
+        font-weight: 400;
+        src: url('assets/fonts/inter-tight-latin-400-normal.woff2') format('woff2');
+      }
+      @font-face {
+        font-family: 'Inter Tight';
+        font-style: normal;
+        font-weight: 500;
+        src: url('assets/fonts/inter-tight-latin-500-normal.woff2') format('woff2');
+      }
+      @font-face {
+        font-family: 'Inter Tight';
+        font-style: normal;
+        font-weight: 600;
+        src: url('assets/fonts/inter-tight-latin-600-normal.woff2') format('woff2');
+      }
+      @font-face {
+        font-family: 'Inter Tight';
+        font-style: normal;
+        font-weight: 700;
+        src: url('assets/fonts/inter-tight-latin-700-normal.woff2') format('woff2');
+      }
+
+      :root {
+        --ink: #222222;
+        --canvas: #e9e9e9;
+        --paper: #ffffff;
+        --ember: #fa5d29;
+        --graphite: #4d4d4d;
+        --smoke: #808080;
+        --fog: #dedede;
+      }
+
+      html, body {
+        width: 1080px;
+        height: 1920px;
+        overflow: hidden;
+        background: var(--ink);
+        font-family: 'Inter Tight', sans-serif;
+      }
+
+      #root { position: relative; width: 1080px; height: 1920px; overflow: hidden; }
+
+      .scene {
+        position: absolute;
+        inset: 0;
+        width: 1080px;
+        height: 1920px;
+        overflow: hidden;
+      }
+
+      #scene-2, #scene-3, #scene-4, #scene-5, #scene-6 { opacity: 0; }
+      #scene-1 { z-index: 1; background: var(--ink); }
+      #scene-2 { z-index: 2; background: var(--canvas); }
+      #scene-3 { z-index: 3; background: var(--canvas); }
+      #scene-4 { z-index: 4; background: var(--canvas); }
+      #scene-5 { z-index: 5; background: var(--ink); }
+      #scene-6 { z-index: 6; background: var(--ink); }
+
+      .scene-content {
+        position: relative;
+        display: flex;
+        width: 100%;
+        height: 100%;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 30px;
+        padding: 110px 76px;
+      }
+
+      /* ---------- Scene 1: hook ---------- */
+      .hook-line {
+        max-width: 920px;
+        text-align: center;
+        font-size: 74px;
+        font-weight: 600;
+        line-height: 1.15;
+        letter-spacing: -0.01em;
+        color: #ffffff;
+      }
+      .hook-line.dim { color: rgba(255, 255, 255, 0.55); font-size: 62px; font-weight: 500; }
+
+      /* ---------- Scene 2: turn ---------- */
+      .turn-glow {
+        position: absolute; top: 50%; left: 50%; width: 900px; height: 900px;
+        transform: translate(-50%, -50%); border-radius: 50%;
+        background: radial-gradient(circle, rgba(250, 93, 41, 0.28) 0%, rgba(250, 93, 41, 0) 68%);
+        opacity: 0.55;
+      }
+      .turn-mark { width: 176px; height: 176px; color: var(--ink); position: relative; z-index: 2; }
+      .turn-label { position: relative; z-index: 2; font-size: 34px; font-weight: 500; color: var(--graphite); }
+
+      /* ---------- Scene 3: founder proof (condensed CLI card) ---------- */
+      .cli-card {
+        width: 860px;
+        border-radius: 18px;
+        background: #15170d;
+        box-shadow: 0 40px 90px rgba(0, 0, 0, 0.28);
+        overflow: hidden;
+      }
+      .cli-bar { display: flex; align-items: center; gap: 8px; padding: 16px 22px; border-bottom: 1px solid rgba(255, 255, 255, 0.08); }
+      .cli-bar i { width: 13px; height: 13px; border-radius: 50%; display: inline-block; }
+      .cli-bar .t { margin-left: 10px; font-family: 'JetBrains Mono', monospace; font-size: 18px; color: rgba(255, 255, 255, 0.4); }
+      .cli-body { padding: 28px 32px 34px; font-family: 'JetBrains Mono', monospace; }
+      .cli-prompt { font-size: 28px; color: #efece3; }
+      .cli-prompt .dollar { color: rgba(255, 255, 255, 0.4); margin-right: 12px; }
+      .cli-prompt .cmd { color: #9cff9c; }
+      .cli-row {
+        margin-top: 24px; padding-top: 22px; border-top: 1px solid rgba(255, 255, 255, 0.1);
+        display: flex; align-items: center; justify-content: space-between;
+      }
+      .cli-verified {
+        display: inline-flex; align-items: center; gap: 8px; padding: 8px 16px; border-radius: 999px;
+        background: #9cff9c; color: #15170d; font-size: 19px; font-weight: 700;
+      }
+      .cli-stats { font-size: 24px; color: #efece3; }
+      .cli-stats b { color: #ffffff; font-variant-numeric: tabular-nums; }
+      .founder-caption { font-size: 32px; font-weight: 500; color: var(--graphite); text-align: center; }
+
+      /* ---------- Scene 4: investor sourcing (thesis + ranked list composed) ---------- */
+      .sourcing-stack { display: flex; flex-direction: column; gap: 26px; width: 880px; }
+      .thesis-mini {
+        padding: 28px 30px; border-radius: 16px; background: var(--paper);
+        box-shadow: 0 20px 50px rgba(34, 34, 34, 0.1);
+      }
+      .thesis-mini .mini-title { font-size: 22px; font-weight: 600; color: var(--smoke); margin-bottom: 16px; text-transform: uppercase; letter-spacing: 0.04em; }
+      .chip-wrap { display: flex; flex-wrap: wrap; gap: 12px; }
+      .chip {
+        display: inline-flex; align-items: center; gap: 6px; padding: 10px 18px; border-radius: 999px;
+        background: var(--canvas); border: 1px solid var(--fog); font-size: 21px; color: var(--graphite);
+      }
+      .chip b { color: var(--ink); font-weight: 600; }
+      .rank-list { display: flex; flex-direction: column; gap: 14px; }
+      .rank-row {
+        display: flex; align-items: center; gap: 18px; padding: 18px 22px; border-radius: 14px;
+        background: var(--paper); border: 1px solid var(--fog);
+      }
+      .rank-avatar {
+        width: 60px; height: 60px; border-radius: 50%; background: var(--ink); color: #ffffff;
+        font-size: 20px; font-weight: 600; display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+      }
+      .rank-who b { display: block; font-size: 23px; color: var(--ink); font-weight: 600; }
+      .rank-who span { display: block; margin-top: 2px; font-size: 17px; color: var(--smoke); }
+      .rank-score { margin-left: auto; text-align: center; flex-shrink: 0; }
+      .rank-score b { display: block; font-size: 26px; color: var(--ink); font-weight: 700; font-variant-numeric: tabular-nums; }
+      .rank-score span { font-size: 13px; color: var(--smoke); text-transform: uppercase; }
+
+      /* ---------- Scene 5: contrast ---------- */
+      .contrast-wrap { display: flex; flex-direction: column; align-items: center; gap: 22px; }
+      .neg-line {
+        position: relative;
+        font-size: 56px;
+        font-weight: 500;
+        color: rgba(255, 255, 255, 0.6);
+      }
+      .neg-line .strike-bar {
+        position: absolute;
+        left: 0;
+        top: 50%;
+        width: 100%;
+        height: 4px;
+        background: var(--ember);
+        transform: scaleX(0);
+        transform-origin: left center;
+      }
+      .affirm-line {
+        max-width: 880px;
+        text-align: center;
+        font-size: 68px;
+        font-weight: 600;
+        color: var(--ember);
+        line-height: 1.2;
+        margin-top: 12px;
+      }
+
+      /* ---------- Scene 6: outro ---------- */
+      .outro-lockup { display: flex; flex-direction: column; align-items: center; gap: 32px; }
+      .outro-brand { display: flex; align-items: center; gap: 22px; }
+      .outro-mark { width: 84px; height: 84px; color: #ffffff; }
+      .outro-word { font-size: 72px; font-weight: 600; color: #ffffff; letter-spacing: -0.01em; }
+      .outro-tagline { max-width: 760px; text-align: center; font-size: 36px; font-weight: 400; color: rgba(255, 255, 255, 0.72); line-height: 1.3; }
+    </style>
+  </head>
+  <body>
+    <div
+      id="root"
+      data-composition-id="main"
+      data-start="0"
+      data-duration="25.72"
+      data-width="1080"
+      data-height="1920"
+    >
+      <!-- Voiceover: 6 lines, back-to-back, measured exact durations -->
+      <audio id="vo-1" data-start="0.30" data-duration="3.861333" data-track-index="5" data-volume="1" src="assets/vo/vo-1-hook.wav"></audio>
+      <audio id="vo-2" data-start="4.461333" data-duration="1.408" data-track-index="5" data-volume="1" src="assets/vo/vo-2-turn.wav"></audio>
+      <audio id="vo-3" data-start="6.169333" data-duration="3.264" data-track-index="5" data-volume="1" src="assets/vo/vo-3-founder.wav"></audio>
+      <audio id="vo-4" data-start="9.733333" data-duration="6.528" data-track-index="5" data-volume="1" src="assets/vo/vo-4-investor.wav"></audio>
+      <audio id="vo-5" data-start="16.561333" data-duration="5.738667" data-track-index="5" data-volume="1" src="assets/vo/vo-5-contrast.wav"></audio>
+      <audio id="vo-6" data-start="22.6" data-duration="2.816" data-track-index="5" data-volume="1" src="assets/vo/vo-6-outro.wav"></audio>
+
+      <!-- Music bed: constant low volume under narration -->
+      <audio id="music" data-start="0" data-duration="25.72" data-track-index="10" data-volume="0.14" src="assets/music/happy-beats-business-moves-vol-10-by-ende-dot-app.mp3"></audio>
+
+      <!-- Sparse SFX -->
+      <audio id="sfx-logo" data-start="4.461333" data-track-index="11" data-volume="0.6" src="assets/sfx/impact/impactSoft_medium_002.ogg"></audio>
+      <audio id="sfx-card" data-start="6.169333" data-track-index="12" data-volume="0.6" src="assets/sfx/impact/impactSoft_medium_001.ogg"></audio>
+      <audio id="sfx-chip" data-start="9.88" data-track-index="13" data-volume="0.5" src="assets/sfx/interface/drop_001.ogg"></audio>
+      <audio id="sfx-outro" data-start="22.6" data-track-index="14" data-volume="0.7" src="assets/sfx/impact/impactBell_heavy_003.ogg"></audio>
+
+      <!-- ================= SCENE 1: HOOK — 0.0 - 4.16 ================= -->
+      <section id="scene-1" class="scene">
+        <div class="scene-content">
+          <p class="hook-line line-a">founders build in silence.</p>
+          <p class="hook-line dim line-b">investors drown in cold decks.</p>
+        </div>
+      </section>
+
+      <!-- ================= SCENE 2: TURN — 4.16 - 5.87 ================= -->
+      <section id="scene-2" class="scene">
+        <div class="scene-content">
+          <div class="turn-glow"></div>
+          <svg class="turn-mark" viewBox="0 0 256 256" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path d="M 128.005 191.173 C 128.448 156.208 156.93 128 192 128 L 192 64 L 128 64 C 128 99.346 99.346 128 64 128 L 64 192 L 128 192 Z M 192 256 L 64 256 C 28.654 256 0 227.346 0 192 L 0 64 L 64 64 L 64 0 L 192 0 C 227.346 0 256 28.654 256 64 L 256 192 L 192 192 Z" />
+          </svg>
+          <p class="turn-label">fixes both.</p>
+        </div>
+      </section>
+
+      <!-- ================= SCENE 3: FOUNDER PROOF — 5.87 - 9.43 ================= -->
+      <section id="scene-3" class="scene">
+        <div class="scene-content">
+          <div class="cli-card">
+            <div class="cli-bar">
+              <i style="background:#ff5f57"></i>
+              <i style="background:#febc2e"></i>
+              <i style="background:#28c840"></i>
+              <span class="t">founder@local: ~/medai</span>
+            </div>
+            <div class="cli-body">
+              <p class="cli-prompt"><span class="dollar">$</span><span class="cmd">npx apparent</span></p>
+              <div class="cli-row">
+                <span class="cli-verified">&#10003; GitHub verified</span>
+                <span class="cli-stats"><b>428</b> commits</span>
+              </div>
+            </div>
+          </div>
+          <p class="founder-caption">your work becomes verified proof.</p>
+        </div>
+      </section>
+
+      <!-- ================= SCENE 4: INVESTOR SOURCING — 9.43 - 16.26 ================= -->
+      <section id="scene-4" class="scene">
+        <div class="scene-content">
+          <div class="sourcing-stack">
+            <div class="thesis-mini">
+              <div class="mini-title">thesis workspace</div>
+              <div class="chip-wrap">
+                <span class="chip" id="chip-1"><b>Sector</b>&nbsp;· Dev tools</span>
+                <span class="chip" id="chip-2"><b>Stage</b>&nbsp;· Pre-seed &rarr; A</span>
+                <span class="chip" id="chip-3"><b>Check</b>&nbsp;· $250k&ndash;$2M</span>
+              </div>
+            </div>
+            <div class="rank-list">
+              <div class="rank-row" id="rank-1">
+                <div class="rank-avatar">AK</div>
+                <div class="rank-who"><b>Edge runtime for agents</b><span>Dev tools &middot; Pre-seed</span></div>
+                <div class="rank-score"><b>96</b><span>Fit</span></div>
+              </div>
+              <div class="rank-row" id="rank-2">
+                <div class="rank-avatar">NL</div>
+                <div class="rank-who"><b>Local-first sync engine</b><span>AI infra &middot; Seed</span></div>
+                <div class="rank-score"><b>92</b><span>Fit</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= SCENE 5: CONTRAST — 16.26 - 22.30 ================= -->
+      <section id="scene-5" class="scene">
+        <div class="scene-content">
+          <div class="contrast-wrap">
+            <p class="neg-line" id="neg-1">no guessing.<span class="strike-bar"></span></p>
+            <p class="neg-line" id="neg-2">no spray and pray.<span class="strike-bar"></span></p>
+            <p class="affirm-line">just proof, matched to fit.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= SCENE 6: OUTRO — 22.30 - 25.72 ================= -->
+      <section id="scene-6" class="scene">
+        <div class="scene-content">
+          <div class="outro-lockup">
+            <div class="outro-brand">
+              <svg class="outro-mark" viewBox="0 0 256 256" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                <path d="M 128.005 191.173 C 128.448 156.208 156.93 128 192 128 L 192 64 L 128 64 C 128 99.346 99.346 128 64 128 L 64 192 L 128 192 Z M 192 256 L 64 256 C 28.654 256 0 227.346 0 192 L 0 64 L 64 64 L 64 0 L 192 0 C 227.346 0 256 28.654 256 64 L 256 192 L 192 192 Z" />
+              </svg>
+              <span class="outro-word">apparent</span>
+            </div>
+            <p class="outro-tagline">where cracked founders meet capital.</p>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <script>
+      window.__timelines = window.__timelines || {};
+      const tl = gsap.timeline({ paused: true });
+      const scenes = ["#scene-1", "#scene-2", "#scene-3", "#scene-4", "#scene-5", "#scene-6"];
+
+      // Soft crossfade (default tone) — opacity only, no blur/scale hard-cut punch.
+      function crossfade(fromScene, toScene, at) {
+        tl.to(fromScene, { opacity: 0, duration: 0.3, ease: "power2.inOut", overwrite: "auto" }, at);
+        tl.fromTo(
+          toScene,
+          { opacity: 0 },
+          { opacity: 1, duration: 0.3, ease: "power2.inOut", overwrite: "auto" },
+          at
+        );
+      }
+
+      // ---------- Scene 1: hook — VO line 1 starts at 0.30s (3.861s) ----------
+      tl.from("#scene-1 .line-a", { y: 30, opacity: 0, duration: 0.4, ease: "power3.out", overwrite: "auto" }, 0.3);
+      tl.from("#scene-1 .line-b", { y: 26, opacity: 0, duration: 0.4, ease: "power3.out", overwrite: "auto" }, 2.0);
+
+      crossfade(scenes[0], scenes[1], 4.161333);
+
+      // ---------- Scene 2: turn — VO line 2 starts at 4.461s (1.408s) ----------
+      tl.from("#scene-2 .turn-glow", { scale: 0.7, opacity: 0, duration: 0.5, ease: "expo.out", overwrite: "auto" }, 4.5);
+      tl.from("#scene-2 .turn-mark", { scale: 1.25, opacity: 0, duration: 0.4, ease: "back.out(2.2)", overwrite: "auto" }, 4.55);
+      tl.from("#scene-2 .turn-label", { y: 20, opacity: 0, duration: 0.3, ease: "power2.out", overwrite: "auto" }, 4.8);
+
+      crossfade(scenes[1], scenes[2], 5.869333);
+
+      // ---------- Scene 3: founder proof — VO line 3 starts at 6.169s (3.264s) ----------
+      tl.from("#scene-3 .cli-card", { y: 40, scale: 0.95, opacity: 0, duration: 0.4, ease: "power3.out", overwrite: "auto" }, 6.25);
+      tl.from("#scene-3 .founder-caption", { y: 20, opacity: 0, duration: 0.35, ease: "sine.out", overwrite: "auto" }, 7.6);
+
+      crossfade(scenes[2], scenes[3], 9.433333);
+
+      // ---------- Scene 4: investor sourcing — VO line 4 starts at 9.733s (6.528s) ----------
+      tl.from("#scene-4 .thesis-mini", { y: 30, opacity: 0, duration: 0.4, ease: "power3.out", overwrite: "auto" }, 9.85);
+      tl.from("#scene-4 #chip-1", { y: 14, opacity: 0, duration: 0.24, ease: "back.out(2)", overwrite: "auto" }, 10.05);
+      tl.from("#scene-4 #chip-2", { y: 14, opacity: 0, duration: 0.24, ease: "power2.out", overwrite: "auto" }, 10.2);
+      tl.from("#scene-4 #chip-3", { y: 14, opacity: 0, duration: 0.24, ease: "sine.out", overwrite: "auto" }, 10.35);
+      tl.from("#scene-4 #rank-1", { x: 40, opacity: 0, duration: 0.32, ease: "back.out(2.2)", overwrite: "auto" }, 11.9);
+      tl.from("#scene-4 #rank-2", { x: 40, opacity: 0, duration: 0.3, ease: "power3.out", overwrite: "auto" }, 12.25);
+
+      crossfade(scenes[3], scenes[4], 16.261333);
+
+      // ---------- Scene 5: contrast — VO line 5 starts at 16.561s (5.739s) ----------
+      tl.from("#scene-5 #neg-1", { y: 20, opacity: 0, duration: 0.3, ease: "power2.out", overwrite: "auto" }, 16.66);
+      tl.to("#scene-5 #neg-1 .strike-bar", { scaleX: 1, duration: 0.22, ease: "power2.inOut", overwrite: "auto" }, 17.25);
+      tl.from("#scene-5 #neg-2", { y: 20, opacity: 0, duration: 0.3, ease: "power2.out", overwrite: "auto" }, 17.35);
+      tl.to("#scene-5 #neg-2 .strike-bar", { scaleX: 1, duration: 0.22, ease: "power2.inOut", overwrite: "auto" }, 18.7);
+      tl.from("#scene-5 .affirm-line", { y: 26, scale: 0.92, opacity: 0, duration: 0.4, ease: "back.out(2)", overwrite: "auto" }, 18.85);
+
+      crossfade(scenes[4], scenes[5], 22.3);
+
+      // ---------- Scene 6: outro — VO line 6 starts at 22.6s (2.816s) ----------
+      tl.from("#scene-6 .outro-brand", { y: 40, scale: 0.9, opacity: 0, duration: 0.4, ease: "back.out(2.2)", overwrite: "auto" }, 22.7);
+      tl.from("#scene-6 .outro-tagline", { y: 22, opacity: 0, duration: 0.35, ease: "power3.out", overwrite: "auto" }, 23.1);
+
+      window.__timelines["main"] = tl;
+    </script>
+  </body>
+</html>

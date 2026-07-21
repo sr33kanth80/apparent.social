@@ -1,0 +1,9 @@
+[0:v]scale=1320:-2,setsar=1,zoompan=z='1+0.00028*on':x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':d=114:s=1000x563:fps=30,format=rgba[art];
+[1:v]format=rgba[base];
+[base][art]overlay=x='40+18*min(t/0.5,1)':y=655:shortest=1[v1];
+[v1]drawbox=x=64:y=130:w=112:h=8:color=0xEC3B31@0.92:t=fill[v2];
+[v2]drawtext=fontfile='C\:/Windows/Fonts/segoeuib.ttf':text='Match proof to thesis.':fontcolor=0x111111:fontsize=70:x=64:y=168:alpha='min(max((t-0.12)/0.32,0),1)'[v3];
+[v3]drawtext=fontfile='C\:/Windows/Fonts/segoeui.ttf':text='the right investor sees why now':fontcolor=0x444444:fontsize=36:x=66:y=268:alpha='min(max((t-0.32)/0.34,0),1)'[v4];
+[v4]drawbox=x=64:y=1528:w=952:h=1:color=0x111111@0.12:t=fill[v5];
+[v5]drawtext=fontfile='C\:/Windows/Fonts/segoeui.ttf':text='npx apparent':fontcolor=0xEC3B31:fontsize=34:x=64:y=1570:alpha='0.95'[v6];
+[v6]drawtext=fontfile='C\:/Windows/Fonts/segoeui.ttf':text='apparent.social':fontcolor=0x222222:fontsize=34:x=w-tw-64:y=1570:alpha='0.75'[vout]

@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Apparent · Latest posts</title>
+<meta name="description" content="Investor research from Apparent: fund maps, pre-seed first-check lists, emerging managers, and how to build a sharper fundraising process." />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@300;400;500;600&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+<main>
+  <section class="subhero inner" style="text-align:center">
+    <h1 class="display" style="margin:0 auto;max-width:14ch">Latest posts.</h1>
+    <p class="lede" style="margin-left:auto;margin-right:auto;text-align:center">Working notes on who actually invests, where, and at what stage, built to make a fundraising list smaller and sharper, not longer.</p>
+  </section>
+
+  <section class="divider">
+    <div class="inner">
+      <div class="postlist" id="postlist"></div>
+    </div>
+  </section>
+
+  <section class="final divider">
+    <div class="inner">
+      <svg class="mark"><use href="#apparent-mark"/></svg>
+      <h2>Investor research should compound.</h2>
+      <p>The second founder should not have to rediscover what the first founder already learned the hard way.</p>
+      <div class="cta">
+        <a class="btn btn-filled" href="for-investors.html">See how Apparent works</a>
+        <a class="btn btn-outline" href="contact.html">Get in touch</a>
+      </div>
+    </div>
+  </section>
+</main>
+<script src="blog-data.js"></script>
+<script>
+  var arrow = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 6l6 6-6 6"/></svg>';
+  document.getElementById('postlist').innerHTML = window.POSTS.map(function (p) {
+    return '<a class="post" href="blog-post.html?slug=' + p.slug + '">' +
+      '<p class="pmeta">' + p.author + ' · ' + p.date + ' · ' + p.readTime + '</p>' +
+      '<h2>' + p.title + '</h2>' +
+      '<p>' + p.excerpt + '</p>' +
+      '<span class="more">Read more ' + arrow + '</span>' +
+    '</a>';
+  }).join('');
+</script>
+<script src="site.js"></script>
+</body>
+</html>

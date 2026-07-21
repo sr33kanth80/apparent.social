@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="260" viewBox="0 0 900 260">
+  <rect x="18" y="22" width="864" height="200" rx="44" fill="#28262a"/>
+  <rect x="40" y="44" width="820" height="156" rx="32" fill="#fffdfa"/>
+  <circle cx="96" cy="122" r="32" fill="#c8dfaa" stroke="#28262a" stroke-width="6"/>
+  <path d="M87 122 L94 129 L110 106" fill="none" stroke="#28262a" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="154" y="112" font-family="Georgia, serif" font-size="40" font-weight="900" fill="#28262a">quick read</text>
+  <text x="154" y="158" font-family="Georgia, serif" font-size="34" font-weight="800" fill="#4a4a4c">proof turns into investor fit</text>
+</svg>

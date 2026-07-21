@@ -1,0 +1,6 @@
+file 'D:/SocialVC/apparent/promo/how-proof-gets-funded-openclaw-work/scene-01.mp4'
+file 'D:/SocialVC/apparent/promo/how-proof-gets-funded-openclaw-work/scene-02.mp4'
+file 'D:/SocialVC/apparent/promo/how-proof-gets-funded-openclaw-work/scene-03.mp4'
+file 'D:/SocialVC/apparent/promo/how-proof-gets-funded-openclaw-work/scene-04.mp4'
+file 'D:/SocialVC/apparent/promo/how-proof-gets-funded-openclaw-work/scene-05.mp4'
+file 'D:/SocialVC/apparent/promo/how-proof-gets-funded-openclaw-work/scene-06.mp4'

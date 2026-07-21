@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="760" height="360" viewBox="0 0 760 360">
+  <rect x="22" y="22" width="716" height="316" rx="42" fill="#fbfaf6" stroke="#28262a" stroke-width="8"/>
+  <rect x="72" y="72" width="136" height="136" rx="32" fill="#c8dfaa" stroke="#28262a" stroke-width="6"/>
+  <rect x="232" y="72" width="136" height="136" rx="32" fill="#97cde5" stroke="#28262a" stroke-width="6"/>
+  <rect x="392" y="72" width="136" height="136" rx="32" fill="#fffdfa" stroke="#28262a" stroke-width="6"/>
+  <rect x="552" y="72" width="136" height="136" rx="32" fill="#ff9473" stroke="#28262a" stroke-width="6"/>
+  <path d="M111 162 L134 185 L171 116" fill="none" stroke="#28262a" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M274 170 L300 112 L326 170 Z" fill="none" stroke="#28262a" stroke-width="9" stroke-linejoin="round"/>
+  <path d="M434 176 H492 M434 136 H492 M434 96 H492" stroke="#28262a" stroke-width="10" stroke-linecap="round"/>
+  <path d="M592 174 C626 126 646 116 664 98" fill="none" stroke="#28262a" stroke-width="10" stroke-linecap="round"/>
+  <circle cx="664" cy="98" r="13" fill="#28262a"/>
+  <text x="72" y="286" font-family="Georgia, serif" font-size="54" font-weight="900" fill="#28262a">proof signals</text>
+</svg>

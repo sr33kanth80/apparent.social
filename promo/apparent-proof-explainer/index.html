@@ -1,0 +1,441 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1080, height=1920" />
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <style>
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      html,
+      body {
+        width: 1080px;
+        height: 1920px;
+        overflow: hidden;
+        background: #fbfaf6;
+      }
+
+      body {
+        color: #28262a;
+        font-family: serif;
+      }
+
+      #root {
+        position: relative;
+        width: 1080px;
+        height: 1920px;
+        overflow: hidden;
+        background: #fbfaf6;
+      }
+
+      .scene {
+        position: absolute;
+        inset: 0;
+        width: 1080px;
+        height: 1920px;
+        overflow: hidden;
+        background:
+          radial-gradient(circle at 18% 12%, rgba(200, 223, 170, 0.28), rgba(200, 223, 170, 0) 280px),
+          radial-gradient(circle at 88% 84%, rgba(151, 205, 229, 0.22), rgba(151, 205, 229, 0) 300px),
+          #fbfaf6;
+      }
+
+      #scene-1 {
+        z-index: 1;
+      }
+
+      #scene-2 {
+        z-index: 2;
+        opacity: 0;
+      }
+
+      #scene-3 {
+        z-index: 3;
+        opacity: 0;
+      }
+
+      #scene-4 {
+        z-index: 4;
+        opacity: 0;
+      }
+
+      #scene-5 {
+        z-index: 5;
+        opacity: 0;
+      }
+
+      #scene-6 {
+        z-index: 6;
+        opacity: 0;
+      }
+
+      .scene-content {
+        display: flex;
+        width: 100%;
+        height: 100%;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 34px;
+        padding: 118px 54px 128px;
+      }
+
+      .chapter {
+        display: flex;
+        width: 100%;
+        min-height: 156px;
+        flex-direction: column;
+        justify-content: flex-end;
+        gap: 14px;
+      }
+
+      .kicker {
+        width: max-content;
+        max-width: 100%;
+        padding: 10px 20px 12px;
+        border: 2px solid #c8dfaa;
+        border-radius: 999px;
+        background: rgba(255, 253, 250, 0.94);
+        color: #4a4a4c;
+        font-size: 30px;
+        font-weight: 700;
+        line-height: 1;
+      }
+
+      .headline {
+        max-width: 930px;
+        color: #28262a;
+        font-size: 78px;
+        font-weight: 800;
+        line-height: 0.98;
+        letter-spacing: 0;
+      }
+
+      .headline .blue {
+        color: #347f9f;
+      }
+
+      .headline .green {
+        color: #567c2a;
+      }
+
+      .art-frame {
+        display: flex;
+        position: relative;
+        width: 940px;
+        height: 1408px;
+        flex: 0 0 auto;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+        border: 2px solid rgba(40, 38, 42, 0.08);
+        border-radius: 34px;
+        background: #fffdfa;
+        box-shadow:
+          0 34px 76px rgba(40, 38, 42, 0.1),
+          0 10px 28px rgba(151, 205, 229, 0.16);
+      }
+
+      .art-frame--full {
+        height: 1480px;
+      }
+
+      .art-frame::after {
+        position: absolute;
+        inset: 0;
+        border-radius: inherit;
+        box-shadow: inset 0 0 0 1px rgba(200, 223, 170, 0.24);
+        content: "";
+        pointer-events: none;
+      }
+
+      .art-frame img {
+        display: block;
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+      }
+
+      .brand-bug {
+        display: flex;
+        position: absolute;
+        top: 46px;
+        right: 52px;
+        z-index: 40;
+        align-items: center;
+        padding: 14px 18px;
+        border: 1.5px solid rgba(200, 223, 170, 0.9);
+        border-radius: 999px;
+        background: rgba(255, 253, 250, 0.9);
+        box-shadow: 0 18px 34px rgba(40, 38, 42, 0.08);
+      }
+
+      .brand-bug img {
+        display: block;
+        width: 176px;
+        height: auto;
+      }
+
+      .note {
+        width: 100%;
+        min-height: 130px;
+        padding: 24px 28px;
+        border: 2px solid rgba(151, 205, 229, 0.76);
+        border-radius: 28px;
+        background: rgba(255, 253, 250, 0.94);
+        box-shadow: 0 16px 38px rgba(40, 38, 42, 0.08);
+        color: #4a4a4c;
+        font-size: 35px;
+        font-weight: 650;
+        line-height: 1.14;
+      }
+
+      .outro-card {
+        display: flex;
+        position: absolute;
+        left: 66px;
+        right: 66px;
+        bottom: 130px;
+        z-index: 22;
+        min-height: 310px;
+        flex-direction: column;
+        justify-content: center;
+        gap: 24px;
+        padding: 42px 46px;
+        border: 2px solid #c8dfaa;
+        border-radius: 40px;
+        background: rgba(255, 253, 250, 0.96);
+        box-shadow: 0 28px 72px rgba(40, 38, 42, 0.16);
+      }
+
+      .outro-brand {
+        display: flex;
+        align-items: center;
+        gap: 22px;
+      }
+
+      .outro-brand__mark {
+        width: 94px;
+        height: 94px;
+        object-fit: contain;
+      }
+
+      .outro-brand__word {
+        width: 310px;
+        height: auto;
+        object-fit: contain;
+      }
+
+      .outro-card p {
+        color: #28262a;
+        font-size: 62px;
+        font-weight: 800;
+        line-height: 1.03;
+      }
+
+      .outro-card small {
+        display: block;
+        max-width: 760px;
+        color: #4a4a4c;
+        font-size: 31px;
+        font-weight: 650;
+        line-height: 1.14;
+      }
+
+      .soft-mark {
+        position: absolute;
+        border-radius: 999px;
+        background: rgba(200, 223, 170, 0.5);
+        opacity: 0.8;
+      }
+
+      .soft-mark--one {
+        top: 74px;
+        left: 78px;
+        width: 128px;
+        height: 8px;
+        transform: rotate(-4deg);
+      }
+
+      .soft-mark--two {
+        right: 110px;
+        bottom: 86px;
+        width: 180px;
+        height: 8px;
+        transform: rotate(3deg);
+      }
+    </style>
+  </head>
+  <body>
+    <div
+      id="root"
+      data-composition-id="main"
+      data-start="0"
+      data-duration="42"
+      data-width="1080"
+      data-height="1920"
+    >
+      <audio
+        id="narration"
+        data-start="0"
+        data-duration="39.616"
+        data-track-index="9"
+        src="assets/narration.wav"
+        data-volume="1"
+      ></audio>
+
+      <div id="scene-1" class="scene">
+        <span class="soft-mark soft-mark--one"></span>
+        <div class="scene-content">
+          <div class="chapter">
+            <div class="kicker">Explainer</div>
+            <h1 class="headline">Proof, not <span class="blue">lists.</span></h1>
+          </div>
+          <figure class="art-frame" data-layout-allow-overflow>
+            <img src="assets/proof-to-pipeline.png" alt="From proof to pipeline" />
+          </figure>
+        </div>
+      </div>
+
+      <div id="scene-2" class="scene">
+        <span class="soft-mark soft-mark--two"></span>
+        <div class="scene-content">
+          <div class="chapter">
+            <div class="kicker">Founder proof</div>
+            <h2 class="headline">Your work becomes <span class="green">context.</span></h2>
+          </div>
+          <figure class="art-frame art-frame--full" data-layout-allow-overflow>
+            <img src="assets/stop-losing-proof.png" alt="Stop losing proof" />
+          </figure>
+        </div>
+      </div>
+
+      <div id="scene-3" class="scene">
+        <span class="soft-mark soft-mark--one"></span>
+        <div class="scene-content">
+          <div class="chapter">
+            <div class="kicker">Apparent workflow</div>
+            <h2 class="headline">Profile, thesis, map, outreach.</h2>
+          </div>
+          <figure class="art-frame" data-layout-allow-overflow>
+            <img src="assets/proof-to-pipeline.png" alt="Proof to pipeline workflow" />
+          </figure>
+          <p class="note">Proof is organized first, then matched against investor thesis and timing.</p>
+        </div>
+      </div>
+
+      <div id="scene-4" class="scene">
+        <span class="soft-mark soft-mark--two"></span>
+        <div class="scene-content">
+          <div class="chapter">
+            <div class="kicker">Investor fit</div>
+            <h2 class="headline">Less list. More <span class="blue">fit.</span></h2>
+          </div>
+          <figure class="art-frame art-frame--full" data-layout-allow-overflow>
+            <img src="assets/less-list-more-fit.png" alt="Less list. More fit." />
+          </figure>
+        </div>
+      </div>
+
+      <div id="scene-5" class="scene">
+        <span class="soft-mark soft-mark--one"></span>
+        <div class="scene-content">
+          <div class="chapter">
+            <div class="kicker">Always-on proof</div>
+            <h2 class="headline">Your GitHub can <span class="green">pitch.</span></h2>
+          </div>
+          <figure class="art-frame art-frame--full" data-layout-allow-overflow>
+            <img src="assets/github-can-pitch.png" alt="Your GitHub can pitch" />
+          </figure>
+        </div>
+      </div>
+
+      <div id="scene-6" class="scene">
+        <div class="scene-content">
+          <figure class="art-frame art-frame--full" data-layout-allow-overflow>
+            <img src="assets/proof-to-pipeline.png" alt="Proof to investor fit close" />
+          </figure>
+        </div>
+        <div class="outro-card">
+          <div class="outro-brand">
+            <img class="outro-brand__mark" src="assets/apparent-logo.png" alt="" />
+            <img class="outro-brand__word" src="assets/apparent-wordmark.png" alt="Apparent" />
+          </div>
+          <p>Proof signals into investor fit.</p>
+          <small>For founders with real momentum and investors who want thesis-fit context.</small>
+        </div>
+      </div>
+
+      <div class="brand-bug">
+        <img src="assets/apparent-wordmark.png" alt="Apparent" />
+      </div>
+    </div>
+
+    <script>
+      window.__timelines = window.__timelines || {};
+
+      const tl = gsap.timeline({ paused: true });
+      const scenes = ["#scene-1", "#scene-2", "#scene-3", "#scene-4", "#scene-5", "#scene-6"];
+
+      function enter(scene, at, hasNote) {
+        tl.from(`${scene} .kicker`, { y: 24, opacity: 0, duration: 0.44, ease: "power2.out", overwrite: "auto" }, at);
+        tl.from(`${scene} .headline`, { y: 38, opacity: 0, duration: 0.58, ease: "power3.out", overwrite: "auto" }, at + 0.12);
+        tl.from(`${scene} .art-frame`, { y: 42, scale: 0.985, opacity: 0, duration: 0.66, ease: "back.out(1.15)", overwrite: "auto" }, at + 0.24);
+        tl.from(`${scene} .soft-mark`, { scaleX: 0, opacity: 0, duration: 0.5, transformOrigin: "left center", ease: "expo.out", overwrite: "auto" }, at + 0.18);
+        if (hasNote) {
+          tl.from(`${scene} .note`, { y: 22, opacity: 0, duration: 0.48, ease: "sine.out", overwrite: "auto" }, at + 0.8);
+        }
+      }
+
+      function drift(scene, at, duration, x, y, scale) {
+        tl.to(`${scene} .art-frame img`, { x, y, scale, duration, ease: "sine.inOut", overwrite: "auto" }, at);
+      }
+
+      function transition(fromScene, toScene, at) {
+        tl.to(fromScene, { filter: "blur(10px)", scale: 1.018, opacity: 0, duration: 0.64, ease: "power2.inOut", overwrite: "auto" }, at);
+        tl.fromTo(
+          toScene,
+          { filter: "blur(12px)", scale: 0.985, opacity: 0 },
+          { filter: "blur(0px)", scale: 1, opacity: 1, duration: 0.64, ease: "power2.inOut", overwrite: "auto" },
+          at + 0.1
+        );
+      }
+
+      enter(scenes[0], 0.18, false);
+      tl.from(".brand-bug", { y: -20, opacity: 0, duration: 0.46, ease: "sine.out", overwrite: "auto" }, 0.48);
+      drift(scenes[0], 1.1, 4.3, -8, -14, 1.024);
+
+      transition(scenes[0], scenes[1], 5.3);
+      enter(scenes[1], 5.78, false);
+      drift(scenes[1], 6.55, 7.4, 10, -20, 1.026);
+
+      transition(scenes[1], scenes[2], 13.9);
+      enter(scenes[2], 14.36, true);
+      drift(scenes[2], 15.2, 6.4, -12, -18, 1.028);
+
+      transition(scenes[2], scenes[3], 21.0);
+      enter(scenes[3], 21.48, false);
+      drift(scenes[3], 22.2, 7.2, 10, -18, 1.026);
+
+      transition(scenes[3], scenes[4], 29.0);
+      enter(scenes[4], 29.48, false);
+      drift(scenes[4], 30.2, 6.2, -10, -22, 1.027);
+
+      transition(scenes[4], scenes[5], 36.3);
+      tl.from("#scene-6 .art-frame", { y: 36, scale: 0.99, opacity: 0, duration: 0.62, ease: "power3.out", overwrite: "auto" }, 36.72);
+      drift(scenes[5], 37.3, 4.0, 0, -16, 1.02);
+      tl.from("#scene-6 .outro-card", { y: 36, scale: 0.98, opacity: 0, duration: 0.62, ease: "power3.out", overwrite: "auto" }, 37.28);
+      tl.from("#scene-6 .outro-brand", { y: 16, opacity: 0, duration: 0.42, ease: "sine.out", overwrite: "auto" }, 37.54);
+      tl.from("#scene-6 .outro-card p", { y: 22, opacity: 0, duration: 0.48, ease: "power2.out", overwrite: "auto" }, 37.78);
+      tl.from("#scene-6 .outro-card small", { y: 16, opacity: 0, duration: 0.46, ease: "expo.out", overwrite: "auto" }, 38.12);
+      tl.to(".brand-bug", { y: -14, opacity: 0, duration: 0.34, ease: "sine.inOut", overwrite: "auto" }, 36.0);
+      tl.to("#scene-6", { opacity: 0, duration: 0.7, ease: "sine.inOut", overwrite: "auto" }, 41.12);
+
+      window.__timelines["main"] = tl;
+    </script>
+  </body>
+</html>

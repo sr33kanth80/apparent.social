@@ -1,0 +1,611 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1080, height=1920" />
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <style>
+      * { box-sizing: border-box; margin: 0; padding: 0; }
+
+      @font-face {
+        font-family: 'Inter Tight';
+        font-style: normal;
+        font-weight: 400;
+        src: url('assets/fonts/inter-tight-latin-400-normal.woff2') format('woff2');
+      }
+      @font-face {
+        font-family: 'Inter Tight';
+        font-style: normal;
+        font-weight: 500;
+        src: url('assets/fonts/inter-tight-latin-500-normal.woff2') format('woff2');
+      }
+      @font-face {
+        font-family: 'Inter Tight';
+        font-style: normal;
+        font-weight: 600;
+        src: url('assets/fonts/inter-tight-latin-600-normal.woff2') format('woff2');
+      }
+      @font-face {
+        font-family: 'Inter Tight';
+        font-style: normal;
+        font-weight: 700;
+        src: url('assets/fonts/inter-tight-latin-700-normal.woff2') format('woff2');
+      }
+      @font-face {
+        font-family: 'JetBrains Mono';
+        font-style: normal;
+        font-weight: 400;
+        src: url('assets/fonts/jetbrains-mono-latin-400-normal.woff2') format('woff2');
+      }
+      @font-face {
+        font-family: 'JetBrains Mono';
+        font-style: normal;
+        font-weight: 500;
+        src: url('assets/fonts/jetbrains-mono-latin-500-normal.woff2') format('woff2');
+      }
+
+      :root {
+        --ink: #222222;
+        --canvas: #e9e9e9;
+        --paper: #ffffff;
+        --ember: #fa5d29;
+        --graphite: #4d4d4d;
+        --smoke: #808080;
+        --fog: #dedede;
+        --term-bg: #15170d;
+        --term-g: #9bbb16;
+        --term-bright: #9cff9c;
+        --term-cy: #3fdede;
+        --term-yl: #ffb02e;
+        --term-w: #efece3;
+        --term-bw: #ffffff;
+        --term-d: rgba(255, 255, 255, 0.4);
+      }
+
+      html, body {
+        width: 1080px;
+        height: 1920px;
+        overflow: hidden;
+        background: var(--ink);
+        font-family: 'Inter Tight', sans-serif;
+      }
+
+      #root {
+        position: relative;
+        width: 1080px;
+        height: 1920px;
+        overflow: hidden;
+      }
+
+      .scene {
+        position: absolute;
+        inset: 0;
+        width: 1080px;
+        height: 1920px;
+        overflow: hidden;
+      }
+
+      #scene-2, #scene-3, #scene-4, #scene-5, #scene-6, #scene-7 { opacity: 0; }
+      #scene-1 { z-index: 1; background: var(--ink); }
+      #scene-2 { z-index: 2; background: var(--canvas); }
+      #scene-3 { z-index: 3; background: var(--canvas); }
+      #scene-4 { z-index: 4; background: var(--canvas); }
+      #scene-5 { z-index: 5; background: var(--paper); }
+      #scene-6 { z-index: 6; background: var(--ink); }
+      #scene-7 { z-index: 7; background: var(--ink); }
+
+      .scene-content {
+        position: relative;
+        display: flex;
+        width: 100%;
+        height: 100%;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 32px;
+        padding: 120px 80px;
+      }
+
+      /* ---------- Scene 1: hook ---------- */
+      .hook-line {
+        max-width: 940px;
+        text-align: center;
+        font-size: 92px;
+        font-weight: 600;
+        line-height: 1.08;
+        letter-spacing: -0.01em;
+        color: #ffffff;
+      }
+      .hook-line .emoji { font-size: 0.9em; display: inline-block; }
+
+      /* ---------- Scene 2: turn ---------- */
+      .turn-glow {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 900px;
+        height: 900px;
+        transform: translate(-50%, -50%);
+        border-radius: 50%;
+        background: radial-gradient(circle, rgba(250, 93, 41, 0.28) 0%, rgba(250, 93, 41, 0) 68%);
+        opacity: 0.55;
+      }
+      .turn-mark { width: 176px; height: 176px; color: var(--ink); position: relative; z-index: 2; }
+      .turn-label {
+        position: relative;
+        z-index: 2;
+        font-size: 40px;
+        font-weight: 500;
+        color: var(--graphite);
+        letter-spacing: -0.01em;
+      }
+
+      /* ---------- Scene 3: terminal ---------- */
+      .cli-card {
+        width: 900px;
+        border-radius: 18px;
+        background: var(--term-bg);
+        box-shadow: 0 40px 90px rgba(0, 0, 0, 0.28);
+        overflow: hidden;
+      }
+      .cli-bar {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 18px 24px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      }
+      .cli-bar i { width: 15px; height: 15px; border-radius: 50%; display: inline-block; }
+      .cli-bar .t { margin-left: 10px; font-family: 'JetBrains Mono', monospace; font-size: 20px; color: var(--term-d); }
+      .cli-body { padding: 30px 34px 38px; font-family: 'JetBrains Mono', monospace; }
+      .cli-prompt { font-size: 30px; color: var(--term-w); }
+      .cli-prompt .dollar { color: var(--term-d); margin-right: 14px; }
+      .cli-prompt .ch { color: var(--term-bright); }
+      .cli-card-inner {
+        margin-top: 28px;
+        padding-top: 26px;
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+        display: flex;
+        flex-direction: column;
+        gap: 18px;
+      }
+      .cli-row-top { display: flex; align-items: center; justify-content: space-between; }
+      .cli-name { font-size: 34px; color: var(--term-bw); font-weight: 600; }
+      .cli-verified {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 16px;
+        border-radius: 999px;
+        background: var(--term-bright);
+        color: var(--term-bg);
+        font-size: 20px;
+        font-weight: 700;
+      }
+      .cli-verified svg { width: 18px; height: 18px; }
+      .cli-stats { font-size: 26px; color: var(--term-w); }
+      .cli-stats b { color: var(--term-bw); font-variant-numeric: tabular-nums; }
+      .cli-lang-row { display: flex; align-items: center; gap: 16px; }
+      .cli-lang-label { font-size: 22px; color: var(--term-d); width: 190px; }
+      .cli-lang-track { flex: 1; height: 14px; border-radius: 999px; background: rgba(255, 255, 255, 0.12); overflow: hidden; }
+      .cli-lang-fill { height: 100%; width: 58%; background: var(--term-g); border-radius: 999px; }
+      .cli-lang-pct { font-size: 22px; color: var(--term-g); font-variant-numeric: tabular-nums; }
+      .term-caption {
+        font-size: 34px;
+        font-weight: 500;
+        color: var(--graphite);
+        text-align: center;
+      }
+
+      /* ---------- Scene 4: fit score ---------- */
+      .fit-card {
+        position: relative;
+        width: 820px;
+        padding: 44px 48px;
+        border-radius: 20px;
+        background: var(--paper);
+        box-shadow: 0 30px 70px rgba(34, 34, 34, 0.12);
+        display: flex;
+        align-items: center;
+        gap: 28px;
+      }
+      .fit-avatar {
+        width: 96px;
+        height: 96px;
+        border-radius: 50%;
+        background: var(--canvas);
+        color: var(--ink);
+        font-size: 34px;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+      }
+      .fit-who b { display: block; font-size: 36px; color: var(--ink); font-weight: 600; }
+      .fit-who span { display: block; margin-top: 6px; font-size: 26px; color: var(--smoke); }
+      .fit-orb {
+        position: absolute;
+        top: -34px;
+        right: -30px;
+        width: 132px;
+        height: 132px;
+        border-radius: 50%;
+        background: var(--ember);
+        color: #ffffff;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 18px 40px rgba(250, 93, 41, 0.4);
+      }
+      .fit-orb b { font-size: 46px; font-weight: 700; line-height: 1; font-variant-numeric: tabular-nums; }
+      .fit-orb span { font-size: 18px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; margin-top: 2px; }
+      .fit-caption {
+        font-size: 34px;
+        font-weight: 500;
+        color: var(--graphite);
+        text-align: center;
+      }
+
+      /* ---------- Scene 5: DM inbox ---------- */
+      .inbox-wrap { width: 900px; display: flex; flex-direction: column; gap: 22px; }
+      .inbox-head { display: flex; align-items: center; justify-content: space-between; }
+      .inbox-title { font-size: 40px; font-weight: 600; color: var(--ink); }
+      .inbox-live {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 22px;
+        font-weight: 600;
+        color: var(--graphite);
+      }
+      .inbox-live i { width: 9px; height: 9px; border-radius: 50%; background: var(--ember); display: inline-block; }
+      .dm-row {
+        display: flex;
+        align-items: center;
+        gap: 22px;
+        padding: 24px 26px;
+        border-radius: 16px;
+        background: var(--canvas);
+        border: 1px solid var(--fog);
+      }
+      .dm-avatar {
+        width: 76px;
+        height: 76px;
+        border-radius: 50%;
+        background: var(--ink);
+        color: #ffffff;
+        font-size: 26px;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+      }
+      .dm-who { flex: 1; min-width: 0; }
+      .dm-who b { display: block; font-size: 30px; color: var(--ink); font-weight: 600; }
+      .dm-who span { display: block; margin-top: 4px; font-size: 22px; color: var(--smoke); }
+      .dm-badge {
+        flex-shrink: 0;
+        padding: 8px 18px;
+        border-radius: 999px;
+        background: var(--ember);
+        color: var(--ink);
+        font-size: 20px;
+        font-weight: 700;
+      }
+
+      /* ---------- Scene 6: punchline ---------- */
+      .punch-glow {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 1100px;
+        height: 1100px;
+        transform: translate(-50%, -50%);
+        border-radius: 50%;
+        background: radial-gradient(circle, rgba(250, 93, 41, 0.22) 0%, rgba(250, 93, 41, 0) 65%);
+      }
+      .punch-line {
+        position: relative;
+        z-index: 2;
+        max-width: 900px;
+        text-align: center;
+        font-size: 80px;
+        font-weight: 600;
+        line-height: 1.15;
+        color: #ffffff;
+        letter-spacing: -0.01em;
+      }
+      .punch-line .gt {
+        color: var(--ember);
+        font-weight: 700;
+        display: inline-block;
+        font-size: 1.15em;
+      }
+
+      /* ---------- Scene 7: outro ---------- */
+      .outro-lockup { display: flex; flex-direction: column; align-items: center; gap: 36px; }
+      .outro-brand { display: flex; align-items: center; gap: 22px; }
+      .outro-mark { width: 88px; height: 88px; color: #ffffff; }
+      .outro-word { font-size: 76px; font-weight: 600; color: #ffffff; letter-spacing: -0.01em; }
+      .outro-tagline {
+        max-width: 760px;
+        text-align: center;
+        font-size: 38px;
+        font-weight: 400;
+        color: rgba(255, 255, 255, 0.72);
+        line-height: 1.3;
+      }
+      .outro-cta {
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 30px;
+        font-weight: 500;
+        color: var(--ember);
+      }
+    </style>
+  </head>
+  <body>
+    <div
+      id="root"
+      data-composition-id="main"
+      data-start="0"
+      data-duration="19.9"
+      data-width="1080"
+      data-height="1920"
+    >
+      <!-- Music bed -->
+      <audio id="music" data-start="0" data-duration="19.9" data-track-index="10" data-volume="0.35" src="assets/music/happy-beats-business-moves-vol-10-by-ende-dot-app.mp3"></audio>
+
+      <!-- SFX: scene 2 logo slam -->
+      <audio id="sfx-logo" data-start="2.18" data-track-index="11" data-volume="0.75" src="assets/sfx/impact/impactSoft_medium_002.ogg"></audio>
+
+      <!-- SFX: scene 3 typing "npx apparent" (11 non-space chars) -->
+      <audio id="sfx-k1" data-start="3.95" data-track-index="12" data-volume="0.6" src="assets/sfx/keyboard/keypress-001.wav"></audio>
+      <audio id="sfx-k2" data-start="4.04" data-track-index="13" data-volume="0.6" src="assets/sfx/keyboard/keypress-002.wav"></audio>
+      <audio id="sfx-k3" data-start="4.13" data-track-index="14" data-volume="0.6" src="assets/sfx/keyboard/keypress-003.wav"></audio>
+      <audio id="sfx-k4" data-start="4.22" data-track-index="15" data-volume="0.6" src="assets/sfx/keyboard/keypress-005.wav"></audio>
+      <audio id="sfx-k5" data-start="4.31" data-track-index="16" data-volume="0.6" src="assets/sfx/keyboard/keypress-008.wav"></audio>
+      <audio id="sfx-k6" data-start="4.40" data-track-index="17" data-volume="0.6" src="assets/sfx/keyboard/keypress-011.wav"></audio>
+      <audio id="sfx-k7" data-start="4.49" data-track-index="18" data-volume="0.6" src="assets/sfx/keyboard/keypress-014.wav"></audio>
+      <audio id="sfx-k8" data-start="4.58" data-track-index="19" data-volume="0.6" src="assets/sfx/keyboard/keypress-016.wav"></audio>
+      <audio id="sfx-k9" data-start="4.67" data-track-index="20" data-volume="0.6" src="assets/sfx/keyboard/keypress-019.wav"></audio>
+      <audio id="sfx-k10" data-start="4.76" data-track-index="21" data-volume="0.6" src="assets/sfx/keyboard/keypress-022.wav"></audio>
+      <audio id="sfx-k11" data-start="4.85" data-track-index="22" data-volume="0.6" src="assets/sfx/keyboard/keypress-024.wav"></audio>
+
+      <!-- SFX: scene 3 card resolve -->
+      <audio id="sfx-card-resolve" data-start="5.0" data-track-index="23" data-volume="0.7" src="assets/sfx/impact/impactSoft_medium_001.ogg"></audio>
+
+      <!-- SFX: scene 4 fit stamp -->
+      <audio id="sfx-fit-stamp" data-start="8.45" data-track-index="24" data-volume="0.75" src="assets/sfx/impact/impactPlate_light_001.ogg"></audio>
+
+      <!-- SFX: scene 5 DM rows (row 1 + row 3 only) -->
+      <audio id="sfx-dm-1" data-start="10.35" data-track-index="25" data-volume="0.65" src="assets/sfx/casino/card-slide-1.ogg"></audio>
+      <audio id="sfx-dm-3" data-start="12.95" data-track-index="26" data-volume="0.65" src="assets/sfx/casino/card-slide-1.ogg"></audio>
+
+      <!-- SFX: scene 6 punchline slam -->
+      <audio id="sfx-punch" data-start="14.68" data-track-index="27" data-volume="0.8" src="assets/sfx/impact/impactSoft_medium_003.ogg"></audio>
+
+      <!-- SFX: scene 7 outro logo hit -->
+      <audio id="sfx-outro" data-start="17.05" data-track-index="28" data-volume="0.85" src="assets/sfx/impact/impactBell_heavy_003.ogg"></audio>
+
+      <!-- ================= SCENE 1: HOOK ================= -->
+      <section id="scene-1" class="scene">
+        <div class="scene-content">
+          <p class="hook-line line-a">you shipped it.</p>
+          <p class="hook-line line-b">nobody saw it. <span class="emoji">💀</span></p>
+        </div>
+      </section>
+
+      <!-- ================= SCENE 2: TURN ================= -->
+      <section id="scene-2" class="scene">
+        <div class="scene-content">
+          <div class="turn-glow"></div>
+          <svg class="turn-mark" viewBox="0 0 256 256" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path d="M 128.005 191.173 C 128.448 156.208 156.93 128 192 128 L 192 64 L 128 64 C 128 99.346 99.346 128 64 128 L 64 192 L 128 192 Z M 192 256 L 64 256 C 28.654 256 0 227.346 0 192 L 0 64 L 64 64 L 64 0 L 192 0 C 227.346 0 256 28.654 256 64 L 256 192 L 192 192 Z" />
+          </svg>
+          <p class="turn-label">meet apparent</p>
+        </div>
+      </section>
+
+      <!-- ================= SCENE 3: TERMINAL -> BUILD CARD ================= -->
+      <section id="scene-3" class="scene">
+        <div class="scene-content">
+          <div class="cli-card">
+            <div class="cli-bar">
+              <i style="background:#ff5f57"></i>
+              <i style="background:#febc2e"></i>
+              <i style="background:#28c840"></i>
+              <span class="t">founder@local: ~/medai</span>
+            </div>
+            <div class="cli-body">
+              <p class="cli-prompt"><span class="dollar">$</span><span class="typed"><span class="ch">n</span><span class="ch">p</span><span class="ch">x</span><span class="ch"> </span><span class="ch">a</span><span class="ch">p</span><span class="ch">p</span><span class="ch">a</span><span class="ch">r</span><span class="ch">e</span><span class="ch">n</span><span class="ch">t</span></span></p>
+              <div class="cli-card-inner">
+                <div class="cli-row-top">
+                  <span class="cli-name">Raj Patel</span>
+                  <span class="cli-verified">
+                    <svg viewBox="0 0 22 22" fill="currentColor"><path d="M20.396 11c-.018-.646-.215-1.275-.57-1.816-.354-.54-.852-.972-1.438-1.246.223-.607.27-1.264.14-1.897-.131-.634-.437-1.218-.882-1.687-.47-.445-1.053-.75-1.687-.882-.633-.13-1.29-.083-1.897.14-.273-.587-.704-1.086-1.245-1.44S11.647 1.62 11 1.604c-.646.017-1.273.213-1.813.568s-.969.854-1.24 1.44c-.608-.223-1.267-.272-1.902-.14-.635.13-1.22.436-1.69.882-.445.47-.749 1.055-.878 1.69-.13.635-.08 1.293.144 1.896-.587.274-1.087.705-1.443 1.245-.356.54-.555 1.17-.574 1.817.02.647.218 1.276.574 1.817.356.54.856.972 1.443 1.245-.224.604-.274 1.26-.144 1.896.13.636.433 1.221.878 1.69.47.446 1.055.752 1.69.883.635.13 1.294.083 1.902-.141.27.587.7 1.086 1.24 1.44s1.167.551 1.813.568c.647-.016 1.276-.213 1.817-.567s.972-.854 1.245-1.44c.604.224 1.26.272 1.895.141.636-.13 1.22-.436 1.69-.883.445-.468.749-1.053.882-1.688.13-.634.085-1.29-.138-1.896.587-.274 1.084-.705 1.438-1.246.354-.54.551-1.17.569-1.816zM9.662 14.85l-3.429-3.428 1.293-1.302 2.072 2.072 4.4-4.794 1.347 1.246z" /></svg>
+                    GitHub verified
+                  </span>
+                </div>
+                <p class="cli-stats"><b>428</b> commits &nbsp;·&nbsp; <b>+52,140</b> lines &nbsp;·&nbsp; <b>3</b> projects</p>
+                <div class="cli-lang-row">
+                  <span class="cli-lang-label">TypeScript</span>
+                  <span class="cli-lang-track"><span class="cli-lang-fill"></span></span>
+                  <span class="cli-lang-pct">58%</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <p class="term-caption">one command. instant proof.</p>
+        </div>
+      </section>
+
+      <!-- ================= SCENE 4: FIT SCORE ================= -->
+      <section id="scene-4" class="scene">
+        <div class="scene-content">
+          <div class="fit-card" data-layout-allow-overflow>
+            <div class="fit-avatar">RP</div>
+            <div class="fit-who">
+              <b>Raj Patel</b>
+              <span>MedAI Labs &middot; Dev tools &middot; Pre-seed</span>
+            </div>
+            <div class="fit-orb">
+              <b>96</b>
+              <span>Fit</span>
+            </div>
+          </div>
+          <p class="fit-caption">ranked. matched. done.</p>
+        </div>
+      </section>
+
+      <!-- ================= SCENE 5: DM INBOX ================= -->
+      <section id="scene-5" class="scene">
+        <div class="scene-content">
+          <div class="inbox-wrap">
+            <div class="inbox-head">
+              <span class="inbox-title">signal inbox</span>
+              <span class="inbox-live"><i></i>fresh today</span>
+            </div>
+            <div class="dm-row" id="dm-1">
+              <div class="dm-avatar">SV</div>
+              <div class="dm-who">
+                <b>Seed fund, dev tools</b>
+                <span>writing $250k&ndash;$1M cheques now</span>
+              </div>
+              <span class="dm-badge">New</span>
+            </div>
+            <div class="dm-row" id="dm-2">
+              <div class="dm-avatar">AC</div>
+              <div class="dm-who">
+                <b>Angel, ex-founder</b>
+                <span>backs technical pre-seed teams</span>
+              </div>
+              <span class="dm-badge">New</span>
+            </div>
+            <div class="dm-row" id="dm-3">
+              <div class="dm-avatar">GP</div>
+              <div class="dm-who">
+                <b>GP, AI infra thesis</b>
+                <span>leads and co-invests at seed</span>
+              </div>
+              <span class="dm-badge">New</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= SCENE 6: PUNCHLINE ================= -->
+      <section id="scene-6" class="scene">
+        <div class="scene-content">
+          <div class="punch-glow"></div>
+          <p class="punch-line">your code <span class="gt">&gt;</span> your network.</p>
+        </div>
+      </section>
+
+      <!-- ================= SCENE 7: OUTRO ================= -->
+      <section id="scene-7" class="scene">
+        <div class="scene-content">
+          <div class="outro-lockup">
+            <div class="outro-brand">
+              <svg class="outro-mark" viewBox="0 0 256 256" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                <path d="M 128.005 191.173 C 128.448 156.208 156.93 128 192 128 L 192 64 L 128 64 C 128 99.346 99.346 128 64 128 L 64 192 L 128 192 Z M 192 256 L 64 256 C 28.654 256 0 227.346 0 192 L 0 64 L 64 64 L 64 0 L 192 0 C 227.346 0 256 28.654 256 64 L 256 192 L 192 192 Z" />
+              </svg>
+              <span class="outro-word">apparent</span>
+            </div>
+            <p class="outro-tagline">where cracked founders meet capital.</p>
+            <p class="outro-cta">npx apparent &rarr;</p>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <script>
+      window.__timelines = window.__timelines || {};
+      const tl = gsap.timeline({ paused: true });
+      const scenes = ["#scene-1", "#scene-2", "#scene-3", "#scene-4", "#scene-5", "#scene-6", "#scene-7"];
+
+      function jump(fromScene, toScene, at) {
+        tl.to(fromScene, { opacity: 0, scale: 1.04, filter: "blur(6px)", duration: 0.16, ease: "power4.in", overwrite: "auto" }, at);
+        tl.fromTo(
+          toScene,
+          { opacity: 0, scale: 0.96, filter: "blur(8px)" },
+          { opacity: 1, scale: 1, filter: "blur(0px)", duration: 0.2, ease: "power4.out", overwrite: "auto" },
+          at + 0.04
+        );
+      }
+
+      // ---------- Scene 1: hook (0 - 2.0) ----------
+      tl.from("#scene-1 .line-a", { y: 36, scale: 0.9, opacity: 0, duration: 0.35, ease: "back.out(2.2)", overwrite: "auto" }, 0.15);
+      tl.from("#scene-1 .line-b", { y: 26, opacity: 0, duration: 0.3, ease: "power3.out", overwrite: "auto" }, 0.55);
+      tl.from("#scene-1 .emoji", { scale: 0, rotation: -20, opacity: 0, duration: 0.25, ease: "back.out(3)", overwrite: "auto" }, 0.78);
+
+      // ---------- Transition 1 -> 2 ----------
+      jump(scenes[0], scenes[1], 2.0);
+
+      // ---------- Scene 2: turn (2.0 - 3.4) ----------
+      tl.from("#scene-2 .turn-glow", { scale: 0.6, opacity: 0, duration: 0.5, ease: "expo.out", overwrite: "auto" }, 2.1);
+      tl.from("#scene-2 .turn-mark", { scale: 1.35, rotation: -10, opacity: 0, duration: 0.4, ease: "back.out(2.6)", overwrite: "auto" }, 2.18);
+      tl.from("#scene-2 .turn-label", { y: 24, opacity: 0, duration: 0.3, ease: "power2.out", overwrite: "auto" }, 2.45);
+
+      // ---------- Transition 2 -> 3 ----------
+      jump(scenes[1], scenes[2], 3.4);
+
+      // ---------- Scene 3: terminal -> build card (3.4 - 7.9) ----------
+      tl.from("#scene-3 .cli-card", { y: 70, scale: 0.92, opacity: 0, duration: 0.4, ease: "back.out(2)", overwrite: "auto" }, 3.55);
+      tl.from("#scene-3 .dollar", { opacity: 0, duration: 0.15, ease: "power1.out", overwrite: "auto" }, 3.85);
+      // typing "npx apparent" one character at a time, paired with keypress SFX above
+      (function typeChars() {
+        const chars = gsap.utils.toArray("#scene-3 .cli-prompt .ch");
+        const startAt = 3.95;
+        const step = 0.09;
+        chars.forEach((ch, i) => {
+          tl.from(ch, { opacity: 0, duration: 0.05, ease: "power2.out", overwrite: "auto" }, startAt + i * step);
+        });
+      })();
+      tl.from("#scene-3 .cli-card-inner", { y: 30, opacity: 0, duration: 0.35, ease: "power3.out", overwrite: "auto" }, 5.0);
+      tl.from("#scene-3 .term-caption", { y: 20, opacity: 0, duration: 0.3, ease: "sine.out", overwrite: "auto" }, 5.5);
+
+      // ---------- Transition 3 -> 4 ----------
+      jump(scenes[2], scenes[3], 7.9);
+
+      // ---------- Scene 4: fit score (7.9 - 9.9) ----------
+      tl.from("#scene-4 .fit-card", { y: 40, scale: 0.94, opacity: 0, duration: 0.32, ease: "power3.out", overwrite: "auto" }, 8.05);
+      tl.from("#scene-4 .fit-orb", { scale: 1.6, rotation: -10, opacity: 0, duration: 0.3, ease: "back.out(3.2)", overwrite: "auto" }, 8.45);
+      tl.from("#scene-4 .fit-caption", { y: 22, opacity: 0, duration: 0.28, ease: "sine.out", overwrite: "auto" }, 8.72);
+
+      // ---------- Transition 4 -> 5 ----------
+      jump(scenes[3], scenes[4], 9.9);
+
+      // ---------- Scene 5: DM inbox (9.9 - 14.5) ----------
+      tl.from("#scene-5 .inbox-head", { y: -20, opacity: 0, duration: 0.3, ease: "power2.out", overwrite: "auto" }, 10.05);
+      tl.from("#scene-5 #dm-1", { x: 60, opacity: 0, duration: 0.32, ease: "back.out(2.4)", overwrite: "auto" }, 10.35); // beat-grid: row 1
+      tl.from("#scene-5 #dm-2", { x: 60, opacity: 0, duration: 0.3, ease: "power3.out", overwrite: "auto" }, 11.65); // beat-grid: row 2
+      tl.from("#scene-5 #dm-3", { x: 60, opacity: 0, duration: 0.3, ease: "expo.out", overwrite: "auto" }, 12.95); // beat-grid: row 3
+
+      // ---------- Transition 5 -> 6 ----------
+      jump(scenes[4], scenes[5], 14.5);
+
+      // ---------- Scene 6: punchline (14.5 - 16.9) ----------
+      tl.from("#scene-6 .punch-glow", { scale: 0.7, opacity: 0, duration: 0.4, ease: "expo.out", overwrite: "auto" }, 14.6);
+      tl.from("#scene-6 .punch-line", { y: 30, scale: 0.85, opacity: 0, duration: 0.34, ease: "back.out(2.3)", overwrite: "auto" }, 14.68);
+      tl.from("#scene-6 .gt", { scale: 0, rotation: -15, duration: 0.28, ease: "back.out(3.5)", overwrite: "auto" }, 14.85);
+      // beat-locked: 15.82s (strong cue) -- emphasis pulse on the accent glyph, not a fresh entrance
+      tl.to("#scene-6 .gt", { scale: 1.28, duration: 0.13, ease: "power2.out", overwrite: "auto" }, 15.82);
+      tl.to("#scene-6 .gt", { scale: 1, duration: 0.17, ease: "power2.in", overwrite: "auto" }, 15.95);
+
+      // ---------- Transition 6 -> 7 ----------
+      jump(scenes[5], scenes[6], 16.9);
+
+      // ---------- Scene 7: outro (16.9 - 19.9) ----------
+      tl.from("#scene-7 .outro-brand", { y: 50, scale: 0.85, opacity: 0, duration: 0.4, ease: "back.out(2.2)", overwrite: "auto" }, 17.05);
+      tl.from("#scene-7 .outro-tagline", { y: 24, opacity: 0, duration: 0.32, ease: "power3.out", overwrite: "auto" }, 17.5);
+      tl.from("#scene-7 .outro-cta", { y: 18, opacity: 0, duration: 0.28, ease: "sine.out", overwrite: "auto" }, 17.9);
+      // beat-locked: 18.2s (strong-cue window 18.01-18.55s) -- settled emphasis pulse on the lockup
+      tl.to("#scene-7 .outro-lockup", { scale: 1.035, duration: 0.5, ease: "power1.inOut", overwrite: "auto" }, 18.2);
+
+      window.__timelines["main"] = tl;
+    </script>
+  </body>
+</html>

@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="720" height="270" viewBox="0 0 720 270">
+  <rect x="18" y="24" width="684" height="204" rx="102" fill="#97cde5" stroke="#28262a" stroke-width="10"/>
+  <circle cx="124" cy="126" r="58" fill="#fffdfa" stroke="#28262a" stroke-width="8"/>
+  <circle cx="124" cy="126" r="28" fill="none" stroke="#28262a" stroke-width="8"/>
+  <path d="M124 66 V38 M124 214 V186 M64 126 H36 M212 126 H184" stroke="#28262a" stroke-width="7" stroke-linecap="round"/>
+  <text x="220" y="118" font-family="Georgia, serif" font-size="62" font-weight="900" fill="#28262a">thesis fit</text>
+  <text x="220" y="174" font-family="Georgia, serif" font-size="34" font-weight="800" fill="#28262a">not a random investor list</text>
+</svg>

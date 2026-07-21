@@ -1,0 +1,334 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Apparent · Find builders before consensus</title>
+<meta name="description" content="Apparent gives investors a private sourcing desk with an AI agent that sources, ranks, and drafts outreach to verified founders by proof, stage, and freshness." />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@300;400;500;600&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+<main id="top">
+  <!-- HERO -->
+  <section class="hero">
+    <div class="inner">
+      <h1 class="display">Where proof meets <em>capital.</em></h1>
+      <p class="sub">Apparent connects founders who've shipped with investors who are actively writing cheques. Founders turn proof into intros; investors source startups that fit their thesis, ranked by proof, stage, and freshness.</p>
+      <div class="cta">
+        <a class="btn btn-filled" href="signup.html">Source your deal flow
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17 17 7M9 7h8v8"/></svg>
+        </a>
+        <a class="btn btn-ember" href="for-founders.html">I'm a founder</a>
+      </div>
+      <div class="trust">
+        <span><b>1,800+</b> investors on Apparent</span><span class="d"></span>
+        <span>Verified proof, not pitches</span><span class="d"></span>
+        <span>No warm intro required</span>
+      </div>
+      <div class="logos">
+        <span class="lbl">Builders &amp; investors on Apparent</span>
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="var(--ash)" aria-hidden="true"><circle cx="12" cy="12" r="10"/></svg>
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="var(--ash)" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5"/></svg>
+        <svg width="26" height="24" viewBox="0 0 26 24" fill="var(--ash)" aria-hidden="true"><path d="M13 2 24 22H2Z"/></svg>
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="var(--ash)" aria-hidden="true"><path d="M12 2 22 12 12 22 2 12Z"/></svg>
+        <svg width="26" height="24" viewBox="0 0 26 24" fill="var(--ash)" aria-hidden="true"><path d="M7 2h12l5 10-5 10H7L2 12Z"/></svg>
+      </div>
+    </div>
+
+    <div class="surface-wrap">
+      <div class="tabbar" role="tablist">
+        <button class="tab active" data-tab="thesis">Thesis</button>
+        <button class="tab" data-tab="sourcing">Sourcing</button>
+        <button class="tab" data-tab="density">Density</button>
+        <button class="tab" data-tab="pipeline">Pipeline</button>
+        <button class="visit" type="button" onclick="location.href='for-investors.html'">See it live</button>
+      </div>
+
+      <div class="surface inner">
+        <div class="surface-grid">
+          <div class="surface-left">
+            <div class="surface-num" data-num>01</div>
+            <div class="surface-label" data-label>Turn your taste into criteria your agent sources against.</div>
+            <p class="surface-note" data-note>Sectors, stages, geographies, check size, the founder signals you back, and the ones you pass on, captured once.</p>
+          </div>
+
+          <div class="surface-right">
+            <div class="panel active" data-panel="thesis">
+              <div class="mock">
+                <div class="mock-head"><span class="t">Thesis workspace</span><span class="live"><i></i> private</span></div>
+                <div class="chips">
+                  <span class="chip"><b>Sector</b> · Dev tools</span>
+                  <span class="chip"><b>Sector</b> · AI infra</span>
+                  <span class="chip"><b>Stage</b> · Pre-seed → A</span>
+                  <span class="chip"><b>Check</b> · $250k–$2M</span>
+                  <span class="chip"><b>Geo</b> · SF · NYC · Remote</span>
+                  <span class="chip"><b>Signal</b> · Ships in public</span>
+                </div>
+                <div class="thesis-foot"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="9"/><path d="M9 12l2 2 4-4"/></svg> Saved. Your agent sources against this continuously.</div>
+              </div>
+            </div>
+
+            <div class="panel" data-panel="sourcing">
+              <div class="mock">
+                <div class="mock-head"><span class="t">Ranked by fit</span><span class="live"><i></i> fresh today</span></div>
+                <div class="row"><div class="av">AK</div><div class="who"><b>Edge runtime for agents</b><span>Dev tools · Pre-seed · SF</span></div><div class="score"><b>96</b><span>Fit</span></div></div>
+                <div class="row"><div class="av">NL</div><div class="who"><b>Local-first sync engine</b><span>AI infra · Seed · Remote</span></div><div class="score"><b>92</b><span>Fit</span></div></div>
+                <div class="row"><div class="av">RS</div><div class="who"><b>Eval harness for LLMs</b><span>Dev tools · Pre-seed · NYC</span></div><div class="score"><b>89</b><span>Fit</span></div></div>
+              </div>
+            </div>
+
+            <div class="panel" data-panel="density">
+              <div class="mock">
+                <div class="mock-head"><span class="t">Builder density · SF</span><span class="live"><i></i> 18 nearby</span></div>
+                <div class="density" id="density"></div>
+                <div class="thesis-foot">Drop a place to see Apparent builders working near your focus.</div>
+              </div>
+            </div>
+
+            <div class="panel" data-panel="pipeline">
+              <div class="mock">
+                <div class="mock-head"><span class="t">Deal flow</span><span class="live"><i></i> 7 active</span></div>
+                <div class="kanban">
+                  <div class="kcol"><div class="kt">Sourced</div><div class="kcard">Edge runtime <span>Drafted outreach</span></div><div class="kcard">Sync engine <span>Saved</span></div></div>
+                  <div class="kcol"><div class="kt">Meeting</div><div class="kcard">Eval harness <span>Thu 2:00</span></div></div>
+                  <div class="kcol"><div class="kt">Diligence</div><div class="kcard">Vector store <span>Terms review</span></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- HEAT MAP PREVIEW -->
+  <section class="divider">
+    <div class="inner work">
+      <div>
+        <h2 class="sec-title">Capital is easier to read when it has a shape.</h2>
+        <p class="lead">Builder Radar plots investors and builders by geography, stage, and thesis instead of burying them in a spreadsheet. Read the density before it becomes consensus.</p>
+        <a class="btn btn-filled" href="heat-map.html" style="margin-top:28px">Open Builder Radar</a>
+      </div>
+      <div class="map-stage" style="min-height:300px">
+        <div class="map-grid"></div>
+        <svg class="map-svg" id="map-mini" viewBox="0 0 600 320" preserveAspectRatio="xMidYMid meet" aria-label="Stylized investor density preview"></svg>
+      </div>
+    </div>
+  </section>
+
+  <!-- WORKFLOW -->
+  <section id="workflow" class="divider">
+    <div class="inner work">
+      <div>
+        <h2 class="sec-title">See the sourcing picture earlier.</h2>
+        <p class="lead">Apparent turns builder proof, public signals, local density, and your thesis into one repeatable sourcing workflow.</p>
+        <a class="btn btn-filled" href="for-investors.html" style="margin-top:28px">Build your thesis</a>
+      </div>
+      <div class="steps">
+        <div class="step"><span class="n">01</span><div><h3>Define thesis</h3><p>Capture sectors, stages, geographies, check size, the founder signals you back, and the ones you pass on.</p></div></div>
+        <div class="step"><span class="n">02</span><div><h3>Let your agent source</h3><p>Your AI investor agent works 24/7, ranking verified founders against your thesis by proof, freshness, and fit.</p></div></div>
+        <div class="step"><span class="n">03</span><div><h3>Map builder density</h3><p>Drop a place, locate projects nearby, and see the Apparent builders working around that focus.</p></div></div>
+        <div class="step"><span class="n">04</span><div><h3>Move through deal flow</h3><p>Save a builder, let the agent draft outreach, and drag opportunities through a clean pipeline.</p></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- BENEFITS -->
+  <section id="thesis" class="divider">
+    <div class="inner">
+      <h2 class="sec-title">Source from proof, not noise.</h2>
+      <div class="benefits">
+        <div class="benefit">
+          <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/></svg>
+          <h3>Private thesis workspace</h3>
+          <p>Turn your taste into criteria your AI agent can source against, repeatedly.</p>
+        </div>
+        <div class="benefit">
+          <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+          <h3>Agent-sourced inbox</h3>
+          <p>Verified founders with source links, proof, and relevance, surfaced fresh every day.</p>
+        </div>
+        <div class="benefit">
+          <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="4" width="5" height="16" rx="1"/><rect x="10" y="4" width="5" height="11" rx="1"/><rect x="17" y="4" width="4" height="7" rx="1"/></svg>
+          <h3>Deal-flow Kanban</h3>
+          <p>Move saved builders through sourcing, meeting, diligence, and partner review.</p>
+        </div>
+        <div class="benefit">
+          <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>
+          <h3>Digest &amp; alerts</h3>
+          <p>Keep the highest-signal founder updates from disappearing between meetings.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- AUDIENCE -->
+  <section class="divider">
+    <div class="inner">
+      <h2 class="sec-title">Two sides, one fit.</h2>
+      <div class="audience">
+        <div class="acard">
+          <h3>Make your strongest signal visible.</h3>
+          <ul>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><path d="M9 12l2 2 4-4"/></svg>Verified builds, launches, and traction in one quiet profile.</li>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><path d="M9 12l2 2 4-4"/></svg>Investor matching by thesis, stage, sector, and geography.</li>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><path d="M9 12l2 2 4-4"/></svg>An AI founder agent that drafts focused, fit-based outreach.</li>
+          </ul>
+          <a class="btn btn-ember" href="for-founders.html">Create founder profile</a>
+        </div>
+        <div class="acard">
+          <h3>Source builders by evidence.</h3>
+          <ul>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="2.5"/></svg>A thesis-aware view of builders with real proof behind them.</li>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="2.5"/></svg>Ranking that separates active signal from stale fundraising lists.</li>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="2.5"/></svg>AI-suggested outreach grounded in why the founder fits.</li>
+          </ul>
+          <a class="btn btn-filled" href="for-investors.html">Create investor profile</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- DARK BAND -->
+  <section class="band" style="padding:0">
+    <div class="inner">
+      <h2>By the time it's consensus, the round is full.</h2>
+      <p>Apparent surfaces founders who fit your thesis while they're still building, not after the deal turns competitive.</p>
+    </div>
+  </section>
+
+  <!-- QUOTE -->
+  <section class="quote">
+    <div class="inner">
+      <blockquote>“The best sourcing advantage is knowing which builders matter before the market agrees.”</blockquote>
+      <div class="attr"><span class="av"></span><span>The Apparent thesis</span></div>
+    </div>
+  </section>
+
+  <!-- VERIFIED FOUNDERS -->
+  <section id="verified" class="divider">
+    <div class="inner">
+      <div class="verified-head">
+        <h2 class="sec-title">Verified builders, with proof attached.</h2>
+        <a class="btn btn-outline" href="for-founders.html">Create founder profile</a>
+      </div>
+      <div class="cards">
+        <article class="card">
+          <div class="ch"><div class="av">AK</div><div><b>Edge runtime for agents</b><span>Dev tools · Pre-seed</span></div><span class="badge">Verified</span></div>
+          <p class="desc">Founder-supplied summary of the company, proof, and current ask. Owner controlled.</p>
+          <div class="meta"><div><span>Stage</span><b>Pre-seed</b></div><div><span>Raising</span><b>$1.2M</b></div></div>
+          <div class="proofs">
+            <span class="proof"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 .5A11.5 11.5 0 0 0 8.4 22.9c.6.1.8-.2.8-.6v-2c-3.2.7-3.9-1.4-3.9-1.4-.5-1.3-1.3-1.7-1.3-1.7-1-.7.1-.7.1-.7 1.2.1 1.8 1.2 1.8 1.2 1 1.8 2.8 1.3 3.5 1 .1-.8.4-1.3.7-1.6-2.6-.3-5.3-1.3-5.3-5.7 0-1.3.5-2.3 1.2-3.1-.1-.3-.5-1.5.1-3.1 0 0 1-.3 3.3 1.2a11.5 11.5 0 0 1 6 0C17 5.3 18 5.6 18 5.6c.6 1.6.2 2.8.1 3.1.8.8 1.2 1.8 1.2 3.1 0 4.4-2.7 5.4-5.3 5.7.4.4.8 1.1.8 2.2v3.3c0 .4.2.7.8.6A11.5 11.5 0 0 0 12 .5Z"/></svg>GitHub</span>
+            <span class="proof">Deck</span>
+            <span class="proof fit">96 fit</span>
+          </div>
+        </article>
+        <article class="card">
+          <div class="ch"><div class="av">NL</div><div><b>Local-first sync engine</b><span>AI infra · Seed</span></div><span class="badge">Verified</span></div>
+          <p class="desc">A second preview card showing the product, team, proof links, and investor materials.</p>
+          <div class="meta"><div><span>Stage</span><b>Seed</b></div><div><span>Raising</span><b>$3M</b></div></div>
+          <div class="proofs">
+            <span class="proof"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 .5A11.5 11.5 0 0 0 8.4 22.9c.6.1.8-.2.8-.6v-2c-3.2.7-3.9-1.4-3.9-1.4-.5-1.3-1.3-1.7-1.3-1.7-1-.7.1-.7.1-.7 1.2.1 1.8 1.2 1.8 1.2 1 1.8 2.8 1.3 3.5 1 .1-.8.4-1.3.7-1.6-2.6-.3-5.3-1.3-5.3-5.7 0-1.3.5-2.3 1.2-3.1-.1-.3-.5-1.5.1-3.1 0 0 1-.3 3.3 1.2a11.5 11.5 0 0 1 6 0C17 5.3 18 5.6 18 5.6c.6 1.6.2 2.8.1 3.1.8.8 1.2 1.8 1.2 3.1 0 4.4-2.7 5.4-5.3 5.7.4.4.8 1.1.8 2.2v3.3c0 .4.2.7.8.6A11.5 11.5 0 0 0 12 .5Z"/></svg>GitHub</span>
+            <span class="proof">Pitch video</span>
+            <span class="proof fit">92 fit</span>
+          </div>
+        </article>
+        <article class="card">
+          <div class="ch"><div class="av">RS</div><div><b>Eval harness for LLMs</b><span>Dev tools · Pre-seed</span></div><span class="badge">Verified</span></div>
+          <p class="desc">A reusable card for the product, team, proof links, and current raise.</p>
+          <div class="meta"><div><span>Stage</span><b>Pre-seed</b></div><div><span>Raising</span><b>$800k</b></div></div>
+          <div class="proofs">
+            <span class="proof"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 .5A11.5 11.5 0 0 0 8.4 22.9c.6.1.8-.2.8-.6v-2c-3.2.7-3.9-1.4-3.9-1.4-.5-1.3-1.3-1.7-1.3-1.7-1-.7.1-.7.1-.7 1.2.1 1.8 1.2 1.8 1.2 1 1.8 2.8 1.3 3.5 1 .1-.8.4-1.3.7-1.6-2.6-.3-5.3-1.3-5.3-5.7 0-1.3.5-2.3 1.2-3.1-.1-.3-.5-1.5.1-3.1 0 0 1-.3 3.3 1.2a11.5 11.5 0 0 1 6 0C17 5.3 18 5.6 18 5.6c.6 1.6.2 2.8.1 3.1.8.8 1.2 1.8 1.2 3.1 0 4.4-2.7 5.4-5.3 5.7.4.4.8 1.1.8 2.2v3.3c0 .4.2.7.8.6A11.5 11.5 0 0 0 12 .5Z"/></svg>GitHub</span>
+            <span class="proof">Deck</span>
+            <span class="proof fit">89 fit</span>
+          </div>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- FINAL CTA -->
+  <section class="final divider">
+    <div class="inner">
+      <svg class="mark"><use href="#apparent-mark"/></svg>
+      <h2>Build your private sourcing desk.</h2>
+      <p>Capture your thesis once, then let Apparent keep surfacing relevant builders with proof attached.</p>
+      <div class="cta">
+        <a class="btn btn-filled" href="signup.html">Source your deal flow</a>
+        <a class="btn btn-outline" href="contact.html">Book a walkthrough</a>
+      </div>
+    </div>
+  </section>
+</main>
+
+<script>
+  // Hero tab bar swaps the surface preview + the editorial number/label/note.
+  const tabMeta = {
+    thesis:   { n: '01', label: 'Turn your taste into criteria your agent sources against.', note: 'Sectors, stages, geographies, check size, the founder signals you back, and the ones you pass on, captured once.' },
+    sourcing: { n: '02', label: 'Verified founders, ranked against your thesis every day.', note: 'Each match arrives with proof, source links, and a relevance score, surfaced while founders are still building.' },
+    density:  { n: '03', label: 'See where the builders are working, near your focus.', note: 'Drop a place and locate the Apparent builders around it. Map the density before the market does.' },
+    pipeline: { n: '04', label: 'Move saved builders through a clean deal-flow board.', note: 'Sourced, meeting, diligence, partner review. The agent drafts the first outreach for you.' },
+  };
+  const tabs = document.querySelectorAll('.tab');
+  const panels = document.querySelectorAll('.panel');
+  const numEl = document.querySelector('[data-num]');
+  const labelEl = document.querySelector('[data-label]');
+  const noteEl = document.querySelector('[data-note]');
+  console.assert(tabs.length === panels.length && tabs.length === Object.keys(tabMeta).length, 'tabs, panels, and meta must align');
+  function activate(name) {
+    tabs.forEach(t => t.classList.toggle('active', t.dataset.tab === name));
+    panels.forEach(p => p.classList.toggle('active', p.dataset.panel === name));
+    const m = tabMeta[name];
+    if (m) { numEl.textContent = m.n; labelEl.textContent = m.label; noteEl.textContent = m.note; }
+  }
+  // Auto-cycle the tabs on a smooth loop; pause on hover, resync on click.
+  const order = ['thesis', 'sourcing', 'density', 'pipeline'];
+  let idx = 0, timer = null;
+  const stop = () => { if (timer) { clearInterval(timer); timer = null; } };
+  const tick = () => { idx = (idx + 1) % order.length; activate(order[idx]); };
+  const start = () => { stop(); timer = setInterval(tick, 1100); };
+  tabs.forEach(t => t.addEventListener('click', () => { idx = order.indexOf(t.dataset.tab); activate(t.dataset.tab); start(); }));
+  const sw = document.querySelector('.surface-wrap');
+  if (sw) { sw.addEventListener('mouseenter', stop); sw.addEventListener('mouseleave', start); }
+  start();
+
+  // Density grid: mostly faint, a few "on", one "hot" (ember) cluster.
+  const grid = document.getElementById('density');
+  if (grid) {
+    const hot = new Set([27, 28, 39, 40]);
+    const on = new Set([5, 14, 22, 33, 45, 51, 58, 62, 70, 7, 19, 53, 66]);
+    for (let i = 0; i < 72; i++) {
+      const cell = document.createElement('i');
+      if (hot.has(i)) cell.className = 'hot';
+      else if (on.has(i)) cell.className = 'on';
+      grid.appendChild(cell);
+    }
+  }
+
+  // Stylized density preview for the heat-map section.
+  const mini = document.getElementById('map-mini');
+  if (mini) {
+    const clusters = [
+      { x: 130, y: 130, n: 20, hot: true }, { x: 350, y: 110, n: 18, hot: false },
+      { x: 470, y: 170, n: 24, hot: true }, { x: 260, y: 230, n: 14, hot: false },
+    ];
+    const rnd = (s) => { const x = Math.sin(s) * 10000; return x - Math.floor(x); };
+    let s = 1, out = '';
+    clusters.forEach((c) => {
+      for (let k = 0; k < c.n; k++) {
+        const a = rnd(s++) * Math.PI * 2, r = rnd(s++) * 42 + 4;
+        const x = c.x + Math.cos(a) * r, y = c.y + Math.sin(a) * r * 0.7, roll = rnd(s++);
+        const cls = c.hot && roll > 0.82 ? 'hot' : roll > 0.6 ? 'on' : '';
+        const rad = cls === 'hot' ? 4.6 : cls === 'on' ? 3.2 : 2.2;
+        out += '<circle class="map-dot ' + cls + '" cx="' + x.toFixed(1) + '" cy="' + y.toFixed(1) + '" r="' + rad + '"/>';
+      }
+    });
+    mini.innerHTML = out;
+  }
+</script>
+<script src="site.js"></script>
+</body>
+</html>

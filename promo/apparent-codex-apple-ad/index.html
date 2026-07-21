@@ -1,0 +1,1023 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1080, height=1920" />
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <style>
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      html,
+      body {
+        width: 1080px;
+        height: 1920px;
+        overflow: hidden;
+        background: #f7f7f2;
+      }
+
+      body {
+        color: #171717;
+        font-family: sans-serif;
+      }
+
+      #root {
+        position: relative;
+        width: 1080px;
+        height: 1920px;
+        overflow: hidden;
+        background:
+          linear-gradient(90deg, rgba(23, 23, 23, 0.035) 1px, rgba(247, 247, 242, 0) 1px),
+          linear-gradient(180deg, rgba(23, 23, 23, 0.035) 1px, rgba(247, 247, 242, 0) 1px),
+          #f7f7f2;
+        background-size: 72px 72px;
+      }
+
+      .scene {
+        position: absolute;
+        inset: 0;
+        width: 1080px;
+        height: 1920px;
+        overflow: hidden;
+        background:
+          linear-gradient(90deg, rgba(23, 23, 23, 0.035) 1px, rgba(247, 247, 242, 0) 1px),
+          linear-gradient(180deg, rgba(23, 23, 23, 0.035) 1px, rgba(247, 247, 242, 0) 1px),
+          #f7f7f2;
+        background-size: 72px 72px;
+      }
+
+      #scene-1 { z-index: 1; }
+      #scene-2 { z-index: 2; opacity: 0; }
+      #scene-3 { z-index: 3; opacity: 0; }
+      #scene-4 { z-index: 4; opacity: 0; }
+      #scene-5 { z-index: 5; opacity: 0; }
+      #scene-6 { z-index: 6; opacity: 0; }
+
+      .frame {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        padding: 86px 58px 96px;
+      }
+
+      .chrome-line {
+        position: absolute;
+        left: 58px;
+        right: 58px;
+        top: 72px;
+        display: flex;
+        z-index: 20;
+        align-items: center;
+        justify-content: space-between;
+      }
+
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+      }
+
+      .brand-mark {
+        width: 52px;
+        height: 52px;
+        object-fit: contain;
+      }
+
+      .brand-word {
+        width: 178px;
+        height: auto;
+        object-fit: contain;
+      }
+
+      .time-pill {
+        padding: 9px 14px 10px;
+        border: 1px solid rgba(23, 23, 23, 0.09);
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.72);
+        box-shadow: 0 12px 34px rgba(23, 23, 23, 0.06);
+        color: rgba(23, 23, 23, 0.58);
+        font-size: 18px;
+        font-weight: 760;
+        line-height: 1;
+        letter-spacing: 0;
+      }
+
+      .hero {
+        display: flex;
+        height: 100%;
+        flex-direction: column;
+        justify-content: center;
+        gap: 44px;
+        padding-top: 88px;
+      }
+
+      .super {
+        max-width: 920px;
+        color: #171717;
+        font-size: 136px;
+        font-weight: 820;
+        line-height: 0.91;
+        letter-spacing: 0;
+      }
+
+      .super .green { color: #6a8f34; }
+      .super .blue { color: #347f9f; }
+      .super .orange { color: #d26042; }
+
+      .subhead {
+        max-width: 800px;
+        color: rgba(23, 23, 23, 0.66);
+        font-size: 40px;
+        font-weight: 640;
+        line-height: 1.08;
+        letter-spacing: 0;
+      }
+
+      .caption {
+        position: absolute;
+        left: 58px;
+        right: 58px;
+        bottom: 78px;
+        z-index: 35;
+        display: flex;
+        min-height: 92px;
+        align-items: center;
+        justify-content: space-between;
+        gap: 22px;
+        padding: 21px 26px;
+        border: 1px solid rgba(23, 23, 23, 0.1);
+        border-radius: 32px;
+        background: rgba(255, 255, 255, 0.8);
+        box-shadow: 0 26px 70px rgba(23, 23, 23, 0.09);
+      }
+
+      .caption strong {
+        color: #171717;
+        font-size: 30px;
+        font-weight: 760;
+        line-height: 1.05;
+        letter-spacing: 0;
+      }
+
+      .caption span {
+        flex: 0 0 auto;
+        padding: 11px 16px 12px;
+        border-radius: 999px;
+        background: #c8dfaa;
+        color: #171717;
+        font-size: 20px;
+        font-weight: 800;
+        line-height: 1;
+      }
+
+      .command {
+        display: grid;
+        width: 936px;
+        grid-template-columns: 1fr;
+        gap: 18px;
+        padding: 26px;
+        border: 1px solid rgba(23, 23, 23, 0.1);
+        border-radius: 42px;
+        background: rgba(255, 255, 255, 0.84);
+        box-shadow: 0 38px 110px rgba(23, 23, 23, 0.12);
+      }
+
+      .command-bar,
+      .terminal-bar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 18px;
+      }
+
+      .traffic {
+        display: flex;
+        gap: 9px;
+      }
+
+      .dot {
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+      }
+
+      .dot.a { background: #d26042; }
+      .dot.b { background: #e2c76d; }
+      .dot.c { background: #6a8f34; }
+
+      .cmd-text {
+        flex: 1;
+        padding: 22px 26px;
+        border-radius: 24px;
+        background: #171717;
+        color: #f7f7f2;
+        font-family: monospace;
+        font-size: 32px;
+        font-weight: 700;
+        line-height: 1.05;
+        letter-spacing: 0;
+      }
+
+      .cursor {
+        display: inline-block;
+        width: 16px;
+        height: 34px;
+        margin-left: 7px;
+        border-radius: 4px;
+        background: #c8dfaa;
+        vertical-align: -5px;
+      }
+
+      .mini-status {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        color: rgba(23, 23, 23, 0.52);
+        font-size: 20px;
+        font-weight: 720;
+      }
+
+      .pulse {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background: #6a8f34;
+        box-shadow: 0 0 0 10px rgba(106, 143, 52, 0.15);
+      }
+
+      .panel {
+        border: 1px solid rgba(23, 23, 23, 0.1);
+        border-radius: 40px;
+        background: rgba(255, 255, 255, 0.82);
+        box-shadow: 0 28px 88px rgba(23, 23, 23, 0.1);
+      }
+
+      .proof-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 18px;
+        width: 936px;
+      }
+
+      .signal-card {
+        display: flex;
+        min-height: 274px;
+        flex-direction: column;
+        justify-content: space-between;
+        padding: 28px;
+        border: 1px solid rgba(23, 23, 23, 0.1);
+        border-radius: 34px;
+        background: rgba(255, 255, 255, 0.86);
+        box-shadow: 0 22px 64px rgba(23, 23, 23, 0.08);
+      }
+
+      .signal-top {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+
+      .signal-icon {
+        display: grid;
+        width: 58px;
+        height: 58px;
+        place-items: center;
+        border-radius: 20px;
+        background: #c8dfaa;
+        color: #171717;
+        font-size: 28px;
+        font-weight: 900;
+      }
+
+      .signal-icon.blue { background: #97cde5; }
+      .signal-icon.orange { background: #f5a184; }
+
+      .check {
+        display: grid;
+        width: 36px;
+        height: 36px;
+        place-items: center;
+        border-radius: 50%;
+        background: #171717;
+        color: #f7f7f2;
+        font-size: 21px;
+        font-weight: 900;
+      }
+
+      .signal-title {
+        color: #171717;
+        font-size: 34px;
+        font-weight: 780;
+        line-height: 1.02;
+        letter-spacing: 0;
+      }
+
+      .metric {
+        display: flex;
+        align-items: end;
+        gap: 7px;
+        height: 74px;
+      }
+
+      .metric span {
+        width: 22px;
+        border-radius: 8px 8px 3px 3px;
+        background: #6a8f34;
+      }
+
+      .metric span:nth-child(1) { height: 22px; opacity: 0.55; }
+      .metric span:nth-child(2) { height: 36px; opacity: 0.7; }
+      .metric span:nth-child(3) { height: 52px; opacity: 0.85; }
+      .metric span:nth-child(4) { height: 68px; }
+
+      .terminal {
+        width: 936px;
+        padding: 28px;
+        border-radius: 42px;
+        background: #171717;
+        color: #f7f7f2;
+        box-shadow: 0 44px 120px rgba(23, 23, 23, 0.18);
+      }
+
+      .terminal-title {
+        color: rgba(247, 247, 242, 0.62);
+        font-family: monospace;
+        font-size: 22px;
+        font-weight: 700;
+      }
+
+      .code-stack {
+        display: grid;
+        gap: 19px;
+        margin-top: 34px;
+      }
+
+      .code-line {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        color: #f7f7f2;
+        font-family: monospace;
+        font-size: 28px;
+        font-weight: 700;
+        line-height: 1.12;
+      }
+
+      .code-num {
+        color: rgba(247, 247, 242, 0.34);
+        font-size: 25px;
+      }
+
+      .code-green { color: #c8dfaa; }
+      .code-blue { color: #97cde5; }
+      .code-orange { color: #f5a184; }
+
+      .compiler {
+        margin-top: 34px;
+        padding: 22px;
+        border: 1px solid rgba(247, 247, 242, 0.12);
+        border-radius: 28px;
+        background: rgba(255, 255, 255, 0.06);
+      }
+
+      .compiler-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        color: rgba(247, 247, 242, 0.82);
+        font-size: 26px;
+        font-weight: 720;
+      }
+
+      .load {
+        position: relative;
+        width: 270px;
+        height: 15px;
+        overflow: hidden;
+        border-radius: 999px;
+        background: rgba(247, 247, 242, 0.16);
+      }
+
+      .load span {
+        display: block;
+        width: 100%;
+        height: 100%;
+        transform-origin: left center;
+        border-radius: 999px;
+        background: #c8dfaa;
+      }
+
+      .fit-board {
+        display: grid;
+        width: 936px;
+        grid-template-columns: 1fr;
+        gap: 18px;
+      }
+
+      .fit-card {
+        display: grid;
+        grid-template-columns: 1fr 172px;
+        min-height: 178px;
+        align-items: center;
+        gap: 28px;
+        padding: 26px;
+        border: 1px solid rgba(23, 23, 23, 0.1);
+        border-radius: 34px;
+        background: rgba(255, 255, 255, 0.84);
+        box-shadow: 0 22px 60px rgba(23, 23, 23, 0.08);
+      }
+
+      .fit-name {
+        color: #171717;
+        font-size: 38px;
+        font-weight: 790;
+        line-height: 1.04;
+      }
+
+      .fit-meta {
+        margin-top: 12px;
+        color: rgba(23, 23, 23, 0.56);
+        font-size: 25px;
+        font-weight: 680;
+        line-height: 1.1;
+      }
+
+      .score {
+        display: grid;
+        width: 160px;
+        height: 160px;
+        place-items: center;
+        border: 14px solid #c8dfaa;
+        border-right-color: #97cde5;
+        border-radius: 50%;
+        color: #171717;
+        font-size: 42px;
+        font-weight: 850;
+      }
+
+      .fit-card:nth-child(2) .score { border-color: #97cde5; border-right-color: #c8dfaa; }
+      .fit-card:nth-child(3) .score { border-color: #f5a184; border-right-color: #c8dfaa; }
+
+      .radar-wrap {
+        position: relative;
+        width: 936px;
+        height: 1052px;
+        overflow: hidden;
+        border: 1px solid rgba(23, 23, 23, 0.1);
+        border-radius: 52px;
+        background: rgba(255, 255, 255, 0.8);
+        box-shadow: 0 34px 100px rgba(23, 23, 23, 0.1);
+      }
+
+      .radar-grid {
+        position: absolute;
+        inset: 68px;
+        border-radius: 42px;
+        background:
+          linear-gradient(90deg, rgba(23, 23, 23, 0.055) 1px, rgba(255, 255, 255, 0) 1px),
+          linear-gradient(180deg, rgba(23, 23, 23, 0.055) 1px, rgba(255, 255, 255, 0) 1px);
+        background-size: 96px 96px;
+      }
+
+      .ring {
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        width: 520px;
+        height: 520px;
+        transform: translate(-50%, -50%);
+        border: 2px solid rgba(106, 143, 52, 0.22);
+        border-radius: 50%;
+      }
+
+      .ring.r2 { width: 700px; height: 700px; border-color: rgba(52, 127, 159, 0.16); }
+      .ring.r3 { width: 850px; height: 850px; border-color: rgba(210, 96, 66, 0.16); }
+
+      .sweep {
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        width: 6px;
+        height: 420px;
+        transform: translate(-50%, -100%) rotate(-28deg);
+        transform-origin: bottom center;
+        border-radius: 999px;
+        background: linear-gradient(180deg, rgba(106, 143, 52, 0.88), rgba(106, 143, 52, 0));
+      }
+
+      .node {
+        position: absolute;
+        width: 28px;
+        height: 28px;
+        border: 4px solid #ffffff;
+        border-radius: 50%;
+        background: #97cde5;
+        box-shadow: 0 12px 22px rgba(23, 23, 23, 0.16);
+      }
+
+      .node.good { background: #c8dfaa; }
+      .node.hot { width: 48px; height: 48px; background: #d26042; }
+
+      .n1 { left: 170px; top: 256px; }
+      .n2 { left: 356px; top: 356px; }
+      .n3 { left: 604px; top: 262px; }
+      .n4 { left: 722px; top: 532px; }
+      .n5 { left: 280px; top: 710px; }
+      .n6 { left: 540px; top: 790px; }
+      .n7 { left: 466px; top: 496px; }
+
+      .radar-label {
+        position: absolute;
+        left: 58px;
+        right: 58px;
+        bottom: 58px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 18px;
+        padding: 22px 24px;
+        border: 1px solid rgba(23, 23, 23, 0.09);
+        border-radius: 30px;
+        background: rgba(255, 255, 255, 0.86);
+      }
+
+      .radar-label strong {
+        color: #171717;
+        font-size: 32px;
+        font-weight: 790;
+      }
+
+      .radar-label span {
+        color: rgba(23, 23, 23, 0.56);
+        font-size: 23px;
+        font-weight: 680;
+      }
+
+      .close-card {
+        display: flex;
+        width: 936px;
+        min-height: 804px;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 44px;
+        padding: 64px;
+        border: 1px solid rgba(23, 23, 23, 0.1);
+        border-radius: 56px;
+        background: rgba(255, 255, 255, 0.82);
+        box-shadow: 0 42px 120px rgba(23, 23, 23, 0.12);
+        text-align: center;
+      }
+
+      .close-logo {
+        width: 118px;
+        height: 118px;
+        object-fit: contain;
+      }
+
+      .close-word {
+        width: 420px;
+        height: auto;
+        object-fit: contain;
+      }
+
+      .close-title {
+        max-width: 800px;
+        color: #171717;
+        font-size: 82px;
+        font-weight: 820;
+        line-height: 0.98;
+        letter-spacing: 0;
+      }
+
+      .close-title span { color: #6a8f34; }
+
+      .close-copy {
+        max-width: 760px;
+        color: rgba(23, 23, 23, 0.62);
+        font-size: 34px;
+        font-weight: 660;
+        line-height: 1.12;
+      }
+
+      .duo-pills {
+        display: flex;
+        justify-content: center;
+        gap: 14px;
+      }
+
+      .duo-pills span {
+        padding: 16px 22px 17px;
+        border-radius: 999px;
+        color: #171717;
+        font-size: 24px;
+        font-weight: 800;
+        line-height: 1;
+      }
+
+      .duo-pills span:nth-child(1) { background: #c8dfaa; }
+      .duo-pills span:nth-child(2) { background: #97cde5; }
+
+      .headline-block {
+        display: grid;
+        gap: 26px;
+      }
+
+      .kicker {
+        width: max-content;
+        max-width: 100%;
+        padding: 12px 18px 13px;
+        border: 1px solid rgba(23, 23, 23, 0.1);
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.74);
+        color: rgba(23, 23, 23, 0.58);
+        font-size: 22px;
+        font-weight: 780;
+        line-height: 1;
+      }
+
+      .page-title {
+        max-width: 900px;
+        color: #171717;
+        font-size: 86px;
+        font-weight: 820;
+        line-height: 0.98;
+        letter-spacing: 0;
+      }
+
+      .page-title .green { color: #6a8f34; }
+      .page-title .blue { color: #347f9f; }
+      .page-title .orange { color: #d26042; }
+
+      .stack {
+        display: flex;
+        height: 100%;
+        flex-direction: column;
+        justify-content: center;
+        gap: 38px;
+        padding-top: 88px;
+      }
+
+      .screen-glow {
+        position: absolute;
+        left: -180px;
+        right: -180px;
+        bottom: -140px;
+        height: 390px;
+        background: linear-gradient(180deg, rgba(200, 223, 170, 0), rgba(200, 223, 170, 0.38));
+        pointer-events: none;
+      }
+    </style>
+  </head>
+  <body>
+    <div
+      id="root"
+      data-composition-id="main"
+      data-start="0"
+      data-duration="16.2"
+      data-width="1080"
+      data-height="1920"
+    >
+      <audio
+        id="music"
+        data-start="0"
+        data-duration="16.2"
+        data-track-index="8"
+        src="assets/music.wav"
+        data-volume="0.54"
+      ></audio>
+
+      <audio
+        id="narration"
+        data-start="0.45"
+        data-duration="15.632"
+        data-track-index="9"
+        src="assets/narration.wav"
+        data-volume="1"
+      ></audio>
+
+      <section id="scene-1" class="scene">
+        <div class="screen-glow" data-layout-allow-overflow></div>
+        <div class="chrome-line">
+          <div class="brand">
+            <img class="brand-mark" src="assets/apparent-logo.png" alt="" />
+            <img class="brand-word" src="assets/apparent-wordmark.png" alt="Apparent" />
+          </div>
+          <div class="time-pill">proof mode</div>
+        </div>
+        <div class="frame">
+          <div class="hero">
+            <h1 class="super">Your proof is already <span class="green">live.</span></h1>
+            <p class="subhead">Apparent reads the work founders are already shipping and makes the investor fit obvious.</p>
+            <div class="command">
+              <div class="command-bar">
+                <div class="traffic">
+                  <span class="dot a"></span>
+                  <span class="dot b"></span>
+                  <span class="dot c"></span>
+                </div>
+                <div class="mini-status"><span class="pulse"></span>matching now</div>
+              </div>
+              <div class="cmd-text">apparent match --proof --fit<span class="cursor"></span></div>
+            </div>
+          </div>
+          <div class="caption">
+            <strong>Your proof is already live.</strong>
+            <span>founder signal</span>
+          </div>
+        </div>
+      </section>
+
+      <section id="scene-2" class="scene">
+        <div class="chrome-line">
+          <div class="brand">
+            <img class="brand-mark" src="assets/apparent-logo.png" alt="" />
+            <img class="brand-word" src="assets/apparent-wordmark.png" alt="Apparent" />
+          </div>
+          <div class="time-pill">collecting signals</div>
+        </div>
+        <div class="frame">
+          <div class="stack">
+            <div class="headline-block">
+              <div class="kicker">Proof feed</div>
+              <h2 class="page-title">Launches, commits, traction, and customer signals.</h2>
+            </div>
+            <div class="proof-grid">
+              <article class="signal-card">
+                <div class="signal-top">
+                  <div class="signal-icon">L</div>
+                  <div class="check">+</div>
+                </div>
+                <h3 class="signal-title">Launch shipped</h3>
+                <div class="metric"><span></span><span></span><span></span><span></span></div>
+              </article>
+              <article class="signal-card">
+                <div class="signal-top">
+                  <div class="signal-icon blue">C</div>
+                  <div class="check">+</div>
+                </div>
+                <h3 class="signal-title">Commits rising</h3>
+                <div class="metric"><span></span><span></span><span></span><span></span></div>
+              </article>
+              <article class="signal-card">
+                <div class="signal-top">
+                  <div class="signal-icon orange">T</div>
+                  <div class="check">+</div>
+                </div>
+                <h3 class="signal-title">Traction visible</h3>
+                <div class="metric"><span></span><span></span><span></span><span></span></div>
+              </article>
+              <article class="signal-card">
+                <div class="signal-top">
+                  <div class="signal-icon">Q</div>
+                  <div class="check">+</div>
+                </div>
+                <h3 class="signal-title">Customer proof</h3>
+                <div class="metric"><span></span><span></span><span></span><span></span></div>
+              </article>
+            </div>
+          </div>
+          <div class="caption">
+            <strong>Apparent reads what you ship.</strong>
+            <span>live proof</span>
+          </div>
+        </div>
+      </section>
+
+      <section id="scene-3" class="scene">
+        <div class="chrome-line">
+          <div class="brand">
+            <img class="brand-mark" src="assets/apparent-logo.png" alt="" />
+            <img class="brand-word" src="assets/apparent-wordmark.png" alt="Apparent" />
+          </div>
+          <div class="time-pill">agent run</div>
+        </div>
+        <div class="frame">
+          <div class="stack">
+            <div class="headline-block">
+              <div class="kicker">Codex-style workflow</div>
+              <h2 class="page-title">Signals become <span class="blue">investor fit.</span></h2>
+            </div>
+            <div class="terminal">
+              <div class="terminal-bar">
+                <div class="traffic">
+                  <span class="dot a"></span>
+                  <span class="dot b"></span>
+                  <span class="dot c"></span>
+                </div>
+                <div class="terminal-title">apparent.ai/run</div>
+              </div>
+              <div class="code-stack">
+                <div class="code-line"><span class="code-num">01</span><span class="code-green">proof</span><span>= collect(founder.work)</span></div>
+                <div class="code-line"><span class="code-num">02</span><span class="code-blue">thesis</span><span>= read(investor.focus)</span></div>
+                <div class="code-line"><span class="code-num">03</span><span class="code-orange">fit</span><span>= rank(proof, thesis)</span></div>
+                <div class="code-line"><span class="code-num">04</span><span>context = "why now"</span></div>
+              </div>
+              <div class="compiler">
+                <div class="compiler-row">
+                  <span>building fit context</span>
+                  <div class="load"><span></span></div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="caption">
+            <strong>Launches, commits, traction, and customer signals become investor fit.</strong>
+            <span>fit engine</span>
+          </div>
+        </div>
+      </section>
+
+      <section id="scene-4" class="scene">
+        <div class="chrome-line">
+          <div class="brand">
+            <img class="brand-mark" src="assets/apparent-logo.png" alt="" />
+            <img class="brand-word" src="assets/apparent-wordmark.png" alt="Apparent" />
+          </div>
+          <div class="time-pill">thesis fit</div>
+        </div>
+        <div class="frame">
+          <div class="stack">
+            <div class="headline-block">
+              <div class="kicker">Investor view</div>
+              <h2 class="page-title">The right investors see <span class="green">why now.</span></h2>
+            </div>
+            <div class="fit-board">
+              <article class="fit-card">
+                <div>
+                  <h3 class="fit-name">AI infra investor</h3>
+                  <p class="fit-meta">Matches technical traction, buyer pull, and efficient growth.</p>
+                </div>
+                <div class="score">94</div>
+              </article>
+              <article class="fit-card">
+                <div>
+                  <h3 class="fit-name">Vertical SaaS fund</h3>
+                  <p class="fit-meta">Strong customer proof and category timing.</p>
+                </div>
+                <div class="score">88</div>
+              </article>
+              <article class="fit-card">
+                <div>
+                  <h3 class="fit-name">Marketplace partner</h3>
+                  <p class="fit-meta">Useful context, but weaker thesis match.</p>
+                </div>
+                <div class="score">62</div>
+              </article>
+            </div>
+          </div>
+          <div class="caption">
+            <strong>Matched to investors whose thesis actually fits.</strong>
+            <span>context wins</span>
+          </div>
+        </div>
+      </section>
+
+      <section id="scene-5" class="scene">
+        <div class="chrome-line">
+          <div class="brand">
+            <img class="brand-mark" src="assets/apparent-logo.png" alt="" />
+            <img class="brand-word" src="assets/apparent-wordmark.png" alt="Apparent" />
+          </div>
+          <div class="time-pill">builder radar</div>
+        </div>
+        <div class="frame">
+          <div class="stack">
+            <div class="headline-block">
+              <div class="kicker">Heat map logic</div>
+              <h2 class="page-title">Less list. More <span class="orange">fit.</span></h2>
+            </div>
+            <div class="radar-wrap">
+              <div class="radar-grid"></div>
+              <div class="ring r3"></div>
+              <div class="ring r2"></div>
+              <div class="ring"></div>
+              <div class="sweep"></div>
+              <span class="node n1 good"></span>
+              <span class="node n2"></span>
+              <span class="node n3 good"></span>
+              <span class="node n4"></span>
+              <span class="node n5 good"></span>
+              <span class="node n6"></span>
+              <span class="node n7 hot"></span>
+              <div class="radar-label">
+                <strong>Top fit found</strong>
+                <span>proof + thesis + timing</span>
+              </div>
+            </div>
+          </div>
+          <div class="caption">
+            <strong>Less cold lists. More context. Better conversations.</strong>
+            <span>live radar</span>
+          </div>
+        </div>
+      </section>
+
+      <section id="scene-6" class="scene">
+        <div class="screen-glow" data-layout-allow-overflow></div>
+        <div class="chrome-line">
+          <div class="brand">
+            <img class="brand-mark" src="assets/apparent-logo.png" alt="" />
+            <img class="brand-word" src="assets/apparent-wordmark.png" alt="Apparent" />
+          </div>
+          <div class="time-pill">investor ready</div>
+        </div>
+        <div class="frame">
+          <div class="hero">
+            <div class="close-card">
+              <img class="close-logo" src="assets/apparent-logo.png" alt="" />
+              <img class="close-word" src="assets/apparent-wordmark.png" alt="Apparent" />
+              <h2 class="close-title">Proof signals into <span>investor fit.</span></h2>
+              <p class="close-copy">For founders with momentum and investors who want sharper context.</p>
+              <div class="duo-pills">
+                <span>Founder proof</span>
+                <span>Investor thesis</span>
+              </div>
+            </div>
+          </div>
+          <div class="caption">
+            <strong>This is Apparent: founder proof, investor fit.</strong>
+            <span>apparent</span>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <script>
+      window.__timelines = window.__timelines || {};
+
+      const tl = gsap.timeline({ paused: true });
+      const scenes = ["#scene-1", "#scene-2", "#scene-3", "#scene-4", "#scene-5", "#scene-6"];
+
+      function transition(fromScene, toScene, at) {
+        tl.to(fromScene, { opacity: 0, scale: 1.025, filter: "blur(8px)", duration: 0.26, ease: "power4.inOut", overwrite: "auto" }, at);
+        tl.fromTo(
+          toScene,
+          { opacity: 0, scale: 0.975, filter: "blur(10px)" },
+          { opacity: 1, scale: 1, filter: "blur(0px)", duration: 0.32, ease: "power4.out", overwrite: "auto" },
+          at + 0.06
+        );
+      }
+
+      function enterShell(scene, at) {
+        tl.from(`${scene} .chrome-line`, { y: -22, opacity: 0, duration: 0.28, ease: "power3.out", overwrite: "auto" }, at);
+        tl.from(`${scene} .caption`, { y: 28, opacity: 0, duration: 0.32, ease: "power3.out", overwrite: "auto" }, at + 0.16);
+      }
+
+      enterShell(scenes[0], 0.12);
+      tl.from("#scene-1 .super", { y: 72, scale: 0.94, opacity: 0, duration: 0.46, ease: "power4.out", overwrite: "auto" }, 0.18);
+      tl.from("#scene-1 .subhead", { y: 34, opacity: 0, duration: 0.36, ease: "power3.out", overwrite: "auto" }, 0.48);
+      tl.from("#scene-1 .command", { y: 48, scale: 0.96, opacity: 0, duration: 0.42, ease: "back.out(1.7)", overwrite: "auto" }, 0.72);
+      tl.to("#scene-1 .cursor", { opacity: 0, duration: 0.18, repeat: 7, yoyo: true, ease: "steps(1)", overwrite: "auto" }, 1.0);
+      tl.to("#scene-1 .pulse", { scale: 1.35, duration: 0.42, repeat: 3, yoyo: true, ease: "sine.inOut", overwrite: "auto" }, 1.0);
+
+      transition(scenes[0], scenes[1], 2.36);
+      enterShell(scenes[1], 2.58);
+      tl.from("#scene-2 .kicker", { y: 18, opacity: 0, duration: 0.24, ease: "power3.out", overwrite: "auto" }, 2.68);
+      tl.from("#scene-2 .page-title", { y: 46, opacity: 0, duration: 0.36, ease: "power4.out", overwrite: "auto" }, 2.78);
+      tl.from("#scene-2 .signal-card", { y: 52, scale: 0.92, opacity: 0, duration: 0.34, stagger: 0.07, ease: "back.out(1.9)", overwrite: "auto" }, 3.18);
+      tl.from("#scene-2 .metric span", { scaleY: 0, transformOrigin: "bottom center", duration: 0.36, stagger: 0.02, ease: "expo.out", overwrite: "auto" }, 3.55);
+
+      transition(scenes[1], scenes[2], 5.0);
+      enterShell(scenes[2], 5.22);
+      tl.from("#scene-3 .kicker", { y: 18, opacity: 0, duration: 0.24, ease: "power3.out", overwrite: "auto" }, 5.3);
+      tl.from("#scene-3 .page-title", { y: 42, opacity: 0, duration: 0.34, ease: "power4.out", overwrite: "auto" }, 5.42);
+      tl.from("#scene-3 .terminal", { y: 58, scale: 0.95, opacity: 0, duration: 0.4, ease: "back.out(1.6)", overwrite: "auto" }, 5.76);
+      tl.from("#scene-3 .code-line", { y: 18, opacity: 0, duration: 0.22, stagger: 0.12, ease: "power3.out", overwrite: "auto" }, 6.1);
+      tl.from("#scene-3 .load span", { scaleX: 0, transformOrigin: "left center", duration: 1.0, ease: "expo.out", overwrite: "auto" }, 6.6);
+
+      transition(scenes[2], scenes[3], 7.68);
+      enterShell(scenes[3], 7.9);
+      tl.from("#scene-4 .kicker", { y: 18, opacity: 0, duration: 0.24, ease: "power3.out", overwrite: "auto" }, 8.0);
+      tl.from("#scene-4 .page-title", { y: 42, opacity: 0, duration: 0.34, ease: "power4.out", overwrite: "auto" }, 8.1);
+      tl.from("#scene-4 .fit-card", { x: 46, scale: 0.95, opacity: 0, duration: 0.34, stagger: 0.12, ease: "back.out(1.6)", overwrite: "auto" }, 8.45);
+      tl.from("#scene-4 .score", { scale: 0.72, opacity: 0, duration: 0.3, stagger: 0.12, ease: "back.out(2.2)", overwrite: "auto" }, 8.74);
+
+      transition(scenes[3], scenes[4], 10.42);
+      enterShell(scenes[4], 10.64);
+      tl.from("#scene-5 .kicker", { y: 18, opacity: 0, duration: 0.24, ease: "power3.out", overwrite: "auto" }, 10.72);
+      tl.from("#scene-5 .page-title", { y: 42, opacity: 0, duration: 0.34, ease: "power4.out", overwrite: "auto" }, 10.84);
+      tl.from("#scene-5 .radar-wrap", { y: 52, scale: 0.96, opacity: 0, duration: 0.38, ease: "back.out(1.6)", overwrite: "auto" }, 11.18);
+      tl.from("#scene-5 .ring", { scale: 0.45, opacity: 0, duration: 0.45, stagger: 0.08, ease: "expo.out", overwrite: "auto" }, 11.42);
+      tl.from("#scene-5 .node", { scale: 0, opacity: 0, duration: 0.24, stagger: 0.04, ease: "back.out(2.6)", overwrite: "auto" }, 11.68);
+      tl.to("#scene-5 .sweep", { rotation: 332, transformOrigin: "bottom center", duration: 1.65, ease: "power2.inOut", overwrite: "auto" }, 11.58);
+      tl.to("#scene-5 .node.hot", { scale: 1.25, duration: 0.32, repeat: 3, yoyo: true, ease: "sine.inOut", overwrite: "auto" }, 12.18);
+
+      transition(scenes[4], scenes[5], 13.12);
+      enterShell(scenes[5], 13.36);
+      tl.from("#scene-6 .close-card", { y: 64, scale: 0.94, opacity: 0, duration: 0.46, ease: "back.out(1.6)", overwrite: "auto" }, 13.46);
+      tl.from("#scene-6 .close-logo", { y: 20, scale: 0.82, opacity: 0, duration: 0.32, ease: "back.out(2)", overwrite: "auto" }, 13.78);
+      tl.from("#scene-6 .close-word", { y: 20, opacity: 0, duration: 0.28, ease: "power3.out", overwrite: "auto" }, 13.98);
+      tl.from("#scene-6 .close-title", { y: 38, opacity: 0, duration: 0.36, ease: "power4.out", overwrite: "auto" }, 14.18);
+      tl.from("#scene-6 .close-copy", { y: 24, opacity: 0, duration: 0.32, ease: "power3.out", overwrite: "auto" }, 14.42);
+      tl.from("#scene-6 .duo-pills span", { y: 22, scale: 0.88, opacity: 0, duration: 0.24, stagger: 0.08, ease: "back.out(2.2)", overwrite: "auto" }, 14.68);
+      tl.to("#scene-6 .close-card", { scale: 1.018, duration: 0.72, ease: "sine.inOut", overwrite: "auto" }, 15.0);
+      tl.to("#scene-6", { opacity: 0, duration: 0.44, ease: "power2.inOut", overwrite: "auto" }, 15.72);
+
+      window.__timelines["main"] = tl;
+    </script>
+  </body>
+</html>

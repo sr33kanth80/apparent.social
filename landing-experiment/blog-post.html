@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Apparent · Post</title>
+<meta name="description" content="Investor research and editorial from Apparent." />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@300;400;500;600&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+<main>
+  <article class="article inner" id="article" style="padding-top:clamp(36px,6vw,72px);padding-bottom:clamp(48px,7vw,96px)"></article>
+  <section class="final divider" id="next"></section>
+</main>
+<script src="blog-data.js"></script>
+<script>
+  var posts = window.POSTS;
+  var slug = new URLSearchParams(location.search).get('slug');
+  var i = posts.findIndex(function (p) { return p.slug === slug; });
+  if (i < 0) { location.replace('blog.html'); }
+  else {
+    var p = posts[i];
+    document.title = 'Apparent · ' + p.title;
+    var arrowL = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M11 18l-6-6 6-6"/></svg>';
+    var body = '<a class="back" href="blog.html">' + arrowL + ' Back to blog</a>' +
+      '<h1>' + p.title + '</h1>' +
+      '<p class="ameta">' + p.author + ' · ' + p.date + ' · ' + p.readTime + '</p>' +
+      '<p class="dek">' + p.dek + '</p>' +
+      p.sections.map(function (s) {
+        return '<section><h2>' + s.heading + '</h2>' + s.paragraphs.map(function (t) { return '<p>' + t + '</p>'; }).join('') + '</section>';
+      }).join('');
+    document.getElementById('article').innerHTML = body;
+
+    var n = posts[(i + 1) % posts.length];
+    document.getElementById('next').innerHTML =
+      '<div class="inner"><p class="sec-kicker" style="text-align:center">Read next</p>' +
+      '<h2 style="margin-top:14px">' + n.title + '</h2>' +
+      '<div class="cta"><a class="btn btn-filled" href="blog-post.html?slug=' + n.slug + '">Read next post</a>' +
+      '<a class="btn btn-outline" href="blog.html">All posts</a></div></div>';
+  }
+</script>
+<script src="site.js"></script>
+</body>
+</html>

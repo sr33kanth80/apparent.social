@@ -1,0 +1,433 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1080, height=1920" />
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <style>
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      html,
+      body {
+        width: 1080px;
+        height: 1920px;
+        overflow: hidden;
+        background: #fbfaf6;
+      }
+
+      body {
+        color: #28262a;
+        font-family: serif;
+      }
+
+      #root {
+        position: relative;
+        width: 1080px;
+        height: 1920px;
+        overflow: hidden;
+        background: #fbfaf6;
+      }
+
+      .scene {
+        position: absolute;
+        inset: 0;
+        width: 1080px;
+        height: 1920px;
+        overflow: hidden;
+        background:
+          radial-gradient(circle at 20% 10%, rgba(200, 223, 170, 0.45), rgba(200, 223, 170, 0) 290px),
+          radial-gradient(circle at 82% 86%, rgba(151, 205, 229, 0.34), rgba(151, 205, 229, 0) 330px),
+          #fbfaf6;
+      }
+
+      #scene-1 { z-index: 1; }
+      #scene-2 { z-index: 2; opacity: 0; }
+      #scene-3 { z-index: 3; opacity: 0; }
+      #scene-4 { z-index: 4; opacity: 0; }
+      #scene-5 { z-index: 5; opacity: 0; }
+      #scene-6 { z-index: 6; opacity: 0; }
+      #scene-7 { z-index: 7; opacity: 0; }
+      #scene-8 { z-index: 8; opacity: 0; }
+
+      .scene-content {
+        display: flex;
+        position: relative;
+        width: 100%;
+        height: 100%;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 28px;
+        padding: 82px 52px 92px;
+      }
+
+      .hero-copy {
+        display: flex;
+        width: 100%;
+        flex-direction: column;
+        gap: 14px;
+        align-items: center;
+        text-align: center;
+      }
+
+      .big {
+        max-width: 980px;
+        color: #28262a;
+        font-size: 146px;
+        font-weight: 900;
+        line-height: 0.88;
+        letter-spacing: 0;
+      }
+
+      .big span {
+        display: inline-block;
+      }
+
+      .blue { color: #347f9f; }
+      .green { color: #567c2a; }
+      .orange { color: #c6593c; }
+
+      .sub {
+        max-width: 780px;
+        color: #4a4a4c;
+        font-size: 44px;
+        font-weight: 750;
+        line-height: 1.03;
+      }
+
+      .art-frame {
+        display: flex;
+        position: relative;
+        width: 920px;
+        height: 1320px;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+        border: 2px solid rgba(40, 38, 42, 0.1);
+        border-radius: 34px;
+        background: #fffdfa;
+        box-shadow:
+          0 30px 70px rgba(40, 38, 42, 0.14),
+          0 8px 28px rgba(151, 205, 229, 0.22);
+      }
+
+      .art-frame--full {
+        height: 1460px;
+      }
+
+      .art-frame--short {
+        height: 1160px;
+      }
+
+      .art-frame img {
+        display: block;
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+      }
+
+      .sticker {
+        position: absolute;
+        z-index: 20;
+        padding: 16px 26px 19px;
+        border: 3px solid #28262a;
+        border-radius: 999px;
+        background: #c8dfaa;
+        color: #28262a;
+        box-shadow: 7px 7px 0 #28262a;
+        font-size: 47px;
+        font-weight: 900;
+        line-height: 0.95;
+        white-space: nowrap;
+      }
+
+      .sticker--blue {
+        background: #97cde5;
+      }
+
+      .sticker--orange {
+        background: #ff9473;
+      }
+
+      .sticker--cream {
+        background: #fffdfa;
+      }
+
+      .top-left { top: 116px; left: 58px; transform: rotate(-4deg); }
+      .top-right { top: 150px; right: 54px; transform: rotate(5deg); }
+      .bottom-left { bottom: 150px; left: 64px; transform: rotate(4deg); }
+      .bottom-right { right: 62px; bottom: 150px; transform: rotate(-4deg); }
+
+      .slash {
+        position: absolute;
+        z-index: 2;
+        width: 240px;
+        height: 12px;
+        border-radius: 999px;
+        background: #c8dfaa;
+      }
+
+      .slash--a { top: 132px; left: 92px; transform: rotate(-9deg); }
+      .slash--b { right: 112px; bottom: 118px; transform: rotate(8deg); background: #97cde5; }
+
+      .collage {
+        display: grid;
+        width: 950px;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 22px;
+      }
+
+      .mini {
+        position: relative;
+        height: 610px;
+        overflow: hidden;
+        border: 2px solid rgba(40, 38, 42, 0.1);
+        border-radius: 30px;
+        background: #fffdfa;
+        box-shadow: 0 22px 42px rgba(40, 38, 42, 0.1);
+      }
+
+      .mini img {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+      }
+
+      .logo-lockup {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 32px;
+        text-align: center;
+      }
+
+      .logo-row {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 24px;
+        padding: 34px 46px;
+        border: 3px solid #c8dfaa;
+        border-radius: 42px;
+        background: rgba(255, 253, 250, 0.96);
+        box-shadow: 10px 10px 0 #28262a;
+      }
+
+      .logo-row__mark {
+        width: 118px;
+        height: 118px;
+        object-fit: contain;
+      }
+
+      .logo-row__word {
+        width: 420px;
+        height: auto;
+        object-fit: contain;
+      }
+
+      .cta {
+        max-width: 880px;
+        color: #28262a;
+        font-size: 76px;
+        font-weight: 900;
+        line-height: 0.98;
+      }
+
+      .tiny {
+        color: #4a4a4c;
+        font-size: 38px;
+        font-weight: 760;
+      }
+    </style>
+  </head>
+  <body>
+    <div
+      id="root"
+      data-composition-id="main"
+      data-start="0"
+      data-duration="15.385"
+      data-width="1080"
+      data-height="1920"
+    >
+      <audio
+        id="music"
+        data-start="0"
+        data-duration="15.385"
+        data-track-index="9"
+        src="assets/music.wav"
+        data-volume="0.92"
+      ></audio>
+
+      <section id="scene-1" class="scene">
+        <span class="slash slash--a"></span>
+        <div class="scene-content">
+          <div class="hero-copy">
+            <h1 class="big"><span class="green">Proof</span> &gt; Pitch</h1>
+            <p class="sub">Fundraising, but make the signal obvious.</p>
+          </div>
+        </div>
+      </section>
+
+      <section id="scene-2" class="scene">
+        <span class="slash slash--b"></span>
+        <div class="scene-content">
+          <figure class="art-frame art-frame--full" data-layout-allow-overflow>
+            <img src="assets/stop-losing-proof.png" alt="Stop losing proof" />
+          </figure>
+          <div class="sticker top-left">stop losing proof</div>
+        </div>
+      </section>
+
+      <section id="scene-3" class="scene">
+        <span class="slash slash--a"></span>
+        <div class="scene-content">
+          <figure class="art-frame art-frame--full" data-layout-allow-overflow>
+            <img src="assets/github-can-pitch.png" alt="Your GitHub can pitch" />
+          </figure>
+          <div class="sticker sticker--blue bottom-right">ship = signal</div>
+        </div>
+      </section>
+
+      <section id="scene-4" class="scene">
+        <div class="scene-content">
+          <figure class="art-frame art-frame--full" data-layout-allow-overflow>
+            <img src="assets/less-list-more-fit.png" alt="Less list. More fit." />
+          </figure>
+          <div class="sticker sticker--cream top-right" data-layout-allow-overlap>less list</div>
+          <div class="sticker sticker--orange bottom-left" data-layout-allow-overlap>more fit</div>
+        </div>
+      </section>
+
+      <section id="scene-5" class="scene">
+        <span class="slash slash--b"></span>
+        <div class="scene-content">
+          <figure class="art-frame art-frame--short" data-layout-allow-overflow>
+            <img src="assets/proof-to-pipeline.png" alt="From proof to pipeline" />
+          </figure>
+          <div class="hero-copy">
+            <h2 class="big"><span class="blue">proof</span> to pipeline</h2>
+          </div>
+        </div>
+      </section>
+
+      <section id="scene-6" class="scene">
+        <div class="scene-content">
+          <div class="collage">
+            <figure class="mini"><img src="assets/stop-losing-proof.png" alt="" /></figure>
+            <figure class="mini"><img src="assets/github-can-pitch.png" alt="" /></figure>
+            <figure class="mini"><img src="assets/less-list-more-fit.png" alt="" /></figure>
+            <figure class="mini"><img src="assets/proof-to-pipeline.png" alt="" /></figure>
+          </div>
+          <div class="sticker sticker--blue bottom-left">right investor</div>
+          <div class="sticker top-right">right now</div>
+        </div>
+      </section>
+
+      <section id="scene-7" class="scene">
+        <div class="scene-content">
+          <figure class="art-frame art-frame--short" data-layout-allow-overflow>
+            <img src="assets/proof-to-pipeline.png" alt="Proof to pipeline" />
+          </figure>
+          <div class="hero-copy">
+            <h2 class="big"><span class="orange">not</span> spray & pray</h2>
+            <p class="sub">Match proof to thesis.</p>
+          </div>
+        </div>
+      </section>
+
+      <section id="scene-8" class="scene">
+        <div class="scene-content">
+          <div class="logo-lockup">
+            <div class="logo-row">
+              <img class="logo-row__mark" src="assets/apparent-logo.png" alt="" />
+              <img class="logo-row__word" src="assets/apparent-wordmark.png" alt="Apparent" />
+            </div>
+            <p class="cta">Proof signals into investor fit.</p>
+            <p class="tiny">for founders with momentum</p>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <script>
+      window.__timelines = window.__timelines || {};
+
+      const beat = 60 / 156;
+      const tl = gsap.timeline({ paused: true });
+      const scenes = ["#scene-1", "#scene-2", "#scene-3", "#scene-4", "#scene-5", "#scene-6", "#scene-7", "#scene-8"];
+
+      function popIn(scene, at, parts) {
+        if (parts.big) {
+          tl.from(`${scene} .big`, { y: 50, scale: 0.88, opacity: 0, duration: 0.24, ease: "back.out(2.4)", overwrite: "auto" }, at);
+        }
+        if (parts.sub) {
+          tl.from(`${scene} .sub`, { y: 22, opacity: 0, duration: 0.2, ease: "power3.out", overwrite: "auto" }, at + beat * 0.55);
+        }
+        if (parts.art) {
+          tl.from(`${scene} .art-frame`, { y: 48, scale: 0.92, rotation: -1.6, opacity: 0, duration: 0.26, ease: "back.out(2.2)", overwrite: "auto" }, at);
+        }
+        if (parts.sticker) {
+          tl.from(`${scene} .sticker`, { y: 30, scale: 0.78, rotation: -7, opacity: 0, duration: 0.22, stagger: 0.08, ease: "back.out(2.8)", overwrite: "auto" }, at + beat * 0.45);
+        }
+        if (parts.slash) {
+          tl.from(`${scene} .slash`, { scaleX: 0, opacity: 0, transformOrigin: "left center", duration: 0.2, ease: "expo.out", overwrite: "auto" }, at + beat * 0.2);
+        }
+      }
+
+      function drift(scene, at, duration, x, y, scale, rotation) {
+        tl.to(`${scene} .art-frame img`, { x, y, scale, rotation, duration, ease: "sine.inOut", overwrite: "auto" }, at);
+      }
+
+      function jump(fromScene, toScene, at) {
+        tl.to(fromScene, { opacity: 0, scale: 1.04, filter: "blur(4px)", duration: 0.16, ease: "power4.in", overwrite: "auto" }, at);
+        tl.fromTo(
+          toScene,
+          { opacity: 0, scale: 0.96, filter: "blur(7px)" },
+          { opacity: 1, scale: 1, filter: "blur(0px)", duration: 0.18, ease: "power4.out", overwrite: "auto" },
+          at + 0.04
+        );
+      }
+
+      popIn(scenes[0], 0.12, { big: true, sub: true, art: false, sticker: false, slash: true });
+      tl.to("#scene-1 .big", { scale: 1.035, duration: beat, ease: "power1.inOut", overwrite: "auto" }, beat * 1.3);
+
+      jump(scenes[0], scenes[1], beat * 4);
+      popIn(scenes[1], beat * 4.28, { big: false, sub: false, art: true, sticker: true, slash: true });
+      drift(scenes[1], beat * 4.6, beat * 3.15, -8, -18, 1.035, 0.4);
+
+      jump(scenes[1], scenes[2], beat * 8);
+      popIn(scenes[2], beat * 8.28, { big: false, sub: false, art: true, sticker: true, slash: true });
+      drift(scenes[2], beat * 8.6, beat * 3.15, 10, -20, 1.034, -0.35);
+
+      jump(scenes[2], scenes[3], beat * 12);
+      popIn(scenes[3], beat * 12.28, { big: false, sub: false, art: true, sticker: true, slash: false });
+      drift(scenes[3], beat * 12.6, beat * 3.15, -10, -18, 1.035, 0.3);
+
+      jump(scenes[3], scenes[4], beat * 16);
+      popIn(scenes[4], beat * 16.26, { big: true, sub: false, art: true, sticker: false, slash: true });
+      drift(scenes[4], beat * 16.6, beat * 3.15, 8, -16, 1.034, 0.2);
+
+      jump(scenes[4], scenes[5], beat * 20);
+      tl.from(`${scenes[5]} .mini`, { y: 48, scale: 0.84, opacity: 0, rotation: -3, duration: 0.28, stagger: 0.06, ease: "back.out(2.4)", overwrite: "auto" }, beat * 20.28);
+      tl.from(`${scenes[5]} .sticker`, { y: 30, scale: 0.78, opacity: 0, duration: 0.22, stagger: 0.08, ease: "back.out(2.8)", overwrite: "auto" }, beat * 21.1);
+      tl.to(`${scenes[5]} .collage`, { scale: 1.025, rotation: -0.35, duration: beat * 3, ease: "sine.inOut", overwrite: "auto" }, beat * 21);
+
+      jump(scenes[5], scenes[6], beat * 28);
+      popIn(scenes[6], beat * 28.25, { big: true, sub: true, art: true, sticker: false, slash: false });
+      drift(scenes[6], beat * 28.6, beat * 3.2, -8, -18, 1.035, -0.2);
+
+      jump(scenes[6], scenes[7], beat * 34);
+      tl.from("#scene-8 .logo-row", { y: 48, scale: 0.84, opacity: 0, rotation: -2, duration: 0.34, ease: "back.out(2.2)", overwrite: "auto" }, beat * 34.2);
+      tl.from("#scene-8 .cta", { y: 42, scale: 0.92, opacity: 0, duration: 0.28, ease: "power4.out", overwrite: "auto" }, beat * 35.1);
+      tl.from("#scene-8 .tiny", { y: 24, opacity: 0, duration: 0.22, ease: "sine.out", overwrite: "auto" }, beat * 36.1);
+      tl.to("#scene-8 .logo-row", { scale: 1.035, duration: beat, ease: "power1.inOut", overwrite: "auto" }, beat * 37);
+      tl.to("#scene-8", { opacity: 0, duration: 0.26, ease: "power2.inOut", overwrite: "auto" }, 15.08);
+
+      window.__timelines["main"] = tl;
+    </script>
+  </body>
+</html>

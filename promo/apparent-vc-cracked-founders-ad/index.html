@@ -1,0 +1,948 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1080, height=1920" />
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <style>
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      html,
+      body {
+        width: 1080px;
+        height: 1920px;
+        overflow: hidden;
+        background: #f7f7f2;
+      }
+
+      body {
+        color: #171717;
+        font-family: sans-serif;
+      }
+
+      #root,
+      .scene {
+        position: relative;
+        width: 1080px;
+        height: 1920px;
+        overflow: hidden;
+        background:
+          radial-gradient(circle at 14% 10%, rgba(200, 223, 170, 0.46), rgba(200, 223, 170, 0) 330px),
+          radial-gradient(circle at 88% 82%, rgba(151, 205, 229, 0.34), rgba(151, 205, 229, 0) 350px),
+          linear-gradient(90deg, rgba(23, 23, 23, 0.035) 1px, rgba(247, 247, 242, 0) 1px),
+          linear-gradient(180deg, rgba(23, 23, 23, 0.035) 1px, rgba(247, 247, 242, 0) 1px),
+          #f7f7f2;
+        background-size: auto, auto, 72px 72px, 72px 72px, auto;
+      }
+
+      .scene {
+        position: absolute;
+        inset: 0;
+      }
+
+      #scene-1 { z-index: 1; }
+      #scene-2 { z-index: 2; opacity: 0; }
+      #scene-3 { z-index: 3; opacity: 0; }
+      #scene-4 { z-index: 4; opacity: 0; }
+      #scene-5 { z-index: 5; opacity: 0; }
+      #scene-6 { z-index: 6; opacity: 0; }
+
+      .frame {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        padding: 86px 58px 90px;
+      }
+
+      .chrome {
+        position: absolute;
+        top: 70px;
+        left: 58px;
+        right: 58px;
+        z-index: 30;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+      }
+
+      .brand img:first-child {
+        width: 54px;
+        height: 54px;
+        object-fit: contain;
+      }
+
+      .brand img:last-child {
+        width: 178px;
+        height: auto;
+      }
+
+      .tag {
+        padding: 10px 15px 11px;
+        border: 1px solid rgba(23, 23, 23, 0.1);
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.76);
+        box-shadow: 0 12px 38px rgba(23, 23, 23, 0.06);
+        color: rgba(23, 23, 23, 0.68);
+        font-size: 18px;
+        font-weight: 800;
+        line-height: 1;
+        letter-spacing: 0;
+      }
+
+      .stack {
+        display: flex;
+        height: 100%;
+        flex-direction: column;
+        justify-content: center;
+        gap: 38px;
+        padding-top: 88px;
+      }
+
+      .hero-stack {
+        display: flex;
+        height: 100%;
+        flex-direction: column;
+        justify-content: center;
+        gap: 44px;
+        padding-top: 92px;
+      }
+
+      .kicker {
+        width: max-content;
+        max-width: 100%;
+        padding: 12px 18px 13px;
+        border: 1px solid rgba(23, 23, 23, 0.1);
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.76);
+        color: rgba(23, 23, 23, 0.66);
+        font-size: 22px;
+        font-weight: 800;
+        line-height: 1;
+      }
+
+      .headline {
+        max-width: 920px;
+        color: #171717;
+        font-size: 94px;
+        font-weight: 840;
+        line-height: 0.96;
+        letter-spacing: 0;
+      }
+
+      .super {
+        max-width: 940px;
+        color: #171717;
+        font-size: 134px;
+        font-weight: 840;
+        line-height: 0.9;
+        letter-spacing: 0;
+      }
+
+      .green { color: #6a8f34; }
+      .blue { color: #347f9f; }
+      .orange { color: #d26042; }
+
+      .subhead {
+        max-width: 820px;
+        color: rgba(23, 23, 23, 0.68);
+        font-size: 40px;
+        font-weight: 650;
+        line-height: 1.08;
+        letter-spacing: 0;
+      }
+
+      .caption {
+        position: absolute;
+        left: 58px;
+        right: 58px;
+        bottom: 74px;
+        z-index: 35;
+        display: flex;
+        min-height: 94px;
+        align-items: center;
+        justify-content: space-between;
+        gap: 22px;
+        padding: 20px 25px;
+        border: 1px solid rgba(23, 23, 23, 0.1);
+        border-radius: 32px;
+        background: rgba(255, 255, 255, 0.82);
+        box-shadow: 0 24px 68px rgba(23, 23, 23, 0.09);
+      }
+
+      .caption strong {
+        color: #171717;
+        font-size: 29px;
+        font-weight: 780;
+        line-height: 1.07;
+        letter-spacing: 0;
+      }
+
+      .caption span {
+        flex: 0 0 auto;
+        padding: 11px 16px 12px;
+        border-radius: 999px;
+        background: #c8dfaa;
+        color: #171717;
+        font-size: 20px;
+        font-weight: 850;
+        line-height: 1;
+      }
+
+      .command {
+        display: grid;
+        width: 936px;
+        gap: 18px;
+        padding: 26px;
+        border: 1px solid rgba(23, 23, 23, 0.1);
+        border-radius: 42px;
+        background: rgba(255, 255, 255, 0.86);
+        box-shadow: 0 38px 110px rgba(23, 23, 23, 0.12);
+      }
+
+      .traffic {
+        display: flex;
+        gap: 9px;
+      }
+
+      .dot {
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+      }
+
+      .dot.a { background: #d26042; }
+      .dot.b { background: #e2c76d; }
+      .dot.c { background: #6a8f34; }
+
+      .cmd-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+
+      .cmd-text {
+        padding: 22px 25px;
+        border-radius: 24px;
+        background: #171717;
+        color: #f7f7f2;
+        font-family: monospace;
+        font-size: 31px;
+        font-weight: 760;
+        line-height: 1.06;
+        letter-spacing: 0;
+      }
+
+      .cursor {
+        display: inline-block;
+        width: 15px;
+        height: 32px;
+        margin-left: 7px;
+        border-radius: 4px;
+        background: #c8dfaa;
+        vertical-align: -5px;
+      }
+
+      .noise-board {
+        display: grid;
+        width: 936px;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 16px;
+      }
+
+      .noise-card {
+        min-height: 198px;
+        padding: 22px;
+        border: 1px solid rgba(23, 23, 23, 0.1);
+        border-radius: 30px;
+        background: rgba(255, 255, 255, 0.78);
+        box-shadow: 0 18px 54px rgba(23, 23, 23, 0.08);
+      }
+
+      .noise-line {
+        height: 10px;
+        margin-bottom: 14px;
+        border-radius: 999px;
+        background: rgba(23, 23, 23, 0.16);
+      }
+
+      .noise-line.short { width: 58%; }
+      .noise-line.med { width: 76%; }
+
+      .xmark {
+        display: grid;
+        width: 42px;
+        height: 42px;
+        margin-top: 26px;
+        place-items: center;
+        border-radius: 50%;
+        background: #f5a184;
+        color: #171717;
+        font-size: 25px;
+        font-weight: 900;
+      }
+
+      .thesis-panel,
+      .flow-panel,
+      .memo-panel,
+      .pipeline-panel {
+        width: 936px;
+        padding: 30px;
+        border: 1px solid rgba(23, 23, 23, 0.1);
+        border-radius: 46px;
+        background: rgba(255, 255, 255, 0.84);
+        box-shadow: 0 34px 105px rgba(23, 23, 23, 0.1);
+      }
+
+      .panel-top {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 26px;
+      }
+
+      .panel-title {
+        color: #171717;
+        font-size: 34px;
+        font-weight: 820;
+        line-height: 1;
+      }
+
+      .status {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        color: rgba(23, 23, 23, 0.62);
+        font-size: 21px;
+        font-weight: 760;
+      }
+
+      .pulse {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background: #6a8f34;
+        box-shadow: 0 0 0 10px rgba(106, 143, 52, 0.15);
+      }
+
+      .thesis-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+      }
+
+      .thesis-item {
+        padding: 22px;
+        border: 1px solid rgba(23, 23, 23, 0.08);
+        border-radius: 28px;
+        background: rgba(247, 247, 242, 0.78);
+      }
+
+      .thesis-item small {
+        display: block;
+        margin-bottom: 10px;
+        color: rgba(23, 23, 23, 0.52);
+        font-size: 18px;
+        font-weight: 760;
+      }
+
+      .thesis-item strong {
+        color: #171717;
+        font-size: 31px;
+        font-weight: 820;
+        line-height: 1.02;
+      }
+
+      .slider {
+        height: 14px;
+        margin-top: 18px;
+        overflow: hidden;
+        border-radius: 999px;
+        background: rgba(23, 23, 23, 0.12);
+      }
+
+      .slider span {
+        display: block;
+        width: 82%;
+        height: 100%;
+        border-radius: inherit;
+        background: #6a8f34;
+      }
+
+      .thesis-item:nth-child(2) .slider span { width: 66%; background: #97cde5; }
+      .thesis-item:nth-child(3) .slider span { width: 74%; background: #f5a184; }
+      .thesis-item:nth-child(4) .slider span { width: 88%; background: #c8dfaa; }
+
+      .founder-card {
+        display: grid;
+        grid-template-columns: 1fr 148px;
+        gap: 22px;
+        min-height: 182px;
+        align-items: center;
+        padding: 24px;
+        border: 1px solid rgba(23, 23, 23, 0.1);
+        border-radius: 32px;
+        background: rgba(255, 255, 255, 0.88);
+        box-shadow: 0 18px 54px rgba(23, 23, 23, 0.08);
+      }
+
+      .founder-card + .founder-card {
+        margin-top: 16px;
+      }
+
+      .rank {
+        display: inline-grid;
+        width: 40px;
+        height: 40px;
+        margin-right: 12px;
+        place-items: center;
+        border-radius: 50%;
+        background: #c8dfaa;
+        color: #171717;
+        font-size: 22px;
+        font-weight: 900;
+      }
+
+      .founder-title {
+        display: flex;
+        align-items: center;
+        color: #171717;
+        font-size: 34px;
+        font-weight: 840;
+        line-height: 1.04;
+      }
+
+      .founder-meta {
+        margin-top: 10px;
+        color: rgba(23, 23, 23, 0.58);
+        font-size: 23px;
+        font-weight: 680;
+        line-height: 1.12;
+      }
+
+      .score {
+        display: grid;
+        width: 132px;
+        height: 132px;
+        place-items: center;
+        border: 12px solid #c8dfaa;
+        border-right-color: #97cde5;
+        border-radius: 50%;
+        color: #171717;
+        font-size: 36px;
+        font-weight: 880;
+      }
+
+      .badges {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 14px;
+      }
+
+      .badges span {
+        padding: 8px 10px 9px;
+        border-radius: 999px;
+        background: rgba(200, 223, 170, 0.75);
+        color: #171717;
+        font-size: 16px;
+        font-weight: 820;
+        line-height: 1;
+      }
+
+      .memo-grid {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 14px;
+      }
+
+      .memo-row {
+        display: grid;
+        grid-template-columns: 58px 1fr 120px;
+        min-height: 104px;
+        align-items: center;
+        gap: 16px;
+        padding: 17px;
+        border: 1px solid rgba(23, 23, 23, 0.08);
+        border-radius: 26px;
+        background: rgba(247, 247, 242, 0.78);
+      }
+
+      .memo-icon {
+        display: grid;
+        width: 58px;
+        height: 58px;
+        place-items: center;
+        border-radius: 20px;
+        background: #97cde5;
+        color: #171717;
+        font-size: 25px;
+        font-weight: 900;
+      }
+
+      .memo-row:nth-child(2) .memo-icon { background: #c8dfaa; }
+      .memo-row:nth-child(3) .memo-icon { background: #f5a184; }
+
+      .memo-copy strong {
+        display: block;
+        color: #171717;
+        font-size: 28px;
+        font-weight: 830;
+        line-height: 1.02;
+      }
+
+      .memo-copy span {
+        display: block;
+        margin-top: 6px;
+        color: rgba(23, 23, 23, 0.58);
+        font-size: 20px;
+        font-weight: 680;
+      }
+
+      .memo-pill {
+        padding: 10px 12px 11px;
+        border-radius: 999px;
+        background: #171717;
+        color: #f7f7f2;
+        text-align: center;
+        font-size: 17px;
+        font-weight: 840;
+      }
+
+      .pipeline {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 20px;
+      }
+
+      .pipe-card {
+        display: grid;
+        grid-template-columns: 76px 1fr auto;
+        min-height: 128px;
+        align-items: center;
+        gap: 18px;
+        padding: 20px;
+        border: 1px solid rgba(23, 23, 23, 0.1);
+        border-radius: 30px;
+        background: rgba(255, 255, 255, 0.86);
+      }
+
+      .pipe-num {
+        display: grid;
+        width: 76px;
+        height: 76px;
+        place-items: center;
+        border-radius: 26px;
+        background: #171717;
+        color: #f7f7f2;
+        font-size: 30px;
+        font-weight: 880;
+      }
+
+      .pipe-card:nth-child(2) .pipe-num { background: #6a8f34; }
+      .pipe-card:nth-child(3) .pipe-num { background: #347f9f; }
+
+      .pipe-copy strong {
+        display: block;
+        color: #171717;
+        font-size: 32px;
+        font-weight: 840;
+        line-height: 1;
+      }
+
+      .pipe-copy span {
+        display: block;
+        margin-top: 7px;
+        color: rgba(23, 23, 23, 0.58);
+        font-size: 21px;
+        font-weight: 690;
+      }
+
+      .arrow {
+        color: #6a8f34;
+        font-size: 44px;
+        font-weight: 900;
+      }
+
+      .close-card {
+        display: flex;
+        width: 936px;
+        min-height: 820px;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 42px;
+        padding: 66px;
+        border: 1px solid rgba(23, 23, 23, 0.1);
+        border-radius: 58px;
+        background: rgba(255, 255, 255, 0.86);
+        box-shadow: 0 44px 128px rgba(23, 23, 23, 0.12);
+        text-align: center;
+      }
+
+      .close-card img:first-child {
+        width: 118px;
+        height: 118px;
+        object-fit: contain;
+      }
+
+      .close-card img:nth-child(2) {
+        width: 430px;
+        height: auto;
+      }
+
+      .close-title {
+        max-width: 790px;
+        color: #171717;
+        font-size: 82px;
+        font-weight: 850;
+        line-height: 0.98;
+        letter-spacing: 0;
+      }
+
+      .close-copy {
+        max-width: 740px;
+        color: rgba(23, 23, 23, 0.64);
+        font-size: 34px;
+        font-weight: 670;
+        line-height: 1.12;
+      }
+
+      .close-pills {
+        display: flex;
+        justify-content: center;
+        gap: 14px;
+      }
+
+      .close-pills span {
+        padding: 16px 22px 17px;
+        border-radius: 999px;
+        background: #c8dfaa;
+        color: #171717;
+        font-size: 24px;
+        font-weight: 850;
+        line-height: 1;
+      }
+
+      .close-pills span:nth-child(2) {
+        background: #97cde5;
+      }
+    </style>
+  </head>
+  <body>
+    <div
+      id="root"
+      data-composition-id="main"
+      data-start="0"
+      data-duration="19.2"
+      data-width="1080"
+      data-height="1920"
+    >
+      <audio
+        id="music"
+        data-start="0"
+        data-duration="19.2"
+        data-track-index="8"
+        src="assets/music.wav"
+        data-volume="0.48"
+      ></audio>
+
+      <audio
+        id="narration"
+        data-start="0.35"
+        data-duration="18.632"
+        data-track-index="9"
+        src="assets/narration.wav"
+        data-volume="1"
+      ></audio>
+
+      <section id="scene-1" class="scene">
+        <div class="chrome">
+          <div class="brand">
+            <img src="assets/apparent-logo.png" alt="" />
+            <img src="assets/apparent-wordmark.png" alt="Apparent" />
+          </div>
+          <div class="tag">venture mode</div>
+        </div>
+        <div class="frame">
+          <div class="hero-stack" data-layout-allow-overlap>
+            <h1 class="super">Not another founder <span class="orange">database.</span></h1>
+            <p class="subhead">Find cracked founders whose proof already fits your thesis.</p>
+            <div class="command">
+              <div class="cmd-row">
+                <div class="traffic">
+                  <span class="dot a"></span>
+                  <span class="dot b"></span>
+                  <span class="dot c"></span>
+                </div>
+                <div class="status"><span class="pulse"></span>source by thesis</div>
+              </div>
+              <div class="cmd-text">apparent source --cracked-founders<span class="cursor"></span></div>
+            </div>
+            <div class="noise-board">
+              <div class="noise-card"><div class="noise-line med"></div><div class="noise-line"></div><div class="noise-line short"></div><div class="xmark">x</div></div>
+              <div class="noise-card"><div class="noise-line"></div><div class="noise-line med"></div><div class="noise-line short"></div><div class="xmark">x</div></div>
+              <div class="noise-card"><div class="noise-line short"></div><div class="noise-line"></div><div class="noise-line med"></div><div class="xmark">x</div></div>
+            </div>
+          </div>
+          <div class="caption">
+            <strong>Venture investors do not need another founder database.</strong>
+            <span>less noise</span>
+          </div>
+        </div>
+      </section>
+
+      <section id="scene-2" class="scene">
+        <div class="chrome">
+          <div class="brand">
+            <img src="assets/apparent-logo.png" alt="" />
+            <img src="assets/apparent-wordmark.png" alt="Apparent" />
+          </div>
+          <div class="tag">thesis encoded</div>
+        </div>
+        <div class="frame">
+          <div class="stack" data-layout-allow-overlap>
+            <div>
+              <div class="kicker">Investor thesis</div>
+              <h2 class="headline">Tell Apparent what you would actually <span class="green">back.</span></h2>
+            </div>
+            <div class="thesis-panel">
+              <div class="panel-top">
+                <div class="panel-title">Thesis profile</div>
+                <div class="status"><span class="pulse"></span>live criteria</div>
+              </div>
+              <div class="thesis-grid">
+                <div class="thesis-item"><small>Stage</small><strong>Seed to Series A</strong><div class="slider"><span></span></div></div>
+                <div class="thesis-item"><small>Category</small><strong>AI infrastructure</strong><div class="slider"><span></span></div></div>
+                <div class="thesis-item"><small>Founder signal</small><strong>Shipped proof</strong><div class="slider"><span></span></div></div>
+                <div class="thesis-item"><small>Timing</small><strong>Raising now</strong><div class="slider"><span></span></div></div>
+              </div>
+            </div>
+          </div>
+          <div class="caption">
+            <strong>They need cracked founders their thesis would actually back.</strong>
+            <span>fit first</span>
+          </div>
+        </div>
+      </section>
+
+      <section id="scene-3" class="scene">
+        <div class="chrome">
+          <div class="brand">
+            <img src="assets/apparent-logo.png" alt="" />
+            <img src="assets/apparent-wordmark.png" alt="Apparent" />
+          </div>
+          <div class="tag">pre-vetted flow</div>
+        </div>
+        <div class="frame">
+          <div class="stack" data-layout-allow-overlap>
+            <div>
+              <div class="kicker">Ranked matches</div>
+              <h2 class="headline">Pre-vetted startups, ranked by proof and <span class="blue">timing.</span></h2>
+            </div>
+            <div class="flow-panel">
+              <article class="founder-card">
+                <div>
+                  <h3 class="founder-title"><span class="rank">1</span>Infra team with buyer pull</h3>
+                  <p class="founder-meta">Open-source adoption, pilots converting, active raise.</p>
+                  <div class="badges"><span>proof checked</span><span>thesis fit</span><span>hot timing</span></div>
+                </div>
+                <div class="score">96</div>
+              </article>
+              <article class="founder-card">
+                <div>
+                  <h3 class="founder-title"><span class="rank">2</span>Healthcare workflow founder</h3>
+                  <p class="founder-meta">Revenue proof, niche moat, warm intro path.</p>
+                  <div class="badges"><span>traction</span><span>category fit</span><span>memo ready</span></div>
+                </div>
+                <div class="score">91</div>
+              </article>
+              <article class="founder-card">
+                <div>
+                  <h3 class="founder-title"><span class="rank">3</span>Devtools repeat founder</h3>
+                  <p class="founder-meta">Fast shipping cadence with credible founder-market fit.</p>
+                  <div class="badges"><span>velocity</span><span>network signal</span><span>early</span></div>
+                </div>
+                <div class="score">87</div>
+              </article>
+            </div>
+          </div>
+          <div class="caption">
+            <strong>Apparent gives you pre-vetted startups ranked by proof, timing, and thesis fit.</strong>
+            <span>ranked</span>
+          </div>
+        </div>
+      </section>
+
+      <section id="scene-4" class="scene">
+        <div class="chrome">
+          <div class="brand">
+            <img src="assets/apparent-logo.png" alt="" />
+            <img src="assets/apparent-wordmark.png" alt="Apparent" />
+          </div>
+          <div class="tag">why this fits</div>
+        </div>
+        <div class="frame">
+          <div class="stack" data-layout-allow-overlap>
+            <div>
+              <div class="kicker">Deal context</div>
+              <h2 class="headline">See what they shipped, who is pulling, and why the match is <span class="green">real.</span></h2>
+            </div>
+            <div class="memo-panel">
+              <div class="panel-top">
+                <div class="panel-title">Fit memo</div>
+                <div class="status"><span class="pulse"></span>ready for partner review</div>
+              </div>
+              <div class="memo-grid">
+                <div class="memo-row"><div class="memo-icon">S</div><div class="memo-copy"><strong>Shipped proof</strong><span>Launches, commits, product velocity.</span></div><div class="memo-pill">strong</div></div>
+                <div class="memo-row"><div class="memo-icon">P</div><div class="memo-copy"><strong>Pull from market</strong><span>Customer replies, revenue movement, usage signal.</span></div><div class="memo-pill">rising</div></div>
+                <div class="memo-row"><div class="memo-icon">T</div><div class="memo-copy"><strong>Thesis fit</strong><span>Stage, category, check size, founder profile.</span></div><div class="memo-pill">96%</div></div>
+              </div>
+            </div>
+          </div>
+          <div class="caption">
+            <strong>See what they shipped, who is pulling, and why the match is real.</strong>
+            <span>memo ready</span>
+          </div>
+        </div>
+      </section>
+
+      <section id="scene-5" class="scene">
+        <div class="chrome">
+          <div class="brand">
+            <img src="assets/apparent-logo.png" alt="" />
+            <img src="assets/apparent-wordmark.png" alt="Apparent" />
+          </div>
+          <div class="tag">source to outreach</div>
+        </div>
+        <div class="frame">
+          <div class="stack" data-layout-allow-overlap>
+            <div>
+              <div class="kicker">Investor workflow</div>
+              <h2 class="headline">Move from signal, to memo, to <span class="blue">outreach.</span></h2>
+            </div>
+            <div class="pipeline-panel">
+              <div class="pipeline">
+                <div class="pipe-card"><div class="pipe-num">1</div><div class="pipe-copy"><strong>Signal</strong><span>Matched startup appears with proof context.</span></div><div class="arrow">-></div></div>
+                <div class="pipe-card"><div class="pipe-num">2</div><div class="pipe-copy"><strong>Memo</strong><span>Why this founder fits your thesis.</span></div><div class="arrow">-></div></div>
+                <div class="pipe-card"><div class="pipe-num">3</div><div class="pipe-copy"><strong>Outreach</strong><span>Reach out with the right reason.</span></div><div class="arrow">+</div></div>
+              </div>
+            </div>
+          </div>
+          <div class="caption">
+            <strong>Move from signal, to memo, to outreach.</strong>
+            <span>faster conviction</span>
+          </div>
+        </div>
+      </section>
+
+      <section id="scene-6" class="scene">
+        <div class="chrome">
+          <div class="brand">
+            <img src="assets/apparent-logo.png" alt="" />
+            <img src="assets/apparent-wordmark.png" alt="Apparent" />
+          </div>
+          <div class="tag">outro</div>
+        </div>
+        <div class="frame">
+          <div class="hero-stack" data-layout-allow-overlap>
+            <div class="close-card">
+              <img src="assets/apparent-logo.png" alt="" />
+              <img src="assets/apparent-wordmark.png" alt="Apparent" />
+              <h2 class="close-title">Find founders worth backing before the round gets <span class="orange">loud.</span></h2>
+              <p class="close-copy">Pre-vetted startups that fit your thesis, backed by real proof.</p>
+              <div class="close-pills"><span>Thesis-fit deal flow</span><span>Proof-backed context</span></div>
+            </div>
+          </div>
+          <div class="caption">
+            <strong>Apparent: find founders worth backing before the round gets loud.</strong>
+            <span>Apparent</span>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <script>
+      window.__timelines = window.__timelines || {};
+
+      const tl = gsap.timeline({ paused: true });
+      const scenes = ["#scene-1", "#scene-2", "#scene-3", "#scene-4", "#scene-5", "#scene-6"];
+
+      function swap(fromScene, toScene, at) {
+        tl.to(fromScene, { opacity: 0, scale: 1.025, filter: "blur(8px)", duration: 0.28, ease: "power4.inOut", overwrite: "auto" }, at);
+        tl.fromTo(
+          toScene,
+          { opacity: 0, scale: 0.975, filter: "blur(10px)" },
+          { opacity: 1, scale: 1, filter: "blur(0px)", duration: 0.34, ease: "power4.out", overwrite: "auto" },
+          at + 0.06
+        );
+      }
+
+      function enterChrome(scene, at) {
+        tl.from(`${scene} .chrome`, { y: -22, opacity: 0, duration: 0.28, ease: "power3.out", overwrite: "auto" }, at);
+        tl.from(`${scene} .caption`, { y: 28, opacity: 0, duration: 0.32, ease: "power3.out", overwrite: "auto" }, at + 0.16);
+      }
+
+      enterChrome(scenes[0], 0.12);
+      tl.from("#scene-1 .super", { y: 72, scale: 0.94, opacity: 0, duration: 0.46, ease: "power4.out", overwrite: "auto" }, 0.18);
+      tl.from("#scene-1 .subhead", { y: 34, opacity: 0, duration: 0.36, ease: "power3.out", overwrite: "auto" }, 0.52);
+      tl.from("#scene-1 .command", { y: 44, scale: 0.96, opacity: 0, duration: 0.38, ease: "back.out(1.7)", overwrite: "auto" }, 0.78);
+      tl.from("#scene-1 .noise-card", { y: 38, scale: 0.92, opacity: 0, duration: 0.3, stagger: 0.06, ease: "back.out(1.8)", overwrite: "auto" }, 1.18);
+      tl.to("#scene-1 .cursor", { opacity: 0, duration: 0.16, repeat: 9, yoyo: true, ease: "steps(1)", overwrite: "auto" }, 0.96);
+
+      swap(scenes[0], scenes[1], 3.02);
+      enterChrome(scenes[1], 3.22);
+      tl.from("#scene-2 .kicker", { y: 18, opacity: 0, duration: 0.24, ease: "power3.out", overwrite: "auto" }, 3.32);
+      tl.from("#scene-2 .headline", { y: 42, opacity: 0, duration: 0.36, ease: "power4.out", overwrite: "auto" }, 3.42);
+      tl.from("#scene-2 .thesis-panel", { y: 54, scale: 0.95, opacity: 0, duration: 0.38, ease: "back.out(1.6)", overwrite: "auto" }, 3.78);
+      tl.from("#scene-2 .thesis-item", { y: 28, opacity: 0, duration: 0.26, stagger: 0.06, ease: "power3.out", overwrite: "auto" }, 4.02);
+      tl.from("#scene-2 .slider span", { scaleX: 0, transformOrigin: "left center", duration: 0.56, stagger: 0.07, ease: "expo.out", overwrite: "auto" }, 4.2);
+
+      swap(scenes[1], scenes[2], 6.22);
+      enterChrome(scenes[2], 6.42);
+      tl.from("#scene-3 .kicker", { y: 18, opacity: 0, duration: 0.24, ease: "power3.out", overwrite: "auto" }, 6.52);
+      tl.from("#scene-3 .headline", { y: 42, opacity: 0, duration: 0.36, ease: "power4.out", overwrite: "auto" }, 6.62);
+      tl.from("#scene-3 .flow-panel", { y: 48, scale: 0.96, opacity: 0, duration: 0.36, ease: "back.out(1.6)", overwrite: "auto" }, 6.98);
+      tl.from("#scene-3 .founder-card", { x: 42, opacity: 0, duration: 0.32, stagger: 0.12, ease: "back.out(1.7)", overwrite: "auto" }, 7.16);
+      tl.from("#scene-3 .score", { scale: 0.72, opacity: 0, duration: 0.28, stagger: 0.12, ease: "back.out(2.2)", overwrite: "auto" }, 7.44);
+
+      swap(scenes[2], scenes[3], 9.55);
+      enterChrome(scenes[3], 9.75);
+      tl.from("#scene-4 .kicker", { y: 18, opacity: 0, duration: 0.24, ease: "power3.out", overwrite: "auto" }, 9.86);
+      tl.from("#scene-4 .headline", { y: 42, opacity: 0, duration: 0.36, ease: "power4.out", overwrite: "auto" }, 9.96);
+      tl.from("#scene-4 .memo-panel", { y: 52, scale: 0.96, opacity: 0, duration: 0.38, ease: "back.out(1.6)", overwrite: "auto" }, 10.32);
+      tl.from("#scene-4 .memo-row", { y: 30, opacity: 0, duration: 0.28, stagger: 0.1, ease: "power3.out", overwrite: "auto" }, 10.58);
+      tl.from("#scene-4 .memo-pill", { scale: 0.78, opacity: 0, duration: 0.24, stagger: 0.1, ease: "back.out(2.3)", overwrite: "auto" }, 10.84);
+
+      swap(scenes[3], scenes[4], 12.82);
+      enterChrome(scenes[4], 13.02);
+      tl.from("#scene-5 .kicker", { y: 18, opacity: 0, duration: 0.24, ease: "power3.out", overwrite: "auto" }, 13.12);
+      tl.from("#scene-5 .headline", { y: 42, opacity: 0, duration: 0.34, ease: "power4.out", overwrite: "auto" }, 13.22);
+      tl.from("#scene-5 .pipeline-panel", { y: 52, scale: 0.96, opacity: 0, duration: 0.36, ease: "back.out(1.6)", overwrite: "auto" }, 13.58);
+      tl.from("#scene-5 .pipe-card", { x: -42, opacity: 0, duration: 0.28, stagger: 0.12, ease: "back.out(1.7)", overwrite: "auto" }, 13.84);
+      tl.from("#scene-5 .arrow", { scale: 0.2, opacity: 0, duration: 0.24, stagger: 0.12, ease: "back.out(2.6)", overwrite: "auto" }, 14.18);
+
+      swap(scenes[4], scenes[5], 15.75);
+      enterChrome(scenes[5], 15.96);
+      tl.from("#scene-6 .close-card", { y: 64, scale: 0.94, opacity: 0, duration: 0.46, ease: "back.out(1.6)", overwrite: "auto" }, 16.08);
+      tl.from("#scene-6 .close-card img:first-child", { y: 20, scale: 0.82, opacity: 0, duration: 0.3, ease: "back.out(2)", overwrite: "auto" }, 16.36);
+      tl.from("#scene-6 .close-card img:nth-child(2)", { y: 20, opacity: 0, duration: 0.28, ease: "power3.out", overwrite: "auto" }, 16.54);
+      tl.from("#scene-6 .close-title", { y: 36, opacity: 0, duration: 0.36, ease: "power4.out", overwrite: "auto" }, 16.74);
+      tl.from("#scene-6 .close-copy", { y: 22, opacity: 0, duration: 0.32, ease: "power3.out", overwrite: "auto" }, 17.02);
+      tl.from("#scene-6 .close-pills span", { y: 22, scale: 0.88, opacity: 0, duration: 0.24, stagger: 0.08, ease: "back.out(2.2)", overwrite: "auto" }, 17.26);
+      tl.to("#scene-6 .close-card", { scale: 1.018, duration: 0.76, ease: "sine.inOut", overwrite: "auto" }, 17.84);
+      tl.to("#scene-6", { opacity: 0, duration: 0.38, ease: "power2.inOut", overwrite: "auto" }, 18.84);
+
+      window.__timelines["main"] = tl;
+    </script>
+  </body>
+</html>

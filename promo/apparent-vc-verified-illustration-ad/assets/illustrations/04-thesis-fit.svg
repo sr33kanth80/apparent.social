@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" role="img" aria-labelledby="title desc">
+  <title id="title">Thesis fit gate</title>
+  <desc id="desc">Xiaohei opens a thesis gate so only fitting verified startups pass through.</desc>
+  <rect width="1600" height="900" fill="#ffffff"/>
+  <g fill="none" stroke="#171717" stroke-width="7" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M198 247h360c30 0 54 24 54 54v280c0 30-24 54-54 54H198c-30 0-54-24-54-54V301c0-30 24-54 54-54z"/>
+    <path d="M226 336h222M226 394h164M226 452h206"/>
+    <path d="M792 190h246c50 0 90 40 90 90v420"/>
+    <path d="M788 704h450"/>
+    <path d="M788 190v514"/>
+    <path d="M905 300h120M905 360h160M905 420h102"/>
+    <path d="M1214 250h206c28 0 52 24 52 52v286c0 28-24 52-52 52h-206c-28 0-52-24-52-52V302c0-28 24-52 52-52z"/>
+    <path d="M1238 342h140M1238 400h108M1238 458h156"/>
+    <path d="M628 430c92-35 147-33 230 8"/>
+    <path d="M1120 430c70-38 136-42 206-12"/>
+  </g>
+  <g fill="#c8dfaa" opacity=".9">
+    <rect x="214" y="282" width="176" height="54" rx="18"/>
+    <rect x="886" y="226" width="184" height="58" rx="20"/>
+  </g>
+  <g fill="#97cde5" opacity=".88">
+    <rect x="1230" y="286" width="172" height="54" rx="18"/>
+  </g>
+  <g font-family="sans-serif" font-weight="800" fill="#171717">
+    <text x="105" y="126" font-size="62">thesis fit</text>
+    <text x="242" y="320" font-size="28">verified</text>
+    <text x="914" y="264" font-size="30">your thesis</text>
+    <text x="1258" y="324" font-size="28">shortlist</text>
+    <text x="112" y="792" font-size="35">stage / category / geo / check size</text>
+  </g>
+  <g fill="#171717">
+    <path d="M704 366c-27-21-39-52-30-88 10-41 43-66 86-61 42 5 71 38 71 80 0 44-28 76-68 87-19 5-40-2-59-18z"/>
+    <circle cx="718" cy="296" r="9" fill="#fff"/>
+    <circle cx="770" cy="296" r="9" fill="#fff"/>
+    <path d="M700 374c-24 31-34 67-29 112M765 376c32 25 47 60 49 101" fill="none" stroke="#171717" stroke-width="7" stroke-linecap="round"/>
+    <path d="M680 430c-35 14-64 37-86 69M812 424c34 16 61 39 80 68" fill="none" stroke="#171717" stroke-width="7" stroke-linecap="round"/>
+  </g>
+  <g fill="none" stroke="#f5a184" stroke-width="7" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M614 448c48 24 94 28 139 12"/>
+    <path d="M1102 448c64-14 108-11 151 9"/>
+    <path d="M662 558c58 36 117 37 177 4"/>
+  </g>
+  <g fill="none" stroke="#6a8f34" stroke-width="7" stroke-linecap="round">
+    <path d="M1376 538c24 20 51 19 81-8"/>
+  </g>
+</svg>

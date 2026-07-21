@@ -1,0 +1,368 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1080, height=1920" />
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <style>
+      * { box-sizing: border-box; margin: 0; padding: 0; }
+      html, body { width: 1080px; height: 1920px; overflow: hidden; background: #f7f7f2; }
+      body { color: #171717; font-family: sans-serif; }
+      #root, .scene {
+        position: relative;
+        width: 1080px;
+        height: 1920px;
+        overflow: hidden;
+        background:
+          radial-gradient(circle at 18% 12%, rgba(200, 223, 170, 0.48), rgba(200, 223, 170, 0) 330px),
+          radial-gradient(circle at 88% 82%, rgba(151, 205, 229, 0.33), rgba(151, 205, 229, 0) 350px),
+          linear-gradient(90deg, rgba(23, 23, 23, 0.035) 1px, rgba(247, 247, 242, 0) 1px),
+          linear-gradient(180deg, rgba(23, 23, 23, 0.035) 1px, rgba(247, 247, 242, 0) 1px),
+          #f7f7f2;
+        background-size: auto, auto, 72px 72px, 72px 72px, auto;
+      }
+      .scene { position: absolute; inset: 0; }
+      #scene-1 { z-index: 1; }
+      #scene-2 { z-index: 2; opacity: 0; }
+      #scene-3 { z-index: 3; opacity: 0; }
+      #scene-4 { z-index: 4; opacity: 0; }
+      #scene-5 { z-index: 5; opacity: 0; }
+      #scene-6 { z-index: 6; opacity: 0; }
+      .frame { position: relative; width: 100%; height: 100%; padding: 86px 58px 90px; }
+      .chrome {
+        position: absolute; top: 70px; left: 58px; right: 58px; z-index: 30;
+        display: flex; align-items: center; justify-content: space-between;
+      }
+      .brand { display: flex; align-items: center; gap: 16px; }
+      .brand img:first-child { width: 54px; height: 54px; object-fit: contain; }
+      .brand img:last-child { width: 178px; height: auto; }
+      .tag {
+        padding: 10px 15px 11px; border: 1px solid rgba(23, 23, 23, 0.1); border-radius: 999px;
+        background: rgba(255, 255, 255, 0.78); box-shadow: 0 12px 38px rgba(23, 23, 23, 0.06);
+        color: rgba(23, 23, 23, 0.68); font-size: 18px; font-weight: 820; line-height: 1;
+      }
+      .hero, .stack {
+        display: flex; height: 100%; flex-direction: column; justify-content: center; gap: 38px; padding-top: 88px;
+      }
+      .hero { gap: 44px; }
+      .kicker {
+        width: max-content; max-width: 100%; padding: 12px 18px 13px; border: 1px solid rgba(23, 23, 23, 0.1);
+        border-radius: 999px; background: rgba(255, 255, 255, 0.76); color: rgba(23, 23, 23, 0.66);
+        font-size: 22px; font-weight: 820; line-height: 1;
+      }
+      .super {
+        max-width: 940px; color: #171717; font-size: 130px; font-weight: 850;
+        line-height: 0.9; letter-spacing: 0;
+      }
+      .headline {
+        max-width: 930px; color: #171717; font-size: 88px; font-weight: 850;
+        line-height: 0.98; letter-spacing: 0;
+      }
+      .subhead { max-width: 820px; color: rgba(23,23,23,.68); font-size: 39px; font-weight: 670; line-height: 1.08; }
+      .green { color: #6a8f34; } .blue { color: #347f9f; } .orange { color: #d26042; }
+      .caption {
+        position: absolute; left: 58px; right: 58px; bottom: 74px; z-index: 35;
+        display: flex; min-height: 94px; align-items: center; justify-content: space-between; gap: 22px;
+        padding: 20px 25px; border: 1px solid rgba(23,23,23,.1); border-radius: 32px;
+        background: rgba(255,255,255,.83); box-shadow: 0 24px 68px rgba(23,23,23,.09);
+      }
+      .caption strong { color: #171717; font-size: 29px; font-weight: 800; line-height: 1.07; }
+      .caption span {
+        flex: 0 0 auto; padding: 11px 16px 12px; border-radius: 999px; background: #c8dfaa;
+        color: #171717; font-size: 20px; font-weight: 860; line-height: 1;
+      }
+      .glass {
+        width: 936px; padding: 30px; border: 1px solid rgba(23,23,23,.1); border-radius: 46px;
+        background: rgba(255,255,255,.84); box-shadow: 0 34px 105px rgba(23,23,23,.1);
+      }
+      .topline { display: flex; align-items: center; justify-content: space-between; margin-bottom: 26px; }
+      .panel-title { color: #171717; font-size: 34px; font-weight: 850; line-height: 1; }
+      .status { display: flex; align-items: center; gap: 10px; color: rgba(23,23,23,.62); font-size: 21px; font-weight: 780; }
+      .pulse { width: 12px; height: 12px; border-radius: 50%; background: #6a8f34; box-shadow: 0 0 0 10px rgba(106,143,52,.15); }
+      .command {
+        display: grid; width: 936px; gap: 18px; padding: 26px; border: 1px solid rgba(23,23,23,.1);
+        border-radius: 42px; background: rgba(255,255,255,.86); box-shadow: 0 38px 110px rgba(23,23,23,.12);
+      }
+      .cmd-row { display: flex; align-items: center; justify-content: space-between; }
+      .traffic { display: flex; gap: 9px; }
+      .dot { width: 14px; height: 14px; border-radius: 50%; }
+      .dot.a { background: #d26042; } .dot.b { background: #e2c76d; } .dot.c { background: #6a8f34; }
+      .cmd-text {
+        padding: 22px 25px; border-radius: 24px; background: #171717; color: #f7f7f2;
+        font-family: monospace; font-size: 31px; font-weight: 760; line-height: 1.06;
+      }
+      .cursor { display: inline-block; width: 15px; height: 32px; margin-left: 7px; border-radius: 4px; background: #c8dfaa; vertical-align: -5px; }
+      .sheet {
+        display: grid; width: 936px; grid-template-columns: repeat(4, 1fr); gap: 10px;
+        padding: 18px; border: 1px solid rgba(23,23,23,.1); border-radius: 34px; background: rgba(255,255,255,.72);
+      }
+      .cell {
+        height: 72px; border-radius: 18px; background: rgba(23,23,23,.08); position: relative; overflow: hidden;
+      }
+      .cell::after {
+        position: absolute; left: 16px; right: 28px; top: 31px; height: 10px; border-radius: 999px;
+        background: rgba(23,23,23,.16); content: "";
+      }
+      .cell.hot { background: rgba(245,161,132,.28); }
+      .cell.good { background: rgba(200,223,170,.45); }
+      .signal-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+      .signal {
+        min-height: 188px; padding: 22px; border: 1px solid rgba(23,23,23,.08); border-radius: 30px;
+        background: rgba(247,247,242,.78);
+      }
+      .signal-icon {
+        display: grid; width: 54px; height: 54px; margin-bottom: 20px; place-items: center;
+        border-radius: 19px; background: #c8dfaa; color: #171717; font-size: 24px; font-weight: 900;
+      }
+      .signal:nth-child(2) .signal-icon { background: #97cde5; }
+      .signal:nth-child(3) .signal-icon { background: #f5a184; }
+      .signal strong { display: block; color: #171717; font-size: 31px; font-weight: 850; line-height: 1.02; }
+      .signal span { display: block; margin-top: 9px; color: rgba(23,23,23,.60); font-size: 21px; font-weight: 700; line-height: 1.12; }
+      .bar { height: 13px; margin-top: 17px; overflow: hidden; border-radius: 999px; background: rgba(23,23,23,.1); }
+      .bar i { display: block; width: 78%; height: 100%; border-radius: inherit; background: #6a8f34; }
+      .signal:nth-child(2) .bar i { width: 86%; background: #97cde5; }
+      .signal:nth-child(3) .bar i { width: 68%; background: #f5a184; }
+      .signal:nth-child(4) .bar i { width: 92%; background: #c8dfaa; }
+      .radar {
+        position: relative; width: 936px; height: 950px; overflow: hidden; border: 1px solid rgba(23,23,23,.1);
+        border-radius: 54px; background: rgba(255,255,255,.82); box-shadow: 0 34px 105px rgba(23,23,23,.1);
+      }
+      .ring {
+        position: absolute; left: 50%; top: 50%; transform: translate(-50%,-50%);
+        border: 2px solid rgba(106,143,52,.2); border-radius: 50%;
+      }
+      .r1 { width: 280px; height: 280px; } .r2 { width: 480px; height: 480px; border-color: rgba(52,127,159,.18); }
+      .r3 { width: 690px; height: 690px; border-color: rgba(210,96,66,.16); } .r4 { width: 860px; height: 860px; border-color: rgba(23,23,23,.08); }
+      .sweep {
+        position: absolute; left: 50%; top: 50%; width: 7px; height: 430px;
+        transform: translate(-50%,-100%) rotate(-36deg); transform-origin: bottom center; border-radius: 999px;
+        background: linear-gradient(180deg, rgba(106,143,52,.9), rgba(106,143,52,0));
+      }
+      .node {
+        position: absolute; width: 30px; height: 30px; border: 4px solid #fff; border-radius: 50%;
+        background: #97cde5; box-shadow: 0 12px 24px rgba(23,23,23,.18);
+      }
+      .node.good { background: #c8dfaa; } .node.hot { width: 54px; height: 54px; background: #d26042; }
+      .n1 { left: 168px; top: 238px; } .n2 { left: 354px; top: 312px; } .n3 { left: 662px; top: 242px; }
+      .n4 { left: 720px; top: 510px; } .n5 { left: 254px; top: 650px; } .n6 { left: 520px; top: 746px; } .n7 { left: 468px; top: 430px; }
+      .radar-note {
+        position: absolute; left: 48px; right: 48px; bottom: 48px; display: flex; align-items: center; justify-content: space-between;
+        gap: 18px; padding: 21px 24px; border: 1px solid rgba(23,23,23,.1); border-radius: 30px; background: rgba(255,255,255,.88);
+      }
+      .radar-note strong { font-size: 32px; font-weight: 860; } .radar-note span { color: rgba(23,23,23,.6); font-size: 23px; font-weight: 720; }
+      .shortlist { display: grid; gap: 15px; }
+      .match {
+        display: grid; grid-template-columns: 1fr 136px; gap: 20px; min-height: 166px; align-items: center;
+        padding: 23px; border: 1px solid rgba(23,23,23,.1); border-radius: 31px; background: rgba(255,255,255,.88);
+      }
+      .match h3 { color: #171717; font-size: 32px; font-weight: 850; line-height: 1.04; }
+      .match p { margin-top: 9px; color: rgba(23,23,23,.6); font-size: 22px; font-weight: 700; line-height: 1.12; }
+      .score {
+        display: grid; width: 122px; height: 122px; place-items: center; border: 11px solid #c8dfaa; border-right-color: #97cde5;
+        border-radius: 50%; color: #171717; font-size: 34px; font-weight: 900;
+      }
+      .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 13px; }
+      .chips span { padding: 8px 10px 9px; border-radius: 999px; background: rgba(200,223,170,.75); font-size: 16px; font-weight: 850; }
+      .memo { display: grid; gap: 14px; }
+      .memo-row {
+        display: grid; grid-template-columns: 62px 1fr auto; min-height: 112px; align-items: center; gap: 16px;
+        padding: 18px; border: 1px solid rgba(23,23,23,.08); border-radius: 27px; background: rgba(247,247,242,.78);
+      }
+      .memo-icon { display: grid; width: 62px; height: 62px; place-items: center; border-radius: 21px; background: #97cde5; font-size: 26px; font-weight: 900; }
+      .memo-row:nth-child(2) .memo-icon { background: #c8dfaa; } .memo-row:nth-child(3) .memo-icon { background: #f5a184; }
+      .memo-copy strong { display: block; color: #171717; font-size: 29px; font-weight: 850; line-height: 1.02; }
+      .memo-copy span { display: block; margin-top: 6px; color: rgba(23,23,23,.6); font-size: 21px; font-weight: 700; }
+      .memo-pill { padding: 10px 13px 11px; border-radius: 999px; background: #171717; color: #f7f7f2; font-size: 17px; font-weight: 850; }
+      .close-card {
+        display: flex; width: 936px; min-height: 820px; flex-direction: column; align-items: center; justify-content: center;
+        gap: 42px; padding: 66px; border: 1px solid rgba(23,23,23,.1); border-radius: 58px; background: rgba(255,255,255,.86);
+        box-shadow: 0 44px 128px rgba(23,23,23,.12); text-align: center;
+      }
+      .close-card img:first-child { width: 118px; height: 118px; object-fit: contain; }
+      .close-card img:nth-child(2) { width: 430px; height: auto; }
+      .close-title { max-width: 800px; color: #171717; font-size: 80px; font-weight: 850; line-height: .98; }
+      .close-copy { max-width: 760px; color: rgba(23,23,23,.64); font-size: 34px; font-weight: 690; line-height: 1.12; }
+      .close-pills { display: flex; justify-content: center; gap: 14px; }
+      .close-pills span { padding: 16px 22px 17px; border-radius: 999px; background: #c8dfaa; font-size: 24px; font-weight: 850; line-height: 1; }
+      .close-pills span:nth-child(2) { background: #97cde5; }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-duration="21" data-width="1080" data-height="1920">
+      <audio id="music" data-start="0" data-duration="21" data-track-index="8" src="assets/music.wav" data-volume="0.48"></audio>
+      <audio id="narration" data-start="0.35" data-duration="20.293" data-track-index="9" src="assets/narration.wav" data-volume="1"></audio>
+
+      <section id="scene-1" class="scene">
+        <div class="chrome"><div class="brand"><img src="assets/apparent-logo.png" alt="" /><img src="assets/apparent-wordmark.png" alt="Apparent" /></div><div class="tag">deal flow mode</div></div>
+        <div class="frame">
+          <div class="hero" data-layout-allow-overlap>
+            <h1 class="super">Your next best deal is not in another <span class="orange">spreadsheet.</span></h1>
+            <p class="subhead">Apparent turns live founder proof into thesis-fit deal flow.</p>
+            <div class="command">
+              <div class="cmd-row"><div class="traffic"><span class="dot a"></span><span class="dot b"></span><span class="dot c"></span></div><div class="status"><span class="pulse"></span>radar online</div></div>
+              <div class="cmd-text">apparent radar --thesis-fit<span class="cursor"></span></div>
+            </div>
+            <div class="sheet">
+              <div class="cell"></div><div class="cell"></div><div class="cell hot"></div><div class="cell"></div>
+              <div class="cell"></div><div class="cell good"></div><div class="cell"></div><div class="cell"></div>
+              <div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell hot"></div>
+            </div>
+          </div>
+          <div class="caption"><strong>Your next best deal is probably not waiting in another spreadsheet.</strong><span>less noise</span></div>
+        </div>
+      </section>
+
+      <section id="scene-2" class="scene">
+        <div class="chrome"><div class="brand"><img src="assets/apparent-logo.png" alt="" /><img src="assets/apparent-wordmark.png" alt="Apparent" /></div><div class="tag">proof stream</div></div>
+        <div class="frame">
+          <div class="stack" data-layout-allow-overlap>
+            <div><div class="kicker">Live founder signals</div><h2 class="headline">Shipping, customer pull, and thesis match in one <span class="green">signal layer.</span></h2></div>
+            <div class="glass">
+              <div class="topline"><div class="panel-title">Proof signals</div><div class="status"><span class="pulse"></span>refreshing</div></div>
+              <div class="signal-grid">
+                <div class="signal"><div class="signal-icon">S</div><strong>Shipped this week</strong><span>Product velocity, launches, commits.</span><div class="bar"><i></i></div></div>
+                <div class="signal"><div class="signal-icon">C</div><strong>Customers pulling</strong><span>Replies, pilots, revenue movement.</span><div class="bar"><i></i></div></div>
+                <div class="signal"><div class="signal-icon">T</div><strong>Thesis matched</strong><span>Stage, category, check size, geo.</span><div class="bar"><i></i></div></div>
+                <div class="signal"><div class="signal-icon">R</div><strong>Raising now</strong><span>Timing signal before the round gets crowded.</span><div class="bar"><i></i></div></div>
+              </div>
+            </div>
+          </div>
+          <div class="caption"><strong>A founder is already shipping, getting pulled by customers, and matching your thesis.</strong><span>live proof</span></div>
+        </div>
+      </section>
+
+      <section id="scene-3" class="scene">
+        <div class="chrome"><div class="brand"><img src="assets/apparent-logo.png" alt="" /><img src="assets/apparent-wordmark.png" alt="Apparent" /></div><div class="tag">thesis radar</div></div>
+        <div class="frame">
+          <div class="stack" data-layout-allow-overlap>
+            <div><div class="kicker">Ranked radar</div><h2 class="headline">Proof signals become a radar of pre-vetted <span class="blue">startups.</span></h2></div>
+            <div class="radar">
+              <div class="ring r4"></div><div class="ring r3"></div><div class="ring r2"></div><div class="ring r1"></div><div class="sweep"></div>
+              <span class="node n1 good"></span><span class="node n2"></span><span class="node n3 good"></span><span class="node n4"></span><span class="node n5 good"></span><span class="node n6"></span><span class="node n7 hot"></span>
+              <div class="radar-note"><strong>Top match surfaced</strong><span>proof + timing + thesis fit</span></div>
+            </div>
+          </div>
+          <div class="caption"><strong>Apparent turns proof signals into a ranked radar of pre-vetted startups.</strong><span>ranked radar</span></div>
+        </div>
+      </section>
+
+      <section id="scene-4" class="scene">
+        <div class="chrome"><div class="brand"><img src="assets/apparent-logo.png" alt="" /><img src="assets/apparent-wordmark.png" alt="Apparent" /></div><div class="tag">shortlist</div></div>
+        <div class="frame">
+          <div class="stack" data-layout-allow-overlap>
+            <div><div class="kicker">Open the match</div><h2 class="headline">See the proof before you spend partner time.</h2></div>
+            <div class="glass">
+              <div class="topline"><div class="panel-title">Thesis-fit shortlist</div><div class="status"><span class="pulse"></span>ready</div></div>
+              <div class="shortlist">
+                <article class="match"><div><h3>Devtools founder with enterprise pull</h3><p>Usage climbing, sharp ICP, warm path to buyer.</p><div class="chips"><span>proof checked</span><span>why now</span><span>intro path</span></div></div><div class="score">97</div></article>
+                <article class="match"><div><h3>Vertical AI workflow team</h3><p>Revenue signal, customer pain, category timing.</p><div class="chips"><span>traction</span><span>stage fit</span><span>memo ready</span></div></div><div class="score">92</div></article>
+                <article class="match"><div><h3>Infrastructure repeat builder</h3><p>Fast shipping cadence, credible technical wedge.</p><div class="chips"><span>velocity</span><span>network signal</span><span>early</span></div></div><div class="score">89</div></article>
+              </div>
+            </div>
+          </div>
+          <div class="caption"><strong>Open the match, see the proof, and know why it fits your thesis.</strong><span>shortlist</span></div>
+        </div>
+      </section>
+
+      <section id="scene-5" class="scene">
+        <div class="chrome"><div class="brand"><img src="assets/apparent-logo.png" alt="" /><img src="assets/apparent-wordmark.png" alt="Apparent" /></div><div class="tag">conviction packet</div></div>
+        <div class="frame">
+          <div class="stack" data-layout-allow-overlap>
+            <div><div class="kicker">Why-now memo</div><h2 class="headline">Move faster from signal to conviction to <span class="green">outreach.</span></h2></div>
+            <div class="glass">
+              <div class="topline"><div class="panel-title">Conviction packet</div><div class="status"><span class="pulse"></span>generated</div></div>
+              <div class="memo">
+                <div class="memo-row"><div class="memo-icon">1</div><div class="memo-copy"><strong>Proof snapshot</strong><span>What changed, what shipped, what customers did.</span></div><div class="memo-pill">signal</div></div>
+                <div class="memo-row"><div class="memo-icon">2</div><div class="memo-copy"><strong>Thesis reason</strong><span>Why this company fits your stated focus.</span></div><div class="memo-pill">fit</div></div>
+                <div class="memo-row"><div class="memo-icon">3</div><div class="memo-copy"><strong>Outreach angle</strong><span>Reach out with a specific reason, not a generic note.</span></div><div class="memo-pill">send</div></div>
+              </div>
+            </div>
+          </div>
+          <div class="caption"><strong>Read the why-now memo and reach out before the round gets crowded.</strong><span>outreach</span></div>
+        </div>
+      </section>
+
+      <section id="scene-6" class="scene">
+        <div class="chrome"><div class="brand"><img src="assets/apparent-logo.png" alt="" /><img src="assets/apparent-wordmark.png" alt="Apparent" /></div><div class="tag">outro</div></div>
+        <div class="frame">
+          <div class="hero" data-layout-allow-overlap>
+            <div class="close-card">
+              <img src="assets/apparent-logo.png" alt="" />
+              <img src="assets/apparent-wordmark.png" alt="Apparent" />
+              <h2 class="close-title">Thesis-fit deal flow for investors who want to find the <span class="orange">cracked founders</span> first.</h2>
+              <p class="close-copy">Pre-vetted startups, proof-backed context, and a cleaner path to conviction.</p>
+              <div class="close-pills"><span>Proof-backed</span><span>Thesis-fit</span></div>
+            </div>
+          </div>
+          <div class="caption"><strong>Apparent: thesis fit deal flow for investors who want to find the cracked founders first.</strong><span>Apparent</span></div>
+        </div>
+      </section>
+    </div>
+
+    <script>
+      window.__timelines = window.__timelines || {};
+      const tl = gsap.timeline({ paused: true });
+      const scenes = ["#scene-1", "#scene-2", "#scene-3", "#scene-4", "#scene-5", "#scene-6"];
+      function swap(fromScene, toScene, at) {
+        tl.to(fromScene, { opacity: 0, scale: 1.025, filter: "blur(8px)", duration: 0.28, ease: "power4.inOut", overwrite: "auto" }, at);
+        tl.fromTo(toScene, { opacity: 0, scale: 0.975, filter: "blur(10px)" }, { opacity: 1, scale: 1, filter: "blur(0px)", duration: 0.34, ease: "power4.out", overwrite: "auto" }, at + 0.06);
+      }
+      function shell(scene, at) {
+        tl.from(`${scene} .chrome`, { y: -22, opacity: 0, duration: 0.28, ease: "power3.out", overwrite: "auto" }, at);
+        tl.from(`${scene} .caption`, { y: 28, opacity: 0, duration: 0.32, ease: "power3.out", overwrite: "auto" }, at + 0.16);
+      }
+      shell(scenes[0], 0.12);
+      tl.from("#scene-1 .super", { y: 72, scale: 0.94, opacity: 0, duration: 0.46, ease: "power4.out", overwrite: "auto" }, 0.18);
+      tl.from("#scene-1 .subhead", { y: 34, opacity: 0, duration: 0.36, ease: "power3.out", overwrite: "auto" }, 0.52);
+      tl.from("#scene-1 .command", { y: 44, scale: 0.96, opacity: 0, duration: 0.38, ease: "back.out(1.7)", overwrite: "auto" }, 0.78);
+      tl.from("#scene-1 .cell", { y: 28, opacity: 0, scale: 0.86, duration: 0.24, stagger: 0.025, ease: "back.out(1.7)", overwrite: "auto" }, 1.1);
+      tl.to("#scene-1 .cursor", { opacity: 0, duration: 0.16, repeat: 11, yoyo: true, ease: "steps(1)", overwrite: "auto" }, 0.96);
+
+      swap(scenes[0], scenes[1], 3.45);
+      shell(scenes[1], 3.65);
+      tl.from("#scene-2 .kicker", { y: 18, opacity: 0, duration: 0.24, ease: "power3.out", overwrite: "auto" }, 3.74);
+      tl.from("#scene-2 .headline", { y: 42, opacity: 0, duration: 0.36, ease: "power4.out", overwrite: "auto" }, 3.84);
+      tl.from("#scene-2 .glass", { y: 54, scale: 0.95, opacity: 0, duration: 0.38, ease: "back.out(1.6)", overwrite: "auto" }, 4.22);
+      tl.from("#scene-2 .signal", { y: 10, scale: 0.96, opacity: 0, duration: 0.28, stagger: 0.07, ease: "power3.out", overwrite: "auto" }, 4.48);
+      tl.from("#scene-2 .bar i", { scaleX: 0, transformOrigin: "left center", duration: 0.5, stagger: 0.06, ease: "expo.out", overwrite: "auto" }, 4.72);
+
+      swap(scenes[1], scenes[2], 7.08);
+      shell(scenes[2], 7.28);
+      tl.from("#scene-3 .kicker", { y: 18, opacity: 0, duration: 0.24, ease: "power3.out", overwrite: "auto" }, 7.38);
+      tl.from("#scene-3 .headline", { y: 42, opacity: 0, duration: 0.36, ease: "power4.out", overwrite: "auto" }, 7.48);
+      tl.from("#scene-3 .radar", { y: 52, scale: 0.96, opacity: 0, duration: 0.38, ease: "back.out(1.6)", overwrite: "auto" }, 7.86);
+      tl.from("#scene-3 .ring", { scale: 0.45, opacity: 0, duration: 0.45, stagger: 0.06, ease: "expo.out", overwrite: "auto" }, 8.08);
+      tl.from("#scene-3 .node", { scale: 0, opacity: 0, duration: 0.22, stagger: 0.035, ease: "back.out(2.5)", overwrite: "auto" }, 8.32);
+      tl.to("#scene-3 .sweep", { rotation: 336, transformOrigin: "bottom center", duration: 1.7, ease: "power2.inOut", overwrite: "auto" }, 8.18);
+      tl.to("#scene-3 .node.hot", { scale: 1.25, duration: 0.3, repeat: 3, yoyo: true, ease: "sine.inOut", overwrite: "auto" }, 8.86);
+
+      swap(scenes[2], scenes[3], 10.75);
+      shell(scenes[3], 10.95);
+      tl.from("#scene-4 .kicker", { y: 18, opacity: 0, duration: 0.24, ease: "power3.out", overwrite: "auto" }, 11.05);
+      tl.from("#scene-4 .headline", { y: 42, opacity: 0, duration: 0.34, ease: "power4.out", overwrite: "auto" }, 11.15);
+      tl.from("#scene-4 .glass", { y: 48, scale: 0.96, opacity: 0, duration: 0.36, ease: "back.out(1.6)", overwrite: "auto" }, 11.52);
+      tl.from("#scene-4 .match", { x: 46, opacity: 0, duration: 0.3, stagger: 0.11, ease: "back.out(1.7)", overwrite: "auto" }, 11.78);
+      tl.from("#scene-4 .score", { scale: 0.72, opacity: 0, duration: 0.25, stagger: 0.11, ease: "back.out(2.2)", overwrite: "auto" }, 12.04);
+
+      swap(scenes[3], scenes[4], 14.38);
+      shell(scenes[4], 14.58);
+      tl.from("#scene-5 .kicker", { y: 18, opacity: 0, duration: 0.24, ease: "power3.out", overwrite: "auto" }, 14.68);
+      tl.from("#scene-5 .headline", { y: 42, opacity: 0, duration: 0.34, ease: "power4.out", overwrite: "auto" }, 14.78);
+      tl.from("#scene-5 .glass", { y: 52, scale: 0.96, opacity: 0, duration: 0.36, ease: "back.out(1.6)", overwrite: "auto" }, 15.14);
+      tl.from("#scene-5 .memo-row", { y: 30, opacity: 0, duration: 0.28, stagger: 0.1, ease: "power3.out", overwrite: "auto" }, 15.38);
+      tl.from("#scene-5 .memo-pill", { scale: 0.78, opacity: 0, duration: 0.24, stagger: 0.1, ease: "back.out(2.3)", overwrite: "auto" }, 15.64);
+
+      swap(scenes[4], scenes[5], 17.78);
+      shell(scenes[5], 17.98);
+      tl.from("#scene-6 .close-card", { y: 64, scale: 0.94, opacity: 0, duration: 0.46, ease: "back.out(1.6)", overwrite: "auto" }, 18.1);
+      tl.from("#scene-6 .close-card img:first-child", { y: 20, scale: 0.82, opacity: 0, duration: 0.3, ease: "back.out(2)", overwrite: "auto" }, 18.38);
+      tl.from("#scene-6 .close-card img:nth-child(2)", { y: 20, opacity: 0, duration: 0.28, ease: "power3.out", overwrite: "auto" }, 18.56);
+      tl.from("#scene-6 .close-title", { y: 36, opacity: 0, duration: 0.36, ease: "power4.out", overwrite: "auto" }, 18.76);
+      tl.from("#scene-6 .close-copy", { y: 22, opacity: 0, duration: 0.32, ease: "power3.out", overwrite: "auto" }, 19.04);
+      tl.from("#scene-6 .close-pills span", { y: 22, scale: 0.88, opacity: 0, duration: 0.24, stagger: 0.08, ease: "back.out(2.2)", overwrite: "auto" }, 19.28);
+      tl.to("#scene-6 .close-card", { scale: 1.018, duration: 0.78, ease: "sine.inOut", overwrite: "auto" }, 19.66);
+      tl.to("#scene-6", { opacity: 0, duration: 0.38, ease: "power2.inOut", overwrite: "auto" }, 20.62);
+      window.__timelines["main"] = tl;
+    </script>
+  </body>
+</html>
