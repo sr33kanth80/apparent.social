@@ -22,6 +22,7 @@ import {
   Paperclip,
   Plus,
   Repeat2,
+  RefreshCw,
   Rocket,
   Search,
   Send,
@@ -130,6 +131,7 @@ import {
   saveSignalStage,
   saveTermReview,
   loadDailyDigestSourced,
+  triggerManualSourcing,
   subscribeBuilderNetwork,
   toggleLaunchUpvote,
   toggleMeetupRsvp,
@@ -953,6 +955,10 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
   useEffect(() => {
     if (typeof window !== 'undefined') localStorage.setItem('apparent.dailyView', dailyView);
   }, [dailyView]);
+  // Manual-refresh state for the Daily tab button. `status` is transient UI
+  // feedback; it clears itself a few seconds after each result.
+  const [dailyRefreshing, setDailyRefreshing] = useState(false);
+  const [dailyRefreshMsg, setDailyRefreshMsg] = useState<string>('');
   const [launchAuthors, setLaunchAuthors] = useState<Record<string, LaunchAuthor>>({});
   // VC list + Apparent investor list, both used to build the founder's
   // dynamic "Investor Matches" view. Loaded once per session.
@@ -7439,6 +7445,25 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
     </motion.div>
   );
 
+  const handleRefreshDailySignals = async () => {
+    if (dailyRefreshing) return;
+    setDailyRefreshing(true);
+    setDailyRefreshMsg('Sourcing fresh startups…');
+    const result = await triggerManualSourcing();
+    if (result.ok) {
+      const fresh = await loadDailyDigestSourced();
+      setDailyDigest(fresh);
+      setDailyRefreshMsg(`Added ${result.upserted ?? 0} fresh startups.`);
+    } else if (result.retryInSec) {
+      const mins = Math.ceil(result.retryInSec / 60);
+      setDailyRefreshMsg(`Cooldown — try again in ~${mins} min.`);
+    } else {
+      setDailyRefreshMsg(result.error || 'Refresh failed.');
+    }
+    setDailyRefreshing(false);
+    setTimeout(() => setDailyRefreshMsg(''), 6000);
+  };
+
   const renderDailyDigestPage = () => {
     // Distinct filter options derived from whatever the scraper delivered today.
     const uniq = (values: string[]) => Array.from(new Set(values.map((v) => v.trim()).filter(Boolean))).sort();
@@ -7490,6 +7515,16 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
                   <span className="rounded-full bg-[#f4f1eb] px-3 py-1.5 text-xs font-semibold text-black/60">
                     {filtered.length} {filtered.length === 1 ? 'startup' : 'startups'}
                   </span>
+                  <button
+                    type="button"
+                    onClick={handleRefreshDailySignals}
+                    disabled={dailyRefreshing}
+                    title="Source fresh startups now"
+                    className="inline-flex items-center gap-1.5 rounded-full border border-black/10 bg-white px-3 py-1.5 text-xs font-semibold text-black/70 hover:border-black/25 hover:text-black disabled:opacity-60"
+                  >
+                    <RefreshCw className={`h-3.5 w-3.5 ${dailyRefreshing ? 'animate-spin' : ''}`} />
+                    {dailyRefreshing ? 'Sourcing…' : 'Refresh'}
+                  </button>
                   <div className="inline-flex items-center rounded-full border border-black/10 bg-white p-0.5">
                     <button
                       type="button"
@@ -7545,6 +7580,9 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
                     </button>
                   )}
                 </div>
+              )}
+              {dailyRefreshMsg && (
+                <p className="mt-3 text-[11px] font-semibold text-black/55">{dailyRefreshMsg}</p>
               )}
             </div>
 

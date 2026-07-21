@@ -37,7 +37,12 @@ import {
 
 const SUPABASE_URL = (process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL || '').replace(/\/$/, '');
 const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
+const ANON_KEY = process.env.VITE_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY || '';
 const CRON_SECRET = process.env.AGENT_CRON_SECRET || '';
+// Soft throttle so an investor's manual refresh can't be double-tapped into two
+// concurrent scout runs. Re-check by the freshest row's age — a successful run
+// stamps freshness_at=now(), so this trails the last successful ingest.
+const MANUAL_COOLDOWN_MS = 10 * 60 * 1000;
 const MAX_AGENT_STEPS = 22; // more targets need more web_search/web_fetch headroom
 // Per-run scrape volume. Default 24, env-tunable up to 60. Each run upserts into
 // source_signals (deduped), so the investor Daily list grows run over run rather
@@ -213,8 +218,34 @@ export default async function handler(req, res) {
     });
   }
 
-  if (req.headers['x-agent-cron-secret'] !== CRON_SECRET) {
-    return res.status(401).json({ error: 'unauthorized' });
+  // Two callers allowed:
+  //   1. GitHub Actions cron (x-agent-cron-secret)
+  //   2. Signed-in investor clicking "Refresh" (Authorization: Bearer <jwt>).
+  //      For that path we verify the JWT against Supabase and throttle by the
+  //      freshest source_signals row so double-taps don't stack runs.
+  const cronOk = req.headers['x-agent-cron-secret'] === CRON_SECRET;
+  const authHeader = str(req.headers.authorization);
+  const jwt = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : '';
+  if (!cronOk) {
+    if (!jwt || !ANON_KEY) return res.status(401).json({ error: 'unauthorized' });
+    const userRes = await fetch(`${SUPABASE_URL}/auth/v1/user`, {
+      headers: { apikey: ANON_KEY, Authorization: `Bearer ${jwt}` },
+    });
+    if (!userRes.ok) return res.status(401).json({ error: 'invalid_token' });
+    // Throttle: refuse if the freshest row is younger than the cooldown.
+    const freshRes = await fetch(
+      `${SUPABASE_URL}/rest/v1/source_signals?select=freshness_at&order=freshness_at.desc&limit=1`,
+      { headers: sbHeaders() },
+    );
+    const freshRows = await freshRes.json().catch(() => []);
+    const newestAt = freshRows?.[0]?.freshness_at ? Date.parse(freshRows[0].freshness_at) : 0;
+    const ageMs = Date.now() - newestAt;
+    if (newestAt && ageMs < MANUAL_COOLDOWN_MS) {
+      return res.status(429).json({
+        error: 'cooldown',
+        retryInSec: Math.ceil((MANUAL_COOLDOWN_MS - ageMs) / 1000),
+      });
+    }
   }
 
   if (!process.env.ORTHOGONAL_API_KEY) {

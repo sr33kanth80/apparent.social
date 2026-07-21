@@ -1596,6 +1596,41 @@ export const enrichSourcedStartup = async (
  * Returns [] when unconfigured/empty so the caller can fall back to the legacy
  * R2 feed.
  */
+/**
+ * Investor-triggered manual scout run. Posts to /api/ingest-signals with the
+ * caller's Supabase JWT — the server verifies the token and enforces its own
+ * cooldown, so all we do here is fire and surface the outcome. Returns a small
+ * result the button can render (fresh count, cooldown seconds, or an error).
+ */
+export const triggerManualSourcing = async (): Promise<{
+  ok: boolean;
+  upserted?: number;
+  retryInSec?: number;
+  error?: string;
+}> => {
+  if (!isSupabaseConfigured || !supabase) return { ok: false, error: 'Sign-in required.' };
+  const { data } = await supabase.auth.getSession();
+  const jwt = data.session?.access_token;
+  if (!jwt) return { ok: false, error: 'Your session expired — sign in again.' };
+  try {
+    const res = await fetch('/api/ingest-signals', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', authorization: `Bearer ${jwt}` },
+    });
+    const body = (await res.json().catch(() => ({}))) as {
+      ok?: boolean;
+      upserted?: number;
+      error?: string;
+      retryInSec?: number;
+    };
+    if (res.status === 429) return { ok: false, retryInSec: body.retryInSec, error: 'cooldown' };
+    if (res.ok && body.ok) return { ok: true, upserted: body.upserted ?? 0 };
+    return { ok: false, error: body.error || `Sourcing failed (${res.status})` };
+  } catch (error) {
+    return { ok: false, error: error instanceof Error ? error.message : 'Network error.' };
+  }
+};
+
 export const loadDailyDigestSourced = async (limit = 200): Promise<ProductLaunch[]> => {
   if (!isSupabaseConfigured || !supabase) return [];
   try {
