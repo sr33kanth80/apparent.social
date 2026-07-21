@@ -1,6 +1,5 @@
-# Daily deal-flow ingestion — replaces the laptop-bound Claude Code routine.
-# POSTs each source to /api/ingest-signals (see that file for source docs).
-# Needs one repo secret: AGENT_CRON_SECRET (same value as the Vercel env var).
+# Daily deal-flow ingestion — single Orthogonal-powered scout.
+# POSTs /api/ingest-signals once per run. Needs one repo secret: AGENT_CRON_SECRET.
 name: Ingest deal flow
 
 on:
@@ -11,14 +10,10 @@ on:
 jobs:
   ingest:
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false # one flaky feed must not kill the others
-      matrix:
-        source: [hn, producthunt, github, yc, web]
     steps:
-      - name: Ingest ${{ matrix.source }}
+      - name: Ingest
         run: |
           curl -sS -f -X POST \
-            "https://apparent.social/api/ingest-signals?source=${{ matrix.source }}" \
+            "https://apparent.social/api/ingest-signals" \
             -H "x-agent-cron-secret: ${{ secrets.AGENT_CRON_SECRET }}" \
             --max-time 570

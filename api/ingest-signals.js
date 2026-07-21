@@ -1,41 +1,30 @@
 // Proactive deal-flow ingestion — the scheduled counterpart to the investor
-// agent's ad-hoc web sourcing (see api/agent.js, which uses the same
-// Orthogonal search/fetch tools per chat). This runs on a schedule (an automation
-// Routine POSTs it every 12h), discovers recently-launched startups across the
-// web that match the sectors the platform's investors actually care about, and
-// upserts them into public.source_signals so every investor gets a fresh,
-// deduped, browseable, filterable deal-flow list — and so the per-investor
-// agent has a warm pool to rank against instead of re-discovering from scratch.
+// agent's ad-hoc web sourcing (see api/agent.js, which uses the same Orthogonal
+// search/fetch tools per chat). Runs on a daily cron, discovers recently-launched
+// startups across the web that match the sectors Apparent's investors care about,
+// and upserts them into public.source_signals so every investor gets a fresh,
+// deduped, browseable, filterable deal-flow list.
 //
-// PROVENANCE: these rows are "Sourced" leads, NOT verified founders. They land
-// with source_type='web' and no GitHub verification, so the dashboard renders
-// them distinctly from native Apparent builders (which are GitHub-verified).
+// SINGLE SOURCE: Orthogonal search/fetch is the only pipe. HN/PH/GitHub/YC
+// scrapers were removed — the agent already covers those surfaces (Launch HN,
+// Product Hunt, YC batches) when its prompt tells it to, and consolidating on
+// one provider means one API key, one failure mode, one place to tune thesis.
+//
+// PROVENANCE: rows are "Sourced" leads, NOT GitHub-verified founders. They land
+// with source_type='web' so the dashboard renders them distinctly from native
+// Apparent builders.
 //
 // DEDUP: public.source_signals has a unique index on (source_type, source_url).
-// We upsert with on_conflict=source_type,source_url so re-runs refresh
-// freshness_at instead of creating duplicates. The only rule the writer must
-// follow is: pick ONE canonical, stable source_url per startup. We canonicalize
-// to the company's bare homepage domain so the same startup collapses to one row
-// across runs even if the model cites it via different paths.
+// Upserts with on_conflict=source_type,source_url so re-runs refresh freshness_at
+// instead of duplicating. canonicalSourceUrl collapses every way the model may
+// cite a startup to its bare homepage domain.
 //
-// SAFETY: disabled by default. Runs only when AGENT_CRON_SECRET (caller must
-// present it as x-agent-cron-secret), SUPABASE_SERVICE_ROLE_KEY, and
-// ORTHOGONAL_API_KEY are all set. The service role lets the upsert bypass RLS.
+// SAFETY: disabled unless AGENT_CRON_SECRET, SUPABASE_SERVICE_ROLE_KEY, and
+// ORTHOGONAL_API_KEY are all set.
 //
-// SOURCES: POST /api/ingest-signals?source=<name> with header
-//   x-agent-cron-secret: <AGENT_CRON_SECRET>
-// where <name> is one of:
-//   web         (default) Apparent agent with Orthogonal search/fetch — the long-tail
-//               scout. Needs ORTHOGONAL_API_KEY. Refreshes freshness_at on re-runs.
-//   hn          Show HN stories via Algolia (free, no key)
-//   producthunt Product Hunt launches (needs PRODUCTHUNT_TOKEN)
-//   github      Fast-rising new repos via GitHub search (GITHUB_INGEST_TOKEN optional)
-//   yc          Recent YC batches via yc-oss.github.io (free, no key)
-// Structured sources insert with ignore-duplicates so daily re-runs don't bump
-// freshness_at and pin the same rows atop the investor Daily list.
-// Scheduled by .github/workflows/ingest-dealflow.yml (daily cron).
+// USAGE: POST /api/ingest-signals with header x-agent-cron-secret: <secret>.
+// Scheduled by .github/workflows/ingest-dealflow.yml.
 
-import { fetchShowHN, fetchProductHunt, fetchGitHubRising, fetchYCRecent } from '../server/agent/ingest-sources.js';
 import {
   createApparentAgentRuntime,
   createPublicResearchPolicy,
@@ -126,18 +115,15 @@ const loadTargetSectors = async () => {
   }
 };
 
-// merge-duplicates (web scout) refreshes existing rows; ignore-duplicates
-// (structured feeds) inserts only genuinely new startups and returns how many.
-const upsertSignals = async (rows, { ignoreDuplicates = false } = {}) => {
+// Refreshes existing rows via merge-duplicates so re-runs bump freshness_at
+// rather than duplicating.
+const upsertSignals = async (rows) => {
   if (!rows.length) return 0;
-  const prefer = ignoreDuplicates
-    ? 'resolution=ignore-duplicates,return=representation'
-    : 'resolution=merge-duplicates,return=minimal';
   const res = await fetch(
     `${SUPABASE_URL}/rest/v1/source_signals?on_conflict=source_type,source_url&select=id`,
     {
       method: 'POST',
-      headers: { ...sbHeaders(), Prefer: prefer },
+      headers: { ...sbHeaders(), Prefer: 'resolution=merge-duplicates,return=minimal' },
       body: JSON.stringify(rows),
     },
   );
@@ -145,9 +131,7 @@ const upsertSignals = async (rows, { ignoreDuplicates = false } = {}) => {
     const text = await res.text().catch(() => '');
     throw new Error(`source_signals upsert failed (${res.status}): ${text.slice(0, 300)}`);
   }
-  if (!ignoreDuplicates) return rows.length;
-  const inserted = await res.json().catch(() => null);
-  return Array.isArray(inserted) ? inserted.length : rows.length;
+  return rows.length;
 };
 
 const logScrapeRun = async (fields) => {
@@ -210,79 +194,6 @@ const buildSystemPrompt = (sectors, sinceLabel) =>
     `When you have recorded a good batch (aim for ${TARGET_COUNT}, fewer is fine if you cannot verify more), stop and briefly summarize what you sourced.`,
   ].join('\n');
 
-// ---------- Structured feed sources ----------
-
-const STRUCTURED_SOURCES = {
-  hn: fetchShowHN,
-  producthunt: fetchProductHunt,
-  github: fetchGitHubRising,
-  yc: fetchYCRecent,
-};
-
-// Normalize a fetcher candidate to a source_signals row. All ingested leads are
-// source_type='web' — "web-sourced, not GitHub-verified" is the provenance the
-// dashboard cares about, and sharing one source_type means the unique index
-// dedupes the same startup across HN/PH/YC/scout automatically. The actual feed
-// lives in raw.source.
-const toSignalRow = (item, source) => {
-  const canonical = canonicalSourceUrl(item?.homepage_url);
-  const company = str(item?.company).trim();
-  const detail = str(item?.detail).trim();
-  if (!canonical || !company || !detail) return null;
-  const now = new Date().toISOString();
-  return {
-    company,
-    founder: str(item?.founder).trim() || 'Founding team',
-    detail,
-    source_type: 'web',
-    source_url: canonical,
-    profile_url: str(item?.homepage_url).trim() || canonical,
-    stage: str(item?.stage).trim(),
-    location: str(item?.location).trim(),
-    github_url: str(item?.github_url).trim(),
-    raw_tags: [str(item?.sector).trim()].filter(Boolean),
-    freshness_at: now,
-    raw: { discovered_at: now, found_via: str(item?.found_via).trim(), sector: str(item?.sector).trim(), source },
-  };
-};
-
-const runStructuredSource = async (source, res) => {
-  const startedAt = new Date().toISOString();
-  try {
-    const fetched = await STRUCTURED_SOURCES[source]();
-    if (fetched && !Array.isArray(fetched) && fetched.skipped) {
-      return res.status(200).json({ skipped: fetched.skipped, source });
-    }
-    const byUrl = new Map();
-    for (const item of fetched) {
-      const row = toSignalRow(item, source);
-      if (row && !byUrl.has(row.source_url)) byUrl.set(row.source_url, row);
-    }
-    const rows = Array.from(byUrl.values());
-    const inserted = await upsertSignals(rows, { ignoreDuplicates: true });
-    await logScrapeRun({
-      source_name: `${source}-feed`,
-      status: 'ok',
-      item_count: inserted,
-      started_at: startedAt,
-      finished_at: new Date().toISOString(),
-      input_json: { source, discovered: rows.length },
-    });
-    return res.status(200).json({ ok: true, source, discovered: rows.length, inserted });
-  } catch (err) {
-    const message = err?.message ?? 'unknown';
-    await logScrapeRun({
-      source_name: `${source}-feed`,
-      status: 'error',
-      started_at: startedAt,
-      finished_at: new Date().toISOString(),
-      error_text: String(message).slice(0, 500),
-      input_json: { source },
-    });
-    return res.status(500).json({ error: `${source} ingest failed: ${message}` });
-  }
-};
-
 // ---------- Handler ----------
 
 export default async function handler(req, res) {
@@ -302,16 +213,8 @@ export default async function handler(req, res) {
     return res.status(401).json({ error: 'unauthorized' });
   }
 
-  const source = str(req.query?.source ?? '').toLowerCase().trim() || 'web';
-  if (source !== 'web') {
-    if (!STRUCTURED_SOURCES[source]) {
-      return res.status(400).json({ error: `unknown source '${source}' — expected web, ${Object.keys(STRUCTURED_SOURCES).join(', ')}` });
-    }
-    return runStructuredSource(source, res);
-  }
-
   if (!process.env.ORTHOGONAL_API_KEY) {
-    return res.status(200).json({ skipped: 'web scout needs ORTHOGONAL_API_KEY — structured sources (?source=hn|producthunt|github|yc) still work.' });
+    return res.status(200).json({ skipped: 'ingest-signals needs ORTHOGONAL_API_KEY.' });
   }
 
   const startedAt = new Date().toISOString();
