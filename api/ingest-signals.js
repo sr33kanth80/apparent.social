@@ -47,7 +47,10 @@ const CRON_SECRET = process.env.AGENT_CRON_SECRET || '';
 // concurrent scout runs. Re-check by the freshest row's age — a successful run
 // stamps freshness_at=now(), so this trails the last successful ingest.
 const MANUAL_COOLDOWN_MS = 10 * 60 * 1000;
-const MAX_AGENT_STEPS = 22; // more targets need more web_search/web_fetch headroom
+// With batched recording a productive run is roughly: search, record 8, search,
+// record 8, search, record 8. That is well under this ceiling — the headroom is
+// for retries and dead-end searches, not for one-company-at-a-time recording.
+const MAX_AGENT_STEPS = Math.min(Math.max(Number(process.env.INGEST_MAX_STEPS) || 30, 8), 60);
 // Orthogonal bills per call, and EVERY request counts — inference completions
 // included. A 22-step loop that fetches 1-3 pages per step needs roughly
 // 22 inference + ~60 tool calls, so the chat-sized default of 20 is nowhere near
@@ -170,23 +173,36 @@ const TOOLS = [
   ...standardOrthogonalTools,
   ...dynamicOrthogonalTools,
   {
-    name: 'record_startup',
+    name: 'record_startups',
+    // Batched on purpose: one startup per call meant a full target of 24 needed
+    // 24 tool calls on top of search/fetch, which exhausted the step budget
+    // after a couple of finds. A whole search page can now land in one call.
     description:
-      'Record ONE real, recently-launched startup you found and verified via web_search/web_fetch. Call once per distinct startup. Only record startups with a real, working homepage you actually reached — never invent a company, founder, or URL. Skip anything you cannot verify.',
+      'Record a BATCH of real startups you found in search or catalog results. Pass every startup from a result page in ONE call — do not call this once per company. Never invent a company, founder, or URL: each startup\'s homepage_url must be one that appeared in a tool result.',
     input_schema: {
       type: 'object',
       properties: {
-        company: { type: 'string', description: 'The startup/company name.' },
-        founder: { type: 'string', description: "The founder's name if known; otherwise a short descriptor like 'Founding team'." },
-        homepage_url: { type: 'string', description: "The startup's canonical homepage URL (e.g. https://acme.com). Required — this is the dedup key." },
-        detail: { type: 'string', description: 'One or two sentences: what they build, the wedge, and any real traction/launch signal you found. Grounded only in what you read.' },
-        sector: { type: 'string', description: 'Primary sector/category (e.g. "AI infra", "fintech").' },
-        stage: { type: 'string', description: 'Rough stage if discernible (e.g. "pre-seed", "seed", "launched"). Leave empty if unknown.' },
-        location: { type: 'string', description: 'City / region / "Remote" if discernible.' },
-        github_url: { type: 'string', description: "The company or founder's GitHub URL if you found one; otherwise omit." },
-        source_url: { type: 'string', description: 'The public URL where you found/verified this startup (launch post, directory, article). Used to attribute the lead.' },
+        startups: {
+          type: 'array',
+          description: 'Every distinct startup you are recording right now. Aim for 6-12 per call.',
+          items: {
+            type: 'object',
+            properties: {
+              company: { type: 'string', description: 'The startup/company name.' },
+              founder: { type: 'string', description: "The founder's name if known; otherwise a short descriptor like 'Founding team'." },
+              homepage_url: { type: 'string', description: "The startup's canonical homepage URL (e.g. https://acme.com). Required — this is the dedup key." },
+              detail: { type: 'string', description: 'One or two sentences: what they build, the wedge, and any real traction/launch signal you found. Grounded only in what you read.' },
+              sector: { type: 'string', description: 'Primary sector/category (e.g. "AI infra", "fintech").' },
+              stage: { type: 'string', description: 'Rough stage if discernible (e.g. "pre-seed", "seed", "launched"). Leave empty if unknown.' },
+              location: { type: 'string', description: 'City / region / "Remote" if discernible.' },
+              github_url: { type: 'string', description: "The company or founder's GitHub URL if you found one; otherwise omit." },
+              source_url: { type: 'string', description: 'The public URL where you found this startup (launch post, directory, article).' },
+            },
+            required: ['company', 'homepage_url', 'detail'],
+          },
+        },
       },
-      required: ['company', 'homepage_url', 'detail'],
+      required: ['startups'],
     },
   },
 ];
@@ -198,19 +214,25 @@ const buildSystemPrompt = (sectors, sinceLabel) =>
     `Your job this run: find up to ${TARGET_COUNT} REAL startups that launched or showed fresh momentum recently (roughly since ${sinceLabel}) and that fit the sectors Apparent\'s investors care about:`,
     `  ${sectors}`,
     '',
-    'How to work:',
-    '- Use search_public_web / search_public_news to find recently-launched startups (Launch HN, Product Hunt, YC batches, launch coverage, "raising seed/pre-seed" posts).',
-    '- Use fetch_public_url to open a candidate\'s homepage/launch post and confirm it is a real, live company before recording it.',
-    '- When the curated search tools cannot answer (e.g. "companies that raised seed in fintech in the last 30 days"), use discover_orthogonal_apis → get_orthogonal_api_details → run_orthogonal_api to reach a structured catalog endpoint. Discovery and details are free; run is paid, so only run when the endpoint clearly fits.',
-    '- Call record_startup once per distinct startup you verified, with its canonical homepage URL.',
+    'You have a limited number of steps, so work in wide sweeps — never one company at a time.',
+    '',
+    'The loop that works:',
+    '1. search_public_web for a whole CATEGORY of recent launches: "Show HN new AI infrastructure startups", "YC W26 fintech companies", "developer tools startups raising pre-seed". Each search returns many companies at once.',
+    '2. Immediately call record_startups with EVERY usable company from those results in ONE call (aim for 6-12 per call). A search result gives you name, URL, and description — that is enough to record.',
+    '3. Repeat with a different sector or a different source until you hit the target.',
+    '',
+    'Tool notes:',
+    '- fetch_public_url is for the occasional ambiguous candidate ONLY. Do not fetch every company — it is the slowest thing you can do and will burn your steps before you find much.',
+    '- search_public_news works well for funding announcements.',
+    '- Use discover_orthogonal_apis → get_orthogonal_api_details → run_orthogonal_api only when plain search genuinely cannot answer (e.g. structured "raised seed in the last 30 days" queries). Discovery and details are free; run is paid.',
     '',
     'Hard rules:',
-    '- NEVER fabricate a company, founder, metric, or URL. If you cannot verify it with a real page you fetched, do not record it.',
-    '- Prefer breadth across the listed sectors over many startups in one niche.',
+    '- NEVER invent a company, founder, or URL. Every homepage_url you record must have appeared in a tool result.',
+    '- Prefer breadth across the listed sectors over depth in one niche.',
     '- Skip well-known late-stage companies; favor early, fresh, fundable teams an investor would not already know.',
     '- Do not record the same startup twice.',
     '',
-    `When you have recorded a good batch (aim for ${TARGET_COUNT}, fewer is fine if you cannot verify more), stop and briefly summarize what you sourced.`,
+    `Keep going until you have recorded about ${TARGET_COUNT} startups, then stop and summarize briefly. Every record_startups result tells you how many remain.`,
   ].join('\n');
 
 // ---------- Handler ----------
@@ -303,47 +325,75 @@ export default async function handler(req, res) {
         if (external !== null) return external;
         const dynamic = await runDynamicOrthogonalTool(session, name, rawInput, publicResearchPolicy);
         if (dynamic !== null) return dynamic;
-        if (name !== 'record_startup') return { error: `Unknown tool: ${name}` };
+        if (name !== 'record_startups') return { error: `Unknown tool: ${name}` };
 
-        const input = rawInput || {};
-        const canonical = canonicalSourceUrl(input.homepage_url);
-        const company = str(input.company).trim();
-        const detail = str(input.detail).trim();
         // Provenance: the URL must have come out of a tool result, never straight
         // from the model. A fetched page is the strongest evidence, but a URL that
         // appeared in a search result or catalog response is real provenance too —
         // and requiring `fetchedOnly` silently rejected every startup the scout
         // found through the catalog, which is most of them.
+        // Origin comparison is exact, so "https://www.acme.com" and
+        // "https://acme.com" read as different sites and a legitimate find gets
+        // dropped on a www mismatch — search results mix the two forms freely.
+        // Check both variants; same registrable domain, same owner.
+        const wwwVariants = (value) => {
+          const raw = str(value).trim();
+          if (!raw) return [];
+          const stripped = raw.replace(/^(https?:\/\/)www\./i, '$1');
+          const prefixed = raw.replace(/^(https?:\/\/)(?!www\.)/i, '$1www.');
+          return [...new Set([raw, stripped, prefixed])];
+        };
         const seenInToolResult = (value) =>
-          isAuthorizedResearchUrl(publicResearchPolicy, value, { fetchedOnly: true, sameOrigin: true }) ||
-          isAuthorizedResearchUrl(publicResearchPolicy, value, { sameOrigin: true });
-        const hasProvenance = seenInToolResult(input.homepage_url) || seenInToolResult(input.source_url);
+          wwwVariants(value).some((candidate) =>
+            isAuthorizedResearchUrl(publicResearchPolicy, candidate, { fetchedOnly: true, sameOrigin: true }) ||
+            isAuthorizedResearchUrl(publicResearchPolicy, candidate, { sameOrigin: true }));
 
-        let result;
-        if (!canonical || !company || !detail || !hasProvenance) {
-          const why = !canonical ? 'no canonical url' : !company ? 'no company' : !detail ? 'no detail' : 'no authorized source provenance';
-          skipped.push(`${company || 'unnamed'}: ${why}`);
-          result = { status: 'skipped', reason: why };
-        } else if (byUrl.has(canonical)) {
-          result = { status: 'skipped', reason: 'already recorded this startup this run' };
-        } else {
+        const batch = Array.isArray(rawInput?.startups) ? rawInput.startups : [];
+        if (!batch.length) return { error: 'startups array is required and must not be empty' };
+
+        let recorded = 0;
+        const rejected = [];
+        for (const input of batch.slice(0, TARGET_COUNT * 2)) {
+          const canonical = canonicalSourceUrl(input?.homepage_url);
+          const company = str(input?.company).trim();
+          const detail = str(input?.detail).trim();
+          const hasProvenance = seenInToolResult(input?.homepage_url) || seenInToolResult(input?.source_url);
+
+          if (!canonical || !company || !detail || !hasProvenance) {
+            const why = !canonical ? 'no canonical url' : !company ? 'no company' : !detail ? 'no detail' : 'no authorized source provenance';
+            skipped.push(`${company || 'unnamed'}: ${why}`);
+            rejected.push({ company: company || 'unnamed', reason: why });
+            continue;
+          }
+          if (byUrl.has(canonical)) {
+            rejected.push({ company, reason: 'already recorded this run' });
+            continue;
+          }
+          const now = new Date().toISOString();
           byUrl.set(canonical, {
             company,
-            founder: str(input.founder).trim() || 'Founding team',
+            founder: str(input?.founder).trim() || 'Founding team',
             detail,
             source_type: 'web',
             source_url: canonical,
             profile_url: canonical,
-            stage: str(input.stage).trim(),
-            location: str(input.location).trim(),
-            github_url: str(input.github_url).trim(),
-            raw_tags: [str(input.sector).trim()].filter(Boolean),
-            freshness_at: new Date().toISOString(),
-            raw: { discovered_at: new Date().toISOString(), found_via: str(input.source_url).trim(), sector: str(input.sector).trim() },
+            stage: str(input?.stage).trim(),
+            location: str(input?.location).trim(),
+            github_url: str(input?.github_url).trim(),
+            raw_tags: [str(input?.sector).trim()].filter(Boolean),
+            freshness_at: now,
+            raw: { discovered_at: now, found_via: str(input?.source_url).trim(), sector: str(input?.sector).trim() },
           });
-          result = { status: 'recorded', company, count_so_far: byUrl.size };
+          recorded += 1;
         }
-        return result;
+
+        return {
+          status: 'ok',
+          recorded,
+          rejected: rejected.slice(0, 10),
+          total_so_far: byUrl.size,
+          remaining: Math.max(0, TARGET_COUNT - byUrl.size),
+        };
       },
     });
 
