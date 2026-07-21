@@ -7458,7 +7458,12 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
     if (result.ok) {
       const fresh = await loadDailyDigestSourced();
       setDailyDigest(fresh);
-      setDailyRefreshMsg(`Added ${result.upserted ?? 0} fresh startups.`);
+      const count = result.upserted ?? 0;
+      setDailyRefreshMsg(
+        result.partial
+          ? `Added ${count} startups — the scout stopped early, run again for more.`
+          : `Added ${count} fresh startups.`,
+      );
     } else if (result.retryInSec) {
       const mins = Math.ceil(result.retryInSec / 60);
       setDailyRefreshMsg(`Cooldown — try again in ~${mins} min.`);

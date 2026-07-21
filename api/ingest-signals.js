@@ -36,6 +36,10 @@ import {
 } from '../server/agent/apparent-agent-runtime.js';
 import { requireAgentAccess, sendAgentAccessError } from '../server/agent/agent-guard.js';
 
+// A full scout loop legitimately runs minutes. Without this the platform kills
+// the function mid-loop and the partial-save in the catch block never runs.
+export const maxDuration = 300;
+
 const SUPABASE_URL = (process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL || '').replace(/\/$/, '');
 const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
 const CRON_SECRET = process.env.AGENT_CRON_SECRET || '';
@@ -44,6 +48,12 @@ const CRON_SECRET = process.env.AGENT_CRON_SECRET || '';
 // stamps freshness_at=now(), so this trails the last successful ingest.
 const MANUAL_COOLDOWN_MS = 10 * 60 * 1000;
 const MAX_AGENT_STEPS = 22; // more targets need more web_search/web_fetch headroom
+// Orthogonal bills per call, and EVERY request counts — inference completions
+// included. A 22-step loop that fetches 1-3 pages per step needs roughly
+// 22 inference + ~60 tool calls, so the chat-sized default of 20 is nowhere near
+// enough. Env-tunable; keep the spend cap in sight since catalog runs are paid.
+const INGEST_MAX_CALLS = Math.min(Math.max(Number(process.env.INGEST_MAX_CALLS) || 120, 20), 400);
+const INGEST_MAX_SPEND_CENTS = Math.min(Math.max(Number(process.env.INGEST_MAX_SPEND_CENTS) || 500, 50), 5000);
 // Per-run scrape volume. Default 24, env-tunable up to 60. Each run upserts into
 // source_signals (deduped), so the investor Daily list grows run over run rather
 // than resetting — bigger target = faster accumulation, but a longer/costlier
@@ -263,7 +273,16 @@ export default async function handler(req, res) {
   const byUrl = new Map();
 
   try {
-    const runtime = createApparentAgentRuntime();
+    // The shared session defaults (20 calls / 100¢) are sized for a short chat
+    // turn. This loop spends one call per inference step plus one per tool call,
+    // so it exhausted 20 within a few steps and threw away everything it had
+    // found. Size the budget to the loop instead.
+    const runtime = createApparentAgentRuntime({
+      sessionOptions: {
+        maxCalls: INGEST_MAX_CALLS,
+        maxSpendCents: INGEST_MAX_SPEND_CENTS,
+      },
+    });
     await runtime.run({
       system,
       messages,
@@ -325,14 +344,39 @@ export default async function handler(req, res) {
     return res.status(200).json({ ok: true, discovered: rows.length, upserted, sectors });
   } catch (err) {
     const message = err?.message ?? 'unknown';
+    // The agent loop hit a wall (call limit, step limit, budget, timeout). Whatever
+    // it verified before that point is still good data — save it rather than
+    // discarding a two-minute run. Only a genuinely empty batch is a hard failure.
+    const rows = Array.from(byUrl.values());
+    let upserted = 0;
+    let saveError = '';
+    if (rows.length) {
+      try {
+        upserted = await upsertSignals(rows);
+      } catch (saveErr) {
+        saveError = saveErr?.message ?? 'upsert failed';
+      }
+    }
+
     await logScrapeRun({
-      status: 'error',
-      item_count: byUrl.size,
+      status: upserted ? 'partial' : 'error',
+      item_count: upserted,
       started_at: startedAt,
       finished_at: new Date().toISOString(),
-      error_text: String(message).slice(0, 500),
+      error_text: `${message}${saveError ? ` | save: ${saveError}` : ''}`.slice(0, 500),
       input_json: { sectors, target: TARGET_COUNT, since: sinceLabel, provider: 'orthogonal' },
     });
+
+    if (upserted) {
+      return res.status(200).json({
+        ok: true,
+        partial: true,
+        discovered: rows.length,
+        upserted,
+        sectors,
+        note: `Scout stopped early (${message}) — saved what it verified.`,
+      });
+    }
     return res.status(500).json({ error: `ingest-signals failed: ${message}` });
   }
 }

@@ -527,7 +527,10 @@ export const createAgentSse = (res, enabled) => {
   return { streaming: enabled, emit };
 };
 
-export const createApparentAgentRuntime = ({ session, complete } = {}) => {
+// `sessionOptions` lets a caller widen the per-session Orthogonal call/spend
+// budget. Chat turns are short and keep the conservative defaults; the daily
+// ingest scout runs a long loop and needs a much larger allowance.
+export const createApparentAgentRuntime = ({ session, complete, sessionOptions = {} } = {}) => {
   let resolvedInference = configuredInference();
   const inferenceApi = resolvedInference?.api;
   if (inferenceApi && isBlockedInferenceApi(inferenceApi)) {
@@ -541,6 +544,7 @@ export const createApparentAgentRuntime = ({ session, complete } = {}) => {
   const orthogonal = session || createOrthogonalSession({
     allowedApis,
     dynamicPricingEndpoints: [{ api: inferenceApi, path: resolvedInference.path }],
+    ...sessionOptions,
   });
 
   const callInference = complete || (async ({ messages, tools, maxTokens }) => {

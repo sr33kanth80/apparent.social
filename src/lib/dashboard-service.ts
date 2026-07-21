@@ -1609,6 +1609,7 @@ export const triggerManualSourcing = async (
   upserted?: number;
   retryInSec?: number;
   error?: string;
+  partial?: boolean;
 }> => {
   const authHeaders = await getAuthHeaders();
   if (!authHeaders.Authorization) return { ok: false, error: 'Your session expired — sign in again.' };
@@ -1622,9 +1623,10 @@ export const triggerManualSourcing = async (
       upserted?: number;
       error?: string;
       retryInSec?: number;
+      partial?: boolean;
     };
     if (res.status === 429) return { ok: false, retryInSec: body.retryInSec, error: 'cooldown' };
-    if (res.ok && body.ok) return { ok: true, upserted: body.upserted ?? 0 };
+    if (res.ok && body.ok) return { ok: true, upserted: body.upserted ?? 0, partial: body.partial };
     return { ok: false, error: body.error || `Sourcing failed (${res.status})` };
   } catch (error) {
     return { ok: false, error: error instanceof Error ? error.message : 'Network error.' };
