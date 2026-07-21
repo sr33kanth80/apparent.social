@@ -165,6 +165,50 @@ test('public web research accepts date/source modifiers and falls back from Link
   assert.deepEqual(calls, ['linkup/v1/search', 'serper/search']);
 });
 
+test('the term allowlist blocks off-context queries but openQueries lifts it', async () => {
+  const seed = 'Source fresh thesis-fit startups. Sectors: fintech.';
+  const session = { run: async () => ({ data: { results: [] } }) };
+  const query = { query: 'Show HN launches raising pre-seed' };
+
+  const gated = await runStandardOrthogonalTool(
+    session,
+    'search_public_web',
+    query,
+    createPublicResearchPolicy({ publicContext: seed }),
+  );
+  assert.equal(gated.error, 'public_query_not_authorized');
+
+  const open = await runStandardOrthogonalTool(
+    session,
+    'search_public_web',
+    query,
+    createPublicResearchPolicy({ publicContext: seed, openQueries: true }),
+  );
+  assert.equal(open.error, undefined);
+
+  // openQueries lifts the allowlist, never the sensitive-data filter.
+  const sensitive = await runStandardOrthogonalTool(
+    session,
+    'search_public_web',
+    { query: 'user password hunter2' },
+    createPublicResearchPolicy({ publicContext: seed, openQueries: true }),
+  );
+  assert.equal(sensitive.error, 'public_query_not_authorized');
+});
+
+test('catalog results feed the research policy so their URLs carry provenance', async () => {
+  const policy = createPublicResearchPolicy({ publicContext: 'sectors: fintech', openQueries: true });
+  const endpoint = { api: 'demo', path: '/v1/companies' };
+  const session = {
+    isDiscovered: () => true,
+    run: async () => ({ data: { companies: [{ name: 'Acme', site: 'https://acme.com' }] } }),
+  };
+
+  assert.equal(isAuthorizedResearchUrl(policy, 'https://acme.com', { sameOrigin: true }), false);
+  await runDynamicOrthogonalTool(session, 'run_orthogonal_api', endpoint, policy);
+  assert.equal(isAuthorizedResearchUrl(policy, 'https://acme.com', { sameOrigin: true }), true);
+});
+
 test('public news research uses Orthogonal Serper news search', async () => {
   const policy = createPublicResearchPolicy({ publicContext: 'funding announcements June 2026' });
   const calls = [];

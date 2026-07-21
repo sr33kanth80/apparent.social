@@ -105,13 +105,22 @@ const collectPublicUrls = (value, hosts, urls, depth = 0) => {
   }
 };
 
-export const createPublicResearchPolicy = ({ publicContext = '' } = {}) => {
+/**
+ * `openQueries` lifts the search-term allowlist. That allowlist exists to stop a
+ * chat agent from taking private profile data and searching for it — a real
+ * exfiltration risk when the conversation contains user data. The scheduled
+ * deal-flow scout has no user data in scope at all: its seed prompt is a
+ * server-authored constant, so the gate blocks legitimate discovery queries
+ * ("Show HN launches", "recently raised pre-seed") while protecting nothing.
+ * The sensitive-pattern check still applies to every query either way.
+ */
+export const createPublicResearchPolicy = ({ publicContext = '', openQueries = false } = {}) => {
   const allowedTerms = new Set([...SAFE_PUBLIC_QUERY_WORDS, ...publicTokens(publicContext)]);
   const allowedHosts = new Set();
   const allowedUrls = new Set();
   const fetchedUrls = new Set();
   collectPublicUrls(publicContext, allowedHosts, allowedUrls);
-  return { allowedTerms, allowedHosts, allowedUrls, fetchedUrls };
+  return { allowedTerms, allowedHosts, allowedUrls, fetchedUrls, openQueries };
 };
 
 // Feed a tool result back into the policy so follow-up research can build on it:
@@ -300,7 +309,10 @@ const containsSensitiveDynamicInput = (value, depth = 0) => {
   return false;
 };
 
-export const runDynamicOrthogonalTool = async (session, name, input) => {
+// `policy` is optional. When supplied, catalog results feed the research policy
+// the same way search/fetch results do, so URLs discovered through a catalog
+// endpoint count as real provenance and become fetchable for follow-up.
+export const runDynamicOrthogonalTool = async (session, name, input, policy = null) => {
   if (name === 'discover_orthogonal_apis') {
     const prompt = str(input?.prompt).trim().slice(0, 500);
     if (!prompt) return { error: 'catalog_prompt_required' };
@@ -323,7 +335,9 @@ export const runDynamicOrthogonalTool = async (session, name, input) => {
     if (containsSensitiveDynamicInput({ query, body })) {
       return { error: 'sensitive_dynamic_input_rejected', guidance: 'Use only non-sensitive public research parameters.' };
     }
-    return orthogonalData(await session.run({ ...endpoint, query, body }));
+    const result = orthogonalData(await session.run({ ...endpoint, query, body }));
+    if (policy) absorbPublicResult(policy, result);
+    return result;
   }
 
   return null;
@@ -334,7 +348,9 @@ export const runStandardOrthogonalTool = async (session, name, input, policy = c
     const query = str(input?.query).trim().slice(0, 500);
     if (!query) return { error: 'query_required' };
     const terms = publicTokens(query);
-    if (SENSITIVE_QUERY_PATTERN.test(query) || terms.some((term) => !policy.allowedTerms.has(term) && !isSafePublicModifier(term))) {
+    const termsAllowed = policy.openQueries
+      || terms.every((term) => policy.allowedTerms.has(term) || isSafePublicModifier(term));
+    if (SENSITIVE_QUERY_PATTERN.test(query) || !termsAllowed) {
       return { error: 'public_query_not_authorized', guidance: 'Reuse the user\'s public research terms and omit private, identifying, or secret data.' };
     }
     let result;

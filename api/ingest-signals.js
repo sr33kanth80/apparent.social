@@ -266,11 +266,20 @@ export default async function handler(req, res) {
 
   const system = buildSystemPrompt(sectors, sinceLabel);
   const messages = [{ role: 'user', content: `Source fresh thesis-fit startups for our investors. Target sectors: ${sectors}.` }];
-  const publicResearchPolicy = createPublicResearchPolicy({ publicContext: messages[0].content });
+  // openQueries: the seed prompt above is a server-authored constant with no user
+  // data in it, so the anti-exfiltration term allowlist has nothing to protect
+  // here — it only blocked the scout's own discovery queries.
+  const publicResearchPolicy = createPublicResearchPolicy({
+    publicContext: messages[0].content,
+    openQueries: true,
+  });
 
   // Collected server-side as the model calls record_startup. Keyed by canonical
   // URL so duplicates within a single run collapse before we ever hit the DB.
   const byUrl = new Map();
+  // Rejected record_startup attempts, logged to scrape_runs. A run that finds
+  // nothing should say why rather than looking like the scout found nothing.
+  const skipped = [];
 
   try {
     // The shared session defaults (20 calls / 100¢) are sized for a short chat
@@ -292,7 +301,7 @@ export default async function handler(req, res) {
       executeTool: async (name, rawInput, { session }) => {
         const external = await runStandardOrthogonalTool(session, name, rawInput, publicResearchPolicy);
         if (external !== null) return external;
-        const dynamic = await runDynamicOrthogonalTool(session, name, rawInput);
+        const dynamic = await runDynamicOrthogonalTool(session, name, rawInput, publicResearchPolicy);
         if (dynamic !== null) return dynamic;
         if (name !== 'record_startup') return { error: `Unknown tool: ${name}` };
 
@@ -300,13 +309,21 @@ export default async function handler(req, res) {
         const canonical = canonicalSourceUrl(input.homepage_url);
         const company = str(input.company).trim();
         const detail = str(input.detail).trim();
-        const hasFetchedProvenance =
-          isAuthorizedResearchUrl(publicResearchPolicy, input.homepage_url, { fetchedOnly: true, sameOrigin: true }) ||
-          isAuthorizedResearchUrl(publicResearchPolicy, input.source_url, { fetchedOnly: true, sameOrigin: true });
+        // Provenance: the URL must have come out of a tool result, never straight
+        // from the model. A fetched page is the strongest evidence, but a URL that
+        // appeared in a search result or catalog response is real provenance too —
+        // and requiring `fetchedOnly` silently rejected every startup the scout
+        // found through the catalog, which is most of them.
+        const seenInToolResult = (value) =>
+          isAuthorizedResearchUrl(publicResearchPolicy, value, { fetchedOnly: true, sameOrigin: true }) ||
+          isAuthorizedResearchUrl(publicResearchPolicy, value, { sameOrigin: true });
+        const hasProvenance = seenInToolResult(input.homepage_url) || seenInToolResult(input.source_url);
 
         let result;
-        if (!canonical || !company || !detail || !hasFetchedProvenance) {
-          result = { status: 'skipped', reason: 'missing fields or no fetched, authorized source provenance' };
+        if (!canonical || !company || !detail || !hasProvenance) {
+          const why = !canonical ? 'no canonical url' : !company ? 'no company' : !detail ? 'no detail' : 'no authorized source provenance';
+          skipped.push(`${company || 'unnamed'}: ${why}`);
+          result = { status: 'skipped', reason: why };
         } else if (byUrl.has(canonical)) {
           result = { status: 'skipped', reason: 'already recorded this startup this run' };
         } else {
@@ -338,10 +355,10 @@ export default async function handler(req, res) {
       item_count: upserted,
       started_at: startedAt,
       finished_at: new Date().toISOString(),
-      input_json: { sectors, target: TARGET_COUNT, since: sinceLabel, provider: 'orthogonal' },
+      input_json: { sectors, target: TARGET_COUNT, since: sinceLabel, provider: 'orthogonal', skipped: skipped.slice(0, 40) },
     });
 
-    return res.status(200).json({ ok: true, discovered: rows.length, upserted, sectors });
+    return res.status(200).json({ ok: true, discovered: rows.length, upserted, skipped: skipped.length, sectors });
   } catch (err) {
     const message = err?.message ?? 'unknown';
     // The agent loop hit a wall (call limit, step limit, budget, timeout). Whatever
@@ -364,7 +381,7 @@ export default async function handler(req, res) {
       started_at: startedAt,
       finished_at: new Date().toISOString(),
       error_text: `${message}${saveError ? ` | save: ${saveError}` : ''}`.slice(0, 500),
-      input_json: { sectors, target: TARGET_COUNT, since: sinceLabel, provider: 'orthogonal' },
+      input_json: { sectors, target: TARGET_COUNT, since: sinceLabel, provider: 'orthogonal', skipped: skipped.slice(0, 40) },
     });
 
     if (upserted) {
