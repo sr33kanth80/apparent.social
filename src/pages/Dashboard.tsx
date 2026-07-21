@@ -7628,7 +7628,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
                 });
                 const toggleSort = (key: typeof dailySort.key) => setDailySort((s) => ({ key, dir: s.key === key && s.dir === 'asc' ? 'desc' : 'asc' }));
                 const th = (key: typeof dailySort.key, label: string) => (
-                  <th className="px-4 py-2.5 text-left font-semibold text-black/55">
+                  <th className="whitespace-nowrap px-4 py-2.5 text-left font-semibold text-black/55">
                     <button type="button" onClick={() => toggleSort(key)} className="inline-flex items-center gap-1 hover:text-black">
                       {label} <ChevronsUpDown className="h-3 w-3 opacity-50" />
                     </button>
@@ -7644,7 +7644,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
                             {th('category', 'Sector')}
                             {th('stage', 'Stage')}
                             {th('location', 'Location')}
-                            <th className="px-4 py-2.5 text-left font-semibold text-black/55">Metric</th>
+                            <th className="whitespace-nowrap px-4 py-2.5 text-left font-semibold text-black/55">Metric</th>
                             {th('source', 'Source')}
                             <th className="px-4 py-2.5" />
                           </tr>
@@ -7658,7 +7658,10 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
                             const cells = (
                               <>
                                 <td className="px-4 py-3">
-                                  <div className="flex items-center gap-2.5">
+                                  {/* Bounded width so the taglines below can truncate: in an
+                                      auto-layout table the column otherwise grows to fit the
+                                      longest description and blows out the row. */}
+                                  <div className="flex w-[20rem] max-w-[20rem] items-center gap-2.5">
                                     <div className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-[#fbfaf7]">
                                       <img
                                         src={launch.logoUrl || `https://www.google.com/s2/favicons?domain=${domain}&sz=128`}
@@ -7667,17 +7670,31 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
                                         onError={(e) => { e.currentTarget.style.visibility = 'hidden'; }}
                                       />
                                     </div>
-                                    <div className="min-w-0">
+                                    <div className="min-w-0 flex-1">
                                       <div className="truncate font-semibold text-black">{launch.name}</div>
-                                      {launch.tagline && <div className="truncate text-[11px] text-black/50">{launch.tagline}</div>}
+                                      {launch.tagline && (
+                                        <div className="truncate text-[11px] text-black/50" title={launch.tagline}>
+                                          {launch.tagline}
+                                        </div>
+                                      )}
                                     </div>
                                   </div>
                                 </td>
-                                <td className="px-4 py-3 text-black/70">{launch.category || '—'}</td>
-                                <td className="px-4 py-3 text-black/70">{launch.stage || '—'}</td>
-                                <td className="px-4 py-3 text-black/70">{launch.location || '—'}</td>
-                                <td className="px-4 py-3 text-black/70">{launch.metrics || '—'}</td>
-                                <td className="px-4 py-3 text-black/60">{launch.source || '—'}</td>
+                                <td className="px-4 py-3 text-black/70">
+                                  <div className="max-w-[10rem] truncate" title={launch.category}>{launch.category || '—'}</div>
+                                </td>
+                                <td className="px-4 py-3 text-black/70">
+                                  <div className="max-w-[9rem] truncate" title={launch.stage}>{launch.stage || '—'}</div>
+                                </td>
+                                <td className="px-4 py-3 text-black/70">
+                                  <div className="max-w-[10rem] truncate" title={launch.location}>{launch.location || '—'}</div>
+                                </td>
+                                <td className="px-4 py-3 text-black/70">
+                                  <div className="max-w-[12rem] truncate" title={launch.metrics}>{launch.metrics || '—'}</div>
+                                </td>
+                                <td className="px-4 py-3 text-black/60">
+                                  <div className="max-w-[8rem] truncate" title={launch.source}>{launch.source || '—'}</div>
+                                </td>
                                 <td className="px-4 py-3 text-right">
                                   <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-[#f4f1eb] text-black/60 group-hover:bg-charcoal group-hover:text-white">
                                     <ArrowUpRight className="h-3.5 w-3.5" />
