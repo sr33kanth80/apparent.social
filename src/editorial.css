@@ -1,31 +1,47 @@
-/* Apparent · Editorial design system (Steep: serif analytics on warm paper).
+/* Apparent · Editorial design system — "Apparent / Tavus" neo-brutalist reskin.
    Namespaced ed- classes and --ed- vars so the layer never collides with the
    legacy alden/monad styles or shadcn/Tailwind tokens. Public site + auth.
-   Token mapping — ink: #17191c · canvas: paper white · paper: card mist ·
-   ember: sienna brown (pairs with --ed-peach accent surfaces only). */
+   Look: warm paper canvas, near-black hard 1px borders, coral accent, offset
+   drop-shadows (no blur), serif display + uppercase tracked labels.
+   Reference: D:\diitto\apparent (globals.css / ditto.css). */
 :root {
-  --ed-ink: #17191c;
+  /* Core palette (reference tokens) */
+  --ed-ink: #28292a;        /* foreground — near-black text */
   --ed-white: #ffffff;
-  --ed-paper: #f2f2f3;
-  --ed-canvas: #ffffff;
-  --ed-fogband: #fafafb;
-  --ed-fog: #ececec;
-  --ed-smoke: #979799;
-  --ed-graphite: #777b86;
-  --ed-ash: #a3a6af;
-  --ed-ember: #5d2a1a;
-  --ed-peach: #fbe1d1;
-  --ed-blue: #1d9bf0;   /* founder accent — matches the verified check */
-  --ed-green: #16a34a;  /* investor accent — money green */
-  --ed-font: 'Sohne', 'Inter', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  --ed-serif: 'Signifier', 'Source Serif 4', Georgia, ui-serif, serif;
+  --ed-black: #000000;
+  --ed-canvas: #f7f4ef;     /* background — warm paper */
+  --ed-paper: #eae5de;      /* surface — panel bg */
+  --ed-border: #140206;     /* hard near-black borders */
+  --ed-accent: #ff6183;     /* coral/pink accent */
+  --ed-primary: #ffb4c5;    /* light pink */
+  --ed-amber: #ffb835;
+  --ed-success: #38f261;    /* success green */
+  /* Neutrals (kept for existing rules; nudged toward the paper theme) */
+  --ed-fogband: #f2efe9;
+  --ed-fog: #d9d0c2;
+  --ed-smoke: #8a827a;
+  --ed-graphite: #5b5751;
+  --ed-ash: #a3a099;
+  --ed-ember: var(--ed-accent);  /* legacy alias → coral */
+  --ed-peach: var(--ed-primary); /* legacy alias → light pink */
+  --ed-blue: #1d9bf0;   /* founder accent — matches the verified check (kept) */
+  --ed-green: #16a34a;  /* investor accent — money green (kept) */
+  /* Fonts — proprietary brand faces first, safe fallbacks after (droppable later) */
+  --ed-font: 'Suisse Intl', 'Inter', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --ed-serif: 'Perfectlynineties', 'Signifier', 'Source Serif 4', Georgia, ui-serif, serif;
+  --ed-label: 'Fk Raster Grotesk Compact Blended', 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   --ed-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  /* Geometry — neo-brutalist: sharp corners (badges stay pill for status dots) */
   --ed-r-badge: 999px;
-  --ed-r: 16px;
-  --ed-r-feature: 24px;
-  --ed-r-artifact: 20px;
-  --ed-shadow-artifact: rgba(4,23,43,.05) 0px 0px 0px 1px, rgba(0,0,0,.1) 0px 20px 25px -5px, rgba(0,0,0,.1) 0px 8px 10px -6px;
-  --ed-shadow-overlay: rgba(0,0,0,.05) 0px 0px 0px 1px, rgba(0,0,0,.08) 0px 4px 24px 0px;
+  --ed-r: 0px;
+  --ed-r-feature: 0px;
+  --ed-r-artifact: 0px;
+  /* Shadows — offset hard drop, no blur */
+  --ed-shadow-hard: 5px 5px 0 0 var(--ed-border);
+  --ed-shadow-hard-sm: 3px 3px 0 0 var(--ed-border);
+  --ed-shadow-artifact: var(--ed-shadow-hard);
+  --ed-shadow-overlay: 4px 4px 0 0 var(--ed-border);
+  --ed-frame: 10px;         /* page frame thickness */
   --ed-pad: clamp(20px, 5vw, 72px);
   --ed-max: 1200px;
 }
@@ -1744,3 +1760,109 @@
 .ed-final h2 { font-family: var(--ed-serif); font-weight: 400; font-size: clamp(2rem, 5vw, 64px); line-height: 1.25; letter-spacing: -0.015em; max-width: 18ch; margin: 0 auto; }
 .ed-final p { margin: 24px auto 0; max-width: 48ch; font-size: 17px; line-height: 1.6; color: var(--ed-graphite); }
 .ed-final .ed-cta { margin-top: 32px; justify-content: center; }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   NEO-BRUTALIST FOUNDATION — "Apparent / Tavus" reskin
+   Tokens/utilities/motion. Scoped to .ed-page so the app shell & dashboards
+   are never touched. Additive: existing .ed-* rules inherit the new tokens;
+   the utilities below are opt-in helpers for eyebrows, titlebars and press.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* --- Page frame: thick near-black border around public routes only --------- */
+.ed-page {
+  background: var(--ed-canvas);
+  border: var(--ed-frame) solid var(--ed-border);
+}
+@media (max-width: 560px) { .ed-page { border-width: 6px; } }
+/* Sticky nav sits below the top frame */
+.ed-page .ed-nav { top: 0; background: var(--ed-canvas); }
+
+/* --- Hard-edge surface utilities ------------------------------------------- */
+.ed-hard { border: 1px solid var(--ed-border); border-radius: 0; }
+.ed-shadow { box-shadow: var(--ed-shadow-hard); }
+.ed-shadow-sm { box-shadow: var(--ed-shadow-hard-sm); }
+.ed-panel {
+  background: var(--ed-white);
+  border: 1px solid var(--ed-border);
+  border-radius: 0;
+  box-shadow: var(--ed-shadow-hard);
+}
+
+/* --- Press-on-hover: translate toward the shadow --------------------------- */
+.ed-press { transition: transform .12s ease, box-shadow .12s ease; }
+.ed-press:hover { transform: translate(4px, 4px); box-shadow: 1px 1px 0 0 var(--ed-border); }
+.ed-press:active { transform: translate(5px, 5px); box-shadow: 0 0 0 0 var(--ed-border); }
+
+/* --- Uppercase tracked label, with a small solid square bullet ------------- */
+.ed-label {
+  font-family: var(--ed-label);
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
+  font-size: 13px;
+  line-height: 1;
+  font-weight: 400;
+  color: var(--ed-ink);
+}
+.ed-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  font-family: var(--ed-label);
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
+  font-size: 13px;
+  line-height: 1;
+  color: var(--ed-ink);
+}
+.ed-eyebrow::before {
+  content: "";
+  width: 10px;
+  height: 10px;
+  background: var(--ed-accent);
+  flex: 0 0 auto;
+}
+
+/* --- Window/panel chrome: titlebar = square + caps label + thin rules ------ */
+.ed-titlebar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--ed-border);
+  background: var(--ed-paper);
+}
+.ed-titlebar::before {
+  content: "";
+  width: 10px; height: 10px;
+  background: var(--ed-border);
+  flex: 0 0 auto;
+}
+.ed-titlebar .ed-titlebar-label {
+  font-family: var(--ed-label);
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
+  font-size: 12px;
+  color: var(--ed-ink);
+}
+.ed-titlebar .ed-titlebar-rule {
+  flex: 1 1 auto;
+  height: 6px;
+  background-image: repeating-linear-gradient(
+    to bottom, var(--ed-border) 0 1px, transparent 1px 3px);
+}
+
+/* --- Motion: scroll-reveal (fail-safe), marquee ---------------------------- */
+@keyframes edMarquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+.ed-marquee { display: flex; width: max-content; animation: edMarquee 30s linear infinite; }
+
+.ed-reveal { opacity: 0; transform: translateY(14px); transition: opacity .6s ease, transform .6s ease; }
+.ed-reveal.is-in { opacity: 1; transform: none; }
+/* Fail-safe: if JS never flips is-in, reveal anyway after a beat */
+@keyframes edRevealFailsafe { to { opacity: 1; transform: none; } }
+.ed-reveal { animation: edRevealFailsafe 0s linear 1.2s forwards; }
+
+@media (prefers-reduced-motion: reduce) {
+  .ed-marquee { animation: none; }
+  .ed-reveal { opacity: 1; transform: none; animation: none; transition: none; }
+  .ed-press { transition: none; }
+}

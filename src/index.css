@@ -63,6 +63,8 @@
   --color-peach: #ff9473;
   --font-serif: 'Source Serif 4', ui-serif, Georgia, 'Times New Roman', serif;
   --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  /* Uppercase tracked label face for the neo-brutalist reskin (font-label utility). */
+  --font-label: 'Fk Raster Grotesk Compact Blended', 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 }
 
 /* Alden-inspired landing page. Scoped to the root Home route so the existing
