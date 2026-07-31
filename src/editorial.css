@@ -18,7 +18,8 @@
   --ed-success: #38f261;    /* success green */
   /* Neutrals (kept for existing rules; nudged toward the paper theme) */
   --ed-fogband: #f2efe9;
-  --ed-fog: #d9d0c2;
+  --ed-fog: var(--ed-border);  /* dividers/card borders → hard near-black */
+  --ed-hairline: #d9d0c2;      /* the old soft fog, if a subtle rule is ever needed */
   --ed-smoke: #8a827a;
   --ed-graphite: #5b5751;
   --ed-ash: #a3a099;
@@ -1866,3 +1867,47 @@
   .ed-reveal { opacity: 1; transform: none; animation: none; transition: none; }
   .ed-press { transition: none; }
 }
+
+/* ═══ PRIMITIVES — neo-brutalist buttons / inputs / nav / chips ═════════════
+   Later-cascade overrides (kept in one block for reviewability). Only the
+   rectangular interactive primitives are squared; avatars, status dots and
+   verified-badge icons stay round. Colours/handlers unchanged. */
+
+/* Buttons: sharp, hard border, offset shadow, press-toward-shadow on hover */
+.ed-page .ed-btn {
+  border-radius: 0;
+  border: 1px solid var(--ed-border);
+  box-shadow: var(--ed-shadow-hard-sm);
+  transition: transform .12s ease, box-shadow .12s ease, background .18s ease, color .18s ease, opacity .18s ease;
+}
+.ed-page .ed-btn:hover { transform: translate(3px, 3px); box-shadow: 0 0 0 0 var(--ed-border); }
+.ed-page .ed-btn:active { transform: translate(3px, 3px); }
+.ed-page .ed-btn.ed-block { border-radius: 0; }
+/* Outline/ghost variants: fill on hover would clash with the press look — keep
+   the border, let the token colours drive the fill. */
+.ed-page .ed-btn-outline:hover,
+.ed-page .ed-btn-ember:hover,
+.ed-page .ed-bf-ghost:hover { background: var(--ed-ink); color: var(--ed-white); }
+
+/* Inputs: sharp + hard border comes from tokens; deepen focus to a 2px ink ring */
+.ed-field input, .ed-field select, .ed-field textarea { border-width: 1px; }
+.ed-field input:focus, .ed-field select:focus, .ed-field textarea:focus {
+  border-color: var(--ed-border); box-shadow: var(--ed-shadow-hard-sm);
+}
+.ed-form { border: 1px solid var(--ed-border); box-shadow: var(--ed-shadow-hard); }
+
+/* Nav pill + tabbar + segmented + chips + pills → rectangular hard-edged */
+.ed-nav.is-scrolled .ed-nav-row { border-radius: 0; box-shadow: var(--ed-shadow-hard-sm); border-color: var(--ed-border); }
+.ed-nav-links a { border-radius: 0; }
+.ed-page .ed-tabbar,
+.ed-page .ed-tabbar button,
+.ed-page .ed-tabbar .ed-visit,
+.ed-page .ed-live-menu,
+.ed-page .ed-live-menu a,
+.ed-page .ed-chip,
+.ed-page .ed-dpill,
+.ed-page .ed-proof,
+.ed-page .ed-seg,
+.ed-page .ed-seg button,
+.ed-page .ed-badge { border-radius: 0; }
+.ed-page .ed-tabbar { box-shadow: var(--ed-shadow-hard-sm); }

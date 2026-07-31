@@ -216,42 +216,49 @@ body {
   border-color: var(--color-hairline-gray);
 }
 
-/* Public website */
+/* ═══ Public website — "Apparent / Tavus" neo-brutalist reskin ══════════════
+   Retokens the public --ed-* palette to the reference (paper canvas, near-black
+   hard borders, coral accent, offset no-blur shadows, sharp corners) and
+   restyles the shared .ed-* primitives. Audience accents (founder blue /
+   investor green) are restored on top of the monochrome base per product spec.
+   Scope: .ed-page only — the dashboard block below is untouched. */
 .ed-page {
-  --ed-ink: var(--color-forest-ink);
-  --ed-white: var(--color-pure-paper);
-  --ed-paper: var(--color-pure-paper);
-  --ed-canvas: var(--color-cream-canvas);
-  --ed-fogband: #f8f3ef;
-  --ed-fog: var(--color-hairline-gray);
-  --ed-smoke: var(--color-mid-gray);
-  --ed-graphite: var(--color-faded-pencil);
-  --ed-ash: var(--color-mid-gray);
-  --ed-ember: var(--color-forest-ink);
-  --ed-peach: #edf5f1;
-  --ed-blue: var(--color-vivid-emerald);
-  --ed-green: var(--color-forest-ink);
+  --ed-ink: #28292a;            /* foreground — near-black */
+  --ed-white: #ffffff;
+  --ed-paper: #eae5de;          /* surface — panel bg */
+  --ed-canvas: #f7f4ef;         /* background — warm paper */
+  --ed-border: #140206;         /* hard near-black borders */
+  --ed-fogband: #f2efe9;
+  --ed-fog: #140206;            /* dividers/card borders → hard near-black */
+  --ed-smoke: #8a827a;
+  --ed-graphite: #5b5751;
+  --ed-ash: #a3a099;
+  --ed-accent: #ff6183;         /* coral accent */
+  --ed-ember: #ff6183;          /* legacy alias → coral */
+  --ed-peach: #ffb4c5;          /* light pink */
+  --ed-blue: #1d9bf0;           /* founder accent (verified-check blue) */
+  --ed-green: #16a34a;          /* investor accent (money green) */
   --ed-font: var(--font-apparent-body);
   --ed-serif: var(--font-apparent-display);
-  --ed-r: var(--radius-card);
-  --ed-r-feature: var(--radius-panel);
-  --ed-r-artifact: var(--radius-card);
-  --ed-shadow-artifact: none;
-  --ed-shadow-overlay: none;
-  background: var(--color-cream-canvas);
-  color: var(--color-ink-black);
+  --ed-r: 0px;
+  --ed-r-feature: 0px;
+  --ed-r-artifact: 0px;
+  --ed-shadow-artifact: var(--ed-shadow-hard);
+  --ed-shadow-overlay: var(--ed-shadow-hard);
+  background: var(--ed-canvas);
+  color: var(--ed-ink);
   font-family: var(--font-apparent-body);
-  letter-spacing: -0.03em;
+  letter-spacing: -0.01em;
   /* `hidden` creates a scroll container and prevents the sticky navbar from
      tracking the viewport. `clip` contains wide artwork without breaking it. */
   overflow-x: clip;
 }
 
 .ed-page :where(h1, h2, h3, h4, .ed-display, .ed-sec-title) {
-  color: var(--color-forest-ink);
+  color: var(--ed-ink);
   font-family: var(--font-apparent-display);
   font-weight: 400;
-  letter-spacing: -0.035em;
+  letter-spacing: -0.02em;
 }
 
 .ed-display {
@@ -263,33 +270,32 @@ body {
 }
 
 .ed-page :where(p, li, .ed-sub, .ed-lede, .ed-lead) {
-  color: var(--color-ink-black);
-  letter-spacing: -0.03em;
+  color: var(--ed-graphite);
+  letter-spacing: -0.005em;
 }
 
 .ed-page main > section:nth-of-type(even):not(.ed-band):not(.ed-hero) {
   background: transparent;
 }
 
-.ed-page :where(.ed-card, .ed-feature, .ed-artifact, .ed-auth-card, .ed-pillar, .ed-pp-panel, .ap-profile-card, .ap-profile-facts, .ap-profile-connect--light) {
-  border-color: var(--color-hairline-gray);
-  border-radius: var(--radius-card);
-  background: var(--color-pure-paper);
-  box-shadow: none;
+/* Cards / panels: sharp corners, hard 1px near-black border, offset shadow */
+.ed-page :where(.ed-card, .ed-feature, .ed-artifact, .ed-auth-card, .ed-pillar, .ed-pp-panel, .ed-surface, .ap-profile-card, .ap-profile-facts, .ap-profile-connect--light) {
+  border: 1px solid var(--ed-border);
+  border-radius: 0;
+  background: var(--ed-white);
+  box-shadow: var(--ed-shadow-hard);
 }
+/* Hero stat surface keeps its paper fill, gains the hard frame */
+.ed-page .ed-surface { background: var(--ed-paper); }
 
 .ed-page :where(.ed-artifact, .ed-auth-card, .ed-pp-panel, .ap-profile-facts, .ap-profile-connect) {
-  border-radius: var(--radius-panel);
+  border-radius: 0;
 }
 
-.ed-page :where([class*="shadow-"]) {
-  box-shadow: none !important;
-}
-
+/* Nav: solid paper bar (no blur), hard border on the scrolled pill */
 .ed-nav {
   border-bottom: 1px solid transparent;
-  background: color-mix(in srgb, var(--color-cream-canvas) 94%, transparent);
-  backdrop-filter: blur(14px);
+  background: var(--ed-canvas);
 }
 
 .ed-nav.is-scrolled {
@@ -297,141 +303,137 @@ body {
 }
 
 .ed-nav.is-scrolled .ed-nav-row {
-  border-color: var(--color-hairline-gray);
-  background: color-mix(in srgb, var(--color-pure-paper) 95%, transparent);
-  box-shadow: 0 14px 34px rgb(0 63 46 / 10%);
+  border: 1px solid var(--ed-border);
+  border-radius: 0;
+  background: var(--ed-white);
+  box-shadow: var(--ed-shadow-hard-sm);
 }
 
 .ed-brand .ed-mark,
 .ed-page .ed-mark {
-  color: var(--color-forest-ink);
+  color: var(--ed-ink);
 }
 
 .ed-nav-links a.is-active {
-  border-color: var(--color-forest-ink);
-  border-radius: var(--radius-button);
-  background: var(--color-forest-ink);
-  color: var(--color-cream-canvas);
+  border-color: var(--ed-border);
+  border-radius: 0;
+  background: var(--ed-ink);
+  color: var(--ed-white);
 }
 
 .ed-nav-links a:hover,
 .ed-nav-links a:focus-visible {
-  background: transparent;
-  color: var(--color-vivid-emerald);
+  background: var(--ed-paper);
+  color: var(--ed-ink);
 }
 
 .ed-vc-logo {
-  border: 1px solid var(--color-hairline-gray);
-  background: color-mix(in srgb, var(--color-pure-paper) 72%, transparent);
-  transition: border-color 160ms ease, background-color 160ms ease, color 160ms ease;
+  border: 1px solid var(--ed-border);
+  border-radius: 0;
+  background: var(--ed-white);
+  transition: border-color 160ms ease, background-color 160ms ease, color 160ms ease, transform .12s ease, box-shadow .12s ease;
 }
 
 .ed-vc-logo:hover,
 .ed-vc-logo:focus-visible {
-  border-color: var(--color-mid-gray);
-  background: var(--color-pure-paper);
-  color: var(--color-forest-ink);
+  border-color: var(--ed-border);
+  background: var(--ed-paper);
+  color: var(--ed-ink);
 }
 
+/* Buttons: rectangular, hard border + offset shadow, press toward the shadow */
 .ed-btn {
-  border-radius: var(--radius-button);
-  box-shadow: inset 0 1px rgb(255 255 255 / 12%), 0 1px 0 rgb(0 63 46 / 18%);
+  border: 1px solid var(--ed-border);
+  border-radius: 0;
+  box-shadow: var(--ed-shadow-hard-sm);
   font-weight: 500;
-  letter-spacing: -0.02em;
-  transition: background-color 180ms ease, border-color 180ms ease, color 180ms ease, box-shadow 180ms ease, transform 180ms ease;
+  letter-spacing: -0.01em;
+  transition: background-color 180ms ease, border-color 180ms ease, color 180ms ease, box-shadow .12s ease, transform .12s ease;
 }
 
-.ed-btn:hover { transform: translateY(-1px); }
+.ed-page .ed-btn:hover { transform: translate(3px, 3px); box-shadow: 0 0 0 0 var(--ed-border); }
 .ed-btn:active,
-.ed-page :where(button, a):active {
-  transform: translateY(1px);
-}
+.ed-page .ed-btn:active { transform: translate(3px, 3px); }
 
-.ed-page .ed-btn-filled,
-.ed-page .ed-btn-blue,
+/* Default filled CTA = ink (near-black). Founder = blue, ember = coral accent. */
+.ed-page .ed-btn-filled {
+  background: var(--ed-ink);
+  color: var(--ed-white);
+}
+.ed-page .ed-btn-blue {
+  background: var(--ed-blue);
+  color: var(--ed-white);
+}
 .ed-page .ed-btn-ember {
-  border: 1px solid var(--color-forest-ink);
-  background: var(--color-forest-ink);
-  color: var(--color-cream-canvas);
+  background: var(--ed-accent);
+  color: var(--ed-ink);
 }
-
 .ed-page :where(.ed-btn-filled, .ed-btn-blue, .ed-btn-ember):hover {
-  border-color: #07513d;
-  background: #07513d;
-  color: var(--color-cream-canvas);
   opacity: 1;
 }
 
 .ed-page .ed-btn-outline-blue,
 .ed-page .ed-btn-outline-green,
 .ed-page .ed-btn-outline {
-  border: 1px solid var(--color-hairline-gray);
-  background: var(--color-pure-paper);
-  color: var(--color-forest-ink);
-  box-shadow: none;
+  background: var(--ed-white);
+  color: var(--ed-ink);
 }
+.ed-page .ed-btn-outline-blue { color: var(--ed-blue); }
+.ed-page .ed-btn-outline-green { color: var(--ed-green); }
 
-.ed-page :where(.ed-btn-outline-blue, .ed-btn-outline-green, .ed-btn-outline):hover {
-  border-color: var(--color-forest-ink);
-  background: #edf5f1;
-  color: var(--color-forest-ink);
-}
+.ed-page .ed-btn-outline:hover { background: var(--ed-ink); color: var(--ed-white); }
+.ed-page .ed-btn-outline-blue:hover { background: var(--ed-blue); color: var(--ed-white); }
+.ed-page .ed-btn-outline-green:hover { background: var(--ed-green); color: var(--ed-white); }
 
-/* Investor actions are the one filled exception requested for Apparent. */
+/* Investor action = filled green */
 .ed-page .ed-btn-green {
-  border: 1px solid var(--color-investor-edge);
-  background: var(--color-forest-ink);
-  color: var(--color-cream-canvas);
-  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 8%);
+  background: var(--ed-green);
+  color: var(--ed-white);
 }
+.ed-page :where(.ed-btn-green):hover { opacity: 1; }
 
-.ed-page :where(.ed-btn-green, .ed-btn-outline-green):hover {
-  border-color: var(--color-vivid-emerald);
-  background: #07513d;
-  color: var(--color-cream-canvas);
-  opacity: 1;
-}
-
+/* Inputs: sharp, hard border, 2px offset shadow on focus (no soft ring) */
 .ed-page :where(input, textarea, select) {
-  border: 1px solid var(--color-hairline-gray);
-  border-radius: var(--radius-input);
-  background: var(--color-pure-paper);
-  color: var(--color-ink-black);
+  border: 1px solid var(--ed-border);
+  border-radius: 0;
+  background: var(--ed-white);
+  color: var(--ed-ink);
   box-shadow: none;
   font-family: var(--font-apparent-body);
 }
 
 .ed-page :where(input, textarea, select):focus {
-  border-color: var(--color-vivid-emerald);
-  box-shadow: 0 0 0 2px rgb(3 152 97 / 14%);
+  border-color: var(--ed-border);
+  box-shadow: var(--ed-shadow-hard-sm);
   outline: none;
 }
 
+/* Footer: solid near-black block with paper text (brutalist end-cap) */
 .ed-footer {
-  border-color: var(--color-hairline-gray);
-  background: var(--color-forest-ink);
-  color: var(--color-cream-canvas);
+  border-top: 1px solid var(--ed-border);
+  background: var(--ed-ink);
+  color: var(--ed-canvas);
 }
 
 .ed-footer :where(h2, h3, h4, p, a, span) {
-  color: var(--color-cream-canvas);
+  color: var(--ed-canvas);
 }
 
 .ed-footer .ed-btn-green {
-  border-color: var(--color-investor-edge);
-  background: var(--color-cream-canvas);
-  color: var(--color-forest-ink);
+  background: var(--ed-green);
+  color: var(--ed-white);
+  border-color: var(--ed-canvas);
 }
 
 .ed-footer .ed-btn-outline-blue {
-  border-color: rgb(253 249 247 / 62%);
-  color: var(--color-cream-canvas);
+  border-color: var(--ed-canvas);
+  color: var(--ed-canvas);
 }
 
 .ed-footer :where(.ed-bf-cols a, .ed-bf-legal a) {
   border: 1px solid transparent;
-  border-radius: var(--radius-button);
-  color: rgb(253 249 247 / 72%);
+  border-radius: 0;
+  color: rgb(247 244 239 / 72%);
   transition: background-color 160ms ease, border-color 160ms ease, color 160ms ease;
 }
 
@@ -448,14 +450,15 @@ body {
 
 .ed-footer .ed-bf-cols a:is(:hover, :focus-visible),
 .ed-footer .ed-bf-legal a:is(:hover, :focus-visible) {
-  border-color: rgb(253 249 247 / 46%);
-  background: rgb(253 249 247 / 7%);
-  color: var(--color-cream-canvas);
+  border-color: rgb(247 244 239 / 46%);
+  background: rgb(247 244 239 / 7%);
+  color: var(--ed-canvas);
 }
 
+/* Uppercase tracked labels in the reference's label face */
 .ed-page :where(.ed-lbl, .ap-profile-label, .ap-profile-micro, .ap-profile-connect-label, [class*="uppercase"]) {
-  font-family: var(--font-apparent-meta);
-  letter-spacing: 0.1em;
+  font-family: var(--ed-label);
+  letter-spacing: 0.09em;
 }
 
 .ed-hero .ed-inner {

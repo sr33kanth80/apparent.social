@@ -2,6 +2,13 @@
 
 Recon output. **No code changed yet.** Awaiting go-ahead before mass edits.
 
+> **Correction (post-implementation):** the true active theme is **`src/apparent-theme.css`**,
+> which loads *last* (after `editorial.css`) and re-maps every `--ed-*` token inside `.ed-page`
+> to a forest-green/cream "Getclockwise" palette, plus restyles the `.ed-*` primitives. So the
+> reskin's palette + component rules live in **`apparent-theme.css`'s `.ed-page` block** (public
+> scope; the dashboard block below it is left untouched). `editorial.css` still holds the shared
+> tokens, utilities (frame, eyebrow, titlebar, press) and keyframes. Both files were edited.
+
 ## 1. Key finding: there is one clean hook point
 
 The entire **public marketing site** (15 routes: Home, ForFounders, ForVCs, OurThesis,
