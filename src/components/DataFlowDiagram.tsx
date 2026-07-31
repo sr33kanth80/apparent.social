@@ -70,7 +70,7 @@ export const DataFlowDiagram = () => {
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="flex items-center gap-3">
               <div className="flex gap-1.5" aria-hidden>
-                <span className="h-2.5 w-2.5 rounded-full bg-[#ff9473]" />
+                <span className="h-2.5 w-2.5 rounded-full bg-[#ffb4c5]" />
                 <span className="h-2.5 w-2.5 rounded-full bg-[#e2c161]" />
                 <span className="h-2.5 w-2.5 rounded-full bg-[#5fcf8e]" />
               </div>

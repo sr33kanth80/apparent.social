@@ -250,8 +250,8 @@ body {
   --ed-smoke: #8a827a;
   --ed-graphite: #5b5751;
   --ed-ash: #a3a099;
-  --ed-accent: #ff6183;         /* coral accent */
-  --ed-ember: #ff6183;          /* legacy alias → coral */
+  --ed-accent: #ffb4c5;         /* soft pink accent (coral dropped) */
+  --ed-ember: #ffb4c5;          /* legacy alias → soft pink */
   --ed-peach: #ffb4c5;          /* light pink */
   --ed-blue: #1d9bf0;           /* founder accent (verified-check blue) */
   --ed-green: #16a34a;          /* investor accent (money green) */
@@ -509,6 +509,18 @@ body {
   --color-mid-gray: #8a827a;
   --color-sidebar-cream: #eae5de;   /* surface */
   --color-investor-edge: #140206;
+  /* Monad @theme tokens leaking into the dashboard content (Morning sourcing
+     desk et al.) — flip them here so bg-lavender/text-ink/bg-charcoal/etc.
+     stop rendering in the old design. */
+  --color-ink: #28292a;             /* was pure black */
+  --color-charcoal: #28292a;        /* dark buttons → ink */
+  --color-parchment: #f7f4ef;       /* → paper canvas */
+  --color-graphite: #5b5751;
+  --color-stone: #8a827a;
+  --color-slate: #5b5751;
+  --color-lavender: #eae5de;        /* periwinkle chips → surface */
+  --color-mint: #e2f7ec;            /* → pale green */
+  --color-peach: #ffb4c5;           /* warm ember/peach → soft pink */
   --radius-button: 0px;
   --radius-input: 0px;
   --radius-card: 0px;
@@ -649,6 +661,29 @@ body {
 .ed-dashboard :where(button, a)[class*="bg-[#002f22]"]:hover {
   transform: translate(3px, 3px);
   box-shadow: 0 0 0 0 var(--dash-border) !important;
+}
+
+/* Neutral dark buttons (Monad bg-charcoal / bg-ink) → ink brutalist button */
+.ed-dashboard :where(button, a)[class*="bg-charcoal"],
+.ed-dashboard :where(button, a)[class*="bg-ink"] {
+  border: 1px solid var(--dash-border) !important;
+  border-radius: 0 !important;
+  box-shadow: var(--ed-shadow-hard-sm) !important;
+  transition: box-shadow .12s ease, transform .12s ease, background-color 180ms ease;
+}
+.ed-dashboard :where(button, a)[class*="bg-charcoal"]:hover,
+.ed-dashboard :where(button, a)[class*="bg-ink"]:hover {
+  transform: translate(3px, 3px);
+  box-shadow: 0 0 0 0 var(--dash-border) !important;
+}
+
+/* Flatten every remaining radius in the dashboard content (named + arbitrary),
+   plus pill chips/buttons. Keep avatars (elements containing an <img>) round. */
+.ed-dashboard :where([class*="rounded-sm"], [class*="rounded-md"], [class*="rounded-lg"], [class*="rounded-xl"], [class*="rounded-2xl"], [class*="rounded-3xl"], [class*="rounded-["]):not(:where(.ed-agent-chat-scope, .ed-agent-chat-scope *)) {
+  border-radius: 0 !important;
+}
+.ed-dashboard :where(button, a, span, div)[class*="rounded-full"]:not(:has(img)):not(:where(.ed-agent-chat-scope, .ed-agent-chat-scope *)) {
+  border-radius: 0 !important;
 }
 
 .ed-dashboard-sidebar {
