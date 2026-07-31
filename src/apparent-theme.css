@@ -78,17 +78,17 @@ body {
    Apparent's existing cream/forest palette. These tokens intentionally stay
    scoped so the rest of the dashboard keeps its current visual language. */
 .agent-page {
-  --agent-canvas: var(--color-cream-canvas);
-  --agent-paper: var(--color-pure-paper);
-  --agent-border: var(--color-hairline-gray);
-  --agent-muted: var(--color-faded-pencil);
-  --agent-text: var(--color-ink-black);
-  --agent-accent: var(--color-forest-ink);
-  --agent-accent-soft: #edf5f1;
-  --agent-radius-card: 16px;
-  --agent-radius-input: 16px;
-  --agent-radius-button: 6px;
-  --agent-shadow-subtle: rgba(0, 0, 0, 0.08) 0 1px 2px;
+  --agent-canvas: #f7f4ef;          /* warm paper */
+  --agent-paper: #ffffff;
+  --agent-border: #140206;          /* hard near-black */
+  --agent-muted: #5b5751;
+  --agent-text: #28292a;            /* ink */
+  --agent-accent: #28292a;          /* monochrome research doc */
+  --agent-accent-soft: #eae5de;
+  --agent-radius-card: 0px;
+  --agent-radius-input: 0px;
+  --agent-radius-button: 0px;
+  --agent-shadow-subtle: var(--ed-shadow-hard-sm);
   background: var(--agent-canvas);
   color: var(--agent-text);
   font-family: var(--font-apparent-body);
@@ -99,6 +99,23 @@ body {
   font-family: var(--font-apparent-body);
   letter-spacing: 0;
 }
+
+/* Agent view literals → neo-brutalist (the dashboard rules skip this scope). */
+.agent-page :where([class*="bg-[#fdf9f7]"], [class*="bg-white"]) {
+  background-color: var(--agent-canvas) !important;
+}
+.agent-page :where([class*="bg-[#003f2e]"], [class*="bg-[#002f22]"]) {
+  background-color: var(--agent-text) !important;
+  color: #ffffff !important;
+}
+.agent-page :where([class*="bg-[#edf5f1]"], [class*="bg-[#e2f7ec]"], [class*="bg-[#effbf4]"], [class*="bg-[#f3fcf7]"]) {
+  background-color: var(--agent-accent-soft) !important;
+}
+.agent-page :where([class*="text-[#003f2e]"]) { color: var(--agent-text) !important; }
+.agent-page :where([class*="text-[#6e7673]"], [class*="text-[#a6a6a6]"]) { color: var(--agent-muted) !important; }
+.agent-page :where([class*="border-[#d6d6d6]"], [class*="border-[#003f2e]"]) { border-color: var(--agent-border) !important; }
+/* Composer + cards go sharp */
+.agent-page :where([class*="rounded"]) { border-radius: 0 !important; }
 
 .agent-page :where(.font-semibold, .font-bold, .font-extrabold) {
   font-weight: 500 !important;
@@ -473,20 +490,46 @@ body {
   max-width: 900px;
 }
 
-/* Product and dashboard */
+/* ═══ Product & dashboard — "Apparent / Tavus" neo-brutalist reskin ═════════
+   Same system as the public site, measured for dense data UI: hard near-black
+   borders + sharp corners everywhere, offset shadows on buttons + floating
+   panels only (dense cards get border-only), soft warm dividers inside content.
+   The palette is flipped by overriding the scoped --color-* / --radius-* vars,
+   so every rule that references them shifts at once — no JSX changes. Role
+   accents match the public site: founder = blue, investor = green. */
+.ed-dashboard,
+.agent-page {
+  --color-forest-ink: #28292a;      /* ink (was forest green) */
+  --color-vivid-emerald: #16a34a;   /* investor green */
+  --color-cream-canvas: #f7f4ef;    /* warm paper */
+  --color-pure-paper: #ffffff;
+  --color-ink-black: #28292a;
+  --color-faded-pencil: #5b5751;
+  --color-hairline-gray: #cbc3b5;   /* soft warm divider (internal only) */
+  --color-mid-gray: #8a827a;
+  --color-sidebar-cream: #eae5de;   /* surface */
+  --color-investor-edge: #140206;
+  --radius-button: 0px;
+  --radius-input: 0px;
+  --radius-card: 0px;
+  --radius-panel: 0px;
+  --radius-pill: 0px;
+  --dash-border: #140206;           /* hard near-black chrome border */
+}
+
 .ed-dashboard {
-  --dashboard-accent: var(--color-vivid-emerald);
+  --dashboard-accent: #1d9bf0;      /* founder = blue (default) */
   height: 100dvh;
   min-height: 100dvh;
   overflow: hidden;
   background: var(--color-cream-canvas);
   color: var(--color-ink-black);
   font-family: var(--font-apparent-body);
-  letter-spacing: -0.025em;
+  letter-spacing: -0.01em;
 }
 
 .ed-dashboard[data-role="investor"] {
-  --dashboard-accent: var(--color-forest-ink);
+  --dashboard-accent: #16a34a;      /* investor = green */
 }
 
 .ed-dashboard-main,
@@ -516,10 +559,17 @@ body {
 }
 
 .ed-dashboard :where(section[class*="rounded"], article[class*="rounded"], [role="dialog"]) {
-  border-color: var(--color-hairline-gray) !important;
-  border-radius: var(--radius-card) !important;
+  border-color: var(--dash-border) !important;
+  border-radius: 0 !important;
   background-color: var(--color-pure-paper) !important;
   box-shadow: none !important;
+}
+
+/* Floating panels (modals/dialogs) get the offset hard shadow */
+.ed-dashboard :where([role="dialog"], [role="menu"], [data-radix-popper-content-wrapper] > *):not(:where(.ed-agent-chat-scope, .ed-agent-chat-scope *)) {
+  border: 1px solid var(--dash-border) !important;
+  border-radius: 0 !important;
+  box-shadow: var(--ed-shadow-hard) !important;
 }
 
 .ed-dashboard :where([class*="rounded-[20px]"], [class*="rounded-2xl"], [class*="rounded-3xl"]):not(:where(.ed-agent-chat-scope, .ed-agent-chat-scope *)) {
@@ -535,7 +585,19 @@ body {
 }
 
 .ed-dashboard :where([class*="bg-gray-50"], [class*="bg-[#f4f1eb]"]):not(:where(.ed-agent-chat-scope, .ed-agent-chat-scope *)) {
-  background-color: #f6f1ed !important;
+  background-color: var(--color-sidebar-cream) !important;
+}
+
+/* Remaining forest/cream brand literals → ink / paper (keep semantic status
+   tints untouched). */
+.ed-dashboard :where([class*="text-[#003f2e]"], [class*="text-[#222]"], [class*="text-[#222222]"]):not(:where(.ed-agent-chat-scope, .ed-agent-chat-scope *)) {
+  color: var(--color-ink-black) !important;
+}
+.ed-dashboard :where([class*="border-[#003f2e]"]):not(:where(.ed-agent-chat-scope, .ed-agent-chat-scope *)) {
+  border-color: var(--dash-border) !important;
+}
+.ed-dashboard :where([class*="bg-[#fdf9f7]"], [class*="bg-[#f8f6f4]"], [class*="bg-[#faf7eb]"]):not(:where(.ed-agent-chat-scope, .ed-agent-chat-scope *)) {
+  background-color: var(--color-pure-paper) !important;
 }
 
 .ed-dashboard :where([class*="border-black/"], [class*="divide-black/"]):not(:where(.ed-agent-chat-scope, .ed-agent-chat-scope *)) {
@@ -551,8 +613,8 @@ body {
 }
 
 .ed-dashboard :where(input, textarea, select):not(:where(.ed-agent-chat-scope, .ed-agent-chat-scope *)) {
-  border-color: var(--color-hairline-gray) !important;
-  border-radius: var(--radius-input) !important;
+  border-color: var(--dash-border) !important;
+  border-radius: 0 !important;
   background: var(--color-pure-paper);
   color: var(--color-ink-black);
   box-shadow: none !important;
@@ -560,41 +622,37 @@ body {
 }
 
 .ed-dashboard :where(input, textarea, select):focus:not(:where(.ed-agent-chat-scope, .ed-agent-chat-scope *)) {
-  border-color: var(--dashboard-accent) !important;
-  box-shadow: 0 0 0 2px rgb(3 152 97 / 12%) !important;
+  border-color: var(--dash-border) !important;
+  box-shadow: var(--ed-shadow-hard-sm) !important;
   outline: none;
 }
 
 .ed-dashboard :where(button.rounded-full[class*="text-sm"], a.rounded-full[class*="text-sm"], .ed-dashboard-workspace-pill) {
-  border-radius: var(--radius-button) !important;
+  border-radius: 0 !important;
 }
 
+/* Primary CTAs (were forest/emerald literals) → role accent, rectangular,
+   hard border + small offset shadow, press toward the shadow on hover. */
 .ed-dashboard :where(button, a)[class*="bg-[#003f2e]"],
-.ed-dashboard :where(button, a)[class*="bg-[#039861]"] {
-  border-radius: var(--radius-button) !important;
-  box-shadow: inset 0 1px rgb(255 255 255 / 12%), 0 1px 0 rgb(0 63 46 / 18%);
-  transition: background-color 180ms ease, border-color 180ms ease, box-shadow 180ms ease, transform 180ms ease;
+.ed-dashboard :where(button, a)[class*="bg-[#039861]"],
+.ed-dashboard :where(button, a)[class*="bg-[#002f22]"] {
+  border: 1px solid var(--dash-border) !important;
+  border-radius: 0 !important;
+  background-color: var(--dashboard-accent) !important;
+  color: #ffffff !important;
+  box-shadow: var(--ed-shadow-hard-sm) !important;
+  transition: box-shadow .12s ease, transform .12s ease, background-color 180ms ease;
 }
 
 .ed-dashboard :where(button, a)[class*="bg-[#003f2e]"]:hover,
-.ed-dashboard :where(button, a)[class*="bg-[#039861]"]:hover {
-  transform: translateY(-1px);
-}
-
-.ed-dashboard[data-role="investor"] :where(button, a)[class*="bg-[#003f2e]"] {
-  border: 1px solid var(--color-investor-edge) !important;
-  background-color: var(--color-forest-ink) !important;
-  color: var(--color-cream-canvas) !important;
-  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 8%) !important;
-}
-
-.ed-dashboard[data-role="investor"] :where(button, a)[class*="bg-[#003f2e]"]:hover {
-  border-color: var(--color-vivid-emerald) !important;
-  background-color: #07513d !important;
+.ed-dashboard :where(button, a)[class*="bg-[#039861]"]:hover,
+.ed-dashboard :where(button, a)[class*="bg-[#002f22]"]:hover {
+  transform: translate(3px, 3px);
+  box-shadow: 0 0 0 0 var(--dash-border) !important;
 }
 
 .ed-dashboard-sidebar {
-  border-color: var(--color-hairline-gray) !important;
+  border-color: var(--dash-border) !important;   /* hard chrome boundary */
   background: var(--color-sidebar-cream);
 }
 
@@ -604,31 +662,31 @@ body {
 }
 
 .ed-dashboard-sidebar :where(a, button) {
-  border-radius: var(--radius-button);
+  border-radius: 0;
 }
 
+/* Active nav item = role accent block */
 .ed-dashboard-sidebar[data-role="investor"] a[class*="bg-[#003f2e]"],
-.ed-dashboard-sidebar[data-role="investor"] button[class*="bg-[#003f2e]"] {
-  border: 1px solid var(--color-investor-edge);
-  background: var(--color-forest-ink) !important;
-  color: var(--color-cream-canvas) !important;
+.ed-dashboard-sidebar[data-role="investor"] button[class*="bg-[#003f2e]"],
+.ed-dashboard-sidebar :where(a, button)[class*="bg-[#003f2e]"],
+.ed-dashboard-sidebar :where(a, button)[class*="bg-[#039861]"] {
+  border: 1px solid var(--dash-border) !important;
+  border-radius: 0 !important;
+  background: var(--dashboard-accent) !important;
+  color: #ffffff !important;
 }
 
 .ed-dashboard-sidebar a:hover,
 .ed-dashboard-sidebar button:hover {
-  background: #edf5f1 !important;
-  color: var(--color-forest-ink) !important;
+  background: var(--color-pure-paper) !important;
+  color: var(--color-ink-black) !important;
 }
 
 .ed-dashboard-sidebar :where(a, button)[class*="bg-[#003f2e]"]:hover,
 .ed-dashboard-sidebar :where(a, button)[class*="bg-[#039861]"]:hover {
-  background: var(--color-forest-ink) !important;
-  color: var(--color-cream-canvas) !important;
-}
-
-.ed-dashboard-sidebar[data-role="investor"] :where(a, button)[class*="bg-[#003f2e]"]:hover {
-  border-color: var(--color-vivid-emerald) !important;
-  background: #07513d !important;
+  background: var(--dashboard-accent) !important;
+  color: #ffffff !important;
+  opacity: .9;
 }
 
 /* Audience landing pages: preserve the split hero, then switch to a focused

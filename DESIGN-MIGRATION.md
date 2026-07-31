@@ -87,6 +87,29 @@ use existing dep for reveals if a JS reveal is cleaner; no new dependency.
 all `src/components/ui/*`, dashboards, any data/hook/handler/route code, `tailwind.config.js`
 (unless you want the label font as a Tailwind family — Q3).
 
+## 5b. Dashboard reskin (second pass — done)
+
+Extended the same system to the logged-in dashboards (`/dashboard/founder/*`,
+`/dashboard/investor/*`) and the agent view. Also **CSS-only** — the dashboard is
+themed by the `.ed-dashboard` / `.agent-page` scoped block in `apparent-theme.css`,
+which remaps the hardcoded Tailwind hex classes via `[class*="…"]` attribute
+selectors. Lever: overriding the scoped `--color-*` / `--radius-*` vars flips the
+whole surface (forest/cream → paper/ink, radii → 0) at once; targeted rules add the
+hard chrome borders, offset shadows and role accents. No JSX touched.
+
+- **Measured brutalism:** hard near-black borders + sharp corners everywhere;
+  offset shadows on buttons + floating panels (dialogs/menus) only; dense cards get
+  border-only; internal dividers stay a soft warm gray (`--color-hairline-gray`).
+- **Role accents (match public):** founder = blue `#1d9bf0`, investor = green
+  `#16a34a` via `--dashboard-accent`; coral remains the general accent.
+- **Agent view:** `--agent-*` tokens flipped + scoped literal remaps (its literals
+  were excluded from the dashboard rules); monochrome ink research doc on paper.
+- Semantic status tints (success green `#37d28b`, info blue `#eef2fb`, amber) left
+  as-is — they're data semantics, not brand chrome.
+- **Verified** via computed-style probes (dashboard is auth-gated, no live
+  screenshot): founder=blue / investor=green CTAs, paper root, hard borders, radius
+  0, offset button shadows, agent ink/paper. build ✓ · 36/36 tests ✓ · tsc ✓.
+
 ## 6. Decisions I need from you before editing
 
 - **Q1 — Scope:** Public marketing site only (recommended), or also retheme the logged-in
