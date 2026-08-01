@@ -706,10 +706,10 @@ body {
   position: relative;
   display: flex;
   flex-direction: column;
-  /* Portrait, like the thing it's imitating. The head absorbs the slack so
-     the name band, stats, and footer keep their intrinsic heights. */
-  aspect-ratio: 3 / 4;
-  min-height: 300px;
+  /* Portrait, like the thing it's imitating, but not as tall as a real FUT
+     card — there's no full-bleed player art here to justify the height. */
+  aspect-ratio: 4 / 5;
+  min-height: 260px;
   border: 1px solid var(--dash-border);
   background: var(--color-pure-paper);
   box-shadow: 5px 5px 0 0 var(--dash-border);
@@ -721,18 +721,20 @@ body {
 }
 .ap-fut-head {
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
   gap: 12px;
-  /* Grows to fill whatever the 3:4 box leaves over. */
+  /* Absorbs the slack in the 4:5 box. Contents are top-aligned and the logo
+     is a fixed square, so this only ever adds breathing room — it never
+     stretches the badge. Matters for cards with no tagline. */
   flex: 1;
-  min-height: 0;
   padding: 14px 14px 12px;
 }
 .ap-fut-rating {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  width: 58px;
+  align-items: flex-start;
+  min-width: 0;
 }
 .ap-fut-pos {
   font-family: var(--font-apparent-meta);
@@ -745,16 +747,13 @@ body {
 .ap-fut-crest {
   width: 100%;
   margin-top: 9px;
-  border-top: 1px solid var(--dash-border);
-  padding-top: 8px;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: 5px;
+  align-items: flex-start;
+  gap: 3px;
   font-family: var(--font-apparent-meta);
   font-size: 9px;
   letter-spacing: .08em;
-  text-align: center;
   color: var(--color-graphite);
 }
 .ap-fut-crest span {
@@ -768,14 +767,16 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  height: 100%;
-  min-height: 84px;
+  /* Square badge in the crest slot. The source art is a favicon, so a large
+     panel just framed empty space. */
+  width: 52px;
+  height: 52px;
   background: var(--color-sidebar-cream);
   border: 1px solid var(--dash-border);
 }
 .ap-fut-portrait img {
-  width: 56px;
-  height: 56px;
+  width: 28px;
+  height: 28px;
   object-fit: contain;
 }
 .ap-fut-name {
