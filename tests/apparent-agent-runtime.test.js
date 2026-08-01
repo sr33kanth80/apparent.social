@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 
 import {
+  agentCallBudget,
   apparentAgentErrorResponse,
   createApparentAgentRuntime,
   createPublicResearchPolicy,
@@ -626,4 +627,126 @@ test('inference requests omit empty tool fields for endpoints that reject them',
 
   assert.equal('tools' in request.body, false);
   assert.equal('tool_choice' in request.body, false);
+});
+
+// ── Orthogonal call-budget exhaustion ───────────────────────────────────────
+// Users were hitting a raw "Orthogonal call limit reached (20)." mid-chat.
+// Three separate defects fed it, one test each, plus the user-facing message.
+
+test('a retried Orthogonal request consumes one call, not one per attempt', async () => {
+  let attempts = 0;
+  const session = createOrthogonalSession({
+    apiKey: 'test',
+    maxRetries: 2,
+    retryBaseDelayMs: 0,
+    fetchImpl: async () => {
+      attempts += 1;
+      // Fail the first two attempts with a retryable status, then succeed.
+      if (attempts < 3) return new Response('{}', { status: 503 });
+      return new Response(JSON.stringify({ success: true, data: { ok: true } }));
+    },
+  });
+
+  await session.search('agent infrastructure startups');
+
+  assert.equal(attempts, 3, 'the request should have been retried twice');
+  assert.equal(
+    session.usage().callCount,
+    1,
+    'retries of one logical request must not each burn the call budget',
+  );
+});
+
+test('the call budget covers the step limit it is asked to run', () => {
+  // The old flat 20 could not cover a 12-step loop: 12 inference calls alone,
+  // before any tool traffic.
+  assert.ok(agentCallBudget(12) > 12 * 2, 'must leave room for tools alongside inference');
+  assert.ok(agentCallBudget(8) >= 8 * 3, 'at least one inference plus tool traffic per step');
+  // Still bounded — this is a runaway-loop stop, not an open tab.
+  assert.equal(agentCallBudget(10_000), 400);
+  assert.ok(agentCallBudget(undefined) > 0);
+});
+
+test('a too-small configured call budget is lifted to fit the loop', async () => {
+  const previous = process.env.ORTHOGONAL_AGENT_MAX_CALLS;
+  const previousKey = process.env.ORTHOGONAL_API_KEY;
+  process.env.ORTHOGONAL_AGENT_MAX_CALLS = '20';
+  process.env.ORTHOGONAL_API_KEY = 'test';
+  try {
+    const runtime = createApparentAgentRuntime({
+      maxSteps: 12,
+      complete: async () => ({ content: 'done', toolCalls: [] }),
+    });
+    assert.ok(
+      runtime.session.usage().maxCalls >= agentCallBudget(12),
+      'a deploy still carrying the old 20 must not cap the loop below its step limit',
+    );
+  } finally {
+    if (previous === undefined) delete process.env.ORTHOGONAL_AGENT_MAX_CALLS;
+    else process.env.ORTHOGONAL_AGENT_MAX_CALLS = previous;
+    if (previousKey === undefined) delete process.env.ORTHOGONAL_API_KEY;
+    else process.env.ORTHOGONAL_API_KEY = previousKey;
+  }
+});
+
+test('an explicitly widened budget is still honoured', async () => {
+  const previousKey = process.env.ORTHOGONAL_API_KEY;
+  process.env.ORTHOGONAL_API_KEY = 'test';
+  try {
+    const runtime = createApparentAgentRuntime({
+      maxSteps: 4,
+      sessionOptions: { maxCalls: 120 },
+      complete: async () => ({ content: 'done', toolCalls: [] }),
+    });
+    assert.equal(runtime.session.usage().maxCalls, 120);
+  } finally {
+    if (previousKey === undefined) delete process.env.ORTHOGONAL_API_KEY;
+    else process.env.ORTHOGONAL_API_KEY = previousKey;
+  }
+});
+
+test('the last call answers from what it has instead of throwing the limit', async () => {
+  const seen = [];
+  let callCount = 0;
+  const maxCalls = 4;
+  const runtime = createApparentAgentRuntime({
+    session: {
+      run: async () => ({}),
+      usage: () => ({ callCount, maxCalls, spentCents: 0, remainingCalls: Math.max(maxCalls - callCount, 0) }),
+    },
+    complete: async ({ messages, tools }) => {
+      callCount += 1;
+      seen.push({ tools: tools.length, last: messages[messages.length - 1] });
+      // Keep asking for tools; the runtime has to cut this off itself.
+      return { content: 'partial', toolCalls: [{ id: `c${callCount}`, name: 'lookup', input: {}, raw: null }] };
+    },
+  });
+
+  const result = await runtime.run({
+    system: 'You are Apparent.',
+    messages: [{ role: 'user', content: 'Research this deeply.' }],
+    tools: [{ name: 'lookup' }],
+    executeTool: async () => ({ ok: true }),
+    maxSteps: 12,
+  });
+
+  // It returned a reply rather than rejecting with orthogonal_call_limit.
+  assert.equal(result.reply, 'partial');
+  const closing = seen[seen.length - 1];
+  assert.equal(closing.tools, 0, 'the closing turn must offer no tools');
+  assert.match(closing.last.content, /no research budget left/i);
+  assert.ok(seen[0].tools > 0, 'earlier turns keep their tools');
+});
+
+test('a call-limit error reads as guidance, not an internal string', () => {
+  const response = apparentAgentErrorResponse(
+    new OrthogonalError('Orthogonal call limit reached (20).', {
+      status: 429,
+      code: 'orthogonal_call_limit',
+    }),
+  );
+  assert.equal(response.status, 429);
+  assert.equal(response.code, 'orthogonal_call_limit');
+  assert.doesNotMatch(response.error, /Orthogonal|\(20\)/, 'must not leak the internal wording');
+  assert.match(response.error, /research limit/i);
 });

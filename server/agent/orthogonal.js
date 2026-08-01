@@ -78,21 +78,26 @@ export const createOrthogonalSession = ({
   const request = async (path, body, { paid = false, estimatedCostCents = 0 } = {}) => {
     const idempotencyKey = globalThis.crypto?.randomUUID?.() || `orth_${Date.now()}_${Math.random().toString(36).slice(2)}`;
 
-    for (let attempt = 0; attempt <= maxRetries; attempt += 1) {
-      if (callCount >= maxCalls) {
-        throw new OrthogonalError(`Orthogonal call limit reached (${maxCalls}).`, {
-          status: 429,
-          code: 'orthogonal_call_limit',
-        });
-      }
-      if (paid && spentCents + estimatedCostCents > maxSpendCents) {
-        throw new OrthogonalError(`Orthogonal request budget would be exceeded (${maxSpendCents} cents).`, {
-          status: 402,
-          code: 'orthogonal_budget_reached',
-        });
-      }
+    // The limits bound distinct operations, so they're checked and charged once
+    // per logical request. Retries of a failed attempt reuse the same
+    // idempotency key and must not each consume budget — counting them inside
+    // the attempt loop silently halved the effective allowance whenever the
+    // upstream was flaky, which is exactly when the agent can least afford it.
+    if (callCount >= maxCalls) {
+      throw new OrthogonalError(`Orthogonal call limit reached (${maxCalls}).`, {
+        status: 429,
+        code: 'orthogonal_call_limit',
+      });
+    }
+    if (paid && spentCents + estimatedCostCents > maxSpendCents) {
+      throw new OrthogonalError(`Orthogonal request budget would be exceeded (${maxSpendCents} cents).`, {
+        status: 402,
+        code: 'orthogonal_budget_reached',
+      });
+    }
+    callCount += 1;
 
-      callCount += 1;
+    for (let attempt = 0; attempt <= maxRetries; attempt += 1) {
       const controller = new AbortController();
       const timer = setTimeout(() => controller.abort(), timeoutMs);
       let response;
@@ -261,7 +266,13 @@ export const createOrthogonalSession = ({
     },
 
     usage() {
-      return { callCount, spentCents, maxCalls, maxSpendCents };
+      return {
+        callCount,
+        spentCents,
+        maxCalls,
+        maxSpendCents,
+        remainingCalls: Math.max(maxCalls - callCount, 0),
+      };
     },
   };
 };

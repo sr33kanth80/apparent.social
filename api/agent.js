@@ -613,7 +613,8 @@ export default async function handler(req, res) {
   const { streaming, emit } = createAgentSse(res, body.stream === true);
 
   try {
-    const runtime = createApparentAgentRuntime();
+    // Size the Orthogonal call budget to the loop this turn is allowed to run.
+    const runtime = createApparentAgentRuntime({ maxSteps: MAX_AGENT_STEPS });
     const runtimeResult = await runtime.run({
       system,
       messages,

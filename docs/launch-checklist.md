@@ -119,7 +119,7 @@ These are read only by your backend functions and must **never** appear in the b
 
 ### 2.3 — Optional (features degrade gracefully if unset)
 - `AGENT_CRON_SECRET` — enables the scheduled follow-up and deal-flow ingestion endpoints. A long random string you make up; the scheduler must send the same value.
-- `ORTHOGONAL_AGENT_MAX_CALLS`, `ORTHOGONAL_AGENT_MAX_SPEND_CENTS`, `ORTHOGONAL_TIMEOUT_MS` — per-request safety and timeout limits.
+- `ORTHOGONAL_AGENT_MAX_CALLS`, `ORTHOGONAL_AGENT_MAX_SPEND_CENTS`, `ORTHOGONAL_TIMEOUT_MS` — per-request safety and timeout limits. `MAX_CALLS` is a runaway-loop stop; spend is capped by `MAX_SPEND_CENTS`. A value too small to cover the agent step limit is raised at runtime, since it would only guarantee mid-turn failure.
 - `INGEST_TARGET_COUNT` — how many startups each deal-flow ingestion run targets (default 18).
 
 **You'll know this phase worked when...** Vercel's Environment Variables list contains every required name above with a value, scoped to Production, and you've triggered a fresh deploy afterward.
