@@ -799,13 +799,16 @@ body {
 .ap-fut-tagline {
   flex: none;
   border-top: 1px solid var(--dash-border);
-  padding: 10px 12px;
+  padding: 12px 12px;
   font-size: 12px;
-  line-height: 1.45;
+  line-height: 1.5;
   text-align: center;
   color: var(--color-graphite);
   display: -webkit-box;
-  -webkit-line-clamp: 2;
+  /* Up to 4 lines — long snapshots were getting cut at 2. Cards grow to fit
+     (height follows content), and the grid equalises the row, so a longer
+     snapshot lifts its whole row rather than truncating. */
+  -webkit-line-clamp: 4;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
