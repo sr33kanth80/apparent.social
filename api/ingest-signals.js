@@ -31,6 +31,7 @@ import {
   dynamicOrthogonalTools,
   isAuthorizedResearchUrl,
   runDynamicOrthogonalTool,
+  runOrthogonalRouterTool,
   runStandardOrthogonalTool,
   standardOrthogonalTools,
 } from '../server/agent/apparent-agent-runtime.js';
@@ -224,7 +225,7 @@ const buildSystemPrompt = (sectors, sinceLabel) =>
     'Tool notes:',
     '- fetch_public_url is for the occasional ambiguous candidate ONLY. Do not fetch every company — it is the slowest thing you can do and will burn your steps before you find much.',
     '- search_public_news works well for funding announcements.',
-    '- Use discover_orthogonal_apis → get_orthogonal_api_details → run_orthogonal_api only when plain search genuinely cannot answer (e.g. structured "raised seed in the last 30 days" queries). Discovery and details are free; run is paid.',
+    '- When plain search genuinely cannot answer (e.g. structured "raised seed in the last 30 days" queries), use find_and_run_orthogonal_api with the capability in plain words — it finds and runs the right endpoint in one step. Reach for discover_orthogonal_apis only to compare providers before spending. Discovery and details are free; run is paid.',
     '',
     'Hard rules:',
     '- NEVER invent a company, founder, or URL. Every homepage_url you record must have appeared in a tool result.',
@@ -323,6 +324,8 @@ export default async function handler(req, res) {
       executeTool: async (name, rawInput, { session }) => {
         const external = await runStandardOrthogonalTool(session, name, rawInput, publicResearchPolicy);
         if (external !== null) return external;
+        const routed = await runOrthogonalRouterTool(session, name, rawInput, publicResearchPolicy);
+        if (routed !== null) return routed;
         const dynamic = await runDynamicOrthogonalTool(session, name, rawInput, publicResearchPolicy);
         if (dynamic !== null) return dynamic;
         if (name !== 'record_startups') return { error: `Unknown tool: ${name}` };

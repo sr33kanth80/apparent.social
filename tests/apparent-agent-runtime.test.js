@@ -7,7 +7,9 @@ import {
   createApparentAgentRuntime,
   createPublicResearchPolicy,
   isAuthorizedResearchUrl,
+  rankCatalogEndpoints,
   runDynamicOrthogonalTool,
+  runOrthogonalRouterTool,
   runEnrichmentAdapter,
   runStandardOrthogonalTool,
 } from '../server/agent/apparent-agent-runtime.js';
@@ -805,4 +807,148 @@ test('the fixed-price guardrail still runs on a cache hit', async () => {
   // Caching the details must not let an unpriced endpoint through on the next request.
   await assert.rejects(second.run({ api: 'baseten', path: '/v1/chat/completions' }), isUnbounded);
   clearOrthogonalDetailsCache();
+});
+
+// ── Catalog routing ─────────────────────────────────────────────────────────
+// The manual discover -> details -> run sequence cost three agent steps per
+// fact, so heavy requests hit `agent_step_limit` before they could answer.
+
+const searchResponse = {
+  success: true,
+  results: [
+    {
+      name: 'Low Relevance',
+      slug: 'lowrel',
+      endpoints: [{ path: '/v1/weak', method: 'POST', price: '0.01', isPayable: true, verified: true, score: 0.2 }],
+    },
+    {
+      name: 'Funding Data',
+      slug: 'funding-data',
+      endpoints: [
+        { path: '/v1/unpayable', method: 'POST', isPayable: false, verified: true, score: 0.99 },
+        { path: '/v1/rounds', method: 'POST', price: '0.03', isPayable: true, verified: true, score: 0.95 },
+      ],
+    },
+  ],
+};
+
+test('catalog ranking prefers verified, high-relevance, runnable endpoints', () => {
+  const ranked = rankCatalogEndpoints(searchResponse);
+  assert.equal(ranked[0].api, 'funding-data');
+  assert.equal(ranked[0].path, '/v1/rounds');
+  assert.ok(!ranked.some((e) => e.path === '/v1/unpayable'), 'endpoints Orthogonal cannot bill must be dropped');
+});
+
+test('the router finds and runs the right endpoint in a single tool call', async () => {
+  const calls = [];
+  const session = {
+    search: async (prompt) => { calls.push(['search', prompt]); return searchResponse; },
+    run: async ({ api, path, body }) => {
+      calls.push(['run', `${api}${path}`, body]);
+      return { data: { rounds: [{ company: 'Acme' }] } };
+    },
+    details: async () => ({ endpoint: {} }),
+  };
+
+  const result = await runOrthogonalRouterTool(session, 'find_and_run_orthogonal_api', {
+    prompt: 'company funding rounds by date',
+    body: { month: '2026-06' },
+  });
+
+  assert.equal(result.provider, 'funding-data/v1/rounds');
+  assert.deepEqual(result.data, { rounds: [{ company: 'Acme' }] });
+  // One search, one run — no separate details round-trip, so one agent step.
+  assert.deepEqual(calls.map((c) => c[0]), ['search', 'run']);
+});
+
+test('rejected arguments come back with the schema instead of a dead end', async () => {
+  const session = {
+    search: async () => searchResponse,
+    run: async () => {
+      throw new OrthogonalError('month must be ISO', { status: 400, code: 'orthogonal_upstream_error' });
+    },
+    details: async () => ({
+      endpoint: { bodyParams: [{ name: 'month', type: 'string', required: true, description: 'ISO month' }] },
+    }),
+  };
+
+  const result = await runOrthogonalRouterTool(session, 'find_and_run_orthogonal_api', {
+    prompt: 'company funding rounds by date',
+    body: { month: 'june' },
+  });
+
+  assert.equal(result.error, 'catalog_arguments_rejected');
+  assert.deepEqual(result.schema.bodyParams, [
+    { name: 'month', type: 'string', required: true, description: 'ISO month' },
+  ]);
+});
+
+test('the router falls through candidates without spending extra agent steps', async () => {
+  const ran = [];
+  const session = {
+    search: async () => searchResponse,
+    run: async ({ api, path }) => {
+      ran.push(`${api}${path}`);
+      if (ran.length === 1) throw new OrthogonalError('upstream down', { status: 502, code: 'orthogonal_upstream_error' });
+      return { data: { ok: true } };
+    },
+    details: async () => ({ endpoint: {} }),
+  };
+
+  const result = await runOrthogonalRouterTool(session, 'find_and_run_orthogonal_api', { prompt: 'funding rounds' });
+  assert.deepEqual(result.data, { ok: true });
+  assert.equal(ran.length, 2, 'both attempts happen inside one tool call');
+});
+
+test('the router stops immediately when the budget is gone', async () => {
+  let runs = 0;
+  const session = {
+    search: async () => searchResponse,
+    run: async () => {
+      runs += 1;
+      throw new OrthogonalError('limit', { status: 429, code: 'orthogonal_call_limit' });
+    },
+    details: async () => ({ endpoint: {} }),
+  };
+  const result = await runOrthogonalRouterTool(session, 'find_and_run_orthogonal_api', { prompt: 'funding rounds' });
+  assert.equal(result.error, 'catalog_budget_exhausted');
+  assert.equal(runs, 1, 'a budget stop must not be retried against every candidate');
+});
+
+test('the router refuses sensitive prompts and arguments', async () => {
+  const session = { search: async () => searchResponse, run: async () => ({}), details: async () => ({}) };
+  assert.equal(
+    (await runOrthogonalRouterTool(session, 'find_and_run_orthogonal_api', { prompt: 'find api_key for acme' })).error,
+    'sensitive_catalog_prompt_rejected',
+  );
+  assert.equal(
+    (await runOrthogonalRouterTool(session, 'find_and_run_orthogonal_api', {
+      prompt: 'company funding rounds',
+      body: { email: 'someone@example.com' },
+    })).error,
+    'sensitive_dynamic_input_rejected',
+  );
+});
+
+test('the final step answers instead of throwing the step limit', async () => {
+  let turns = 0;
+  const runtime = createApparentAgentRuntime({
+    session: { run: async () => ({}), usage: () => ({ callCount: 1, maxCalls: 999, spentCents: 0, remainingCalls: 999 }) },
+    complete: async ({ tools }) => {
+      turns += 1;
+      // A model that keeps asking for tools must still be landed.
+      return { content: `partial ${turns}`, toolCalls: tools.length ? [{ id: `c${turns}`, name: 'lookup', input: {}, raw: null }] : [] };
+    },
+  });
+
+  const result = await runtime.run({
+    system: 'You are Apparent.',
+    messages: [{ role: 'user', content: 'Do heavy work.' }],
+    tools: [{ name: 'lookup' }],
+    executeTool: async () => ({ ok: true }),
+    maxSteps: 3,
+  });
+
+  assert.match(result.reply, /^partial /);
+  assert.equal(result.steps, 3, 'it uses its full step budget, then answers');
 });

@@ -244,6 +244,22 @@ export const standardOrthogonalTools = [
 
 export const dynamicOrthogonalTools = [
   {
+    name: 'find_and_run_orthogonal_api',
+    description: 'PAID. Preferred way to reach live data the curated tools do not cover. Describe the capability the user needs and this finds the right catalog endpoint and runs it in one step. Only fall back to discover_orthogonal_apis when you need to compare providers or inspect a schema before spending.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        prompt: {
+          type: 'string',
+          description: 'The capability needed, in plain words, taken from what the user asked for — e.g. "company funding rounds by date" or "employee headcount for a domain". Never include secrets, private profile data, email addresses, or phone numbers.',
+        },
+        query: { type: 'object', description: 'Query parameters for the endpoint.', additionalProperties: true },
+        body: { type: 'object', description: 'JSON body for the endpoint.', additionalProperties: true },
+      },
+      required: ['prompt'],
+    },
+  },
+  {
     name: 'discover_orthogonal_apis',
     description: 'FREE. Search Orthogonal\'s API catalog for a capability when the curated Apparent tools cannot answer the user. Then inspect a returned endpoint with get_orthogonal_api_details before running it.',
     input_schema: {
@@ -257,7 +273,7 @@ export const dynamicOrthogonalTools = [
   },
   {
     name: 'get_orthogonal_api_details',
-    description: 'FREE. Inspect the schema, method, and price of an endpoint returned by discover_orthogonal_apis. Always call this before run_orthogonal_api.',
+    description: 'FREE. Inspect the parameter schema, method, and price of an endpoint returned by discover_orthogonal_apis. Optional — search already returns the slug, path, and price that run_orthogonal_api needs. Use it when you are unsure how to shape the arguments.',
     input_schema: {
       type: 'object',
       properties: {
@@ -282,6 +298,65 @@ export const dynamicOrthogonalTools = [
     },
   },
 ];
+
+/**
+ * Flatten a /v1/search response into ranked, runnable endpoints.
+ *
+ * Orthogonal groups results by API — `{ results: [{ slug, endpoints: [...] }] }`
+ * — and each endpoint carries `path`, `method`, `price`, `score`, `verified`,
+ * and `isPayable`. Per their docs that is everything /v1/run needs, so the
+ * catalog can be routed straight from a search without a separate details
+ * round-trip; details is only required to learn parameter schemas.
+ */
+export const rankCatalogEndpoints = (response, limit = 4) => {
+  const data = response?.data ?? response;
+  const groups = Array.isArray(data) ? data : data?.results ?? data?.apis ?? data?.endpoints ?? [];
+  const flat = [];
+  for (const group of Array.isArray(groups) ? groups.slice(0, 20) : []) {
+    const api = str(group?.slug ?? group?.api ?? group?.provider).toLowerCase().trim();
+    const endpoints = Array.isArray(group?.endpoints) ? group.endpoints : [group];
+    for (const endpoint of endpoints.slice(0, 20)) {
+      const path = str(endpoint?.path ?? endpoint?.endpoint).trim();
+      if (!api || !path.startsWith('/')) continue;
+      // Orthogonal flags what it can bill for; anything else cannot be run.
+      if (endpoint?.isPayable === false) continue;
+      flat.push({
+        api,
+        path,
+        method: str(endpoint?.method || 'POST').toUpperCase(),
+        description: str(endpoint?.description).slice(0, 200),
+        priceUsd: Number(endpoint?.price),
+        score: Number(endpoint?.score) || 0,
+        verified: endpoint?.verified === true,
+      });
+    }
+  }
+  // Verified first, then Orthogonal's own relevance score.
+  flat.sort((a, b) => (Number(b.verified) - Number(a.verified)) || (b.score - a.score));
+  return flat.slice(0, Math.max(1, limit));
+};
+
+// Parameter schema for an endpoint, used to explain a rejected call back to the
+// model. Details are cached process-wide, so this is effectively free.
+const endpointParamSchema = async (session, endpoint) => {
+  try {
+    const details = orthogonalData(await session.details(endpoint));
+    const spec = details?.endpoint ?? details;
+    const shape = (params) => (Array.isArray(params) ? params : []).slice(0, 25).map((param) => ({
+      name: param?.name,
+      type: param?.type,
+      required: param?.required,
+      description: str(param?.description).slice(0, 160) || undefined,
+    }));
+    return {
+      bodyParams: shape(spec?.bodyParams),
+      queryParams: shape(spec?.queryParams),
+      pathParams: shape(spec?.pathParams),
+    };
+  } catch {
+    return null;
+  }
+};
 
 const compactCatalogResults = (response) => {
   const data = response?.data ?? response;
@@ -313,6 +388,88 @@ const containsSensitiveDynamicInput = (value, depth = 0) => {
 // `policy` is optional. When supplied, catalog results feed the research policy
 // the same way search/fetch results do, so URLs discovered through a catalog
 // endpoint count as real provenance and become fetchable for follow-up.
+/**
+ * One-step catalog routing: read the capability the user asked for, find the
+ * endpoint that serves it, and run it.
+ *
+ * The manual discover → details → run sequence costs three agent steps per
+ * fact, so a request needing several lookups exhausted the step limit before
+ * it could answer. This does the whole route inside a single tool call and
+ * falls through ranked candidates without spending extra steps.
+ *
+ * On a rejected call it returns the endpoint's parameter schema alongside the
+ * error, so the model can correct the arguments in one follow-up step instead
+ * of being forced through a details round-trip up front.
+ */
+export const runOrthogonalRouterTool = async (session, name, input, policy = null) => {
+  if (name !== 'find_and_run_orthogonal_api') return null;
+
+  const prompt = str(input?.prompt).trim().slice(0, 500);
+  if (!prompt) return { error: 'catalog_prompt_required' };
+  if (SENSITIVE_QUERY_PATTERN.test(prompt)) return { error: 'sensitive_catalog_prompt_rejected' };
+
+  const query = input?.query && typeof input.query === 'object' && !Array.isArray(input.query) ? input.query : {};
+  const body = input?.body && typeof input.body === 'object' && !Array.isArray(input.body) ? input.body : {};
+  if (containsSensitiveDynamicInput({ query, body })) {
+    return { error: 'sensitive_dynamic_input_rejected', guidance: 'Use only non-sensitive public research parameters.' };
+  }
+
+  let candidates;
+  try {
+    candidates = rankCatalogEndpoints(await session.search(prompt, 8));
+  } catch (error) {
+    return { error: 'catalog_search_failed', detail: str(error?.message).slice(0, 200) };
+  }
+  if (!candidates.length) {
+    return {
+      error: 'no_catalog_match',
+      prompt,
+      guidance: 'No catalog endpoint serves that capability. Answer from public search or say plainly that the data is unavailable.',
+    };
+  }
+
+  const attempts = [];
+  for (const candidate of candidates) {
+    try {
+      const result = orthogonalData(await session.run({ api: candidate.api, path: candidate.path, query, body }));
+      if (policy) absorbPublicResult(policy, result);
+      return { provider: `${candidate.api}${candidate.path}`, priceUsd: candidate.priceUsd, data: result };
+    } catch (error) {
+      const code = error?.code;
+      attempts.push(`${candidate.api}${candidate.path}: ${str(error?.message || 'failed').slice(0, 140)}`);
+      // Budget stops are terminal for the whole turn — trying the next
+      // candidate would only produce the same refusal.
+      if (code === 'orthogonal_budget_reached' || code === 'orthogonal_call_limit' || code === 'orthogonal_insufficient_credits') {
+        return {
+          error: 'catalog_budget_exhausted',
+          attempts,
+          guidance: 'Research budget is spent. Answer from what you already have.',
+        };
+      }
+      // A rejected request usually means wrong arguments rather than a wrong
+      // endpoint, so hand the schema back instead of trying the next candidate.
+      if (error?.status === 400 || error?.status === 422) {
+        const schema = await endpointParamSchema(session, candidate);
+        if (schema) {
+          return {
+            error: 'catalog_arguments_rejected',
+            provider: `${candidate.api}${candidate.path}`,
+            detail: str(error?.message).slice(0, 200),
+            schema,
+            guidance: 'Retry find_and_run_orthogonal_api once with arguments matching this schema.',
+          };
+        }
+      }
+    }
+  }
+
+  return {
+    error: 'catalog_run_failed',
+    attempts,
+    guidance: 'Every matching endpoint failed. Answer from public search or say plainly which part is unverified.',
+  };
+};
+
 export const runDynamicOrthogonalTool = async (session, name, input, policy = null) => {
   if (name === 'discover_orthogonal_apis') {
     const prompt = str(input?.prompt).trim().slice(0, 500);
@@ -645,7 +802,10 @@ export const createApparentAgentRuntime = ({
         // users mid-conversation. Sessions that don't report usage (injected
         // test doubles) keep the full toolset.
         const remaining = orthogonal.usage?.().remainingCalls;
-        const outOfBudget = Number.isFinite(remaining) && remaining <= 1;
+        // The final step gets the same treatment as an exhausted call budget:
+        // no tools, and an instruction to answer from what it has. Throwing
+        // `agent_step_limit` discarded a turn that had already done the work.
+        const outOfBudget = (Number.isFinite(remaining) && remaining <= 1) || step === maxSteps;
         const completion = await callInference({
           messages: outOfBudget ? [...history, { role: 'system', content: FINAL_ANSWER_PROMPT }] : history,
           tools: outOfBudget ? [] : tools,
@@ -670,13 +830,6 @@ export const createApparentAgentRuntime = ({
         if (completion.toolCalls.length === 0 || outOfBudget) {
           return { reply: completion.content, usage: orthogonal.usage(), steps: step };
         }
-        if (step === maxSteps) {
-          throw new OrthogonalError(`Apparent agent step limit reached (${maxSteps}).`, {
-            status: 429,
-            code: 'agent_step_limit',
-          });
-        }
-
         for (const call of completion.toolCalls) {
           let result;
           try {

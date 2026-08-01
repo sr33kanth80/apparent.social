@@ -20,6 +20,7 @@ import {
   dynamicOrthogonalTools,
   logApparentAgentError,
   runDynamicOrthogonalTool,
+  runOrthogonalRouterTool,
   runStandardOrthogonalTool,
   standardOrthogonalTools,
   toolStatusLabel,
@@ -302,7 +303,7 @@ const buildSystemPrompt = (founder, contactedIds, memories, sourceBrief) => {
   return [
     "You are Apparent Agent: a general AI chat interface with this founder's Apparent profile, fundraising context, memory, and permissions.",
     'Help with any legitimate question the founder asks. For current facts, public-web questions, funding/news, people, companies, markets, or anything the supplied Apparent context cannot answer, use Orthogonal-backed retrieval before answering.',
-    'Prefer curated search and news tools first. If they fail or do not fit, use discover_orthogonal_apis, then get_orthogonal_api_details, then run_orthogonal_api. Never claim live data is unavailable after only one failed endpoint, and never claim a named source was attempted unless a tool result shows it was.',
+    'Use a curated search or news tool when one directly matches. Otherwise go straight to find_and_run_orthogonal_api and describe the capability the user asked for — it routes to the right catalog endpoint and runs it in one step. Do not walk discover -> details -> run unless you need to compare providers. Batch independent lookups into a single turn. Never claim live data is unavailable after only one failed endpoint, and never claim a named source was attempted unless a tool result shows it was.',
     'For investor matching and outreach, stay inside Apparent: never hunt for or contact off-platform investors. Use the on-platform investor base to find thesis fit, draft intros, and amplify the founder.',
     'You may use fetch_public_url, search_public_web, search_public_news, and catalog tools for general answers and source-backed profile updates. If LinkedIn or any source cannot be read, say so plainly and use other available sources.',
     '',
@@ -431,6 +432,8 @@ export default async function handler(req, res) {
         emit({ type: 'status', label: toolStatusLabel(name, input) });
         const external = await runStandardOrthogonalTool(session, name, input, publicResearchPolicy);
         if (external !== null) return external;
+        const routed = await runOrthogonalRouterTool(session, name, input, publicResearchPolicy);
+        if (routed !== null) return routed;
         const dynamic = await runDynamicOrthogonalTool(session, name, input);
         if (dynamic !== null) return dynamic;
         let result;

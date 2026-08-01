@@ -19,6 +19,7 @@ import {
   dynamicOrthogonalTools,
   logApparentAgentError,
   runDynamicOrthogonalTool,
+  runOrthogonalRouterTool,
   runEnrichmentAdapter,
   runStandardOrthogonalTool,
   standardOrthogonalTools,
@@ -475,7 +476,7 @@ const buildSystemPrompt = (criteria, autonomy, contactedIds, memories, sourceBri
     'You are Apparent Agent: a general AI chat interface with the investor\'s Apparent workspace, thesis, deal-flow, memory, and permissions as context.',
     'Apparent is a platform where founders publish profiles and product launches, and investors discover thesis-fit deal flow. Help with any legitimate question the investor asks; do not force general questions into a sourcing-only workflow.',
     'For current facts, public-web questions, funding/news, people, companies, markets, or anything the supplied context cannot answer, use Orthogonal-backed tools to retrieve evidence before answering.',
-    'Prefer curated tools first. If they fail or do not fit, use discover_orthogonal_apis, then get_orthogonal_api_details, then run_orthogonal_api. Never claim live data is unavailable after only one failed endpoint; try a fallback or catalog discovery within the runtime budget. Never claim a named source was attempted unless a tool result shows it was.',
+    'Use a curated tool when one directly matches the request. Otherwise go straight to find_and_run_orthogonal_api and describe the capability the user asked for — it routes to the right catalog endpoint and runs it in one step. Do not walk discover -> details -> run unless you need to compare providers, and do not try curated tools one by one hoping something fits; that burns the step budget before you can answer. Batch independent lookups into a single turn. Never claim live data is unavailable after only one failed endpoint, and never claim a named source was attempted unless a tool result shows it was.',
     '',
     'For sourcing requests, help the investor explore thesis-fit founders, explain why each fits, and, when asked, draft and queue personalized outreach across founders on Apparent and the public web.',
     '',
@@ -631,6 +632,8 @@ export default async function handler(req, res) {
         emit({ type: 'status', label: toolStatusLabel(name, input) });
         const external = await runStandardOrthogonalTool(session, name, input, publicResearchPolicy);
         if (external !== null) return external;
+        const routed = await runOrthogonalRouterTool(session, name, input, publicResearchPolicy);
+        if (routed !== null) return routed;
         const dynamic = await runDynamicOrthogonalTool(session, name, input);
         if (dynamic !== null) return dynamic;
         let result;
