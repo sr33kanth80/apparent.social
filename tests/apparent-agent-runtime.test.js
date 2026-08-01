@@ -10,6 +10,7 @@ import {
   rankCatalogEndpoints,
   runDynamicOrthogonalTool,
   runOrthogonalRouterTool,
+  toolErrorResult,
   runEnrichmentAdapter,
   runStandardOrthogonalTool,
 } from '../server/agent/apparent-agent-runtime.js';
@@ -48,6 +49,7 @@ test('Orthogonal session enforces its API allowlist before making a request', as
   const session = createOrthogonalSession({
     apiKey: 'test',
     detailsCache: new Map(),
+    runCacheStore: new Map(),
     allowedApis: ['linkup'],
     fetchImpl: async () => {
       fetched = true;
@@ -397,6 +399,7 @@ test('Orthogonal checks the catalog price before a paid run', async () => {
   const session = createOrthogonalSession({
     apiKey: 'test',
     detailsCache: new Map(),
+    runCacheStore: new Map(),
     allowedApis: ['baseten'],
     maxSpendCents: 100,
     fetchImpl: async (url) => {
@@ -419,6 +422,7 @@ test('Orthogonal reserves the catalog price when run responses omit billing meta
   const session = createOrthogonalSession({
     apiKey: 'test',
     detailsCache: new Map(),
+    runCacheStore: new Map(),
     allowedApis: ['baseten'],
     maxSpendCents: 100,
     fetchImpl: async (url) => {
@@ -444,6 +448,7 @@ test('Orthogonal permits explicitly approved usage-priced inference and records 
   const session = createOrthogonalSession({
     apiKey: 'test',
     detailsCache: new Map(),
+    runCacheStore: new Map(),
     allowedApis: ['baseten'],
     dynamicPricingEndpoints: [{ api: 'baseten', path: '/v1/chat/completions' }],
     dynamicPriceEstimateCents: 10,
@@ -472,6 +477,7 @@ test('Orthogonal retries a transient paid upstream response with one idempotency
   const session = createOrthogonalSession({
     apiKey: 'test',
     detailsCache: new Map(),
+    runCacheStore: new Map(),
     allowedApis: ['baseten'],
     dynamicPricingEndpoints: [{ api: 'baseten', path: '/v1/chat/completions' }],
     maxRetries: 1,
@@ -506,6 +512,7 @@ test('Orthogonal retries a transport failure with one idempotency key', async ()
   const session = createOrthogonalSession({
     apiKey: 'test',
     detailsCache: new Map(),
+    runCacheStore: new Map(),
     maxRetries: 1,
     retryBaseDelayMs: 1,
     fetchImpl: async (_url, init) => {
@@ -528,6 +535,7 @@ test('Orthogonal does not retry a non-transient paid response', async () => {
   const session = createOrthogonalSession({
     apiKey: 'test',
     detailsCache: new Map(),
+    runCacheStore: new Map(),
     allowedApis: ['baseten'],
     dynamicPricingEndpoints: [{ api: 'baseten', path: '/v1/chat/completions' }],
     maxRetries: 1,
@@ -570,6 +578,7 @@ test('Orthogonal still blocks dynamic pricing outside the explicitly approved in
   const session = createOrthogonalSession({
     apiKey: 'test',
     detailsCache: new Map(),
+    runCacheStore: new Map(),
     allowedApis: ['baseten'],
     dynamicPricingEndpoints: [{ api: 'baseten', path: '/v1/chat/completions' }],
     fetchImpl: async (url) => {
@@ -590,6 +599,7 @@ test('Orthogonal enforces the dynamic price reservation before a usage-priced ca
   const session = createOrthogonalSession({
     apiKey: 'test',
     detailsCache: new Map(),
+    runCacheStore: new Map(),
     allowedApis: ['baseten'],
     dynamicPricingEndpoints: [{ api: 'baseten', path: '/v1/chat/completions' }],
     dynamicPriceEstimateCents: 25,
@@ -649,6 +659,7 @@ test('a retried Orthogonal request consumes one call, not one per attempt', asyn
   const session = createOrthogonalSession({
     apiKey: 'test',
     detailsCache: new Map(),
+    runCacheStore: new Map(),
     maxRetries: 2,
     retryBaseDelayMs: 0,
     fetchImpl: async () => {
@@ -951,4 +962,143 @@ test('the final step answers instead of throwing the step limit', async () => {
 
   assert.match(result.reply, /^partial /);
   assert.equal(result.steps, 3, 'it uses its full step budget, then answers');
+});
+
+// ── Budget exhaustion must degrade, never fail the turn ─────────────────────
+
+test('spend exhaustion lands the answer instead of throwing', async () => {
+  // Research tools drained the cents budget; the closing inference call would
+  // previously throw orthogonal_budget_reached and discard the whole turn.
+  let spent = 0;
+  const runtime = createApparentAgentRuntime({
+    session: {
+      run: async () => ({}),
+      usage: () => ({ callCount: 2, maxCalls: 999, remainingCalls: 999, spentCents: spent, remainingCents: Math.max(100 - spent, 0) }),
+    },
+    complete: async ({ tools }) => {
+      spent += 50; // two rounds of enrichment and the budget is gone
+      return {
+        content: 'Here is what I found so far.',
+        toolCalls: tools.length ? [{ id: 'c1', name: 'lookup', input: {}, raw: null }] : [],
+      };
+    },
+  });
+
+  const result = await runtime.run({
+    system: 'You are Apparent.',
+    messages: [{ role: 'user', content: 'Heavy research please.' }],
+    tools: [{ name: 'lookup' }],
+    executeTool: async () => ({ ok: true }),
+    maxSteps: 12,
+  });
+
+  assert.equal(result.reply, 'Here is what I found so far.');
+});
+
+test('an unforeseen budget stop salvages the work already done', async () => {
+  let turn = 0;
+  const runtime = createApparentAgentRuntime({
+    session: {
+      run: async () => ({}),
+      // Reports plenty of budget, then the call fails anyway — a price change
+      // or an unpriced call the reserve could not predict.
+      usage: () => ({ callCount: 1, maxCalls: 999, remainingCalls: 999, spentCents: 0, remainingCents: 999 }),
+    },
+    complete: async () => {
+      turn += 1;
+      if (turn === 1) {
+        return { content: 'Acme raised a $4M seed in March.', toolCalls: [{ id: 'c1', name: 'lookup', input: {}, raw: null }] };
+      }
+      throw new OrthogonalError('budget', { status: 402, code: 'orthogonal_budget_reached' });
+    },
+  });
+
+  const result = await runtime.run({
+    system: 'You are Apparent.',
+    messages: [{ role: 'user', content: 'Research Acme.' }],
+    tools: [{ name: 'lookup' }],
+    executeTool: async () => ({ ok: true }),
+    maxSteps: 12,
+  });
+
+  assert.equal(result.reply, 'Acme raised a $4M seed in March.');
+  assert.equal(result.budgetStopped, true);
+});
+
+test('a non-budget inference failure still surfaces as an error', async () => {
+  const runtime = createApparentAgentRuntime({
+    session: { run: async () => ({}), usage: () => ({ remainingCalls: 999, remainingCents: 999 }) },
+    complete: async () => { throw new OrthogonalError('upstream down', { status: 503, code: 'orthogonal_upstream_error' }); },
+  });
+  await assert.rejects(
+    runtime.run({ system: 'x', messages: [{ role: 'user', content: 'hi' }], tools: [], executeTool: async () => null }),
+    (error) => error.code === 'orthogonal_upstream_error',
+  );
+});
+
+test('tool errors carry explicit retry guidance', () => {
+  const rateLimited = toolErrorResult(new OrthogonalError('slow down', { status: 429, code: 'orthogonal_rate_limited' }));
+  assert.equal(rateLimited.retryable, true);
+
+  const badArgs = toolErrorResult(new OrthogonalError('bad param', { status: 400, code: 'orthogonal_upstream_error' }));
+  assert.equal(badArgs.retryable, false);
+
+  const notAllowed = toolErrorResult(new OrthogonalError('nope', { status: 403, code: 'orthogonal_api_not_allowed' }));
+  assert.equal(notAllowed.retryable, false);
+
+  const budget = toolErrorResult(new OrthogonalError('spent', { status: 402, code: 'orthogonal_budget_reached' }));
+  assert.equal(budget.retryable, false);
+  assert.match(budget.guidance, /answer from what you already have/i);
+});
+
+test('a timeout on a paid call is indeterminate, not a retry', () => {
+  // The upstream may have run and charged, so repeating it risks paying twice.
+  for (const code of ['orthogonal_timeout', 'orthogonal_network_error']) {
+    const result = toolErrorResult(new OrthogonalError('gone', { status: 504, code, retryable: true }));
+    assert.equal(result.retryable, false, `${code} must not invite a blind retry`);
+    assert.equal(result.indeterminate, true);
+    assert.match(result.guidance, /may have run and been charged/i);
+  }
+});
+
+test('a thrown tool never escapes the loop', async () => {
+  const runtime = createApparentAgentRuntime({
+    session: { run: async () => ({}), usage: () => ({ remainingCalls: 999, remainingCents: 999 }) },
+    complete: async ({ messages }) => {
+      const last = messages[messages.length - 1];
+      if (last?.role === 'tool') return { content: 'Recovered.', toolCalls: [] };
+      return { content: '', toolCalls: [{ id: 'c1', name: 'boom', input: {}, raw: null }] };
+    },
+  });
+
+  const result = await runtime.run({
+    system: 'x',
+    messages: [{ role: 'user', content: 'go' }],
+    tools: [{ name: 'boom' }],
+    executeTool: async () => { throw new OrthogonalError('kaboom', { status: 500, code: 'orthogonal_upstream_error' }); },
+  });
+  assert.equal(result.reply, 'Recovered.');
+});
+
+test('an identical paid run is not charged twice across sessions', async () => {
+  clearOrthogonalDetailsCache();
+  let runs = 0;
+  const fetchImpl = async (url) => {
+    const path = new URL(url).pathname;
+    if (path === '/v1/details') {
+      return new Response(JSON.stringify({ success: true, endpoint: { price: 0.5, hasDynamicPricing: false } }));
+    }
+    runs += 1;
+    return new Response(JSON.stringify({ success: true, priceCents: 50, data: { rounds: [] } }));
+  };
+  const args = { api: 'baseten', path: '/v1/chat/completions', body: { q: 'acme' } };
+  const first = createOrthogonalSession({ apiKey: 'test', allowedApis: ['baseten'], fetchImpl });
+  const second = createOrthogonalSession({ apiKey: 'test', allowedApis: ['baseten'], fetchImpl });
+
+  await first.run(args);
+  await second.run(args);
+
+  assert.equal(runs, 1, 'the repeat must be served from cache rather than charged again');
+  assert.equal(second.usage().spentCents, 0, 'a deduplicated run costs nothing');
+  clearOrthogonalDetailsCache();
 });

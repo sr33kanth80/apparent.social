@@ -46,13 +46,26 @@ const DETAILS_TTL_MS = positiveInt(process.env.ORTHOGONAL_DETAILS_TTL_MS, 60 * 6
 const DETAILS_CACHE_MAX = 500;
 const sharedDetailsCache = new Map();
 
-/** Test seam: drops the process-wide details cache so call counts are isolated. */
-export const clearOrthogonalDetailsCache = () => sharedDetailsCache.clear();
+/**
+ * Successful paid runs are also cached process-wide, keyed by the exact
+ * arguments. This is deduplication, not performance: the cache was per session,
+ * so the same lookup repeated across turns — or after a retry — paid twice.
+ * A short TTL keeps results fresh while covering the window where a repeat is
+ * almost certainly a mistake rather than a genuine re-query.
+ */
+const RUN_TTL_MS = positiveInt(process.env.ORTHOGONAL_RUN_TTL_MS, 10 * 60 * 1000);
+const sharedRunCache = new Map();
 
-const cachedDetails = (cache, key) => {
+/** Test seam: drops the process-wide caches so call counts are isolated. */
+export const clearOrthogonalDetailsCache = () => {
+  sharedDetailsCache.clear();
+  sharedRunCache.clear();
+};
+
+const cachedDetails = (cache, key, ttlMs = DETAILS_TTL_MS) => {
   const hit = cache.get(key);
   if (!hit) return null;
-  if (Date.now() - hit.storedAt > DETAILS_TTL_MS) {
+  if (Date.now() - hit.storedAt > ttlMs) {
     cache.delete(key);
     return null;
   }
@@ -91,6 +104,8 @@ export const createOrthogonalSession = ({
   // Defaults to the process-wide catalog cache. Pass a fresh Map to isolate a
   // session (tests that count /v1/details traffic).
   detailsCache = sharedDetailsCache,
+  // Same idea for paid-run deduplication; tests that count charges pass their own.
+  runCacheStore = sharedRunCache,
 } = {}) => {
   if (!apiKey) {
     throw new OrthogonalError('ORTHOGONAL_API_KEY is not configured.', {
@@ -273,6 +288,11 @@ export const createOrthogonalSession = ({
       const normalizedPath = endpoint.path;
       const runKey = JSON.stringify({ api: normalizedApi, path: normalizedPath, body, query });
       if (runCache.has(runKey)) return runCache.get(runKey);
+      const deduped = cachedDetails(runCacheStore, runKey, RUN_TTL_MS);
+      if (deduped) {
+        runCache.set(runKey, deduped);
+        return deduped;
+      }
 
       const detailsKey = endpoint.key;
       let details = cachedDetails(detailsCache, detailsKey);
@@ -300,6 +320,7 @@ export const createOrthogonalSession = ({
         { paid: true, estimatedCostCents },
       );
       runCache.set(runKey, result);
+      storeDetails(runCacheStore, runKey, result);
       return result;
     },
 
@@ -310,6 +331,7 @@ export const createOrthogonalSession = ({
         maxCalls,
         maxSpendCents,
         remainingCalls: Math.max(maxCalls - callCount, 0),
+        remainingCents: Math.max(maxSpendCents - spentCents, 0),
       };
     },
   };
