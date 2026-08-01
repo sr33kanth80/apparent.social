@@ -86,6 +86,7 @@ import type {
   VcOutreachStage,
 } from '@/lib/apparent-types';
 import type { ApparentInvestorRow, LaunchAuthor } from '@/lib/dashboard-service';
+import { buildFutCard, FUT_STAT_TITLES } from '@/lib/fut-card';
 import { useAgentAuthHeaders } from '@/lib/agent-auth';
 import { VerifiedAvatar } from '@/components/VerifiedAvatar';
 import { uploadFile } from '@/lib/upload';
@@ -7458,87 +7459,71 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
                 );
               })()
             ) : (
-              // Card grid — investors scan at-a-glance instead of reading a
-              // dense list. Responsive: 1 col mobile, 2 col md, 3 col xl.
-              <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-                {filtered.map((launch, index) => {
+              // Trading-card grid — each sourced startup as a FUT-style card.
+              // Smaller columns than the old list: these are cards, so they
+              // want card proportions rather than full-width panels.
+              <div className="grid grid-cols-2 gap-5 lg:grid-cols-3 xl:grid-cols-4">
+                {filtered.map((launch) => {
                   const domain = dashboardLaunchDomain(launch.launchUrl || launch.sourceUrl || '');
                   const href = launch.sourceUrl || launch.launchUrl || '';
                   // Sourced items carry projectPath → open the in-app /sourced/:id
                   // profile (SPA nav). Legacy R2-fallback items have none → link out.
                   const internalTo = launch.projectPath;
-                  const cardClass = "group relative flex h-full flex-col rounded-[18px] border border-black/10 bg-white p-5 shadow-[0_8px_24px_rgba(0,0,0,0.04)] transition-all hover:-translate-y-0.5 hover:border-black/15 hover:shadow-[0_14px_38px_rgba(0,0,0,0.08)]";
+                  const card = buildFutCard(launch, {
+                    thesis: intakeValues.thesis,
+                    sectors: intakeValues.sectors,
+                    stage: intakeValues.stage,
+                    geography: intakeValues.geography,
+                  });
+                  const bestStat = card.stats.reduce((a, b) => (b.value > a.value ? b : a));
                   const inner = (
                     <>
-                      {/* Top: logo + source pill (right) + index (left of logo on hover) */}
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-[14px] bg-[#fbfaf7]">
+                      <div className="ap-fut-head">
+                        <div className="ap-fut-rating">
+                          <span className="ap-fut-ovr">{card.ovr}</span>
+                          <span className="ap-fut-pos">{card.position}</span>
+                          <span className="ap-fut-crest">
+                            {launch.category && <span title={launch.category}>{launch.category}</span>}
+                            {launch.location && <span title={launch.location}>{launch.location}</span>}
+                          </span>
+                        </div>
+                        <div className="ap-fut-portrait">
                           <img
                             src={launch.logoUrl || `https://www.google.com/s2/favicons?domain=${domain}&sz=128`}
                             alt=""
-                            className="h-7 w-7 object-contain"
                             onError={(e) => { e.currentTarget.style.visibility = 'hidden'; }}
                           />
                         </div>
-                        <div className="flex items-center gap-2">
-                          {launch.source && (
-                            <span className="inline-flex items-center gap-1 rounded-full border border-black/10 bg-[#f6f3f1] px-2 py-0.5 text-[10px] font-semibold text-black/55">
-                              <Globe className="h-3 w-3" /> {launch.source}
-                            </span>
-                          )}
-                          <span className="text-[10px] font-semibold tracking-[0.18em] text-black/30">0{index + 1}</span>
-                        </div>
                       </div>
 
-                      {/* Title + tagline — fills the middle of the card */}
-                      <h3 className="mt-4 text-base font-semibold tracking-[-0.01em] line-clamp-1">{launch.name}</h3>
-                      {launch.tagline && (
-                        <p className="mt-1.5 line-clamp-2 text-sm leading-5 text-black/60">{launch.tagline}</p>
-                      )}
+                      <div className="ap-fut-name" title={launch.name}>{launch.name}</div>
 
-                      {/* Spacer to push meta + CTA to the bottom for even card heights */}
-                      <div className="flex-1" />
+                      {launch.tagline && <p className="ap-fut-tagline">{launch.tagline}</p>}
 
-                      {/* Compact meta chips: category / stage / location / metric */}
-                      <div className="mt-4 flex flex-wrap gap-1.5">
-                        {launch.category && (
-                          <span className="rounded-full bg-[#f6f3f1] px-2 py-0.5 text-[10px] font-semibold text-black/60">
-                            {launch.category}
-                          </span>
-                        )}
-                        {launch.stage && (
-                          <span className="rounded-full bg-[#f6f3f1] px-2 py-0.5 text-[10px] font-semibold text-black/60">
-                            {launch.stage}
-                          </span>
-                        )}
-                        {launch.location && (
-                          <span className="inline-flex items-center gap-0.5 rounded-full bg-[#f6f3f1] px-2 py-0.5 text-[10px] font-semibold text-black/60">
-                            <MapPin className="h-2.5 w-2.5" />
-                            {launch.location}
-                          </span>
-                        )}
-                        {launch.metrics && (
-                          <span className="rounded-full bg-lavender px-2 py-0.5 text-[10px] font-semibold text-ink">
-                            {launch.metrics}
-                          </span>
-                        )}
+                      <div className="ap-fut-stats">
+                        {card.stats.map((s) => (
+                          <div
+                            key={s.label}
+                            className="ap-fut-stat"
+                            data-best={s.label === bestStat.label}
+                            title={FUT_STAT_TITLES[s.label]}
+                          >
+                            <b>{s.value}</b>
+                            <i>{s.label}</i>
+                          </div>
+                        ))}
                       </div>
 
-                      {/* Footer CTA — fills olive on hover to mirror the rest of the app */}
-                      <div className="mt-4 flex items-center justify-between border-t border-black/[0.06] pt-3">
-                        <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-black/35">
-                          {internalTo ? 'View profile' : 'View source'}
-                        </span>
-                        <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-[#f4f1eb] text-black/60 transition-colors group-hover:bg-charcoal group-hover:text-white">
-                          <ArrowUpRight className="h-3.5 w-3.5" />
-                        </span>
+                      <div className="ap-fut-foot">
+                        <span>{launch.source || 'Sourced'}</span>
+                        <span>{internalTo ? 'Profile' : 'Source'} &#8599;</span>
                       </div>
                     </>
                   );
                   return internalTo ? (
-                    <Link key={launch.id} to={internalTo} className={cardClass}>{inner}</Link>
+                    <Link key={launch.id} to={internalTo} className="ap-fut">{inner}</Link>
                   ) : (
-                    <a key={launch.id} href={href || undefined} target={href ? '_blank' : undefined} rel="noreferrer" className={cardClass}>{inner}</a>
+                    <a key={launch.id} href={href || undefined} target={href ? '_blank' : undefined} rel="noreferrer" className="ap-fut">{inner}</a>
                   );
                 })}
               </div>

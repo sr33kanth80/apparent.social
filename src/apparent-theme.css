@@ -541,6 +541,9 @@ body {
 
 .ed-dashboard {
   --dashboard-accent: #1d9bf0;      /* founder = blue (default) */
+  /* Fill accents are too light to sit as text on paper (blue reads 2.8:1).
+     These are the darkened text-safe pairs — both clear 4.5:1 on white. */
+  --dashboard-accent-ink: #0b6fb8;
   height: 100dvh;
   min-height: 100dvh;
   overflow: hidden;
@@ -552,6 +555,7 @@ body {
 
 .ed-dashboard[data-role="investor"] {
   --dashboard-accent: #16a34a;      /* investor = green */
+  --dashboard-accent-ink: #15803d;
 }
 
 .ed-dashboard-main,
@@ -694,6 +698,167 @@ body {
 }
 .ed-dashboard :where(button, a, span, div)[class*="rounded-full"]:not(:has(img)):not(:where(.ed-agent-chat-scope, .ed-agent-chat-scope *)) {
   border-radius: 0 !important;
+}
+
+/* ── Daily digest trading cards ─────────────────────────────────────────────
+   Sourced startups render in FIFA Ultimate Team's layout: overall rating and
+   stage stacked top-left, crest line beneath, logo centred, name across a
+   band, six stats along the foot. Drawn in Apparent's language rather than
+   FUT's — square corners, hard near-black border, offset shadow, no gloss,
+   no gradient. Own classes because the dashboard reskin strips Tailwind
+   radius/shadow utilities wholesale. */
+.ed-dashboard .ap-fut {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  /* Portrait, like the thing it's imitating. The head absorbs the slack so
+     the name band, stats, and footer keep their intrinsic heights. */
+  aspect-ratio: 3 / 4;
+  min-height: 300px;
+  border: 1px solid var(--dash-border);
+  background: var(--color-pure-paper);
+  box-shadow: 5px 5px 0 0 var(--dash-border);
+  transition: transform .16s ease, box-shadow .16s ease;
+}
+.ed-dashboard .ap-fut:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: 8px 8px 0 0 var(--dash-border);
+}
+.ap-fut-head {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 12px;
+  /* Grows to fill whatever the 3:4 box leaves over. */
+  flex: 1;
+  min-height: 0;
+  padding: 14px 14px 12px;
+}
+.ap-fut-rating {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 62px;
+}
+.ap-fut-ovr {
+  font-family: var(--font-apparent-display);
+  font-size: 40px;
+  font-weight: 400;
+  line-height: .95;
+  letter-spacing: -.03em;
+  color: var(--color-ink);
+}
+.ap-fut-pos {
+  margin-top: 3px;
+  font-family: var(--font-apparent-meta);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .12em;
+  color: var(--color-ink);
+}
+.ap-fut-crest {
+  width: 100%;
+  margin-top: 9px;
+  border-top: 1px solid var(--dash-border);
+  padding-top: 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  font-family: var(--font-apparent-meta);
+  font-size: 9px;
+  letter-spacing: .08em;
+  text-align: center;
+  color: var(--color-graphite);
+}
+.ap-fut-crest span {
+  display: block;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ap-fut-portrait {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  min-height: 84px;
+  background: var(--color-sidebar-cream);
+  border: 1px solid var(--dash-border);
+}
+.ap-fut-portrait img {
+  width: 56px;
+  height: 56px;
+  object-fit: contain;
+}
+.ap-fut-name {
+  border-top: 1px solid var(--dash-border);
+  border-bottom: 1px solid var(--dash-border);
+  padding: 9px 12px;
+  font-family: var(--font-apparent-display);
+  font-size: 17px;
+  font-weight: 400;
+  line-height: 1.15;
+  letter-spacing: -.01em;
+  text-align: center;
+  text-transform: uppercase;
+  color: var(--color-ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ap-fut-tagline {
+  flex: none;
+  padding: 10px 12px;
+  font-size: 12px;
+  line-height: 1.45;
+  text-align: center;
+  color: var(--color-graphite);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.ap-fut-stats {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  border-top: 1px solid var(--dash-border);
+}
+.ap-fut-stat {
+  padding: 9px 1px;
+  text-align: center;
+}
+.ap-fut-stat + .ap-fut-stat { border-left: 1px solid var(--dash-border); }
+.ap-fut-stat b {
+  display: block;
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1;
+  color: var(--color-ink);
+}
+.ap-fut-stat i {
+  display: block;
+  margin-top: 4px;
+  font-family: var(--font-apparent-meta);
+  font-size: 9px;
+  font-style: normal;
+  letter-spacing: .06em;
+  color: var(--color-graphite);
+}
+/* The strongest stat on each card gets the accent, so a card reads at a glance. */
+.ap-fut-stat[data-best="true"] b { color: var(--dashboard-accent-ink); }
+.ap-fut-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  border-top: 1px solid var(--dash-border);
+  padding: 8px 12px;
+  font-family: var(--font-apparent-meta);
+  font-size: 9px;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--color-graphite);
 }
 
 .ed-dashboard-sidebar {
