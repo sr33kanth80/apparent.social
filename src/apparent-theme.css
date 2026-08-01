@@ -306,7 +306,7 @@ body {
 }
 
 /* Cards / panels: sharp corners, hard 1px near-black border, offset shadow */
-.ed-page :where(.ed-card, .ed-feature, .ed-artifact, .ed-auth-card, .ed-pillar, .ed-pp-panel, .ed-surface, .ap-profile-card, .ap-profile-facts, .ap-profile-connect--light) {
+.ed-page :where(.ed-card, .ed-feature, .ed-artifact, .ed-auth-card, .ed-pillar, .ed-pp-panel, .ed-surface, .ap-profile-card, .ap-stats, .ap-profile-connect--light) {
   border: 1px solid var(--ed-border);
   border-radius: 0;
   background: var(--ed-white);
@@ -315,7 +315,7 @@ body {
 /* Hero stat surface keeps its paper fill, gains the hard frame */
 .ed-page .ed-surface { background: var(--ed-paper); }
 
-.ed-page :where(.ed-artifact, .ed-auth-card, .ed-pp-panel, .ap-profile-facts, .ap-profile-connect) {
+.ed-page :where(.ed-artifact, .ed-auth-card, .ed-pp-panel, .ap-stats, .ap-profile-connect) {
   border-radius: 0;
 }
 

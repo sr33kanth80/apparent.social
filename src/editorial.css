@@ -1468,22 +1468,9 @@
   padding-top: clamp(36px, 5vw, 72px);
   padding-bottom: clamp(40px, 6vw, 80px);
 }
-.ap-profile-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 10px;
-  flex-wrap: wrap;
-  margin-bottom: clamp(28px, 4vw, 44px);
-}
 .ap-profile-action {
   border-radius: var(--ed-r);
   min-height: 42px;
-}
-.ap-profile-kicker {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 8px;
 }
 .ap-profile-tag {
   display: inline-flex;
@@ -1512,16 +1499,6 @@
   font-size: 12px;
   font-weight: 600;
 }
-.ap-profile-identity {
-  display: flex;
-  align-items: center;
-  gap: clamp(14px, 2vw, 20px);
-  flex-wrap: wrap;
-  margin-top: 22px;
-}
-.ap-profile-identity > .min-w-0 {
-  flex: 1 1 min(520px, 100%);
-}
 .ap-profile-name {
   max-width: 13ch;
   color: var(--ed-ink);
@@ -1532,12 +1509,6 @@
   line-height: 1.05;
 }
 .ap-profile-name--large { max-width: 16ch; }
-.ap-profile-handle {
-  margin-top: 8px;
-  color: var(--ed-smoke);
-  font-size: 13px;
-  font-weight: 600;
-}
 .ap-profile-dek {
   max-width: 62ch;
   margin-top: clamp(24px, 3vw, 32px);
@@ -1560,11 +1531,6 @@
   color: var(--ed-smoke);
 }
 .ap-profile-micro { color: var(--ed-smoke); }
-.ap-profile-panel {
-  margin-top: clamp(28px, 4vw, 42px);
-  border-top: 1px solid var(--ed-fog);
-  padding-top: 22px;
-}
 .ap-profile-github { color: var(--ed-graphite); }
 .ap-profile-skeleton { background: var(--ed-fog); }
 .ap-profile-empty-link {
@@ -1580,28 +1546,6 @@
 .ap-profile-empty-link:hover {
   border-color: rgba(23,25,28,.36);
   background: var(--ed-paper);
-}
-.ap-profile-facts {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 1px;
-  margin-top: clamp(32px, 4vw, 48px);
-  overflow: hidden;
-  border: 1px solid var(--ed-fog);
-  border-radius: var(--ed-r-feature);
-  background: var(--ed-fog);
-}
-.ap-profile-fact {
-  background: rgba(255,255,255,.66);
-  padding: clamp(18px, 2.4vw, 26px);
-}
-.ap-profile-fact-value {
-  margin-top: 8px;
-  color: var(--ed-ink);
-  font-size: clamp(18px, 2vw, 24px);
-  font-weight: 500;
-  line-height: 1.2;
-  letter-spacing: -.02em;
 }
 .ap-profile-media {
   position: relative;
@@ -1658,19 +1602,6 @@
   background: rgba(255,255,255,.48);
   padding-block: 12px;
 }
-.ap-profile-section {
-  border-top: 1px solid var(--ed-fog);
-  padding-top: clamp(48px, 7vw, 84px);
-  padding-bottom: clamp(48px, 7vw, 84px);
-}
-.ap-profile-section-head {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  flex-wrap: wrap;
-  margin-bottom: 28px;
-}
-.ap-profile-section-head .ap-profile-label { margin-bottom: 0; }
 .ap-profile-card {
   border: 1px solid var(--ed-fog);
   border-radius: var(--ed-r-feature);
@@ -1742,13 +1673,173 @@
   font-size: 14px;
   line-height: 1.7;
 }
+/* ── Dossier layout ──────────────────────────────────────────────────────────
+   The profile reads as a document: a sticky identity rail on the left that
+   stays with you, and an evidence stream on the right ordered by what a
+   visitor actually wants (the pitch, then whether they're raising, then the
+   proof, then the work). Replaces the old full-width stack, where every
+   section shared one width and the most actionable facts sat at the bottom. */
+.ap-dossier {
+  display: grid;
+  grid-template-columns: minmax(0, 19rem) minmax(0, 1fr);
+  gap: clamp(36px, 5vw, 84px);
+  align-items: start;
+  padding-top: clamp(28px, 4vw, 52px);
+  padding-bottom: clamp(48px, 7vw, 88px);
+}
+.ap-rail {
+  position: sticky;
+  /* Clears the sticky .ed-nav (64px, 52px + 10px offset once scrolled). */
+  top: 84px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+.ap-rail-id { display: flex; flex-direction: column; gap: 14px; }
+.ap-rail-name {
+  color: var(--ed-ink);
+  font-family: var(--ed-serif);
+  /* Deliberately not the old 90px: the name is a label, not the story. The
+     headline in the stream carries the display weight now. */
+  font-size: clamp(28px, 3.2vw, 38px);
+  font-weight: 400;
+  letter-spacing: -.025em;
+  line-height: 1.1;
+}
+.ap-rail-handle {
+  color: var(--ed-smoke);
+  font-size: 13px;
+  font-weight: 600;
+}
+.ap-rail-meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.ap-rail-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  border-top: 1px solid var(--ed-fog);
+  padding-top: 20px;
+}
+.ap-rail-actions .ap-profile-action { width: 100%; justify-content: center; }
+.ap-rail-links {
+  display: flex;
+  flex-direction: column;
+  border-top: 1px solid var(--ed-fog);
+  padding-top: 8px;
+}
+.ap-rail-link {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 0;
+  color: var(--ed-graphite);
+  font-size: 13px;
+  font-weight: 600;
+  transition: color .15s ease;
+}
+.ap-rail-link:hover { color: var(--ed-ink); }
+.ap-rail-link .ap-rail-link-out {
+  margin-left: auto;
+  opacity: 0;
+  transition: opacity .15s ease;
+}
+.ap-rail-link:hover .ap-rail-link-out { opacity: .5; }
+
+.ap-stream {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+/* Hairline between stream blocks — the rhythm the old page got from
+   full-bleed section borders, without the dead vertical space. */
+.ap-block + .ap-block {
+  border-top: 1px solid var(--ed-fog);
+  margin-top: clamp(32px, 4vw, 48px);
+  padding-top: clamp(32px, 4vw, 48px);
+}
+.ap-block-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 22px;
+}
+.ap-block-head .ap-profile-label { margin-bottom: 0; }
+/* The lede is the largest type on the page. */
+.ap-lede {
+  max-width: 34ch;
+  color: var(--ed-ink);
+  font-family: var(--ed-serif);
+  font-size: clamp(30px, 4.4vw, 52px);
+  font-weight: 400;
+  letter-spacing: -.028em;
+  line-height: 1.14;
+}
+/* Raising: promoted out of the page footer into the top of the stream. */
+.ap-raise {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 10px 18px;
+}
+.ap-raise-figure {
+  color: var(--ed-ink);
+  font-family: var(--ed-serif);
+  font-size: clamp(26px, 3vw, 36px);
+  font-weight: 400;
+  letter-spacing: -.02em;
+  line-height: 1;
+}
+/* Facts as an inline stat row rather than the old boxed 2-col grid. */
+.ap-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 1px;
+  border: 1px solid var(--ed-fog);
+  background: var(--ed-fog);
+}
+.ap-stat {
+  background: rgba(255,255,255,.66);
+  padding: 16px 18px;
+}
+.ap-stat-value {
+  margin-top: 7px;
+  color: var(--ed-ink);
+  font-size: 17px;
+  font-weight: 500;
+  letter-spacing: -.015em;
+  line-height: 1.3;
+}
+
+@media (max-width: 960px) {
+  .ap-dossier {
+    grid-template-columns: 1fr;
+    gap: clamp(28px, 5vw, 40px);
+  }
+  /* Rail unsticks and reads as a normal header block on narrow screens. */
+  .ap-rail {
+    position: static;
+    border-bottom: 1px solid var(--ed-fog);
+    padding-bottom: 24px;
+  }
+  .ap-rail-actions { flex-direction: row; }
+  .ap-rail-actions .ap-profile-action { width: auto; flex: 1 1 auto; }
+  .ap-rail-links {
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 0 18px;
+  }
+}
+
 @media (max-width: 760px) {
-  .ap-profile-actions { justify-content: flex-start; }
   .ap-profile-name {
     max-width: none;
     font-size: clamp(3rem, 14vw, 5.4rem);
   }
-  .ap-profile-facts { grid-template-columns: 1fr; }
   .ap-profile-connect {
     align-items: flex-start;
     flex-direction: column;

@@ -3,7 +3,7 @@ interface VerifiedAvatarProps {
   name: string;
   /** Override the auto-computed initials when the name string won't produce sensible ones. */
   fallbackInitials?: string;
-  size?: 'sm' | 'md' | 'feed';
+  size?: 'sm' | 'md' | 'lg' | 'feed';
   bg?: string;
   verified?: boolean;
 }
@@ -11,6 +11,8 @@ interface VerifiedAvatarProps {
 const sizeMap = {
   sm: 'h-11 w-11 text-sm rounded-[14px]',
   md: 'h-12 w-12 text-sm rounded-2xl',
+  /* Public-profile identity rail, where the avatar carries the header. */
+  lg: 'h-20 w-20 text-xl rounded-[18px]',
   feed: 'h-10 w-10 text-xs rounded-xl',
 };
 
