@@ -639,7 +639,7 @@ body {
   outline: none;
 }
 
-.ed-dashboard :where(button.rounded-full[class*="text-sm"], a.rounded-full[class*="text-sm"], .ed-dashboard-workspace-pill) {
+.ed-dashboard :where(button.rounded-full[class*="text-sm"], a.rounded-full[class*="text-sm"]) {
   border-radius: 0 !important;
 }
 

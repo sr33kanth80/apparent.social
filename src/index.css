@@ -1220,18 +1220,6 @@
   color: var(--ed-dashboard-ink);
 }
 
-.ed-dashboard-topbar {
-  border: 1px solid rgba(34,34,34,.08);
-  border-radius: 14px;
-  background: rgba(255,255,255,.78);
-  padding: 10px;
-}
-
-.ed-dashboard-workspace-pill {
-  border-radius: 8px !important;
-  letter-spacing: 0;
-}
-
 .ed-dashboard :where(section[class*="rounded-[20px]"], article[class*="rounded-[20px]"], div[class*="rounded-[20px]"], aside[class*="rounded-[20px]"]):not(:where(.ed-agent-chat-scope, .ed-agent-chat-scope *)) {
   border-color: var(--ed-dashboard-fog) !important;
   border-radius: 14px !important;
