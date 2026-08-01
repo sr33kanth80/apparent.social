@@ -706,10 +706,10 @@ body {
   position: relative;
   display: flex;
   flex-direction: column;
-  /* Portrait, like the thing it's imitating, but not as tall as a real FUT
-     card — there's no full-bleed player art here to justify the height. */
-  aspect-ratio: 4 / 5;
-  min-height: 260px;
+  /* Height follows content — no forced aspect ratio. A real FUT card is tall
+     because of full-bleed player art; there's none here, so a fixed ratio just
+     opened a void above the name band. Grid rows still equalise sibling
+     heights, and the head takes up any small difference (see .ap-fut-head). */
   border: 1px solid var(--dash-border);
   background: var(--color-pure-paper);
   box-shadow: 5px 5px 0 0 var(--dash-border);
@@ -724,11 +724,12 @@ body {
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: start;
   gap: 12px;
-  /* Absorbs the slack in the 4:5 box. Contents are top-aligned and the logo
-     is a fixed square, so this only ever adds breathing room — it never
-     stretches the badge. Matters for cards with no tagline. */
+  /* Absorbs the small height difference when a grid row equalises cards with
+     one- vs two-line taglines. Contents are top-aligned and the logo is a
+     fixed square, so this only ever adds a little breathing room above the
+     name band — it never stretches the badge or reopens a large void. */
   flex: 1;
-  padding: 14px 14px 12px;
+  padding: 16px 14px 14px;
 }
 .ap-fut-rating {
   display: flex;
