@@ -11,7 +11,7 @@ import {
   runEnrichmentAdapter,
   runStandardOrthogonalTool,
 } from '../server/agent/apparent-agent-runtime.js';
-import { createOrthogonalSession, OrthogonalError } from '../server/agent/orthogonal.js';
+import { clearOrthogonalDetailsCache, createOrthogonalSession, OrthogonalError } from '../server/agent/orthogonal.js';
 
 test('the Apparent runtime executes tools and returns the final reply', async () => {
   const completions = [
@@ -45,6 +45,7 @@ test('Orthogonal session enforces its API allowlist before making a request', as
   let fetched = false;
   const session = createOrthogonalSession({
     apiKey: 'test',
+    detailsCache: new Map(),
     allowedApis: ['linkup'],
     fetchImpl: async () => {
       fetched = true;
@@ -393,6 +394,7 @@ test('Orthogonal checks the catalog price before a paid run', async () => {
   const paths = [];
   const session = createOrthogonalSession({
     apiKey: 'test',
+    detailsCache: new Map(),
     allowedApis: ['baseten'],
     maxSpendCents: 100,
     fetchImpl: async (url) => {
@@ -414,6 +416,7 @@ test('Orthogonal reserves the catalog price when run responses omit billing meta
   const paths = [];
   const session = createOrthogonalSession({
     apiKey: 'test',
+    detailsCache: new Map(),
     allowedApis: ['baseten'],
     maxSpendCents: 100,
     fetchImpl: async (url) => {
@@ -438,6 +441,7 @@ test('Orthogonal permits explicitly approved usage-priced inference and records 
   const paths = [];
   const session = createOrthogonalSession({
     apiKey: 'test',
+    detailsCache: new Map(),
     allowedApis: ['baseten'],
     dynamicPricingEndpoints: [{ api: 'baseten', path: '/v1/chat/completions' }],
     dynamicPriceEstimateCents: 10,
@@ -465,6 +469,7 @@ test('Orthogonal retries a transient paid upstream response with one idempotency
   let runAttempts = 0;
   const session = createOrthogonalSession({
     apiKey: 'test',
+    detailsCache: new Map(),
     allowedApis: ['baseten'],
     dynamicPricingEndpoints: [{ api: 'baseten', path: '/v1/chat/completions' }],
     maxRetries: 1,
@@ -498,6 +503,7 @@ test('Orthogonal retries a transport failure with one idempotency key', async ()
   let attempts = 0;
   const session = createOrthogonalSession({
     apiKey: 'test',
+    detailsCache: new Map(),
     maxRetries: 1,
     retryBaseDelayMs: 1,
     fetchImpl: async (_url, init) => {
@@ -519,6 +525,7 @@ test('Orthogonal does not retry a non-transient paid response', async () => {
   const paths = [];
   const session = createOrthogonalSession({
     apiKey: 'test',
+    detailsCache: new Map(),
     allowedApis: ['baseten'],
     dynamicPricingEndpoints: [{ api: 'baseten', path: '/v1/chat/completions' }],
     maxRetries: 1,
@@ -560,6 +567,7 @@ test('Orthogonal still blocks dynamic pricing outside the explicitly approved in
   const paths = [];
   const session = createOrthogonalSession({
     apiKey: 'test',
+    detailsCache: new Map(),
     allowedApis: ['baseten'],
     dynamicPricingEndpoints: [{ api: 'baseten', path: '/v1/chat/completions' }],
     fetchImpl: async (url) => {
@@ -579,6 +587,7 @@ test('Orthogonal enforces the dynamic price reservation before a usage-priced ca
   const paths = [];
   const session = createOrthogonalSession({
     apiKey: 'test',
+    detailsCache: new Map(),
     allowedApis: ['baseten'],
     dynamicPricingEndpoints: [{ api: 'baseten', path: '/v1/chat/completions' }],
     dynamicPriceEstimateCents: 25,
@@ -637,6 +646,7 @@ test('a retried Orthogonal request consumes one call, not one per attempt', asyn
   let attempts = 0;
   const session = createOrthogonalSession({
     apiKey: 'test',
+    detailsCache: new Map(),
     maxRetries: 2,
     retryBaseDelayMs: 0,
     fetchImpl: async () => {
@@ -749,4 +759,50 @@ test('a call-limit error reads as guidance, not an internal string', () => {
   assert.equal(response.code, 'orthogonal_call_limit');
   assert.doesNotMatch(response.error, /Orthogonal|\(20\)/, 'must not leak the internal wording');
   assert.match(response.error, /research limit/i);
+});
+
+test('endpoint details are cached across sessions, not re-fetched every request', async () => {
+  clearOrthogonalDetailsCache();
+  const paths = [];
+  const fetchImpl = async (url) => {
+    const path = new URL(url).pathname;
+    paths.push(path);
+    if (path === '/v1/details') {
+      return new Response(JSON.stringify({ success: true, endpoint: { price: 0.01, hasDynamicPricing: false } }));
+    }
+    return new Response(JSON.stringify({ success: true, priceCents: 1, data: { ok: true } }));
+  };
+  // Two sessions, as two separate requests would create.
+  const first = createOrthogonalSession({ apiKey: 'test', allowedApis: ['baseten'], fetchImpl });
+  const second = createOrthogonalSession({ apiKey: 'test', allowedApis: ['baseten'], fetchImpl });
+
+  await first.run({ api: 'baseten', path: '/v1/chat/completions', body: { turn: 1 } });
+  await second.run({ api: 'baseten', path: '/v1/chat/completions', body: { turn: 2 } });
+
+  assert.deepEqual(
+    paths,
+    ['/v1/details', '/v1/run', '/v1/run'],
+    'the second request must reuse the cached catalog price, not re-fetch it',
+  );
+  assert.equal(second.usage().callCount, 1, 'a warm session spends its calls on work, not on details');
+  clearOrthogonalDetailsCache();
+});
+
+test('the fixed-price guardrail still runs on a cache hit', async () => {
+  clearOrthogonalDetailsCache();
+  const fetchImpl = async (url) => {
+    const path = new URL(url).pathname;
+    if (path === '/v1/details') {
+      return new Response(JSON.stringify({ success: true, endpoint: { hasDynamicPricing: true } }));
+    }
+    return new Response(JSON.stringify({ success: true, data: { ok: true } }));
+  };
+  const first = createOrthogonalSession({ apiKey: 'test', allowedApis: ['baseten'], fetchImpl });
+  const second = createOrthogonalSession({ apiKey: 'test', allowedApis: ['baseten'], fetchImpl });
+
+  const isUnbounded = (error) => error instanceof OrthogonalError && error.code === 'orthogonal_unbounded_price';
+  await assert.rejects(first.run({ api: 'baseten', path: '/v1/chat/completions' }), isUnbounded);
+  // Caching the details must not let an unpriced endpoint through on the next request.
+  await assert.rejects(second.run({ api: 'baseten', path: '/v1/chat/completions' }), isUnbounded);
+  clearOrthogonalDetailsCache();
 });

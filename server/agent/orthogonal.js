@@ -29,6 +29,42 @@ const retryDelay = (response, attempt, baseDelayMs) => {
 
 const compactText = (value, max = 500) => String(value ?? '').replace(/\s+/g, ' ').trim().slice(0, max);
 
+/**
+ * Endpoint details (parameters + fixed price) are global catalog data, not
+ * per-account, so they're cached for the whole process instead of per session.
+ *
+ * This used to be a per-session Map, and a session is created per request — so
+ * every chat turn re-paid a /v1/details call for each endpoint it touched,
+ * including the inference endpoint it always touches. That was a call per turn
+ * spent re-reading a price that does not change.
+ *
+ * Orthogonal's docs confirm /v1/details is optional before /v1/run; Apparent
+ * calls it purely to enforce its own fixed-price guardrail, so caching it does
+ * not weaken that check — the guardrail still runs on every paid call.
+ */
+const DETAILS_TTL_MS = positiveInt(process.env.ORTHOGONAL_DETAILS_TTL_MS, 60 * 60 * 1000);
+const DETAILS_CACHE_MAX = 500;
+const sharedDetailsCache = new Map();
+
+/** Test seam: drops the process-wide details cache so call counts are isolated. */
+export const clearOrthogonalDetailsCache = () => sharedDetailsCache.clear();
+
+const cachedDetails = (cache, key) => {
+  const hit = cache.get(key);
+  if (!hit) return null;
+  if (Date.now() - hit.storedAt > DETAILS_TTL_MS) {
+    cache.delete(key);
+    return null;
+  }
+  return hit.value;
+};
+
+const storeDetails = (cache, key, value) => {
+  // Bounded so a long-lived instance walking a large catalog can't grow without limit.
+  if (cache.size >= DETAILS_CACHE_MAX) cache.clear();
+  cache.set(key, { value, storedAt: Date.now() });
+};
+
 export class OrthogonalError extends Error {
   constructor(message, { status = 500, code = 'orthogonal_error', retryable = false, details } = {}) {
     super(message);
@@ -52,6 +88,9 @@ export const createOrthogonalSession = ({
   maxRetries = nonNegativeInt(process.env.ORTHOGONAL_MAX_RETRIES, 1),
   retryBaseDelayMs = positiveInt(process.env.ORTHOGONAL_RETRY_BASE_DELAY_MS, 300),
   allowedApis = [],
+  // Defaults to the process-wide catalog cache. Pass a fresh Map to isolate a
+  // session (tests that count /v1/details traffic).
+  detailsCache = sharedDetailsCache,
 } = {}) => {
   if (!apiKey) {
     throw new OrthogonalError('ORTHOGONAL_API_KEY is not configured.', {
@@ -71,7 +110,6 @@ export const createOrthogonalSession = ({
   }).filter(Boolean));
   let callCount = 0;
   let spentCents = 0;
-  const detailsCache = new Map();
   const runCache = new Map();
   const discoveredEndpoints = new Set();
 
@@ -213,10 +251,10 @@ export const createOrthogonalSession = ({
     async details({ api, path }) {
       const endpoint = assertAllowed(api, path);
       const detailsKey = endpoint.key;
-      let details = detailsCache.get(detailsKey);
+      let details = cachedDetails(detailsCache, detailsKey);
       if (!details) {
         details = await request('/v1/details', { api: endpoint.api, path: endpoint.path });
-        detailsCache.set(detailsKey, details);
+        storeDetails(detailsCache, detailsKey, details);
       }
       return details;
     },
@@ -237,10 +275,10 @@ export const createOrthogonalSession = ({
       if (runCache.has(runKey)) return runCache.get(runKey);
 
       const detailsKey = endpoint.key;
-      let details = detailsCache.get(detailsKey);
+      let details = cachedDetails(detailsCache, detailsKey);
       if (!details) {
         details = await request('/v1/details', { api: normalizedApi, path: normalizedPath });
-        detailsCache.set(detailsKey, details);
+        storeDetails(detailsCache, detailsKey, details);
       }
       const endpointDetails = details?.endpoint ?? details?.data?.endpoint;
       const priceUsd = Number(endpointDetails?.price);
