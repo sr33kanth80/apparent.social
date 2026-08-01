@@ -55,7 +55,6 @@ import { BuilderRadarMap } from '@/components/BuilderRadarMap';
 import { SessionNavBar } from '@/components/ui/sidebar';
 import { Switch } from '@/components/ui/switch';
 import { HeatMap } from '@/pages/HeatMap';
-import { DiscoverDeck } from '@/pages/DiscoverDeck';
 import { GitHubIcon } from '@/components/GitHubIcon';
 import { LogoIcon } from '@/components/LogoIcon';
 import { GithubVerifyCard } from '@/components/GithubVerifyCard';
@@ -146,7 +145,7 @@ import { signOut } from '@/lib/auth-service';
 type DashboardRole = 'founder' | 'investor';
 type ActionMode = 'profile' | 'launch' | 'thesis' | 'meetup';
 type FieldKind = 'input' | 'textarea' | 'select';
-type ViewMode = 'overview' | 'agent' | 'profile' | 'products' | 'matches' | 'messages' | 'deals' | 'terms' | 'knowledge' | 'feedback' | 'settings' | 'for-you' | 'vc-heatmap' | 'discover' | 'outreach' | 'daily';
+type ViewMode = 'overview' | 'agent' | 'profile' | 'products' | 'matches' | 'messages' | 'deals' | 'terms' | 'knowledge' | 'feedback' | 'settings' | 'for-you' | 'vc-heatmap' | 'outreach' | 'daily';
 type InvestorDealStage = 'New' | 'Reviewing' | 'Reached Out' | 'Meeting' | 'Watchlist';
 
 interface DashboardProps {
@@ -417,7 +416,6 @@ const PATH_TO_VIEW: Record<string, ViewMode> = {
   products: 'products',
   launches: 'products', // legacy
   matches: 'matches',
-  discover: 'discover',
   messages: 'messages',
   deals: 'deals',
   terms: 'terms',
@@ -467,10 +465,6 @@ const viewFromSectionId = (id: string): ViewMode => {
 
   if (id === 'matches') {
     return 'matches';
-  }
-
-  if (id === 'discover') {
-    return 'discover';
   }
 
   if (id === 'messages') {
@@ -9285,33 +9279,6 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
               renderProductsPage()
             ) : activeView === 'matches' ? (
               isInvestor ? renderInvestorBuilderDiscoveryPage() : renderFounderMatchesPage()
-            ) : activeView === 'discover' ? (
-              <motion.div
-                key="discover-main"
-                initial={{ opacity: 0, y: 10, filter: 'blur(2px)' }}
-                animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
-                exit={{ opacity: 0, y: -8, filter: 'blur(2px)' }}
-                transition={{ duration: 0.22, ease: 'easeOut' }}
-              >
-                {/* Discover ships soon — deck is a view-only preview behind the stamp. */}
-                <div className="relative">
-                  <div className="pointer-events-none select-none opacity-60 saturate-[0.6]">
-                    <DiscoverDeck user={user} builders={builderNodes} />
-                  </div>
-                  <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center overflow-hidden">
-                    <motion.div
-                      initial={{ opacity: 0, scale: 1.7, rotate: -12 }}
-                      animate={{ opacity: 1, scale: 1, rotate: -12 }}
-                      transition={{ type: 'spring', bounce: 0.4, duration: 0.55, delay: 0.2 }}
-                      className="rounded-2xl border-[5px] border-[#1e3a8a]/70 px-8 py-3 sm:border-[7px] sm:px-12 sm:py-5"
-                    >
-                      <span className="block whitespace-nowrap text-4xl font-black uppercase tracking-[0.2em] text-[#1e3a8a]/70 sm:text-7xl">
-                        Coming Soon
-                      </span>
-                    </motion.div>
-                  </div>
-                </div>
-              </motion.div>
             ) : activeView === 'messages' ? (
               renderMessagesPage()
             ) : activeView === 'deals' ? (
