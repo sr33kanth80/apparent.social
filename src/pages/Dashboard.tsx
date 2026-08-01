@@ -32,7 +32,6 @@ import {
   Sunrise,
   Target,
   Trash2,
-  Users,
   Video,
   X,
 } from 'lucide-react';
@@ -53,7 +52,6 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { BuilderRadarMap } from '@/components/BuilderRadarMap';
 import { SessionNavBar } from '@/components/ui/sidebar';
 import { HeatMap } from '@/pages/HeatMap';
-import { GitHubIcon } from '@/components/GitHubIcon';
 import { LogoIcon } from '@/components/LogoIcon';
 import { GithubVerifyCard } from '@/components/GithubVerifyCard';
 import { InvestorAgentChat } from '@/components/InvestorAgentChat';
@@ -443,66 +441,6 @@ const viewFromLocation = (pathname: string, hash: string): ViewMode => {
   const hashSegment = hash.replace(/^#/, '');
   if (hashSegment && PATH_TO_VIEW[hashSegment]) {
     return PATH_TO_VIEW[hashSegment];
-  }
-
-  return 'overview';
-};
-
-const viewFromSectionId = (id: string): ViewMode => {
-  if (id === 'agent') {
-    return 'agent';
-  }
-
-  if (id === 'profile') {
-    return 'profile';
-  }
-
-  if (id === 'products' || id === 'launches') {
-    return 'products';
-  }
-
-  if (id === 'matches') {
-    return 'matches';
-  }
-
-  if (id === 'messages') {
-    return 'messages';
-  }
-
-  if (id === 'deals') {
-    return 'deals';
-  }
-
-  if (id === 'terms') {
-    return 'terms';
-  }
-
-  if (id === 'knowledge') {
-    return 'knowledge';
-  }
-
-  if (id === 'feedback') {
-    return 'feedback';
-  }
-
-  if (id === 'settings') {
-    return 'settings';
-  }
-
-  if (id === 'for-you') {
-    return 'for-you';
-  }
-
-  if (id === 'vc-heatmap') {
-    return 'vc-heatmap';
-  }
-
-  if (id === 'outreach') {
-    return 'outreach';
-  }
-
-  if (id === 'daily') {
-    return 'daily';
   }
 
   return 'overview';
