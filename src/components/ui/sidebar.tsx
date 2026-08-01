@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { useKindeAuth } from '@kinde-oss/kinde-auth-react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
@@ -61,6 +61,9 @@ interface SessionNavBarProps {
   activeAgentThreadId?: string | null;
   onStartNewAgentConversation?: () => void;
   onDeleteAgentThread?: (thread: AgentChatThread) => Promise<void>;
+  /** Notification bell + panel, rendered in the footer next to Settings. The
+      dashboard has no top bar, so this rail is the only global chrome. */
+  notificationSlot?: ReactNode;
 }
 
 const deriveDisplayName = (email: string): string =>
@@ -141,6 +144,7 @@ const roleConfig = {
     groups: [
       [
         { label: 'Overview', path: '/dashboard/founder', icon: LayoutDashboard },
+        { label: 'For You', path: '/dashboard/founder/for-you', icon: Sunrise },
         { label: 'Apparent Agent', path: '/dashboard/founder/agent', icon: Sparkles },
         { label: 'Your Profile', path: '/dashboard/founder/profile', icon: UserCircle },
         { label: 'Products', path: '/dashboard/founder/products', icon: Rocket },
@@ -271,6 +275,7 @@ function BaseSessionNavBar({
   activeAgentThreadId = null,
   onStartNewAgentConversation,
   onDeleteAgentThread,
+  notificationSlot,
   onSignOut,
 }: SessionNavBarProps & { onSignOut?: () => Promise<void> }) {
   const [isHovered, setIsHovered] = useState(false);
@@ -478,6 +483,11 @@ function BaseSessionNavBar({
               </div>
 
               <div className="flex flex-col p-2">
+                {notificationSlot && (
+                  <div className="group/rail" data-collapsed={isCollapsed}>
+                    {notificationSlot}
+                  </div>
+                )}
                 <Link
                   to={`${config.basePath}/settings`}
                   className="mt-auto flex h-8 w-full flex-row items-center rounded-md px-2 py-1.5 transition hover:bg-muted hover:text-primary"

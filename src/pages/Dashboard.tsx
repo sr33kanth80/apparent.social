@@ -50,10 +50,8 @@ import {
   type ReactNode,
 } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { ActionSearchBar, type Action } from '@/components/ui/action-search-bar';
 import { BuilderRadarMap } from '@/components/BuilderRadarMap';
 import { SessionNavBar } from '@/components/ui/sidebar';
-import { Switch } from '@/components/ui/switch';
 import { HeatMap } from '@/pages/HeatMap';
 import { GitHubIcon } from '@/components/GitHubIcon';
 import { LogoIcon } from '@/components/LogoIcon';
@@ -1085,7 +1083,6 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
 
   const accentSurface = isInvestor ? 'bg-[#003f2e]' : 'bg-[#039861]';
   const accentForeground = 'text-white';
-  const accentSwitchForeground = 'text-white fill-white';
   const accentIconForeground = 'text-white/90';
   const dmSurface = isInvestor ? 'bg-[#f7f3e4]' : 'bg-[#effbf4]';
   const dmSelectedSurface = isInvestor ? 'bg-[#f3edd7]' : 'bg-[#e2f7ec]';
@@ -2109,145 +2106,6 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
       setSelectedClusterCity(networkFilters.city);
     }
   }, [networkFilters.city, radarClusters, selectedClusterCity, selectedNetworkCluster]);
-
-  const dashboardSearchActions = useMemo<Action[]>(() => {
-    // For You is the founder-side social feed of "what's launching today on
-    // Apparent." For investors it duplicated `daily` (Today's deal flow), so
-    // it's removed from their action list and the founder-only entry is added
-    // back in their branch below.
-    const sharedActions: Action[] = [
-      {
-        id: 'query-ai',
-        label: 'Search AI infra',
-        icon: <Search className="h-4 w-4 text-gray-700" />,
-        description: 'Filter current workspace for AI infrastructure',
-        short: 'AI',
-        end: 'Search',
-      },
-      {
-        id: 'open-meetups',
-        label: 'Open meetups',
-        icon: <Calendar className="h-4 w-4 text-gray-700" />,
-        description: 'Create, RSVP, and review founder rooms',
-        short: 'Events',
-        end: 'Workspace',
-      },
-      {
-        id: 'open-map',
-        label: 'Open network map',
-        icon: <MapPin className="h-4 w-4 text-gray-700" />,
-        description: 'Explore builder and meetup city clusters',
-        short: 'Map',
-        end: 'Workspace',
-      },
-      {
-        id: 'open-terms',
-        label: 'Open terms review',
-        icon: <FileText className="h-4 w-4 text-gray-700" />,
-        description: 'Track deal terms and review notes',
-        short: 'Terms',
-        end: 'Workspace',
-      },
-      {
-        id: 'open-messages',
-        label: 'Open messages',
-        icon: <MessageCircle className="h-4 w-4 text-gray-700" />,
-        description: 'Compose and manage persisted outreach',
-        short: 'Inbox',
-        end: 'Workspace',
-      },
-    ];
-
-    if (isInvestor) {
-      return [
-        {
-          id: 'open-criteria',
-          label: 'Open your thesis',
-          icon: <Target className="h-4 w-4 text-green-700" />,
-          description: 'Thesis, stage, geography, and founder taste',
-          short: 'Thesis',
-          end: 'Page',
-        },
-        {
-          id: 'open-signals',
-          label: 'Open Signal inbox',
-          icon: <Search className="h-4 w-4 text-green-700" />,
-          description: 'Ranked public founder and company signals',
-          short: 'Signals',
-          end: 'Inbox',
-        },
-        {
-          id: 'open-deals',
-          label: 'Open Deal-flow Kanban',
-          icon: <FileText className="h-4 w-4 text-green-700" />,
-          description: 'Move sourced companies through the pipeline',
-          short: 'Kanban',
-          end: 'CRM',
-        },
-        {
-          id: 'open-digest',
-          label: 'Review Daily digest',
-          icon: <Calendar className="h-4 w-4 text-green-700" />,
-          description: 'Fresh source signals and team summary',
-          short: 'Digest',
-          end: 'Alerts',
-        },
-        {
-          id: 'query-devtools',
-          label: 'Search devtools founders',
-          icon: <Target className="h-4 w-4 text-green-700" />,
-          description: 'Filter signals for developer tools',
-          short: 'Devtools',
-          end: 'Search',
-        },
-        ...sharedActions,
-      ];
-    }
-
-    return [
-      {
-        id: 'view-for-you',
-        label: 'Open For You feed',
-        icon: <Users className="h-4 w-4 text-gray-700" />,
-        description: 'Front page and personalized updates',
-        short: 'Feed',
-        end: 'View',
-      },
-      {
-        id: 'open-profile',
-        label: 'Open your profile',
-        icon: <GitHubIcon className="h-4 w-4" />,
-        description: 'Founder bio, links, products, and network goals',
-        short: 'Profile',
-        end: 'Page',
-      },
-      {
-        id: 'open-launches',
-        label: 'Open product launcher',
-        icon: <Rocket className="h-4 w-4 text-[#37d28b]" />,
-        description: 'Publish a product into Apparent',
-        short: 'Products',
-        end: 'Launch',
-      },
-      {
-        id: 'open-deal-room',
-        label: 'Open deal room',
-        icon: <FileText className="h-4 w-4 text-[#37d28b]" />,
-        description: 'Investor conversations and terms',
-        short: 'Deals',
-        end: 'Workspace',
-      },
-      {
-        id: 'query-investors',
-        label: 'Search investors',
-        icon: <Search className="h-4 w-4 text-[#37d28b]" />,
-        description: 'Filter for investor matches and capital notes',
-        short: 'Investors',
-        end: 'Search',
-      },
-      ...sharedActions,
-    ];
-  }, [isInvestor]);
 
   const addActivity = (item: string) => {
     setActivity((current) => [item, ...current].slice(0, 6));
@@ -3755,53 +3613,6 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
     } catch (error) {
       setDashboardError(error instanceof Error ? error.message : 'Unable to create reply draft.');
     }
-  };
-
-  const handleDashboardSearchAction = (action: Action) => {
-    const openWorkspaceSection = (id: string) => {
-      setActiveView(viewFromSectionId(id));
-      navigate(`${dashboardBasePath}/${id}`);
-      window.setTimeout(() => scrollToSection(id), 50);
-    };
-
-    const actionMap: Record<string, () => void> = {
-      'open-criteria': () => openWorkspaceSection('profile'),
-      'open-signals': () => openWorkspaceSection('matches'),
-      'open-deals': () => openWorkspaceSection('deals'),
-      'open-digest': () => openWorkspaceSection('digest'),
-      'open-profile': () => openWorkspaceSection('profile'),
-      'open-launches': () => {
-        setActiveView('products');
-        navigate('/dashboard/founder/products');
-        window.setTimeout(() => scrollToSection('products'), 50);
-      },
-      'open-deal-room': () => openWorkspaceSection('deals'),
-      'open-meetups': () => openWorkspaceSection('meetups'),
-      'open-map': () => openWorkspaceSection('map'),
-      'open-terms': () => openWorkspaceSection('terms'),
-      'open-messages': () => openWorkspaceSection('messages'),
-      'view-for-you': () => {
-        setActiveView('for-you');
-        navigate(`${dashboardBasePath}/for-you`);
-        window.setTimeout(() => scrollToSection('for-you'), 50);
-      },
-      'query-ai': () => setQuery('AI infra'),
-      'query-devtools': () => {
-        setActiveView('matches');
-        navigate(`${dashboardBasePath}/matches`);
-        setQuery('devtools');
-        window.setTimeout(() => scrollToSection('matches'), 50);
-      },
-      'query-investors': () => {
-        setActiveView('matches');
-        navigate(`${dashboardBasePath}/matches`);
-        setQuery('investor');
-        window.setTimeout(() => scrollToSection('matches'), 50);
-      },
-    };
-
-    actionMap[action.id]?.();
-    addActivity(`Search action: ${action.label}`);
   };
 
   const handleDashboardViewChange = (value: string) => {
@@ -9051,22 +8862,28 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
 
   // Notification bell + dropdown — reused across the overview flow header and
   // the floating top-right placement on section pages.
+  // Lives in the sidebar footer (next to Settings) — the dashboard has no top
+  // bar, so the panel opens sideways out of the rail rather than downward.
   const notificationBell = (
     <div className="relative">
       <button
-        className="relative rounded-full border border-black/10 bg-white p-2.5 text-gray-700 transition-colors hover:text-black"
+        className="flex h-8 w-full flex-row items-center rounded-md px-2 py-1.5 text-muted-foreground transition hover:bg-muted hover:text-primary"
         onClick={handleToggleNotifications}
         aria-label="Toggle notifications"
+        title="Notifications"
       >
-        <Bell className="h-4 w-4" />
-        {unreadNotificationCount > 0 && (
-          <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-semibold leading-none text-white">
-            {unreadNotificationCount > 9 ? '9+' : unreadNotificationCount}
-          </span>
-        )}
+        <span className="relative shrink-0">
+          <Bell className="h-4 w-4" />
+          {unreadNotificationCount > 0 && (
+            <span className="absolute -right-1.5 -top-1.5 flex h-3.5 min-w-3.5 items-center justify-center rounded-full bg-red-500 px-1 text-[9px] font-semibold leading-none text-white">
+              {unreadNotificationCount > 9 ? '9+' : unreadNotificationCount}
+            </span>
+          )}
+        </span>
+        <span className="ml-2 truncate text-sm font-medium group-data-[collapsed=true]/rail:hidden">Notifications</span>
       </button>
       {showNotifications && (
-        <div className="absolute right-0 top-12 z-30 w-80 rounded-2xl border border-black/10 bg-white p-4 shadow-xl">
+        <div className="absolute bottom-0 left-full z-50 ml-2 w-80 rounded-2xl border border-black/10 bg-white p-4 shadow-xl">
           <div className="mb-3 flex items-center justify-between">
             <p className="font-semibold">Notifications</p>
             <button onClick={() => setShowNotifications(false)} aria-label="Close notifications">
@@ -9118,76 +8935,13 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
         activeAgentThreadId={activeAgentThreadId}
         onStartNewAgentConversation={handleStartNewAgentConversation}
         onDeleteAgentThread={handleDeleteAgentConversation}
+        notificationSlot={notificationBell}
       />
 
       <main className="ed-dashboard-main min-h-screen pl-[16.25rem]">
         <div className={isVCHeatMapView ? 'min-h-screen' : isAgentView ? 'ed-dashboard-frame relative flex h-screen w-full flex-col overflow-hidden bg-[#fdf9f7]' : isMessagesView ? 'ed-dashboard-frame relative mx-auto flex h-screen w-full max-w-[1440px] flex-col overflow-hidden px-6 pt-6' : showWorkspaceHeader ? 'ed-dashboard-frame mx-auto max-w-[1440px] px-6 py-6' : 'ed-dashboard-frame relative mx-auto max-w-[1440px] px-6 pb-6 pt-6'}>
-          {/* Overview + For You: full header with the workspace/For-You toggle +
-              global search + bell. Other section pages drop it — the toggle's
-              targets are both reachable here, and sections carry their own
-              in-context controls — so they reserve no vertical band (no leftover
-              whitespace). */}
-          {!isVCHeatMapView && showWorkspaceHeader && (
-            <header className="ed-dashboard-topbar mb-6 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-              {isInvestor ? (
-                // Investor side: no For You toggle (the feed duplicated `daily`),
-                // so the workspace label is shown statically.
-                <div className={`ed-dashboard-workspace-pill inline-flex items-center rounded-full px-4 py-2 text-sm font-semibold ${accentSurface} ${accentSwitchForeground}`}>
-                  Investor workspace
-                </div>
-              ) : (
-                <Switch
-                  name="dashboard-view"
-                  value={activeView}
-                  onValueChange={handleDashboardViewChange}
-                  size="medium"
-                  style={{ width: 'min(100%, 360px)' }}
-                >
-                  <Switch.Control
-                    label="Founder workspace"
-                    value="overview"
-                    activeClassName={`${accentSurface} ${accentSwitchForeground}`}
-                  />
-                  <Switch.Control
-                    label="For You"
-                    value="for-you"
-                    activeClassName={`${accentSurface} ${accentSwitchForeground}`}
-                  />
-                </Switch>
-              )}
-
-              <div className="flex w-full max-w-4xl items-center gap-3 md:justify-end">
-                <ActionSearchBar
-                  value={query}
-                  onValueChange={setQuery}
-                  onActionSelect={handleDashboardSearchAction}
-                  actions={dashboardSearchActions}
-                  className="max-w-none"
-                  label="Search Apparent"
-                  placeholder={
-                      activeView === 'for-you'
-                        ? 'Search the front page'
-                        : isInvestor
-                          ? 'Search signals, founders, deal flow'
-                          : 'Search builders, investors, cities'
-                  }
-                />
-                {notificationBell}
-              </div>
-            </header>
-          )}
-
-          {/* Messages has a distinct full-height layout — keep the bell in a
-              tight in-flow bar so it can't overlap the conversation header. */}
-          {!isVCHeatMapView && !showWorkspaceHeader && isMessagesView && (
-            <div className="mb-2 flex shrink-0 justify-end">{notificationBell}</div>
-          )}
-
-          {/* Other section pages render no header band at all — content sits
-              flush at the top. The bell would otherwise either leave an empty
-              band (whitespace) or float over the section's own top-right action
-              buttons (e.g. profile upload), so it stays on Overview, For You,
-              and Messages. */}
+          {/* No top bar on any dashboard view — every section owns its own
+              in-context controls, and notifications live in the sidebar rail. */}
 
           {dashboardError && (
             <div className="mb-4 border-y border-red-200 bg-red-50 px-5 py-3 text-sm text-red-700">
