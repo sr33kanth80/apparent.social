@@ -291,6 +291,16 @@ body {
   letter-spacing: -0.005em;
 }
 
+/* This theme collapses --ed-ember onto --ed-peach, so wherever the editorial
+   base paints ember text on a peach surface the two resolve to the same pink
+   and the text vanishes. Those foregrounds want ink; ember's fill and border
+   uses stay pink and are left alone. */
+.ed-page .ed-band,
+.ed-page .ed-band-lines span,
+.ed-page .ed-proof.ed-fit {
+  color: var(--ed-ink);
+}
+
 .ed-page main > section:nth-of-type(even):not(.ed-band):not(.ed-hero) {
   background: transparent;
 }
