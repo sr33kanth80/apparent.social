@@ -629,7 +629,7 @@ export const InvestorAgentChat = ({
               </div>
             ) : (
               <div>
-                <p className="mb-1.5 text-sm font-medium text-[#333333]">Apparent</p>
+                <p className="mb-1.5 text-sm font-medium text-[#003f2e]">Apparent</p>
 
                 <ResearchTrailDisclosure steps={message.steps} />
 

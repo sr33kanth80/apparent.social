@@ -13,16 +13,16 @@ export const AgentMarkdown = ({ children, className }: { children: string; class
         ul: ({ children: c }) => <ul className="my-2 list-disc space-y-1 pl-5 first:mt-0 last:mb-0">{c}</ul>,
         ol: ({ children: c }) => <ol className="my-2 list-decimal space-y-1 pl-5 first:mt-0 last:mb-0">{c}</ol>,
         li: ({ children: c }) => <li className="[&>p]:my-0">{c}</li>,
-        h1: ({ children: c }) => <h3 className="mb-2 mt-4 text-[1.05em] font-semibold text-black first:mt-0">{c}</h3>,
-        h2: ({ children: c }) => <h3 className="mb-2 mt-4 text-[1.05em] font-semibold text-black first:mt-0">{c}</h3>,
-        h3: ({ children: c }) => <h4 className="mb-1.5 mt-3 font-semibold text-black first:mt-0">{c}</h4>,
+        h1: ({ children: c }) => <h3 className="mb-2 mt-4 text-[1.05em] font-semibold text-[#003f2e] first:mt-0">{c}</h3>,
+        h2: ({ children: c }) => <h3 className="mb-2 mt-4 text-[1.05em] font-semibold text-[#003f2e] first:mt-0">{c}</h3>,
+        h3: ({ children: c }) => <h4 className="mb-1.5 mt-3 font-semibold text-[#003f2e] first:mt-0">{c}</h4>,
         strong: ({ children: c }) => <strong className="font-semibold text-black">{c}</strong>,
         a: ({ href, children: c }) => (
           <a
             href={href}
             target="_blank"
             rel="noreferrer"
-            className="font-medium text-black underline decoration-black/30 underline-offset-2 transition-colors hover:decoration-black"
+            className="font-medium text-[#003f2e] underline decoration-[#003f2e]/30 underline-offset-2 transition-colors hover:decoration-[#003f2e]"
           >
             {c}
           </a>
