@@ -86,7 +86,7 @@ import type {
   VcOutreachStage,
 } from '@/lib/apparent-types';
 import type { ApparentInvestorRow, LaunchAuthor } from '@/lib/dashboard-service';
-import { buildFutCard, FUT_STAT_TITLES } from '@/lib/fut-card';
+import { stagePosition } from '@/lib/fut-card';
 import { useAgentAuthHeaders } from '@/lib/agent-auth';
 import { VerifiedAvatar } from '@/components/VerifiedAvatar';
 import { uploadFile } from '@/lib/upload';
@@ -7469,19 +7469,11 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
                   // Sourced items carry projectPath → open the in-app /sourced/:id
                   // profile (SPA nav). Legacy R2-fallback items have none → link out.
                   const internalTo = launch.projectPath;
-                  const card = buildFutCard(launch, {
-                    thesis: intakeValues.thesis,
-                    sectors: intakeValues.sectors,
-                    stage: intakeValues.stage,
-                    geography: intakeValues.geography,
-                  });
-                  const bestStat = card.stats.reduce((a, b) => (b.value > a.value ? b : a));
                   const inner = (
                     <>
                       <div className="ap-fut-head">
                         <div className="ap-fut-rating">
-                          <span className="ap-fut-ovr">{card.ovr}</span>
-                          <span className="ap-fut-pos">{card.position}</span>
+                          <span className="ap-fut-pos">{stagePosition(launch.stage)}</span>
                           <span className="ap-fut-crest">
                             {launch.category && <span title={launch.category}>{launch.category}</span>}
                             {launch.location && <span title={launch.location}>{launch.location}</span>}
@@ -7499,20 +7491,6 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
                       <div className="ap-fut-name" title={launch.name}>{launch.name}</div>
 
                       {launch.tagline && <p className="ap-fut-tagline">{launch.tagline}</p>}
-
-                      <div className="ap-fut-stats">
-                        {card.stats.map((s) => (
-                          <div
-                            key={s.label}
-                            className="ap-fut-stat"
-                            data-best={s.label === bestStat.label}
-                            title={FUT_STAT_TITLES[s.label]}
-                          >
-                            <b>{s.value}</b>
-                            <i>{s.label}</i>
-                          </div>
-                        ))}
-                      </div>
 
                       <div className="ap-fut-foot">
                         <span>{launch.source || 'Sourced'}</span>

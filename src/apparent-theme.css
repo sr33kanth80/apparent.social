@@ -541,9 +541,6 @@ body {
 
 .ed-dashboard {
   --dashboard-accent: #1d9bf0;      /* founder = blue (default) */
-  /* Fill accents are too light to sit as text on paper (blue reads 2.8:1).
-     These are the darkened text-safe pairs — both clear 4.5:1 on white. */
-  --dashboard-accent-ink: #0b6fb8;
   height: 100dvh;
   min-height: 100dvh;
   overflow: hidden;
@@ -555,7 +552,6 @@ body {
 
 .ed-dashboard[data-role="investor"] {
   --dashboard-accent: #16a34a;      /* investor = green */
-  --dashboard-accent-ink: #15803d;
 }
 
 .ed-dashboard-main,
@@ -701,12 +697,11 @@ body {
 }
 
 /* ── Daily digest trading cards ─────────────────────────────────────────────
-   Sourced startups render in FIFA Ultimate Team's layout: overall rating and
-   stage stacked top-left, crest line beneath, logo centred, name across a
-   band, six stats along the foot. Drawn in Apparent's language rather than
-   FUT's — square corners, hard near-black border, offset shadow, no gloss,
-   no gradient. Own classes because the dashboard reskin strips Tailwind
-   radius/shadow utilities wholesale. */
+   Sourced startups borrow FIFA Ultimate Team's frame: stage code and crest
+   line stacked top-left, logo centred, name across a band. Drawn in
+   Apparent's language rather than FUT's — square corners, hard near-black
+   border, offset shadow, no gloss, no gradient. Own classes because the
+   dashboard reskin strips Tailwind radius/shadow utilities wholesale. */
 .ed-dashboard .ap-fut {
   position: relative;
   display: flex;
@@ -737,22 +732,14 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  width: 62px;
-}
-.ap-fut-ovr {
-  font-family: var(--font-apparent-display);
-  font-size: 40px;
-  font-weight: 400;
-  line-height: .95;
-  letter-spacing: -.03em;
-  color: var(--color-ink);
+  width: 58px;
 }
 .ap-fut-pos {
-  margin-top: 3px;
   font-family: var(--font-apparent-meta);
-  font-size: 11px;
+  font-size: 15px;
   font-weight: 700;
-  letter-spacing: .12em;
+  line-height: 1;
+  letter-spacing: .1em;
   color: var(--color-ink);
 }
 .ap-fut-crest {
@@ -809,6 +796,7 @@ body {
 }
 .ap-fut-tagline {
   flex: none;
+  border-top: 1px solid var(--dash-border);
   padding: 10px 12px;
   font-size: 12px;
   line-height: 1.45;
@@ -819,34 +807,6 @@ body {
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
-.ap-fut-stats {
-  display: grid;
-  grid-template-columns: repeat(6, minmax(0, 1fr));
-  border-top: 1px solid var(--dash-border);
-}
-.ap-fut-stat {
-  padding: 9px 1px;
-  text-align: center;
-}
-.ap-fut-stat + .ap-fut-stat { border-left: 1px solid var(--dash-border); }
-.ap-fut-stat b {
-  display: block;
-  font-size: 15px;
-  font-weight: 600;
-  line-height: 1;
-  color: var(--color-ink);
-}
-.ap-fut-stat i {
-  display: block;
-  margin-top: 4px;
-  font-family: var(--font-apparent-meta);
-  font-size: 9px;
-  font-style: normal;
-  letter-spacing: .06em;
-  color: var(--color-graphite);
-}
-/* The strongest stat on each card gets the accent, so a card reads at a glance. */
-.ap-fut-stat[data-best="true"] b { color: var(--dashboard-accent-ink); }
 .ap-fut-foot {
   display: flex;
   align-items: center;
