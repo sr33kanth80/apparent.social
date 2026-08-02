@@ -2730,20 +2730,6 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
     );
   };
 
-  const autonomyLabel: Record<AgentAutonomy, string> = {
-    manual: 'Draft & approve',
-    auto_onplatform: 'Auto-DM matches',
-    autonomous: 'Fully autonomous',
-  };
-
-  const handleAgentAutonomyChange = (next: AgentAutonomy) => {
-    if (next === agentAutonomy) return;
-    void persistSettings(
-      { dailyDigestEnabled, slackAlertsEnabled, agentAutonomy: next },
-      `Agent mode set to “${autonomyLabel[next]}”`,
-    );
-  };
-
   // Founder ids this investor has already messaged — the agent avoids re-proposing
   // them, and the send guardrail blocks a second contact.
   const contactedFounderIds = useMemo(

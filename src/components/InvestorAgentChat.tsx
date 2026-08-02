@@ -18,7 +18,6 @@ import { InvestorAIPrompt } from '@/components/InvestorAIAssist';
 import { LogoIcon } from '@/components/LogoIcon';
 import { useAgentAuthHeaders } from '@/lib/agent-auth';
 import type { AgentChatHistoryMessage, AgentMemory, AgentProfilePatch } from '@/lib/apparent-types';
-import { cn } from '@/lib/utils';
 
 export type OutreachProposal = {
   founderId: string;
