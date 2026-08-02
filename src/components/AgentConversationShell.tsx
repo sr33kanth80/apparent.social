@@ -1,4 +1,5 @@
 import type { ReactNode, RefObject } from 'react';
+import { ShieldCheck } from 'lucide-react';
 import { InvestorAIPrompt } from '@/components/InvestorAIAssist';
 import { LogoIcon } from '@/components/LogoIcon';
 import { cn } from '@/lib/utils';
@@ -57,24 +58,6 @@ export const AgentConversationShell = ({
       {!hasConversation && !isLoading ? (
         <div className="flex min-h-0 flex-1 overflow-y-auto px-5 sm:px-10">
           <div className="m-auto w-full max-w-[900px] py-10 sm:py-14">
-            <nav aria-label="Agent capabilities" className="mb-12 flex flex-wrap items-center justify-center gap-1 sm:mb-16">
-              {copy.suggestionLabels.map((label, index) => (
-                <button
-                  key={label}
-                  type="button"
-                  onClick={() => onSubmit(suggestions[index] ?? label)}
-                  className={cn(
-                    'rounded-full px-3 py-2 text-sm transition-colors',
-                    index === 0
-                      ? 'bg-[#003f2e] text-[#fdf9f7]'
-                      : 'text-[#6e7673] hover:bg-[#f4efea] hover:text-[#333333]',
-                  )}
-                >
-                  {label}
-                </button>
-              ))}
-            </nav>
-
             <div className="text-center">
               <div className="mb-7 inline-flex items-center gap-2.5">
                 <LogoIcon className="h-8 w-8 text-black" />
@@ -98,6 +81,31 @@ export const AgentConversationShell = ({
               />
             </div>
 
+            <nav aria-label="Agent capabilities" className="mt-6 flex flex-wrap items-center justify-center gap-1">
+              {copy.suggestionLabels.map((label, index) => (
+                <button
+                  key={label}
+                  type="button"
+                  onClick={() => onSubmit(suggestions[index] ?? label)}
+                  className={cn(
+                    'rounded-full px-3 py-2 text-sm transition-colors',
+                    index === 0
+                      ? 'bg-[#003f2e] text-[#fdf9f7]'
+                      : 'text-[#6e7673] hover:bg-[#f4efea] hover:text-[#333333]',
+                  )}
+                >
+                  {label}
+                </button>
+              ))}
+            </nav>
+
+            <div className="mt-5 flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-[11px] text-[#a6a6a6]">
+              <span className="inline-flex items-center gap-1.5">
+                <ShieldCheck className="h-3.5 w-3.5" />
+                {copy.context}
+              </span>
+              <span>Follow-ups keep this conversation in context</span>
+            </div>
           </div>
         </div>
       ) : (
