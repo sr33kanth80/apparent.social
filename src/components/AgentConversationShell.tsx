@@ -76,9 +76,9 @@ export const AgentConversationShell = ({
             </nav>
 
             <div className="text-center">
-              <div className="mb-7 inline-flex items-center gap-2.5 text-[#003f2e]">
-                <LogoIcon className="h-7 w-7" />
-                <span className="text-[28px] font-medium tracking-[-0.045em]">Apparent</span>
+              <div className="mb-7 inline-flex items-center gap-2.5">
+                <LogoIcon className="h-8 w-8 text-black" />
+                <img src="/apparent-wordmark.png" alt="Apparent" className="h-8 w-auto object-contain" />
               </div>
               <p className="mb-3 text-[11px] font-medium uppercase tracking-[0.14em] text-[#6e7673]">{copy.eyebrow}</p>
               <h1 className="text-balance text-[28px] font-medium leading-tight tracking-[-0.035em] text-[#333333] sm:text-[34px]">{copy.title}</h1>
