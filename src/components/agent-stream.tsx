@@ -99,7 +99,7 @@ export const AgentStatusTrail = ({ steps, className }: { steps: string[]; classN
           key={`${index}-${label}`}
           className={cn('flex items-center gap-2 text-sm', current ? 'text-gray-600' : 'text-gray-400')}
         >
-          {current ? <Loader2 className="h-3.5 w-3.5 shrink-0 animate-spin" /> : <Check className="h-3.5 w-3.5 shrink-0" />}
+          {current ? <Loader2 className="h-3.5 w-3.5 shrink-0 animate-spin" /> : <Check className="h-3.5 w-3.5 shrink-0 text-[#16a34a]" />}
           {label}
         </div>
       );
@@ -132,7 +132,7 @@ export const ResearchTrailDisclosure = ({ steps }: { steps?: string[] }) => {
       <div className="ml-1.5 mt-2 space-y-1.5 border-l border-[#d6d6d6] py-1 pl-4">
         {trail.map((label, index) => (
           <div key={`${index}-${label}`} className="flex items-center gap-2 text-xs text-gray-500">
-            <Check className="h-3 w-3 shrink-0 text-gray-400" />
+            <Check className="h-3 w-3 shrink-0 text-[#16a34a]" />
             {label}
           </div>
         ))}

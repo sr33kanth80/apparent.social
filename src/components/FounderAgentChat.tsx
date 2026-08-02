@@ -332,7 +332,7 @@ export const FounderAgentChat = ({
               </div>
             ) : (
               <div>
-                <p className="mb-1.5 text-sm font-medium text-[#003f2e]">Apparent</p>
+                <p className="mb-1.5 text-sm font-medium text-[#16a34a]">Apparent</p>
 
                 <ResearchTrailDisclosure steps={message.steps} />
 
