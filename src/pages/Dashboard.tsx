@@ -6356,6 +6356,15 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
       { label: 'Founder taste', done: Boolean((intakeValues.founderSignals ?? '').trim()) },
     ];
     const thesisCompleteness = Math.round((thesisFields.filter((field) => field.done).length / thesisFields.length) * 100);
+    const missingThesisFields = thesisFields.filter((field) => !field.done);
+    const avgFit = averageSignalScore
+      || Math.round(topBuilders.reduce((sum, builder) => sum + builder.fitScore, 0) / Math.max(1, topBuilders.length));
+    const deskStats = [
+      { label: 'Top matches', value: visibleBuilders.length },
+      { label: 'Avg fit', value: `${avgFit}%` },
+      { label: 'Saved', value: savedBuilderCount },
+      { label: 'In pipeline', value: activePipelineCount },
+    ];
     const actionRows = [
       {
         label: 'Review top matches',
@@ -6390,35 +6399,29 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
           <section className="overflow-hidden rounded-[20px] border border-black/10 bg-white shadow-[0_10px_34px_rgba(0,0,0,0.04)]">
             <div className="grid gap-0 xl:grid-cols-[minmax(0,1fr)_360px]">
               <div className="px-5 py-5 sm:px-6">
-                <div className="flex flex-wrap items-start justify-between gap-4">
-                  <div>
-                    <div className="inline-flex items-center gap-2 rounded-full bg-lavender px-3 py-1.5 text-xs font-semibold text-ink">
-                      <Target className="h-3.5 w-3.5" />
-                      Morning sourcing desk
+                <div className="inline-flex items-center gap-2 rounded-full bg-lavender px-3 py-1.5 text-xs font-semibold text-ink">
+                  <Target className="h-3.5 w-3.5" />
+                  Morning sourcing desk
+                </div>
+                <h2 className="mt-4 max-w-[20ch] font-serif text-3xl font-normal leading-[1.08] tracking-[-0.035em] md:text-[44px]">
+                  The builders most worth your attention today.
+                </h2>
+                <p className="mt-3 max-w-2xl text-sm leading-6 text-black/55">
+                  Ranked against your thesis, proof signals, freshness, stage, and founder intent so the first decision is what to review next.
+                </p>
+
+                {/* A line of figures rather than four bordered boxes, which sat
+                    beside the headline and competed with it for weight. */}
+                <div className="mt-6 flex flex-wrap items-baseline gap-x-7 gap-y-3 border-t border-black/10 pt-4">
+                  {deskStats.map(({ label, value }) => (
+                    <div key={label} className="flex items-baseline gap-2">
+                      <span className="text-xl font-semibold tracking-[-0.02em]">{value}</span>
+                      <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-black/40">{label}</span>
                     </div>
-                    <h2 className="mt-4 max-w-3xl text-3xl font-normal leading-tight tracking-[-0.035em] font-serif md:text-5xl">
-                      The builders most worth your attention today.
-                    </h2>
-                    <p className="mt-3 max-w-2xl text-sm leading-6 text-black/55">
-                      Ranked against your thesis, proof signals, freshness, stage, and founder intent so the first decision is what to review next.
-                    </p>
-                  </div>
-                  <div className="grid min-w-[220px] grid-cols-2 gap-2 text-sm">
-                    {[
-                      ['Top matches', visibleBuilders.length],
-                      ['Avg fit', `${averageSignalScore || Math.round(topBuilders.reduce((sum, builder) => sum + builder.fitScore, 0) / Math.max(1, topBuilders.length))}%`],
-                      ['Saved', savedBuilderCount],
-                      ['In pipeline', activePipelineCount],
-                    ].map(([label, value]) => (
-                      <div key={label} className="rounded-[14px] border border-black/10 bg-[#fbfaf7] px-3 py-3">
-                        <p className="text-xl font-semibold tracking-[-0.02em]">{value}</p>
-                        <p className="mt-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-black/40">{label}</p>
-                      </div>
-                    ))}
-                  </div>
+                  ))}
                 </div>
 
-                <div className="mt-6 divide-y divide-black/10 border-y border-black/10">
+                <div className="mt-5 divide-y divide-black/10 border-y border-black/10">
                   {topBuilders.map((builder, index) => {
                     const state = getBuilderState(builder);
                     const reasons = builder.matchReasons.length
@@ -6454,19 +6457,20 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
                                 )}
                               </div>
                               <p className="mt-2 line-clamp-2 text-sm leading-6 text-black/60">{builder.buildSummary || builder.traction}</p>
-                              <div className="mt-3 flex flex-wrap gap-1.5">
+                              <div className="mt-2.5 flex flex-wrap gap-1.5">
                                 {reasons.map((reason) => (
                                   <span key={reason} className="rounded-full bg-[#fbfaf7] px-2.5 py-1 text-[11px] font-medium text-black/55">
                                     {reason}
                                   </span>
                                 ))}
                               </div>
-                              <div className="mt-3 flex flex-wrap gap-2 text-xs text-black/40">
-                                <span>{builder.stage}</span>
-                                <span>{builder.location}</span>
-                                <span>{builder.latestActivityLabel}</span>
-                                {builder.tractionValue && <span>{builder.tractionValue}</span>}
-                              </div>
+                              {/* Stage/where/when as one separated line: four loose
+                                  spans read as a second, competing row of chips. */}
+                              <p className="mt-2.5 text-xs text-black/40">
+                                {[builder.stage, builder.location, builder.latestActivityLabel, builder.tractionValue]
+                                  .filter(Boolean)
+                                  .join(' · ')}
+                              </p>
                             </div>
                           </div>
                         </button>
@@ -6522,16 +6526,37 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
                     Tune
                   </button>
                 </div>
-                <div className="mt-4 space-y-2">
-                  {thesisFields.map((field) => (
-                    <div key={field.label} className="flex items-center justify-between rounded-[12px] bg-white px-3 py-2 text-sm">
-                      <span className="text-black/65">{field.label}</span>
-                      <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${field.done ? 'bg-lavender text-ink' : 'bg-[#f4f1eb] text-black/40'}`}>
-                        {field.done ? 'Set' : 'Missing'}
-                      </span>
-                    </div>
-                  ))}
+                <div className="mt-3 h-1.5 w-full overflow-hidden bg-black/10">
+                  <div
+                    className="h-full bg-ink transition-[width] duration-300"
+                    style={{ width: `${thesisCompleteness}%` }}
+                  />
                 </div>
+
+                {/* Only what's still missing. The full field list spent most of its
+                    rows confirming things that were already set — the one thing an
+                    investor can act on is the gap, so that is what's shown. */}
+                {missingThesisFields.length > 0 ? (
+                  <div className="mt-4">
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-black/40">Still missing</p>
+                    <div className="mt-2 flex flex-wrap gap-1.5">
+                      {missingThesisFields.map((field) => (
+                        <button
+                          key={field.label}
+                          type="button"
+                          onClick={() => handleDashboardViewChange('profile')}
+                          className="rounded-full border border-black/10 bg-white px-2.5 py-1 text-[11px] font-medium text-black/55 hover:bg-[#f6f3f1]"
+                        >
+                          {field.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                ) : (
+                  <p className="mt-4 text-xs leading-5 text-black/45">
+                    Every ranking input is set — matches are using your full thesis.
+                  </p>
+                )}
                 <div className="mt-5 rounded-[16px] border border-black/10 bg-white p-4">
                   <p className="text-sm font-semibold">What changed</p>
                   <div className="mt-3 space-y-3">
@@ -6550,7 +6575,7 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
                           {builder.fundraisingStatus === 'raising'
                             ? `Raising ${builder.raisingAmount || builder.raisingRound || 'now'}`
                             : builder.latestActivityLabel}
-                          {' - '}
+                          {' · '}
                           {builder.matchReasons[0] || builder.category}
                         </p>
                       </button>
