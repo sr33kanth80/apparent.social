@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { ArrowUpRight, Globe2, Link as LinkIcon, Loader2, MapPin, Sparkles, Star, Tag, Users } from 'lucide-react';
 import { GitHubIcon } from '@/components/GitHubIcon';
+import { useAgentAuthHeaders } from '@/lib/agent-auth';
 import type { SourcedDossier, SourcedStartup } from '@/lib/apparent-types';
 import { enrichSourcedStartup, loadSourceSignalDetail } from '@/lib/dashboard-service';
 import NotFound4042 from '@/components/4042';
@@ -37,6 +38,7 @@ const SectionLabel = ({ children }: { children: React.ReactNode }) => (
  */
 export const SourcedDetail = () => {
   const { signalId = '' } = useParams();
+  const authHeaders = useAgentAuthHeaders();
   const [startup, setStartup] = useState<SourcedStartup | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [dossier, setDossier] = useState<SourcedDossier | null>(null);
@@ -61,7 +63,7 @@ export const SourcedDetail = () => {
     if (!startup || enriching) return;
     setEnriching(true);
     setEnrichError('');
-    const result = await enrichSourcedStartup(startup.id);
+    const result = await enrichSourcedStartup(startup.id, authHeaders);
     if (result.ok) setDossier(result.dossier);
     else setEnrichError(result.error || 'Could not build the deep dive. Try again.');
     setEnriching(false);

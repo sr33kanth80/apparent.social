@@ -7,10 +7,11 @@
 // later view is instant and free. On-demand by design: we only spend credits on
 // startups an investor actually opens.
 //
-// Auth: caller must present their Supabase JWT (Authorization: Bearer <jwt>).
-// Any signed-in user can trigger — the JWT is the guard against anonymous
-// credit-burning. ponytail: not role-gated; tighten to investors-only if abuse
-// shows up.
+// Auth: caller must present a signed-in token (Authorization: Bearer <jwt>),
+// verified by the shared Kinde-or-Supabase guard the chat agents use. Any
+// signed-in user can trigger — the token is the guard against anonymous
+// credit-burning, and requireAgentAccess rate-limits by IP and user on top.
+// ponytail: not role-gated; tighten to investors-only if abuse shows up.
 //
 // Request:  POST { signalId: string, force?: boolean }
 // Response: { ok, dossier, cached } | { ok:false, error }
@@ -19,6 +20,7 @@
 // ORTHOGONAL_API_KEY.
 
 import { createClient } from '@supabase/supabase-js';
+import { requireAgentAccess, sendAgentAccessError } from './agent-guard.js';
 import {
   createApparentAgentRuntime,
   createPublicResearchPolicy,
@@ -141,14 +143,12 @@ export default async function handler(req, res) {
     return res.status(200).json({ ok: false, error: 'server_misconfigured' });
   }
 
-  // Resolve the caller's identity from their Supabase JWT (credit guard).
-  const authHeader = str(req.headers.authorization);
-  const jwt = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : '';
-  if (!jwt) return res.status(401).json({ ok: false, error: 'unauthenticated' });
-
-  const anon = createClient(SUPABASE_URL, ANON_KEY, { auth: { persistSession: false } });
-  const { data: userData, error: userErr } = await anon.auth.getUser(jwt);
-  if (userErr || !userData?.user?.id) return res.status(401).json({ ok: false, error: 'invalid_token' });
+  // Credit guard. This used to verify against Supabase alone, which rejected
+  // every real caller: sign-in goes through Kinde, so there is no Supabase user
+  // behind the token. The shared verifier accepts either, and rate-limits by IP
+  // and user — worth having on an endpoint that spends credits per call.
+  const access = await requireAgentAccess(req, null, 'sourced-enrich');
+  if (!access.ok) return sendAgentAccessError(res, access);
 
   const body = await readJsonBody(req);
   const signalId = str(body?.signalId).trim();

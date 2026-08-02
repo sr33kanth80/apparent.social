@@ -1562,22 +1562,29 @@ export const loadSourceSignalDetail = async (
 
 /**
  * Trigger (or fetch the cached) agent deep dive for a sourced startup. POSTs to
- * /api/sourced-enrich with the caller's Supabase JWT — the server researches the
- * company through the Apparent runtime and Orthogonal tools, caches the dossier on the row, and returns it.
+ * /api/sourced-enrich — the server researches the company through the Apparent
+ * runtime and Orthogonal tools, caches the dossier on the row, and returns it.
  * On-demand: only called when an investor clicks "Generate deep dive".
+ *
+ * Takes the caller's header getter rather than reading the Supabase session
+ * itself: sign-in goes through Kinde, so there is no Supabase session to read
+ * and this always reported an expired session without ever issuing the request.
  */
 export const enrichSourcedStartup = async (
   signalId: string,
+  getAuthHeaders: () => Promise<Record<string, string>>,
   force = false,
 ): Promise<{ ok: boolean; dossier: SourcedDossier | null; error?: string }> => {
-  if (!isSupabaseConfigured || !supabase) return { ok: false, dossier: null, error: 'Sign-in required.' };
-  const { data } = await supabase.auth.getSession();
-  const jwt = data.session?.access_token;
-  if (!jwt) return { ok: false, dossier: null, error: 'Your session expired — sign in again.' };
   try {
+    // Kinde's getter rejects when nobody is signed in — a logged-out visitor on
+    // a public /sourced page should get the sign-in prompt, not a raw rejection.
+    const authHeaders = await getAuthHeaders().catch(() => ({}) as Record<string, string>);
+    if (!authHeaders.Authorization) {
+      return { ok: false, dossier: null, error: 'Sign in to generate a deep dive.' };
+    }
     const res = await fetch('/api/sourced-enrich', {
       method: 'POST',
-      headers: { 'content-type': 'application/json', authorization: `Bearer ${jwt}` },
+      headers: { 'content-type': 'application/json', ...authHeaders },
       body: JSON.stringify({ signalId, force }),
     });
     const body = (await res.json().catch(() => ({}))) as { ok?: boolean; dossier?: SourcedDossier; error?: string };
