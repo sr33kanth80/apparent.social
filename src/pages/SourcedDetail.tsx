@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { ArrowUpRight, Globe2, Link as LinkIcon, Loader2, MapPin, Sparkles, Star, Tag, Users } from 'lucide-react';
 import { GitHubIcon } from '@/components/GitHubIcon';
-import { VerifiedAvatar } from '@/components/VerifiedAvatar';
 import type { SourcedDossier, SourcedStartup } from '@/lib/apparent-types';
 import { enrichSourcedStartup, loadSourceSignalDetail } from '@/lib/dashboard-service';
 import NotFound4042 from '@/components/4042';
@@ -23,13 +22,18 @@ const formatDate = (iso: string) => {
     : d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
 };
 
+const SectionLabel = ({ children }: { children: React.ReactNode }) => (
+  <p className="ap-profile-label">{children}</p>
+);
+
 /**
- * Investor-facing detail page for a sourced (agent-discovered) startup, rendered
- * in the same editorial template as a native Apparent launch (ProjectDetail) but
- * explicitly marked "Sourced · unverified". No founder has claimed it, so there's
- * no outreach DM, team, or pitch material — instead we surface what the sourcing
- * agent found and link out to the original source. The "Deep dive" block is a
- * placeholder for Phase 2 agent enrichment.
+ * Investor-facing detail page for a sourced (agent-discovered) startup.
+ *
+ * Same two-column dossier as a founder's public profile — sticky identity rail,
+ * scrolling evidence stream — so a sourced lead and a claimed profile read as
+ * the same kind of document. The difference is stated, not styled: nothing here
+ * is verified, so the rail carries a "Sourced · unverified" mark and the stream
+ * leads with whatever the agent actually found.
  */
 export const SourcedDetail = () => {
   const { signalId = '' } = useParams();
@@ -64,7 +68,21 @@ export const SourcedDetail = () => {
   };
 
   if (isLoading) {
-    return <section className="ed-sec ed-inner"><p className="ed-lead">Loading sourced profile...</p></section>;
+    return (
+      <main className="ap-dossier ed-inner">
+        <aside className="ap-rail">
+          <div className="ap-profile-skeleton h-20 w-20 rounded-[18px]" />
+          <div className="ap-profile-skeleton h-8 w-2/3 rounded" />
+          <div className="ap-profile-skeleton h-4 w-1/2 rounded" />
+        </aside>
+        <div className="ap-stream">
+          <div className="space-y-3">
+            <div className="ap-profile-skeleton h-7 w-3/4 rounded" />
+            <div className="ap-profile-skeleton h-7 w-1/2 rounded" />
+          </div>
+        </div>
+      </main>
+    );
   }
 
   if (!startup) {
@@ -77,175 +95,261 @@ export const SourcedDetail = () => {
     );
   }
 
-  const homepage = startup.profileUrl || startup.sourceUrl;
-  const domain = getDomain(homepage);
-  const founderName = startup.founder || 'Founding team';
-  const category = startup.tags[0] || 'Sourced startup';
+  const domain = getDomain(startup.profileUrl || startup.sourceUrl);
+
+  // The pitch is the largest type on the page — but `detail` is free text from a
+  // scrape, so a paragraph-length one drops to body size rather than blowing the
+  // column out to several lines of 52px serif.
+  const pitch = startup.detail || 'No description captured yet.';
+  const pitchClass = pitch.length <= 150 ? 'ap-lede' : 'ed-lede';
+
+  const facts = [
+    { label: 'Stage', value: startup.stage || 'Unknown' },
+    { label: 'Location', value: startup.location || 'Not provided' },
+    { label: 'Founder', value: startup.founder || 'Not identified' },
+    { label: 'Source', value: startup.sourceType || 'Web' },
+    { label: 'Discovered', value: formatDate(startup.freshnessAt) },
+  ];
+
+  const links = [
+    startup.profileUrl && { label: 'Website', href: startup.profileUrl, icon: Globe2 },
+    startup.sourceUrl && { label: 'Original source', href: startup.sourceUrl, icon: LinkIcon },
+    startup.githubUrl && { label: 'GitHub', href: startup.githubUrl, icon: GitHubIcon },
+  ].filter(Boolean) as { label: string; href: string; icon: React.ElementType }[];
 
   return (
-    <main>
-      {/* HERO */}
-      <section className="ed-subhero ed-inner">
-        <div style={{ display: 'grid', gap: 32, gridTemplateColumns: 'minmax(0,1fr) 22rem', alignItems: 'end' }} className="ed-proj-hero">
-          <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 24 }}>
-              <img src={domain ? `https://www.google.com/s2/favicons?domain=${domain}&sz=128` : ''} alt="" style={{ width: 52, height: 52, borderRadius: 'var(--ed-r)', background: 'var(--ed-paper)', objectFit: 'contain', padding: 10 }} onError={(e) => { e.currentTarget.style.visibility = 'hidden'; }} />
-              <div>
-                <p style={{ fontSize: 14, fontWeight: 600 }}>{category}</p>
-                <p style={{ marginTop: 2, fontSize: 13, color: 'var(--ed-smoke)' }}>{startup.stage || 'Sourced lead'}</p>
-              </div>
+    <main className="ap-dossier ed-inner">
+      {/* ── Identity rail — sticks while the evidence scrolls past ── */}
+      <aside className="ap-rail">
+        <div className="ap-rail-id">
+          {domain ? (
+            <img
+              src={`https://www.google.com/s2/favicons?domain=${domain}&sz=128`}
+              alt=""
+              className="h-20 w-20 rounded-[18px] border border-[var(--ed-fog)] bg-[var(--ed-paper)] object-contain p-3.5"
+              onError={(e) => {
+                e.currentTarget.style.visibility = 'hidden';
+              }}
+            />
+          ) : (
+            <div className="flex h-20 w-20 items-center justify-center rounded-[18px] bg-[var(--ed-ink)] text-2xl text-[var(--ed-paper)]">
+              {startup.company.slice(0, 1).toUpperCase()}
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
-              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '4px 10px', borderRadius: 999, background: 'var(--ed-paper)', border: '1px solid var(--ed-fog)', fontSize: 12, fontWeight: 600, color: 'var(--ed-smoke)' }}>
-                <Globe2 style={{ width: 13, height: 13 }} /> Sourced · unverified
+          )}
+          <div className="min-w-0">
+            <h1 className="ap-rail-name">{startup.company}</h1>
+            {domain && <p className="ap-rail-handle">{domain}</p>}
+          </div>
+        </div>
+
+        <div className="ap-rail-meta">
+          <span className="ap-profile-tag ap-profile-tag--accent">
+            <Globe2 className="h-3.5 w-3.5" /> Sourced · unverified
+          </span>
+          {startup.stage && <span className="ap-profile-tag">{startup.stage}</span>}
+          {startup.location && (
+            <span className="ap-profile-location">
+              <MapPin className="h-3.5 w-3.5" /> {startup.location}
+            </span>
+          )}
+        </div>
+
+        <div className="ap-rail-actions">
+          {startup.profileUrl && (
+            <a
+              className="ed-btn ed-btn-filled ap-profile-action"
+              href={startup.profileUrl}
+              target="_blank"
+              rel="noreferrer"
+            >
+              Visit website <ArrowUpRight className="h-4 w-4" />
+            </a>
+          )}
+          {startup.sourceUrl && (
+            <a
+              className="ed-btn ed-btn-outline ap-profile-action"
+              href={startup.sourceUrl}
+              target="_blank"
+              rel="noreferrer"
+            >
+              View original source <ArrowUpRight className="h-4 w-4" />
+            </a>
+          )}
+        </div>
+
+        {links.length > 0 && (
+          <div className="ap-rail-links">
+            {links.map(({ label, href, icon: Icon }) => (
+              <a key={label} href={href} target="_blank" rel="noreferrer" className="ap-rail-link">
+                <Icon className="h-3.5 w-3.5 shrink-0" /> {label}
+                <ArrowUpRight className="ap-rail-link-out h-3.5 w-3.5" />
+              </a>
+            ))}
+          </div>
+        )}
+
+        <p className="text-xs leading-relaxed text-[var(--ed-smoke)]">
+          Discovered by Apparent's sourcing agent from public signals. Not verified or claimed by the
+          founder — treat as a lead, not vetted dealflow.
+        </p>
+      </aside>
+
+      {/* ── Evidence stream — ordered by what an investor came to find out ── */}
+      <div className="ap-stream">
+        {/* 1. What is this company? */}
+        <section className="ap-block">
+          <p className={pitchClass}>{pitch}</p>
+        </section>
+
+        {/* 2. Is it worth the time? The agent dossier carries the page. */}
+        <section className="ap-block">
+          <div className="ap-block-head">
+            <SectionLabel>Deep dive</SectionLabel>
+            {dossier && (
+              <span className="ap-profile-tag">
+                <Sparkles className="h-3.5 w-3.5" /> AI research
               </span>
-            </div>
-            <h1 className="ed-display" style={{ fontSize: 'clamp(2.6rem,8vw,96px)', maxWidth: '14ch' }}>{startup.company}</h1>
-            <p className="ed-lede">{startup.detail}</p>
+            )}
           </div>
 
-          <aside className="ed-pp-panel">
-            <p style={{ fontSize: 13, fontWeight: 600, letterSpacing: '.12em', textTransform: 'uppercase', color: 'var(--ed-smoke)' }}>Sourced lead</p>
-            <div className="ed-row" style={{ marginTop: 14, background: 'var(--ed-canvas)', borderColor: 'var(--ed-fog)' }}>
-              <VerifiedAvatar src={undefined} name={founderName} size="md" verified={false} />
-              <div className="ed-who" style={{ flex: 1 }}>
-                <b style={{ color: 'var(--ed-ink)' }}>{founderName}</b>
-                <span style={{ color: 'var(--ed-smoke)' }}>Discovered from {startup.sourceType || 'public'} signals</span>
-              </div>
-            </div>
-            <div style={{ marginTop: 18, display: 'grid', gap: 10 }}>
-              {startup.profileUrl && (
-                <a className="ed-btn ed-btn-filled ed-block" href={startup.profileUrl} target="_blank" rel="noreferrer">Visit website <ArrowUpRight style={{ width: 16, height: 16 }} /></a>
-              )}
-              {startup.sourceUrl && (
-                <a className="ed-btn ed-btn-outline ed-block" href={startup.sourceUrl} target="_blank" rel="noreferrer">View original source <ArrowUpRight style={{ width: 16, height: 16 }} /></a>
-              )}
-              {startup.githubUrl && (
-                <a className="ed-btn ed-btn-outline ed-block" href={startup.githubUrl} target="_blank" rel="noreferrer"><GitHubIcon style={{ width: 16, height: 16 }} /> GitHub</a>
-              )}
-            </div>
-            <p style={{ marginTop: 16, fontSize: 12, lineHeight: 1.5, color: 'var(--ed-smoke)' }}>
-              Discovered by Apparent's sourcing agent from public signals. Not yet verified or claimed by the founder — treat as a lead, not vetted dealflow.
-            </p>
-          </aside>
-        </div>
-      </section>
+          {dossier ? (
+            <div className="grid gap-5">
+              <article className="ed-infocard">
+                <p className="text-[15px] leading-relaxed text-[var(--ed-ink)]">{dossier.summary}</p>
+                {dossier.whatTheyBuild && (
+                  <p className="mt-4 text-sm leading-relaxed text-[var(--ed-graphite)]">
+                    {dossier.whatTheyBuild}
+                  </p>
+                )}
+              </article>
 
-      {/* STATS */}
-      <section className="ed-sec ed-divider ed-inner">
-        <div className="ed-benefits" style={{ marginTop: 0 }}>
-          {([['Location', startup.location || 'Not provided', MapPin], ['Stage', startup.stage || 'Unknown', Star], ['Source', startup.sourceType || 'Web', Globe2], ['Discovered', formatDate(startup.freshnessAt), Sparkles]] as const).map(([label, value, Icon]) => (
-            <article className="ed-infocard" key={String(label)}>
-              <Icon style={{ width: 18, height: 18, color: 'var(--ed-ink)', marginBottom: 14 }} />
-              <div style={{ fontSize: 10, fontWeight: 600, letterSpacing: '.12em', textTransform: 'uppercase', color: 'var(--ed-smoke)' }}>{String(label)}</div>
-              <p style={{ marginTop: 8 }}>{String(value)}</p>
-            </article>
-          ))}
-        </div>
-      </section>
-
-      {/* WHAT THEY'RE BUILDING + TAGS */}
-      <section className="ed-sec ed-divider ed-inner">
-        <div style={{ display: 'grid', gap: 20, gridTemplateColumns: '2fr 1fr' }} className="ed-proj-cols">
-          <article className="ed-infocard">
-            <h2 className="ed-sec-title" style={{ fontSize: 'clamp(1.5rem,3vw,28px)' }}>What they're building</h2>
-            <p style={{ marginTop: 18, fontSize: 15, lineHeight: 1.7, color: 'var(--ed-graphite)' }}>{startup.detail || 'No description captured yet.'}</p>
-          </article>
-          <article className="ed-infocard">
-            <h2 className="ed-sec-title" style={{ fontSize: 'clamp(1.5rem,3vw,28px)' }}>Sectors</h2>
-            <div style={{ marginTop: 18, display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-              {startup.tags.length > 0 ? (
-                startup.tags.map((tag) => (
-                  <span key={tag} className="ed-proof"><Tag style={{ width: 13, height: 13 }} /> {tag}</span>
-                ))
-              ) : (
-                <p style={{ color: 'var(--ed-smoke)' }}>No sectors tagged yet.</p>
+              {((dossier.traction?.length ?? 0) > 0 || dossier.thesisFit) && (
+                <div className="grid gap-5 sm:grid-cols-2">
+                  {(dossier.traction?.length ?? 0) > 0 && (
+                    <article className="ed-infocard">
+                      <b>Traction signals</b>
+                      <div className="mt-3 grid gap-3">
+                        {dossier.traction!.map((item) => (
+                          <div key={item} className="flex items-start gap-2.5">
+                            <Star className="mt-0.5 h-4 w-4 shrink-0 text-[var(--ed-ink)]" />
+                            <span className="text-sm leading-relaxed text-[var(--ed-graphite)]">{item}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </article>
+                  )}
+                  {dossier.thesisFit && (
+                    <article className="ed-infocard">
+                      <b>Thesis fit &amp; risk</b>
+                      <p>{dossier.thesisFit}</p>
+                    </article>
+                  )}
+                </div>
               )}
-            </div>
-          </article>
-        </div>
-      </section>
 
-      {/* DEEP DIVE — on-demand agent dossier (Phase 2, via /api/sourced-enrich) */}
-      <section className="ed-sec ed-divider ed-inner">
-        {dossier ? (
-          <div style={{ display: 'grid', gap: 20 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <Sparkles style={{ width: 20, height: 20, color: 'var(--ed-ink)' }} />
-              <h2 className="ed-sec-title" style={{ fontSize: 'clamp(1.5rem,3vw,28px)' }}>Deep dive</h2>
-              <span style={{ fontSize: 11, fontWeight: 600, letterSpacing: '.1em', textTransform: 'uppercase', color: 'var(--ed-smoke)' }}>AI research</span>
-            </div>
-
-            <article className="ed-infocard">
-              <p style={{ fontSize: 16, lineHeight: 1.7, color: 'var(--ed-ink)' }}>{dossier.summary}</p>
-              {dossier.whatTheyBuild && (
-                <p style={{ marginTop: 16, fontSize: 15, lineHeight: 1.7, color: 'var(--ed-graphite)' }}>{dossier.whatTheyBuild}</p>
-              )}
-            </article>
-
-            <div style={{ display: 'grid', gap: 20, gridTemplateColumns: '1fr 1fr' }} className="ed-proj-cols">
-              {(dossier.traction?.length ?? 0) > 0 && (
+              {(dossier.team?.length ?? 0) > 0 && (
                 <article className="ed-infocard">
-                  <h3 className="ed-sec-title" style={{ fontSize: 'clamp(1.3rem,3vw,22px)' }}>Traction signals</h3>
-                  <div style={{ marginTop: 16, display: 'grid', gap: 12 }}>
-                    {dossier.traction!.map((item) => (
-                      <div key={item} style={{ display: 'flex', gap: 12, alignItems: 'flex-start', fontSize: 14, lineHeight: 1.6, color: 'var(--ed-graphite)' }}>
-                        <Star style={{ width: 16, height: 16, marginTop: 3, flexShrink: 0, color: 'var(--ed-ink)' }} /> <span>{item}</span>
+                  <b className="flex items-center gap-2">
+                    <Users className="h-4 w-4 text-[var(--ed-ink)]" /> Team
+                  </b>
+                  <div className="mt-3 grid gap-3.5">
+                    {dossier.team!.map((member) => (
+                      <div key={member.name}>
+                        <p className="text-[15px] font-semibold text-[var(--ed-ink)]">
+                          {member.name}
+                          {member.role && (
+                            <span className="font-normal text-[var(--ed-smoke)]"> — {member.role}</span>
+                          )}
+                        </p>
+                        {member.note && (
+                          <p className="mt-1 text-sm leading-relaxed text-[var(--ed-graphite)]">
+                            {member.note}
+                          </p>
+                        )}
                       </div>
                     ))}
                   </div>
                 </article>
               )}
-              {dossier.thesisFit && (
-                <article className="ed-infocard">
-                  <h3 className="ed-sec-title" style={{ fontSize: 'clamp(1.3rem,3vw,22px)' }}>Thesis fit & risk</h3>
-                  <p style={{ marginTop: 16, fontSize: 14, lineHeight: 1.7, color: 'var(--ed-graphite)' }}>{dossier.thesisFit}</p>
-                </article>
-              )}
-            </div>
 
-            {(dossier.team?.length ?? 0) > 0 && (
-              <article className="ed-infocard">
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <Users style={{ width: 18, height: 18, color: 'var(--ed-ink)' }} />
-                  <h3 className="ed-sec-title" style={{ fontSize: 'clamp(1.3rem,3vw,22px)' }}>Team</h3>
-                </div>
-                <div style={{ marginTop: 16, display: 'grid', gap: 14 }}>
-                  {dossier.team!.map((member) => (
-                    <div key={member.name}>
-                      <p style={{ fontSize: 15, fontWeight: 600 }}>{member.name}{member.role ? <span style={{ color: 'var(--ed-smoke)', fontWeight: 400 }}> — {member.role}</span> : null}</p>
-                      {member.note && <p style={{ marginTop: 4, fontSize: 14, lineHeight: 1.6, color: 'var(--ed-graphite)' }}>{member.note}</p>}
-                    </div>
+              {(dossier.sources?.length ?? 0) > 0 && (
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="text-xs font-semibold text-[var(--ed-smoke)]">Sources</span>
+                  {dossier.sources!.map((s) => (
+                    <a key={s.url} className="ap-profile-tag" href={s.url} target="_blank" rel="noreferrer">
+                      <LinkIcon className="h-3 w-3" /> {s.label || getDomain(s.url) || 'link'}
+                    </a>
                   ))}
                 </div>
-              </article>
-            )}
+              )}
 
-            {(dossier.sources?.length ?? 0) > 0 && (
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center' }}>
-                <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--ed-smoke)' }}>Sources:</span>
-                {dossier.sources!.map((s) => (
-                  <a key={s.url} className="ed-proof" href={s.url} target="_blank" rel="noreferrer"><LinkIcon style={{ width: 13, height: 13 }} /> {s.label || getDomain(s.url) || 'link'}</a>
-                ))}
-              </div>
-            )}
-            <p style={{ fontSize: 12, color: 'var(--ed-smoke)' }}>AI-generated from public sources — verify before acting.</p>
+              <p className="text-xs text-[var(--ed-smoke)]">
+                AI-generated from public sources — verify before acting.
+              </p>
+            </div>
+          ) : (
+            <article className="ed-infocard text-center">
+              <Sparkles className="mx-auto h-5 w-5 text-[var(--ed-ink)]" />
+              <p className="mx-auto mt-3 max-w-[52ch] text-sm leading-relaxed text-[var(--ed-graphite)]">
+                Apparent's research agent will dig into this company — team, traction, and why it fits
+                your thesis — from public sources.
+              </p>
+              <button
+                type="button"
+                className="ed-btn ed-btn-filled mt-5"
+                onClick={handleEnrich}
+                disabled={enriching}
+              >
+                {enriching ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" /> Researching…
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="h-4 w-4" /> Generate deep dive
+                  </>
+                )}
+              </button>
+              {enriching && (
+                <p className="mt-3 text-xs text-[var(--ed-smoke)]">
+                  This takes ~20–40 seconds while the agent reads the web.
+                </p>
+              )}
+              {enrichError && <p className="mt-3 text-[13px] text-[var(--ed-ember)]">{enrichError}</p>}
+            </article>
+          )}
+        </section>
+
+        {/* 3. Where did this come from? */}
+        <section className="ap-block">
+          <div className="ap-block-head">
+            <SectionLabel>Signals</SectionLabel>
           </div>
-        ) : (
-          <article className="ed-infocard" style={{ textAlign: 'center', padding: '40px 24px' }}>
-            <Sparkles style={{ width: 22, height: 22, color: 'var(--ed-ink)', margin: '0 auto 14px' }} />
-            <h2 className="ed-sec-title" style={{ fontSize: 'clamp(1.4rem,3vw,26px)' }}>Generate a deep dive</h2>
-            <p style={{ maxWidth: '52ch', margin: '12px auto 0', color: 'var(--ed-smoke)', lineHeight: 1.6 }}>
-              Apparent's research agent will dig into this company — team, traction, and why it fits your thesis — from public sources.
-            </p>
-            <button type="button" className="ed-btn ed-btn-filled" onClick={handleEnrich} disabled={enriching} style={{ marginTop: 20 }}>
-              {enriching ? (<><Loader2 className="animate-spin" style={{ width: 16, height: 16 }} /> Researching…</>) : (<><Sparkles style={{ width: 16, height: 16 }} /> Generate deep dive</>)}
-            </button>
-            {enriching && <p style={{ marginTop: 12, fontSize: 12, color: 'var(--ed-smoke)' }}>This takes ~20–40 seconds while the agent reads the web.</p>}
-            {enrichError && <p style={{ marginTop: 12, fontSize: 13, color: 'var(--ed-ember)' }}>{enrichError}</p>}
-          </article>
+          <div className="ap-stats">
+            {facts.map((f) => (
+              <div key={f.label} className="ap-stat">
+                <p className="ap-profile-micro">{f.label}</p>
+                <p className="ap-stat-value">{f.value}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {startup.tags.length > 0 && (
+          <section className="ap-block">
+            <div className="ap-block-head">
+              <SectionLabel>Sectors</SectionLabel>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {startup.tags.map((tag) => (
+                <span key={tag} className="ap-profile-tag">
+                  <Tag className="h-3 w-3" /> {tag}
+                </span>
+              ))}
+            </div>
+          </section>
         )}
-      </section>
+      </div>
     </main>
   );
 };
