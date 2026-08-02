@@ -395,7 +395,6 @@ export const FounderAgentChat = ({
         className={className}
         hasConversation={hasConversation}
         isLoading={isLoading}
-        onNewConversation={clear}
         onSubmit={send}
         role="founder"
         suggestions={SUGGESTIONS}

@@ -1,5 +1,5 @@
 import type { ReactNode, RefObject } from 'react';
-import { ArrowUpRight, Megaphone, PenLine, Plus, Search, ShieldCheck, Sparkles } from 'lucide-react';
+import { ArrowUpRight, Megaphone, PenLine, Search, ShieldCheck, Sparkles } from 'lucide-react';
 
 import { InvestorAIPrompt } from '@/components/InvestorAIAssist';
 import { LogoIcon } from '@/components/LogoIcon';
@@ -10,7 +10,6 @@ type AgentConversationShellProps = {
   hasConversation: boolean;
   isLoading: boolean;
   onSubmit: (value: string) => void;
-  onNewConversation?: () => void;
   suggestions: string[];
   transcript: ReactNode;
   transcriptRef: RefObject<HTMLDivElement | null>;
@@ -44,7 +43,6 @@ export const AgentConversationShell = ({
   hasConversation,
   isLoading,
   onSubmit,
-  onNewConversation,
   suggestions,
   transcript,
   transcriptRef,
@@ -140,18 +138,6 @@ export const AgentConversationShell = ({
         <>
           <div ref={transcriptRef} className="min-h-0 flex-1 overflow-y-auto scroll-smooth">
             <div className="mx-auto w-full max-w-[900px] px-5 py-6 sm:px-10 sm:py-8">
-              {onNewConversation && (
-                <div className="mb-8 flex justify-end">
-                  <button
-                    type="button"
-                    onClick={onNewConversation}
-                    className="inline-flex items-center gap-1.5 rounded-md border border-[#d6d6d6] px-3 py-2 text-xs text-[#6e7673] transition-colors hover:border-[#003f2e] hover:text-[#003f2e]"
-                  >
-                    <Plus className="h-3.5 w-3.5" />
-                    New thread
-                  </button>
-                </div>
-              )}
               {transcript}
             </div>
           </div>
