@@ -103,19 +103,14 @@ export const SourcedDetail = () => {
   const pitch = startup.detail || 'No description captured yet.';
   const pitchClass = pitch.length <= 150 ? 'ap-lede' : 'ed-lede';
 
+  // Stage and location are already tags in the rail, so they stay out of here.
+  // Three facts also fill the auto-fit grid exactly — a wrapped row would leave
+  // uncovered cells showing the container's hairline colour as a solid block.
   const facts = [
-    { label: 'Stage', value: startup.stage || 'Unknown' },
-    { label: 'Location', value: startup.location || 'Not provided' },
     { label: 'Founder', value: startup.founder || 'Not identified' },
     { label: 'Source', value: startup.sourceType || 'Web' },
     { label: 'Discovered', value: formatDate(startup.freshnessAt) },
   ];
-
-  const links = [
-    startup.profileUrl && { label: 'Website', href: startup.profileUrl, icon: Globe2 },
-    startup.sourceUrl && { label: 'Original source', href: startup.sourceUrl, icon: LinkIcon },
-    startup.githubUrl && { label: 'GitHub', href: startup.githubUrl, icon: GitHubIcon },
-  ].filter(Boolean) as { label: string; href: string; icon: React.ElementType }[];
 
   return (
     <main className="ap-dossier ed-inner">
@@ -175,18 +170,17 @@ export const SourcedDetail = () => {
               View original source <ArrowUpRight className="h-4 w-4" />
             </a>
           )}
+          {startup.githubUrl && (
+            <a
+              className="ed-btn ed-btn-outline ap-profile-action"
+              href={startup.githubUrl}
+              target="_blank"
+              rel="noreferrer"
+            >
+              <GitHubIcon className="h-4 w-4" /> GitHub <ArrowUpRight className="h-4 w-4" />
+            </a>
+          )}
         </div>
-
-        {links.length > 0 && (
-          <div className="ap-rail-links">
-            {links.map(({ label, href, icon: Icon }) => (
-              <a key={label} href={href} target="_blank" rel="noreferrer" className="ap-rail-link">
-                <Icon className="h-3.5 w-3.5 shrink-0" /> {label}
-                <ArrowUpRight className="ap-rail-link-out h-3.5 w-3.5" />
-              </a>
-            ))}
-          </div>
-        )}
 
         <p className="text-xs leading-relaxed text-[var(--ed-smoke)]">
           Discovered by Apparent's sourcing agent from public signals. Not verified or claimed by the
