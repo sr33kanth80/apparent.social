@@ -3,8 +3,6 @@ import remarkGfm from 'remark-gfm';
 
 import { cn } from '@/lib/utils';
 
-const BRAND_GREEN = '#16a34a';
-
 /** Renders agent replies as GitHub-flavored markdown, styled for the chat surfaces. */
 export const AgentMarkdown = ({ children, className }: { children: string; className?: string }) => (
   <div className={cn('agent-markdown min-w-0 [overflow-wrap:anywhere]', className)}>
