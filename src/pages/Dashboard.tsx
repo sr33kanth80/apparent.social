@@ -8588,8 +8588,6 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
           threadId={activeAgentThreadId}
           persistedMessages={agentChatMessages}
           persistedMessagesLoaded={agentChatLoaded}
-          autonomy={agentAutonomy}
-          onAutonomyChange={handleAgentAutonomyChange}
           contactedFounderIds={contactedFounderIds}
           onApplyProfilePatch={handleApplyAgentProfilePatch}
           onPersistMessages={handlePersistAgentChat}

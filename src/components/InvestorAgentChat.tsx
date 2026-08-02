@@ -16,10 +16,8 @@ import {
 import { AgentProfilePatchCard } from '@/components/AgentProfilePatchCard';
 import { InvestorAIPrompt } from '@/components/InvestorAIAssist';
 import { LogoIcon } from '@/components/LogoIcon';
-import { Switch } from '@/components/ui/switch';
-import { Tooltip } from '@/components/ui/tooltip';
 import { useAgentAuthHeaders } from '@/lib/agent-auth';
-import type { AgentAutonomy, AgentChatHistoryMessage, AgentMemory, AgentProfilePatch } from '@/lib/apparent-types';
+import type { AgentChatHistoryMessage, AgentMemory, AgentProfilePatch } from '@/lib/apparent-types';
 import { cn } from '@/lib/utils';
 
 export type OutreachProposal = {
@@ -120,8 +118,6 @@ interface InvestorAgentChatProps {
   threadId: string | null;
   persistedMessages: AgentChatHistoryMessage[];
   persistedMessagesLoaded: boolean;
-  autonomy: AgentAutonomy;
-  onAutonomyChange: (next: AgentAutonomy) => void;
   /** Founder ids the investor has already messaged — the agent avoids re-proposing them. */
   contactedFounderIds: string[];
   /** Performs the actual RLS-authenticated send (and guardrail enforcement). */
@@ -145,14 +141,6 @@ const SUGGESTIONS = [
   'Find founders NOT on Apparent that fit my thesis and prep intros',
 ];
 
-const AUTONOMY_OPTIONS: { value: AgentAutonomy; label: string; hint: string }[] = [
-  { value: 'manual', label: 'Draft & approve', hint: 'Agent drafts outreach; you send each one.' },
-  { value: 'auto_onplatform', label: 'Auto-DM', hint: 'Agent auto-sends in-app DMs to matched founders.' },
-  { value: 'autonomous', label: 'Autonomous', hint: 'Agent sources and reaches out on its own.' },
-];
-
-const isAutoMode = (autonomy: AgentAutonomy) => autonomy === 'auto_onplatform' || autonomy === 'autonomous';
-
 /** Spring used for the prompt box flying between its in-page spot and the fullscreen bottom dock. */
 const DOCK_TRANSITION = { type: 'spring', bounce: 0.18, duration: 0.55 } as const;
 
@@ -162,8 +150,6 @@ export const InvestorAgentChat = ({
   threadId,
   persistedMessages,
   persistedMessagesLoaded,
-  autonomy,
-  onAutonomyChange,
   contactedFounderIds,
   onSendOutreach,
   onApplyProfilePatch,
@@ -313,7 +299,7 @@ export const InvestorAgentChat = ({
           messages: conversation.map((m) => ({ role: m.role, content: m.content })),
           criteria,
           memories,
-          autonomy,
+          autonomy: 'autonomous',
           contacted: contactedFounderIds,
         },
         await authHeaders(),
@@ -327,7 +313,7 @@ export const InvestorAgentChat = ({
       const rawProposals: OutreachProposal[] = Array.isArray(data.proposals) ? data.proposals : [];
       const emailDrafts: EmailDraft[] = Array.isArray(data.emailDrafts) ? data.emailDrafts : [];
       const profilePatches: AgentProfilePatch[] = Array.isArray(data.profilePatches) ? data.profilePatches : [];
-      const auto = isAutoMode(autonomy);
+      const auto = true;
       const proposalStates: ProposalState[] = rawProposals.map((proposal) => ({
         ...proposal,
         status: auto ? 'sending' : 'pending',
@@ -456,39 +442,6 @@ export const InvestorAgentChat = ({
     );
   };
 
-  const autonomySwitch = (variant: 'default' | 'dark' | 'parchment' = 'default') => (
-    <div className="flex items-center gap-2">
-      <span className={cn(
-        'hidden text-xs font-medium sm:inline',
-        variant === 'dark' ? 'text-white/70' : variant === 'parchment' ? 'text-[#6e7673]' : 'text-gray-500',
-      )}>Agent mode</span>
-      <Switch
-        name="agent-autonomy"
-        size="tiny"
-        value={autonomy}
-        onValueChange={(next) => onAutonomyChange(next as AgentAutonomy)}
-        className={cn(
-          'shadow-none',
-          variant === 'parchment'
-            ? 'border border-[#d6d6d6] bg-[#f4efea]'
-            : 'border border-gray-alpha-400 bg-background-100',
-        )}
-      >
-        {AUTONOMY_OPTIONS.map((option) => (
-          <Tooltip key={option.value} text={option.hint} className="h-full">
-            <Switch.Control
-              name="agent-autonomy"
-              size="tiny"
-              label={option.label}
-              value={option.value}
-              activeClassName={variant === 'parchment' ? 'bg-[#003f2e] text-white fill-white' : undefined}
-            />
-          </Tooltip>
-        ))}
-      </Switch>
-    </div>
-  );
-
   const suggestionChips = (centered = false) => (
     <div className={`flex flex-wrap gap-2 ${centered ? 'justify-center' : ''}`}>
       {SUGGESTIONS.map((suggestion) => (
@@ -601,7 +554,6 @@ export const InvestorAgentChat = ({
         className="py-0"
         onSubmit={send}
         autoFocus={expanded}
-        toolbarExtras={expanded ? autonomySwitch('dark') : undefined}
       />
     </motion.div>
   );
@@ -694,7 +646,6 @@ export const InvestorAgentChat = ({
         onSubmit={send}
         role="investor"
         suggestions={SUGGESTIONS}
-        toolbarExtras={autonomySwitch('parchment')}
         transcript={pageTranscript}
         transcriptRef={transcriptRef}
       />
@@ -740,7 +691,6 @@ export const InvestorAgentChat = ({
 
           {promptDock}
 
-          <div className="mt-3">{autonomySwitch()}</div>
 
           {!hasConversation && <div className="mt-3">{suggestionChips()}</div>}
         </>
