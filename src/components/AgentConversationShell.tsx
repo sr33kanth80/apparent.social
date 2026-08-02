@@ -1,6 +1,4 @@
 import type { ReactNode, RefObject } from 'react';
-import { ArrowUpRight, Megaphone, PenLine, Search, ShieldCheck, Sparkles } from 'lucide-react';
-
 import { InvestorAIPrompt } from '@/components/InvestorAIAssist';
 import { LogoIcon } from '@/components/LogoIcon';
 import { cn } from '@/lib/utils';
@@ -35,8 +33,6 @@ const roleCopy = {
     suggestionLabels: ['Source founders', 'Test thesis fit', 'Draft outreach', 'Plan diligence'],
   },
 } as const;
-
-const SUGGESTION_ICONS = [Search, Sparkles, PenLine, Megaphone];
 
 export const AgentConversationShell = ({
   role,
@@ -102,36 +98,6 @@ export const AgentConversationShell = ({
               />
             </div>
 
-            <div className="mx-auto mt-5 grid max-w-[680px] gap-3 text-left sm:grid-cols-2">
-              {suggestions.map((suggestion, index) => {
-                const Icon = SUGGESTION_ICONS[index % SUGGESTION_ICONS.length];
-                return (
-                  <button
-                    key={suggestion}
-                    type="button"
-                    onClick={() => onSubmit(suggestion)}
-                    className="group flex min-h-[104px] items-start gap-3 rounded-2xl bg-white p-4 text-left shadow-[0_1px_2px_rgba(0,0,0,0.08)] transition-colors hover:bg-[#f8f3ef]"
-                  >
-                    <Icon className="mt-0.5 h-4 w-4 shrink-0 text-[#003f2e]" />
-                    <span className="min-w-0 flex-1">
-                      <span className="flex items-center justify-between gap-3 text-sm font-medium text-[#333333]">
-                        {copy.suggestionLabels[index] ?? 'Explore'}
-                        <ArrowUpRight className="h-3.5 w-3.5 shrink-0 text-[#a6a6a6] transition-colors group-hover:text-[#003f2e]" />
-                      </span>
-                      <span className="mt-1.5 block text-[13px] leading-5 text-[#6e7673]">{suggestion}</span>
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
-
-            <div className="mt-7 flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-[11px] text-[#a6a6a6]">
-              <span className="inline-flex items-center gap-1.5">
-                <ShieldCheck className="h-3.5 w-3.5" />
-                {copy.context}
-              </span>
-              <span>Follow-ups keep this conversation in context</span>
-            </div>
           </div>
         </div>
       ) : (
