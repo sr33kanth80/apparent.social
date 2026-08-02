@@ -190,7 +190,7 @@ const TOOLS = [
             type: 'object',
             properties: {
               company: { type: 'string', description: 'The startup/company name.' },
-              founder: { type: 'string', description: "The founder's name if known; otherwise a short descriptor like 'Founding team'." },
+              founder: { type: 'string', description: "The founder's actual name, only if you read it on a real page. Leave empty when you do not know it — never substitute a descriptor like 'Founding team', which reads as an answer while carrying no information." },
               homepage_url: { type: 'string', description: "The startup's canonical homepage URL (e.g. https://acme.com). Required — this is the dedup key." },
               detail: { type: 'string', description: 'One or two sentences: what they build, the wedge, and any real traction/launch signal you found. Grounded only in what you read.' },
               sector: { type: 'string', description: 'Primary sector/category (e.g. "AI infra", "fintech").' },
@@ -375,7 +375,9 @@ export default async function handler(req, res) {
           const now = new Date().toISOString();
           byUrl.set(canonical, {
             company,
-            founder: str(input?.founder).trim() || 'Founding team',
+            // Stored empty when unknown so the UI can say so. It used to default
+            // to 'Founding team', which rendered as "Founder: Founding team".
+            founder: str(input?.founder).trim(),
             detail,
             source_type: 'web',
             source_url: canonical,

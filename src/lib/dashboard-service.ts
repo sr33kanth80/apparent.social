@@ -7,6 +7,7 @@ import {
   seedBuilderNodes,
   seedMeetups,
 } from '@/lib/app-defaults';
+import { realFounderName } from '@/lib/sourced-founder';
 import type {
   AppUser,
   AgentProfilePatch,
@@ -1509,7 +1510,7 @@ export const loadSourceSignal = async (
     if (error || !data) return null;
     return {
       company: String(data.company ?? ''),
-      founder: String(data.founder ?? ''),
+      founder: realFounderName(data.founder),
       detail: String(data.detail ?? ''),
       sourceType: String(data.source_type ?? ''),
       location: String(data.location ?? ''),
@@ -1542,7 +1543,7 @@ export const loadSourceSignalDetail = async (
     return {
       id: String(data.id ?? signalId),
       company: String(data.company ?? ''),
-      founder: String(data.founder ?? ''),
+      founder: realFounderName(data.founder),
       detail: String(data.detail ?? ''),
       sourceType: String(data.source_type ?? ''),
       sourceUrl: String(data.source_url ?? ''),

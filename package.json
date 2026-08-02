@@ -7,7 +7,7 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
-    "test": "node --test tests/apparent-agent-runtime.test.js tests/agent-guard.test.js tests/fut-card.test.js && node scripts/ingest-signals.test.mjs",
+    "test": "node --test tests/apparent-agent-runtime.test.js tests/agent-guard.test.js tests/fut-card.test.js tests/sourced-founder.test.js && node scripts/ingest-signals.test.mjs",
     "preview": "vite preview"
   },
   "dependencies": {
