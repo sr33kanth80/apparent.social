@@ -2,11 +2,14 @@
 # Builds an original ambient pad bed (royalty-free, deterministic) for the explainer.
 # Slow chord swells: Cmaj7 -> Am7 -> Fmaj7 -> G, looped, reverbed, low-passed, quiet.
 set -e
+TARGET="${1:-63}"          # total bed length in seconds
+OUTFILE="${2:-public/music/bed.mp3}"
 TMP="./mtmp"
 rm -rf "$TMP"; mkdir -p "$TMP"
-OUT="public/music"
-mkdir -p "$OUT"
+mkdir -p "$(dirname "$OUTFILE")"
 DUR=4.0
+LOOPS=$(python -c "import math;print(math.ceil($TARGET/16)+1)")   # 16s per progression
+FADEOUT=$(python -c "print(max(0,$TARGET-5))")
 
 chord () { # $1=outfile  $2..=freqs
   local out="$1"; shift
@@ -25,10 +28,10 @@ chord "$TMP/c4.wav" 196.00 261.63 293.66 392.00   # Gsus
 ffmpeg -y -loglevel error -i "$TMP/c1.wav" -i "$TMP/c2.wav" -i "$TMP/c3.wav" -i "$TMP/c4.wav" \
   -filter_complex "[0][1][2][3]concat=n=4:v=0:a=1[a]" -map "[a]" "$TMP/prog.wav"
 
-# Loop the 16s progression to cover ~64s, then warm it up and quiet it down.
-ffmpeg -y -loglevel error -stream_loop 3 -i "$TMP/prog.wav" \
-  -filter_complex "vibrato=f=5:d=0.04,aecho=0.8:0.9:120|280:0.3|0.2,lowpass=f=1900,highpass=f=90,afade=t=in:d=2,afade=t=out:st=58:d=5,volume=0.16" \
-  -t 63 -ar 44100 -ac 2 "$OUT/bed.mp3"
+# Loop the 16s progression to cover the target, then warm it up and quiet it down.
+ffmpeg -y -loglevel error -stream_loop "$LOOPS" -i "$TMP/prog.wav" \
+  -filter_complex "vibrato=f=5:d=0.04,aecho=0.8:0.9:120|280:0.3|0.2,lowpass=f=1900,highpass=f=90,afade=t=in:d=2,afade=t=out:st=${FADEOUT}:d=5,volume=0.16" \
+  -t "$TARGET" -ar 44100 -ac 2 "$OUTFILE"
 
 rm -rf "$TMP"
-ffprobe -v error -show_entries format=duration -of csv=p=0 "$OUT/bed.mp3"
+ffprobe -v error -show_entries format=duration -of csv=p=0 "$OUTFILE"

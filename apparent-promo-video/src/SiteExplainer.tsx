@@ -13,12 +13,12 @@ import { loadFont as loadSans } from "@remotion/google-fonts/Inter";
 import { loadFont as loadMono } from "@remotion/google-fonts/JetBrainsMono";
 import voDur from "./vo-durations.json";
 
-const serif = loadSerif().fontFamily;
-const sans = loadSans().fontFamily;
-const mono = loadMono().fontFamily;
+export const serif = loadSerif().fontFamily;
+export const sans = loadSans().fontFamily;
+export const mono = loadMono().fontFamily;
 
 // ── Design tokens — lifted from src/apparent-theme.css (.ed-page) ────────────
-const C = {
+export const C = {
   canvas: "#f7f4ef",
   paper: "#eae5de",
   white: "#ffffff",
@@ -30,25 +30,25 @@ const C = {
   blue: "#1d9bf0",
   green: "#16a34a",
 };
-const HARD = `6px 6px 0 0 ${C.border}`;
-const HARD_SM = `3px 3px 0 0 ${C.border}`;
-const ease = Easing.bezier(0.16, 1, 0.3, 1);
-const clamp = { extrapolateLeft: "clamp" as const, extrapolateRight: "clamp" as const };
+export const HARD = `6px 6px 0 0 ${C.border}`;
+export const HARD_SM = `3px 3px 0 0 ${C.border}`;
+export const ease = Easing.bezier(0.16, 1, 0.3, 1);
+export const clamp = { extrapolateLeft: "clamp" as const, extrapolateRight: "clamp" as const };
 
-const fade = (f: number, a: number, b: number) =>
+export const fade = (f: number, a: number, b: number) =>
   interpolate(f, [a, b], [0, 1], { ...clamp, easing: ease });
-const riseY = (f: number, start: number, dist = 34, dur = 20) =>
+export const riseY = (f: number, start: number, dist = 34, dur = 20) =>
   interpolate(f, [start, start + dur], [dist, 0], { ...clamp, easing: ease });
 
 // ── Apparent logomark (from src/components/LogoIcon.tsx) ─────────────────────
-const Logo = ({ size = 40, color = C.ink }: { size?: number; color?: string }) => (
+export const Logo = ({ size = 40, color = C.ink }: { size?: number; color?: string }) => (
   <svg viewBox="0 0 256 256" width={size} height={size} fill={color}>
     <path d="M 128.005 191.173 C 128.448 156.208 156.93 128 192 128 L 192 64 L 128 64 C 128 99.346 99.346 128 64 128 L 64 192 L 128 192 Z M 192 256 L 64 256 C 28.654 256 0 227.346 0 192 L 0 64 L 64 64 L 64 0 L 192 0 C 227.346 0 256 28.654 256 64 L 256 192 L 192 192 Z" />
   </svg>
 );
 
 // Faint editorial grid on the warm paper canvas.
-const Canvas = ({ children }: { children?: React.ReactNode }) => (
+export const Canvas = ({ children }: { children?: React.ReactNode }) => (
   <AbsoluteFill style={{ background: C.canvas }}>
     <div
       style={{
@@ -63,13 +63,13 @@ const Canvas = ({ children }: { children?: React.ReactNode }) => (
   </AbsoluteFill>
 );
 
-const Eyebrow = ({ children, color = C.graphite }: { children: React.ReactNode; color?: string }) => (
+export const Eyebrow = ({ children, color = C.graphite }: { children: React.ReactNode; color?: string }) => (
   <div style={{ fontFamily: mono, fontSize: 20, letterSpacing: "0.16em", textTransform: "uppercase", color, fontWeight: 500 }}>
     {children}
   </div>
 );
 
-const BrandRow = () => (
+export const BrandRow = () => (
   <div style={{ position: "absolute", top: 56, left: 110, right: 110, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
     <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
       <Logo size={38} />
@@ -88,7 +88,7 @@ const BrandRow = () => (
 );
 
 // Sharp, hard-bordered surface with offset shadow — the site's signature card.
-const Card = ({
+export const Card = ({
   children,
   style,
   bg = C.white,
@@ -100,23 +100,23 @@ const Card = ({
   <div style={{ background: bg, border: `1px solid ${C.border}`, boxShadow: HARD, ...style }}>{children}</div>
 );
 
-const Chip = ({ children, bg = C.white, color = C.ink }: { children: React.ReactNode; bg?: string; color?: string }) => (
+export const Chip = ({ children, bg = C.white, color = C.ink }: { children: React.ReactNode; bg?: string; color?: string }) => (
   <div style={{ background: bg, color, border: `1px solid ${C.border}`, boxShadow: HARD_SM, padding: "12px 20px", fontFamily: sans, fontSize: 19, fontWeight: 500 }}>
     {children}
   </div>
 );
 
-const StepNum = ({ n, color = C.ink }: { n: string; color?: string }) => (
+export const StepNum = ({ n, color = C.ink }: { n: string; color?: string }) => (
   <div style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 66, height: 66, border: `1px solid ${C.border}`, boxShadow: HARD_SM, background: C.white, fontFamily: serif, fontSize: 34, color }}>
     {n}
   </div>
 );
 
-const Headline = ({ children, size = 96, style }: { children: React.ReactNode; size?: number; style?: React.CSSProperties }) => (
+export const Headline = ({ children, size = 96, style }: { children: React.ReactNode; size?: number; style?: React.CSSProperties }) => (
   <div style={{ fontFamily: serif, fontSize: size, lineHeight: 1.02, color: C.ink, letterSpacing: "-0.02em", ...style }}>{children}</div>
 );
 
-const Sub = ({ children, style }: { children: React.ReactNode; style?: React.CSSProperties }) => (
+export const Sub = ({ children, style }: { children: React.ReactNode; style?: React.CSSProperties }) => (
   <div style={{ fontFamily: sans, fontSize: 29, lineHeight: 1.45, color: C.graphite, letterSpacing: "-0.01em", ...style }}>{children}</div>
 );
 
