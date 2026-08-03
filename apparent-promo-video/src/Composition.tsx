@@ -9,7 +9,7 @@ import {
   useVideoConfig,
 } from "remotion";
 
-const colors = {
+export const colors = {
   ink: "#111111",
   offWhite: "#fbfaf7",
   paper: "#f4f1eb",
@@ -21,23 +21,23 @@ const colors = {
   greenText: "#bcd99a",
 };
 
-const serif = "Georgia, 'Times New Roman', serif";
-const sans = "Inter, Arial, sans-serif";
+export const serif = "Georgia, 'Times New Roman', serif";
+export const sans = "Inter, Arial, sans-serif";
 
-const ease = Easing.bezier(0.16, 1, 0.3, 1);
+export const ease = Easing.bezier(0.16, 1, 0.3, 1);
 
-const clamp = {
+export const clamp = {
   extrapolateLeft: "clamp" as const,
   extrapolateRight: "clamp" as const,
 };
 
-const fade = (frame: number, start: number, end: number) =>
+export const fade = (frame: number, start: number, end: number) =>
   interpolate(frame, [start, end], [0, 1], { ...clamp, easing: ease });
 
-const outro = (frame: number, start: number, end: number) =>
+export const outro = (frame: number, start: number, end: number) =>
   interpolate(frame, [start, end], [1, 0], { ...clamp, easing: Easing.ease });
 
-const PaperBackground = ({ wave = 0 }: { wave?: number }) => (
+export const PaperBackground = ({ wave = 0 }: { wave?: number }) => (
   <AbsoluteFill style={{ background: colors.offWhite }}>
     <div
       style={{
@@ -65,7 +65,7 @@ const PaperBackground = ({ wave = 0 }: { wave?: number }) => (
   </AbsoluteFill>
 );
 
-const Brand = ({ light = false }: { light?: boolean }) => (
+export const Brand = ({ light = false }: { light?: boolean }) => (
   <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
     <Img src={staticFile("assets/logo-founder-green.png")} style={{ width: 42, height: 42 }} />
     <div
@@ -156,7 +156,7 @@ const HeroTiles = () => {
   );
 };
 
-const FounderCard = ({ scale = 1, x = 0, y = 0 }: { scale?: number; x?: number; y?: number }) => {
+export const FounderCard = ({ scale = 1, x = 0, y = 0 }: { scale?: number; x?: number; y?: number }) => {
   const frame = useCurrentFrame();
   const dots = Array.from({ length: 120 }, (_, i) => {
     const row = i % 6;
@@ -305,7 +305,7 @@ const SwipeDeck = () => {
   );
 };
 
-const MiniBuilderCard = ({
+export const MiniBuilderCard = ({
   name,
   score,
   meta,
@@ -380,7 +380,7 @@ const MiniBuilderCard = ({
   </div>
 );
 
-const ScreenshotFrame = ({
+export const ScreenshotFrame = ({
   src,
   x,
   y,
