@@ -418,6 +418,8 @@ function BaseSessionNavBar({
                                       <Plus className="h-3 w-3 shrink-0 opacity-70" />
                                       <span>New chat</span>
                                     </button>
+                                    {/* ponytail: cap the thread list so it scrolls instead of pushing the rest of the sidebar down */}
+                                    <div className="max-h-[15rem] space-y-0.5 overflow-y-auto overflow-x-hidden">
                                     {agentThreads.map((thread) => {
                                       const threadPath = `${item.path}?thread=${encodeURIComponent(thread.id)}`;
                                       const isCurrent = activePath === item.path && activeAgentThreadId === thread.id;
@@ -459,6 +461,7 @@ function BaseSessionNavBar({
                                         </div>
                                       );
                                     })}
+                                    </div>
                                   </div>
                                 )}
                               </div>
