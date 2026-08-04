@@ -492,8 +492,17 @@ body {
   max-width: 760px;
 }
 
+/* ponytail: the hero column is a tight 760px, but the single-line headline
+   is wider than that. Size it to its content and center it on the viewport
+   so it doesn't overflow its narrow column to the right. */
 .ed-hero .ed-display {
   white-space: nowrap;
+  width: max-content;
+  max-width: 92vw;
+  margin-inline: 0;
+  position: relative;
+  left: 50%;
+  transform: translateX(-50%);
 }
 
 .ed-surface {
@@ -941,6 +950,10 @@ body {
     font-size: clamp(2.85rem, 13.5vw, 4.25rem);
     line-height: 0.96;
     white-space: normal;
+    width: auto;
+    position: static;
+    left: auto;
+    transform: none;
   }
 
   .ed-hero .ed-sub {
