@@ -493,7 +493,7 @@ body {
 }
 
 .ed-hero .ed-display {
-  white-space: normal;
+  white-space: nowrap;
 }
 
 .ed-surface {
