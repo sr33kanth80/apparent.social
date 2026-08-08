@@ -19,7 +19,7 @@ const AuthActionPlaceholder = () => (
   <span aria-hidden="true" className="ed-btn ed-btn-blue ed-nav-auth-placeholder">Dashboard</span>
 );
 
-const SignedOutAction = () => <Link className="ed-btn ed-btn-blue" to="/login">Get Started</Link>;
+const SignedOutAction = () => <Link className="ed-btn ed-btn-blue" to="/login">Explore Apparent</Link>;
 
 const KindeAuthAction = () => {
   const { getAccessToken, isAuthenticated, isLoading, user } = useKindeAuth();

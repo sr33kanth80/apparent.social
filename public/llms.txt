@@ -1,6 +1,6 @@
 # Apparent
 
-Apparent helps founders find thesis-fit venture investors and helps investors discover founders who match their stage, sector, geography, and proof signals.
+Apparent opens venture discovery to more people. It helps investors discover startups, understand the proof behind them, and connect with founders who match their conviction. Founders launch with evidence they control and get matched by thesis, stage, sector, geography, and proof.
 
 Canonical site: https://apparent.social
 Sitemap: https://apparent.social/sitemap.xml
@@ -10,7 +10,7 @@ Sitemap: https://apparent.social/sitemap.xml
 - Home: https://apparent.social/
 - How it works: https://apparent.social/our-thesis
 - For founders: https://apparent.social/for-founders
-- For VCs: https://apparent.social/for-vcs
+- For investors: https://apparent.social/for-vcs
 - VC heat map: https://apparent.social/heat-map
 - About: https://apparent.social/about
 - Resources: https://apparent.social/resources

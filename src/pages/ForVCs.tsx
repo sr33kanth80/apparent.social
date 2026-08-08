@@ -111,19 +111,19 @@ export const ForVCs = () => (
       <section className="ed-subhero ed-inner ed-split">
         <div>
           <h1 className="ed-display">
-            Get early access to startups already proving <em>commercial demand.</em>
+            You do not need to work at a VC firm to <em>invest like one.</em>
           </h1>
-          <p className="ed-lede">Apparent gives emerging managers, GPs, and investment teams a private pipeline of companies pre-vetted for thesis fit. Prioritize <span className="ed-emoji-keep">revenue-generating startups <span className="ed-copy-emoji">🧭</span></span>, early traction, or exceptional founder proof, then take the strongest deals from first look to <span className="ed-emoji-keep">partner meeting <span className="ed-copy-emoji">📈</span></span>.</p>
+          <p className="ed-lede">Apparent gives new and experienced investors the tools to build a thesis, discover startups, understand the evidence behind them, and connect with the founders they believe in. Your conviction is the starting point.</p>
           <div className="ed-cta">
-            <Link className="ed-btn ed-btn-green" to="/login?role=investor">Build your pipeline
+            <Link className="ed-btn ed-btn-green" to="/login?role=investor">Explore startups
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M7 17 17 7M9 7h8v8" /></svg>
             </Link>
-            <Link className="ed-btn ed-btn-outline" to="/our-thesis">See how Apparent sources</Link>
+            <Link className="ed-btn ed-btn-outline" to="/our-thesis">See how Apparent works</Link>
           </div>
           <div className="ed-trust">
-            <span className="ed-emoji-keep"><b>1,800+</b> investors on Apparent <span className="ed-copy-emoji">💸</span></span><span className="ed-d" />
-            <span className="ed-emoji-keep">Pre-vetted for thesis fit <span className="ed-copy-emoji">✅</span></span><span className="ed-d" />
-            <span className="ed-emoji-keep">Revenue and traction surfaced upfront <span className="ed-copy-emoji">🤝</span></span>
+            <span><b>1,800+</b> investors mapped</span><span className="ed-d" />
+            <span>For angels, operators, and funds</span><span className="ed-d" />
+            <span>Proof behind every match</span>
           </div>
         </div>
         <InvestorSourcingPreview />
@@ -133,15 +133,15 @@ export const ForVCs = () => (
       <section className="ed-sec ed-divider">
         <div className="ed-inner ed-work">
           <div>
-            <h2 className="ed-sec-title">Start with companies that already clear your bar.</h2>
-            <p className="ed-lead">Every company is screened against your mandate before it reaches the pipeline. Revenue status, traction, stage, location, and founder proof sit together so you know why the deal deserves a look.</p>
-            <Link className="ed-btn ed-btn-green" to="/login?role=investor" style={{ marginTop: 28 }}>Set your thesis</Link>
+            <h2 className="ed-sec-title">Turn your conviction into an investment thesis.</h2>
+            <p className="ed-lead">Choose the companies you want to understand by sector, stage, location, check size, and founder signals. Apparent shows you why each match deserves your attention.</p>
+            <Link className="ed-btn ed-btn-green" to="/login?role=investor" style={{ marginTop: 28 }}>Build your thesis</Link>
           </div>
           <div className="ed-steps">
-            <div className="ed-step"><span className="ed-n">01</span><div><h3>Set your investment thesis</h3><p>Capture the sectors, stages, geographies, check size, must-have signals, pass reasons, and companies that define your taste.</p></div></div>
-            <div className="ed-step"><span className="ed-n">02</span><div><h3>Receive pre-vetted deal flow</h3><p>Apparent continuously screens founders against your thesis and brings forward the companies most worth a first pass.</p></div></div>
-            <div className="ed-step"><span className="ed-n">03</span><div><h3>See where talent is clustering</h3><p>Search a city or neighborhood to find builders and new companies forming around your areas of focus.</p></div></div>
-            <div className="ed-step"><span className="ed-n">04</span><div><h3>Work the pipeline</h3><p>Save a company, draft the intro, and move the opportunity from screening to first meeting, diligence, and partner review.</p></div></div>
+            <div className="ed-step"><span className="ed-n">01</span><div><h3>Define what you believe</h3><p>Capture the sectors, stages, places, check size, must-have signals, and pass reasons that shape your point of view.</p></div></div>
+            <div className="ed-step"><span className="ed-n">02</span><div><h3>Discover matching startups</h3><p>Apparent screens founders against your thesis and brings forward the companies most worth understanding.</p></div></div>
+            <div className="ed-step"><span className="ed-n">03</span><div><h3>Follow the proof</h3><p>See the founder&apos;s work, available traction, source links, and the exact reasons the opportunity fits.</p></div></div>
+            <div className="ed-step"><span className="ed-n">04</span><div><h3>Connect and keep learning</h3><p>Save the company, draft the intro, and carry its proof from first look through meetings and diligence.</p></div></div>
           </div>
         </div>
       </section>
@@ -149,12 +149,12 @@ export const ForVCs = () => (
       {/* BENEFITS */}
       <section className="ed-sec ed-divider">
         <div className="ed-inner">
-          <h2 className="ed-sec-title">Know what is working before the first meeting.</h2>
+          <h2 className="ed-sec-title">Build conviction before the first conversation.</h2>
           <div className="ed-benefits">
-            <div className="ed-benefit"><svg className="ed-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="12" cy="12" r="9" /><circle cx="12" cy="12" r="5" /><circle cx="12" cy="12" r="1" /></svg><h3>Pre-vetted for fit</h3><p>Each company is screened against your sectors, stage, geography, check size, must-have signals, and pass reasons.</p></div>
-            <div className="ed-benefit"><svg className="ed-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="11" cy="11" r="7" /><path d="m21 21-4.3-4.3" /></svg><h3>Revenue and traction upfront</h3><p>See MRR or ARR, paying customers, usage, pilots, launches, and other available proof before you spend time on a meeting.</p></div>
-            <div className="ed-benefit"><svg className="ed-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="3" y="4" width="5" height="16" rx="1" /><rect x="10" y="4" width="5" height="11" rx="1" /><rect x="17" y="4" width="4" height="7" rx="1" /></svg><h3>A partnership-ready pipeline</h3><p>Keep the company, the reason to lean in, and the supporting proof together from first pass through partner review.</p></div>
-            <div className="ed-benefit"><svg className="ed-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9" /><path d="M13.7 21a2 2 0 0 1-3.4 0" /></svg><h3>Fewer cold starts</h3><p>Open every company with enough context to know what changed, what is working, and what you need to diligence next.</p></div>
+            <div className="ed-benefit"><svg className="ed-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="12" cy="12" r="9" /><circle cx="12" cy="12" r="5" /><circle cx="12" cy="12" r="1" /></svg><h3>Matched to your thesis</h3><p>Each company is screened against your sectors, stage, geography, check size, must-have signals, and pass reasons.</p></div>
+            <div className="ed-benefit"><svg className="ed-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="11" cy="11" r="7" /><path d="m21 21-4.3-4.3" /></svg><h3>Founder proof upfront</h3><p>Review available revenue, customers, usage, pilots, launches, and shipped work before requesting a meeting.</p></div>
+            <div className="ed-benefit"><svg className="ed-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="3" y="4" width="5" height="16" rx="1" /><rect x="10" y="4" width="5" height="11" rx="1" /><rect x="17" y="4" width="4" height="7" rx="1" /></svg><h3>Permissioned business signals</h3><p>In development: founders will connect selected campaign and business tools, then decide which performance signals you can see.</p></div>
+            <div className="ed-benefit"><svg className="ed-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9" /><path d="M13.7 21a2 2 0 0 1-3.4 0" /></svg><h3>A living view of momentum</h3><p>Follow meaningful founder updates and changes as your understanding of the company develops.</p></div>
           </div>
         </div>
       </section>
@@ -162,19 +162,19 @@ export const ForVCs = () => (
       {/* DARK BAND */}
       <section className="ed-band">
         <div className="ed-inner">
-          <h2>Walk into partner meeting already knowing why this deal fits.</h2>
-          <p>Start with pre-vetted companies, clear traction, and the proof behind the match. Build conviction before the round gets competitive and allocation gets tight.</p>
+          <h2>Anyone can form a thesis. Apparent helps you act on it.</h2>
+          <p>Start with relevant companies and the proof behind each match. Develop conviction before the market tells you what to think.</p>
         </div>
       </section>
 
       {/* SIGNAL TO DEAL ROOM */}
       <section className="ed-sec ed-divider">
         <div className="ed-inner">
-          <h2 className="ed-sec-title">From first signal to partner meeting.</h2>
+          <h2 className="ed-sec-title">From first signal to informed conviction.</h2>
           <div className="ed-infocards" style={{ marginTop: 'clamp(32px,5vw,56px)' }}>
             <div className="ed-infocard"><b>First pass</b><p>Quickly screen each company for thesis fit, founder-market fit, traction, stage, and timing.</p></div>
             <div className="ed-infocard"><b>First meeting</b><p>Start with the signal that caught your attention and a drafted intro you can make your own.</p></div>
-            <div className="ed-infocard"><b>Partner review</b><p>Keep the opportunity, supporting proof, and current stage together as the deal moves forward.</p></div>
+            <div className="ed-infocard"><b>Ongoing diligence</b><p>Keep the opportunity, supporting proof, and current stage together as your understanding develops.</p></div>
           </div>
         </div>
       </section>
@@ -195,10 +195,10 @@ export const ForVCs = () => (
         <div className="ed-inner">
           <h2 className="ed-sec-title">Questions, answered.</h2>
           <div className="ed-faq">
-            <div className="ed-q"><h3>Is this another startup database?</h3><p>No. A database gives you names. Apparent gives you thesis-matched deal flow, the reason each company deserves a first pass, and the proof to decide whether to lean in.</p></div>
+            <div className="ed-q"><h3>Do I need to be a professional VC?</h3><p>No. Apparent is for angels, operators, emerging investors, funds, and anyone building a serious investment thesis.</p></div>
             <div className="ed-q"><h3>What does pre-vetted mean?</h3><p>Pre-vetted means screened for thesis fit with the available traction, source links, and founder proof attached. It is a stronger starting point for your first pass, not a substitute for due diligence.</p></div>
             <div className="ed-q"><h3>Can I focus on revenue-generating startups?</h3><p>Yes. Revenue is a supported traction signal, including MRR and ARR. Add it to your mandate and Apparent can prioritize companies showing revenue, paying customers, and commercial momentum.</p></div>
-            <div className="ed-q"><h3>Do I have to write the first message?</h3><p>No. Apparent drafts an intro from your thesis and the signal that triggered the match. You add your point of view, review it, and send.</p></div>
+            <div className="ed-q"><h3>Can I complete an investment through Apparent?</h3><p>Not yet. Apparent currently helps you discover, understand, and connect with startups. Direct investment support is in development.</p></div>
           </div>
         </div>
       </section>
@@ -207,10 +207,10 @@ export const ForVCs = () => (
       <section className="ed-sec ed-divider ed-final">
         <div className="ed-inner">
           <LogoIcon className="ed-mark" />
-          <h2>Bring better deals to the partner meeting.</h2>
-          <p>Turn your thesis into a living pipeline, make the first pass faster, and reach the right founders before the round crowds up.</p>
+          <h2>Build your own venture thesis.</h2>
+          <p>Discover the founders who fit what you believe, understand the evidence, and start the relationship with context.</p>
           <div className="ed-cta">
-            <Link className="ed-btn ed-btn-green" to="/login?role=investor">Build your pipeline</Link>
+            <Link className="ed-btn ed-btn-green" to="/login?role=investor">Explore startups</Link>
             <Link className="ed-btn ed-btn-outline" to="/our-thesis">See how it works</Link>
           </div>
         </div>

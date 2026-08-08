@@ -133,8 +133,8 @@ export const OurThesis = () => (
     <main>
       {/* HERO */}
       <section className="ed-subhero ed-inner">
-        <h1 className="ed-display">How Apparent <em>works.</em></h1>
-        <p className="ed-lede">Apparent turns founder proof and investor thesis into a usable match: profile, fit reason, map context, outreach, and deal flow.</p>
+        <h1 className="ed-display">From conviction to <em>connection.</em></h1>
+        <p className="ed-lede">Apparent helps founders make momentum visible and gives anyone serious about investing the tools to discover, understand, and connect with companies that fit what they believe.</p>
         <div className="ed-cta">
           <Link className="ed-btn ed-btn-blue" to="/login?role=founder">I&apos;m a founder</Link>
           <Link className="ed-btn ed-btn-green" to="/login?role=investor">I&apos;m an investor</Link>
@@ -144,8 +144,8 @@ export const OurThesis = () => (
       {/* INTRO */}
       <section className="ed-sec ed-divider" style={{ paddingBlock: 'clamp(40px,6vw,72px)' }}>
         <div className="ed-inner">
-          <h2 className="ed-sec-title">Five pieces, one fundraising workflow.</h2>
-          <p className="ed-lead" style={{ marginTop: 20, maxWidth: '52ch' }}>The product is not just a directory. Apparent keeps the evidence, thesis, geography, message, and pipeline connected from the first match to the next step.</p>
+          <h2 className="ed-sec-title">Five pieces, one path to conviction.</h2>
+          <p className="ed-lead" style={{ marginTop: 20, maxWidth: '52ch' }}>Apparent is not just a directory. It keeps founder proof, investment thesis, geography, conversation, and diligence connected from the first match to the next step.</p>
         </div>
       </section>
 
@@ -156,7 +156,7 @@ export const OurThesis = () => (
             <div>
               <span className="ed-n">01</span>
               <h3>Create a Proof Profile</h3>
-              <p>Founders put the useful evidence in one place: launch, traction, customers, product, GitHub, pitch, and the current ask.</p>
+              <p>Founders put useful evidence in one place—launch, traction, customers, product, GitHub, pitch, and the current ask—then control who can see it.</p>
             </div>
             <div className="ed-figure ed-product-figure"><div className="ed-proof-card">
               <div className="ed-ui-top">
@@ -187,8 +187,8 @@ export const OurThesis = () => (
           <article className="ed-bigstep">
             <div>
               <span className="ed-n">02</span>
-              <h3>Match it to thesis</h3>
-              <p>Investors define what they actually fund. Apparent compares that thesis to founder proof, stage, category, geography, and timing.</p>
+              <h3>Match it to conviction</h3>
+              <p>People define what they want to back. Apparent compares that thesis to founder proof, stage, category, geography, and timing.</p>
             </div>
             <div className="ed-figure ed-product-figure"><div className="ed-match-card">
               <div className="ed-ui-top">
@@ -273,8 +273,8 @@ export const OurThesis = () => (
           <article className="ed-bigstep">
             <div>
               <span className="ed-n">05</span>
-              <h3>Move fit into deal flow</h3>
-              <p>Investors can save, review, prioritize, and follow up with builders without losing the proof that made the match matter.</p>
+              <h3>Carry conviction forward</h3>
+              <p>Investors can save, review, prioritize, and follow up with founders without losing the proof that made the match matter.</p>
             </div>
             <div className="ed-figure ed-product-figure"><div className="ed-pipeline-card">
               <div className="ed-ui-top">
@@ -298,8 +298,8 @@ export const OurThesis = () => (
       {/* CLOSING */}
       <section className="ed-band">
         <div className="ed-inner">
-          <h2>Show the work. Declare the thesis. Let Apparent connect the fit.</h2>
-          <p>Start with the side of the marketplace you are on. Apparent keeps the rest of the workflow attached.</p>
+          <h2>Show the work. Define what you believe. Let Apparent connect the fit.</h2>
+          <p>Whether you are building a company or learning to invest in one, Apparent keeps the evidence and relationship attached.</p>
           <div className="ed-cta" style={{ marginTop: 32 }}>
             <Link className="ed-btn ed-btn-blue" to="/login?role=founder">Start as founder</Link>
             <Link className="ed-btn ed-btn-green" to="/login?role=investor">Start as investor</Link>

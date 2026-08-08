@@ -6,20 +6,20 @@ export const EditorialFooter = () => (
     <div className="ed-inner">
       <div className="ed-bf-top">
         <div className="ed-bf-cta">
-          <h2>Where proof meets capital.</h2>
+          <h2>Back the startups you believe in.</h2>
           <p className="ed-bf-tag">
-            Proof of work is the new warm intro. Founders show what they have built; investors find them by
-            thesis, proof, and timing.
+            Apparent opens venture discovery to more people. Founders make momentum visible; investors find
+            companies through conviction, proof, and timing.
           </p>
           <div className="ed-cta">
-            <Link className="ed-btn ed-btn-green ed-bf-btn" to="/login?role=investor">Source your deal flow</Link>
+            <Link className="ed-btn ed-btn-green ed-bf-btn" to="/login?role=investor">Explore startups</Link>
             <Link className="ed-btn ed-bf-btn ed-btn-outline-blue" to="/for-founders">Launch on Apparent</Link>
           </div>
         </div>
         <div className="ed-bf-cols">
           <div>
             <h4>Product</h4>
-            <Link to="/for-vcs">Investor sourcing</Link>
+            <Link to="/for-vcs">For investors</Link>
             <Link to="/for-founders">Founder profiles</Link>
             <Link to="/heat-map">Builder Radar</Link>
             <Link to="/our-thesis">How it works</Link>
@@ -40,7 +40,7 @@ export const EditorialFooter = () => (
       </div>
       <img className="ed-bf-word" src="/apparent-wordmark.png" alt="Apparent" />
       <div className="ed-bf-bottom">
-        <span>&copy; 2026 Apparent. Verified dealflow for investors.</span>
+        <span>&copy; 2026 Apparent. Venture discovery, opened up.</span>
         <span className="ed-bf-legal">
           <Link to="/privacy">Privacy</Link>
           <Link to="/terms">Terms</Link>

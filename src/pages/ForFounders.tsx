@@ -12,24 +12,19 @@ export const ForFounders = () => (
       <section className="ed-subhero ed-inner ed-split ed-founder-hero">
         <div>
           <h1 className="ed-display ed-genz-head">
-            <span className="ed-genz-word">Stop<span className="ed-clap">👏</span></span>{' '}
-            <span className="ed-genz-word">launching<span className="ed-clap">👏</span></span>{' '}
-            <span className="ed-genz-word">into<span className="ed-clap">👏</span></span>{' '}
-            <span className="ed-genz-word">the<span className="ed-clap">👏</span></span>{' '}
-            <br />
-            <span className="ed-genz-word">void<span className="ed-clap">👏</span></span>
+            Raise where your <em>momentum is visible.</em>
           </h1>
-          <p className="ed-lede">Most launches disappear. On Apparent you launch in front of investors who are actively writing cheques, so the right ones DM you, matched by thesis, proof, and stage. Run <code style={{ fontFamily: 'var(--ed-mono)', fontSize: '0.92em' }}>npx apparent</code> and your shipped work becomes the proof that earns the intro. No warm intro required.</p>
+          <p className="ed-lede">Launch your startup on Apparent, turn the work you have already done into credible proof, and get matched with people whose investment interests fit your company. You choose what becomes visible. The right investors get a reason to come to you.</p>
           <div className="ed-cta">
-            <Link className="ed-btn ed-btn-blue" to="/login?role=founder">Launch to active investors
+            <Link className="ed-btn ed-btn-blue" to="/login?role=founder">Launch your startup
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M7 17 17 7M9 7h8v8" /></svg>
             </Link>
             <Link className="ed-btn ed-btn-outline" to="/our-thesis">How it works</Link>
           </div>
           <div className="ed-trust">
-            <span><b>1,800+</b> active investors</span><span className="ed-d" />
-            <span>Verified in one command</span><span className="ed-d" />
-            <span>Investors DM you</span>
+            <span><b>1,800+</b> investors mapped</span><span className="ed-d" />
+            <span>Founder-controlled proof</span><span className="ed-d" />
+            <span>No warm intro required</span>
           </div>
         </div>
         <div className="ed-cli-wrap" aria-label="npx apparent terminal preview">
@@ -49,8 +44,8 @@ export const ForFounders = () => (
       {/* DM INBOX */}
       <section className="ed-sec ed-divider">
         <div className="ed-inner">
-          <h2 className="ed-sec-title">Launch, then watch the DMs land.</h2>
-          <p className="ed-lead">Investors whose thesis matches your proof, stage, and sector reach out directly. You launch to a room that&apos;s already watching.</p>
+          <h2 className="ed-sec-title">Launch once. Become discoverable by the right capital.</h2>
+          <p className="ed-lead">Apparent matches your proof, stage, sector, geography, and current raise with investors already looking for companies like yours.</p>
           <div style={{ marginTop: 'clamp(28px,4vw,44px)', maxWidth: 660 }}>
             <div className="ed-mock">
               <div className="ed-mock-head"><span className="ed-t">Investor inbox</span><span className="ed-live"><i />3 new</span></div>
@@ -67,15 +62,15 @@ export const ForFounders = () => (
       <section className="ed-sec ed-divider">
         <div className="ed-inner ed-work">
           <div>
-            <h2 className="ed-sec-title">Show what investors need to see.</h2>
-            <p className="ed-lead">Apparent is built around the evidence you already have: code, launches, customers, press, product velocity, and where you are building.</p>
+            <h2 className="ed-sec-title">Show what matters. Keep control of the rest.</h2>
+            <p className="ed-lead">Bring code, launches, customers, traction, and product velocity into one investor-readable profile. You decide what is public and what is shared only with investors.</p>
             <Link className="ed-btn ed-btn-blue" to="/login?role=founder" style={{ marginTop: 28 }}>Start building your profile</Link>
           </div>
           <div className="ed-steps">
-            <div className="ed-step"><span className="ed-n">01</span><div><h3>Verify in seconds</h3><p>Run npx apparent and your GitHub, shipped products, traction, and launches become a verified proof profile.</p></div></div>
-            <div className="ed-step"><span className="ed-n">02</span><div><h3>Get matched by thesis</h3><p>Investors find you through criteria, founder signals, stage, category, and the evidence you already have.</p></div></div>
-            <div className="ed-step"><span className="ed-n">03</span><div><h3>Let your agent reach out</h3><p>Your AI founder agent finds the investors who fit and opens personalized intros on your behalf, never spam.</p></div></div>
-            <div className="ed-step"><span className="ed-n">04</span><div><h3>Move from DM to deal room</h3><p>Messages, terms review, and investor follow-up stay connected to the profile that created interest.</p></div></div>
+            <div className="ed-step"><span className="ed-n">01</span><div><h3>Launch with proof</h3><p>Run npx apparent and turn your GitHub, shipped products, traction, and launches into a verified profile.</p></div></div>
+            <div className="ed-step"><span className="ed-n">02</span><div><h3>Choose who sees what</h3><p>Keep sensitive details private, share selected evidence with investors, and make only the right signals public.</p></div></div>
+            <div className="ed-step"><span className="ed-n">03</span><div><h3>Get matched by conviction</h3><p>Apparent finds investors whose thesis, stage, category, and founder signals align with your company.</p></div></div>
+            <div className="ed-step"><span className="ed-n">04</span><div><h3>Move from interest to a raise</h3><p>Messages, terms review, and investor follow-up stay connected to the proof that created interest.</p></div></div>
           </div>
         </div>
       </section>
@@ -83,12 +78,12 @@ export const ForFounders = () => (
       {/* BENEFITS */}
       <section className="ed-sec ed-divider">
         <div className="ed-inner">
-          <h2 className="ed-sec-title">Build once. Become discoverable everywhere.</h2>
+          <h2 className="ed-sec-title">Let your progress make the fundraising case.</h2>
           <div className="ed-benefits">
             <div className="ed-benefit"><svg className="ed-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="12" cy="12" r="9" /><path d="M9 12l2 2 4-4" /></svg><h3>Verified in one command</h3><p>Run npx apparent and turn what you shipped into a profile investors can actually trust.</p></div>
-            <div className="ed-benefit"><svg className="ed-ic" viewBox="0 0 24 24" fill="currentColor"><path d="M12 .5A11.5 11.5 0 0 0 8.4 22.9c.6.1.8-.2.8-.6v-2c-3.2.7-3.9-1.4-3.9-1.4-.5-1.3-1.3-1.7-1.3-1.7-1-.7.1-.7.1-.7 1.2.1 1.8 1.2 1.8 1.2 1 1.8 2.8 1.3 3.5 1 .1-.8.4-1.3.7-1.6-2.6-.3-5.3-1.3-5.3-5.7 0-1.3.5-2.3 1.2-3.1-.1-.3-.5-1.5.1-3.1 0 0 1-.3 3.3 1.2a11.5 11.5 0 0 1 6 0C17 5.3 18 5.6 18 5.6c.6 1.6.2 2.8.1 3.1.8.8 1.2 1.8 1.2 3.1 0 4.4-2.7 5.4-5.3 5.7.4.4.8 1.1.8 2.2v3.3c0 .4.2.7.8.6A11.5 11.5 0 0 0 12 .5Z" /></svg><h3>GitHub context</h3><p>Show technical depth and project history without forcing people to hunt.</p></div>
+            <div className="ed-benefit"><svg className="ed-ic" viewBox="0 0 24 24" fill="currentColor"><path d="M12 .5A11.5 11.5 0 0 0 8.4 22.9c.6.1.8-.2.8-.6v-2c-3.2.7-3.9-1.4-3.9-1.4-.5-1.3-1.3-1.7-1.3-1.7-1-.7.1-.7.1-.7 1.2.1 1.8 1.2 1.8 1.2 1 1.8 2.8 1.3 3.5 1 .1-.8.4-1.3.7-1.6-2.6-.3-5.3-1.3-5.3-5.7 0-1.3.5-2.3 1.2-3.1-.1-.3-.5-1.5.1-3.1 0 0 1-.3 3.3 1.2a11.5 11.5 0 0 1 6 0C17 5.3 18 5.6 18 5.6c.6 1.6.2 2.8.1 3.1.8.8 1.2 1.8 1.2 3.1 0 4.4-2.7 5.4-5.3 5.7.4.4.8 1.1.8 2.2v3.3c0 .4.2.7.8.6A11.5 11.5 0 0 0 12 .5Z" /></svg><h3>Permissioned by design</h3><p>Control which details are public and which are visible only to investors.</p></div>
             <div className="ed-benefit"><svg className="ed-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="11" cy="11" r="7" /><path d="m21 21-4.3-4.3" /></svg><h3>An agent that pitches for you</h3><p>Your AI agent surfaces and reaches investors whose thesis maps to your category, stage, and traction.</p></div>
-            <div className="ed-benefit"><svg className="ed-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="9" cy="8" r="3" /><path d="M3 20a6 6 0 0 1 12 0" /><path d="M16 6a3 3 0 0 1 0 6" /><path d="M18 20a6 6 0 0 0-3-5.2" /></svg><h3>Founder network</h3><p>Find nearby and similar builders, then start the conversation inside Apparent.</p></div>
+            <div className="ed-benefit"><svg className="ed-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="9" cy="8" r="3" /><path d="M3 20a6 6 0 0 1 12 0" /><path d="M16 6a3 3 0 0 1 0 6" /><path d="M18 20a6 6 0 0 0-3-5.2" /></svg><h3>Connected business signals</h3><p>In development: connect selected campaign and business tools so approved investors can follow the momentum you choose to share.</p></div>
           </div>
         </div>
       </section>
@@ -96,8 +91,8 @@ export const ForFounders = () => (
       {/* DARK BAND */}
       <section className="ed-band">
         <div className="ed-inner">
-          <h2>Your GitHub is a better pitch than your network.</h2>
-          <p>Apparent reads the evidence you already have and puts it in front of the investors it actually fits.</p>
+          <h2>Your progress should travel farther than your network.</h2>
+          <p>Apparent turns the evidence you choose to share into a clearer fundraising story, then puts it in front of investors it actually fits.</p>
         </div>
       </section>
 
@@ -138,10 +133,10 @@ export const ForFounders = () => (
       <section className="ed-sec ed-divider ed-final">
         <div className="ed-inner">
           <LogoIcon className="ed-mark" />
-          <h2>Put your proof in front of capital.</h2>
-          <p>Verify in one command, launch your build, and let active investors come to you.</p>
+          <h2>Raise where the right investors can find you.</h2>
+          <p>Launch your startup, make the right proof visible, and let conviction-matched investors come to you.</p>
           <div className="ed-cta">
-            <Link className="ed-btn ed-btn-blue" to="/login?role=founder">Launch to active investors</Link>
+            <Link className="ed-btn ed-btn-blue" to="/login?role=founder">Launch your startup</Link>
             <Link className="ed-btn ed-btn-outline" to="/our-thesis">See the thesis</Link>
           </div>
         </div>

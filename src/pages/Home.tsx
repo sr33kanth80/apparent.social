@@ -11,10 +11,10 @@ const TABS = ['thesis', 'sourcing', 'density', 'pipeline'] as const;
 type Tab = (typeof TABS)[number];
 
 const META: Record<Tab, { n: string; label: string; note: string }> = {
-  thesis: { n: '01', label: 'Turn your taste into criteria your agent sources against.', note: 'Sectors, stages, geographies, check size, the founder signals you back, and the ones you pass on, captured once.' },
-  sourcing: { n: '02', label: 'Verified founders, ranked against your thesis every day.', note: 'Each match arrives with proof, source links, and a relevance score, surfaced while founders are still building.' },
-  density: { n: '03', label: 'See where the builders are working, near your focus.', note: 'Drop a place and locate the Apparent builders around it. Map the density before the market does.' },
-  pipeline: { n: '04', label: 'Move saved builders through a clean deal-flow board.', note: 'Sourced, meeting, diligence, partner review. The agent drafts the first outreach for you.' },
+  thesis: { n: '01', label: 'Turn what you believe into your own investment thesis.', note: 'Choose the sectors, stages, places, check size, and founder signals that earn your conviction.' },
+  sourcing: { n: '02', label: 'Discover startups matched to that conviction.', note: 'Each match arrives with founder proof, source links, and a clear reason it fits what you want to back.' },
+  density: { n: '03', label: 'See where founders are building before the market notices.', note: 'Drop a place and locate the Apparent builders around it. Follow momentum wherever it is forming.' },
+  pipeline: { n: '04', label: 'Keep every company and next step in one place.', note: 'Save, review, meet, and diligence without losing the evidence that made the company matter.' },
 };
 
 const DENSITY_CENTER: [number, number] = [37.7767, -122.4242];
@@ -234,19 +234,19 @@ export const Home = () => {
         <section className="ed-hero">
           <div className="ed-inner">
             <h1 className="ed-display">
-              Where <span className="ed-hero-keep">proof</span> meets{' '}
-              <em className="ed-hero-keep">capital 💸</em>
+              Back the startups{' '}
+              <em className="ed-hero-keep">you believe in.</em>
             </h1>
-            <p className="ed-sub">Apparent connects founders who&apos;ve shipped with investors who are actively writing cheques. Founders turn proof into intros; investors source startups that fit their thesis, ranked by proof, stage, and freshness.</p>
+            <p className="ed-sub">Apparent opens venture investing to more people. Discover startups, understand the proof behind them, and connect with the founders building them. Founders launch once and get matched with people whose conviction fits their company.</p>
             <div className="ed-cta">
-              <Link className="ed-btn ed-btn-green" to="/login?role=investor">Source your deal flow
+              <Link className="ed-btn ed-btn-green" to="/login?role=investor">Explore startups
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M7 17 17 7M9 7h8v8" /></svg>
               </Link>
-              <Link className="ed-btn ed-btn-outline-blue" to="/for-founders">I&apos;m a founder</Link>
+              <Link className="ed-btn ed-btn-outline-blue" to="/for-founders">Launch your startup</Link>
             </div>
             <div className="ed-trust">
-              <span><b>1,800+</b> investors on Apparent</span><span className="ed-d" />
-              <span className="ed-trust-verified"><VerifiedBadge className="ed-vb ed-vb-sm" />Verified proof, not pitches</span><span className="ed-d" />
+              <span><b>1,800+</b> investors mapped</span><span className="ed-d" />
+              <span className="ed-trust-verified"><VerifiedBadge className="ed-vb ed-vb-sm" />Proof behind every match</span><span className="ed-d" />
               <span>No warm intro required</span>
             </div>
             <div className="ed-logos">
@@ -320,15 +320,15 @@ export const Home = () => {
         <section className="ed-sec ed-divider">
           <div className="ed-inner ed-work">
             <div>
-              <h2 className="ed-sec-title">See the sourcing picture earlier.</h2>
-              <p className="ed-lead">Apparent turns builder proof, public signals, local density, and your thesis into one repeatable sourcing workflow.</p>
-              <Link className="ed-btn ed-btn-green" to="/for-vcs" style={{ marginTop: 28 }}>Build your thesis</Link>
+              <h2 className="ed-sec-title">You do not need a VC title to think like an investor.</h2>
+              <p className="ed-lead">Apparent gives you the discovery, evidence, and workflow to form your own view of a company instead of waiting for consensus.</p>
+              <Link className="ed-btn ed-btn-green" to="/for-vcs" style={{ marginTop: 28 }}>Build your investment thesis</Link>
             </div>
             <div className="ed-steps">
-              <div className="ed-step"><span className="ed-n">01</span><div><h3>Define thesis</h3><p>Capture sectors, stages, geographies, check size, the founder signals you back, and the ones you pass on.</p></div></div>
-              <div className="ed-step"><span className="ed-n">02</span><div><h3>Let your agent source</h3><p>Your AI investor agent works 24/7, ranking verified founders against your thesis by proof, freshness, and fit.</p></div></div>
-              <div className="ed-step"><span className="ed-n">03</span><div><h3>Map builder density</h3><p>Drop a place, locate projects nearby, and see the Apparent builders working around that focus.</p></div></div>
-              <div className="ed-step"><span className="ed-n">04</span><div><h3>Move through deal flow</h3><p>Save a builder, let the agent draft outreach, and drag opportunities through a clean pipeline.</p></div></div>
+              <div className="ed-step"><span className="ed-n">01</span><div><h3>Define your conviction</h3><p>Capture the sectors, stages, places, check size, and founder signals you want to back.</p></div></div>
+              <div className="ed-step"><span className="ed-n">02</span><div><h3>Discover the fit</h3><p>Your AI investor agent ranks founders against your thesis by proof, freshness, and relevance.</p></div></div>
+              <div className="ed-step"><span className="ed-n">03</span><div><h3>Understand the evidence</h3><p>See what founders have shipped, the traction they choose to share, and why the company matches your view.</p></div></div>
+              <div className="ed-step"><span className="ed-n">04</span><div><h3>Start the relationship</h3><p>Save the company, draft a relevant introduction, and carry the original proof into every next step.</p></div></div>
             </div>
           </div>
         </section>
@@ -336,23 +336,23 @@ export const Home = () => {
         {/* BENEFITS */}
         <section className="ed-sec ed-divider">
           <div className="ed-inner">
-            <h2 className="ed-sec-title">Source from proof, not noise.</h2>
+            <h2 className="ed-sec-title">Conviction needs more than a pitch deck.</h2>
             <div className="ed-benefits">
               <div className="ed-benefit">
                 <svg className="ed-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="12" cy="12" r="9" /><circle cx="12" cy="12" r="5" /><circle cx="12" cy="12" r="1" /></svg>
-                <h3>Private thesis workspace</h3><p>Turn your taste into criteria your AI agent can source against, repeatedly.</p>
+                <h3>Your investment thesis</h3><p>Turn what you believe into criteria your AI agent can discover against, repeatedly.</p>
               </div>
               <div className="ed-benefit">
                 <svg className="ed-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="11" cy="11" r="7" /><path d="m21 21-4.3-4.3" /></svg>
-                <h3>Agent-sourced inbox</h3><p>Verified founders with source links, proof, and relevance, surfaced fresh every day.</p>
+                <h3>Evidence behind the match</h3><p>Review founder proof, source links, traction, and the specific reasons a company fits.</p>
               </div>
               <div className="ed-benefit">
                 <svg className="ed-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="3" y="4" width="5" height="16" rx="1" /><rect x="10" y="4" width="5" height="11" rx="1" /><rect x="17" y="4" width="4" height="7" rx="1" /></svg>
-                <h3>Deal-flow Kanban</h3><p>Move saved builders through sourcing, meeting, diligence, and partner review.</p>
+                <h3>Permissioned business signals</h3><p>In development: founders will connect selected business and campaign tools, then control which signals each investor can see.</p>
               </div>
               <div className="ed-benefit">
                 <svg className="ed-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9" /><path d="M13.7 21a2 2 0 0 1-3.4 0" /></svg>
-                <h3>Digest &amp; alerts</h3><p>Keep the highest-signal founder updates from disappearing between meetings.</p>
+                <h3>A living view of momentum</h3><p>Keep meaningful founder updates and changes visible as your conviction develops.</p>
               </div>
             </div>
           </div>
@@ -361,31 +361,31 @@ export const Home = () => {
         {/* AUDIENCE */}
         <section className="ed-sec ed-divider">
           <div className="ed-inner">
-            <h2 className="ed-sec-title">Two sides, one fit.</h2>
+            <h2 className="ed-sec-title">Founders bring proof. You bring conviction.</h2>
             <div className="ed-audience">
               <div className="ed-acard">
                 <div className="ed-acard-head">
                   <LogoIcon className="ed-acard-mark" />
                   <span>Founder proof</span>
                 </div>
-                <h3>Make your strongest signal visible.</h3>
+                <h3>Raise where your momentum is visible.</h3>
                 <ul>
-                  <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6"><circle cx="12" cy="12" r="9" /><path d="M9 12l2 2 4-4" /></svg>Verified builds, launches, and traction in one quiet profile.</li>
-                  <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6"><circle cx="12" cy="12" r="9" /><path d="M9 12l2 2 4-4" /></svg>Investor matching by thesis, stage, sector, and geography.</li>
-                  <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6"><circle cx="12" cy="12" r="9" /><path d="M9 12l2 2 4-4" /></svg>An AI founder agent that drafts focused, fit-based outreach.</li>
+                  <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6"><circle cx="12" cy="12" r="9" /><path d="M9 12l2 2 4-4" /></svg>Bring builds, launches, traction, and your current raise into one profile.</li>
+                  <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6"><circle cx="12" cy="12" r="9" /><path d="M9 12l2 2 4-4" /></svg>Control which proof is public and which is reserved for investors.</li>
+                  <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6"><circle cx="12" cy="12" r="9" /><path d="M9 12l2 2 4-4" /></svg>Get matched with people whose thesis and conviction fit your company.</li>
                 </ul>
                 <Link className="ed-btn ed-btn-blue" to="/for-founders">Create founder profile</Link>
               </div>
               <div className="ed-acard">
                 <div className="ed-acard-head">
                   <LogoIcon className="ed-acard-mark" />
-                  <span>Investor desk</span>
+                  <span>Investor access</span>
                 </div>
-                <h3>Source builders by evidence.</h3>
+                <h3>Build your own venture thesis.</h3>
                 <ul>
-                  <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6"><circle cx="12" cy="12" r="9" /><circle cx="12" cy="12" r="2.5" /></svg>A thesis-aware view of builders with real proof behind them.</li>
-                  <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6"><circle cx="12" cy="12" r="9" /><circle cx="12" cy="12" r="2.5" /></svg>Ranking that separates active signal from stale fundraising lists.</li>
-                  <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6"><circle cx="12" cy="12" r="9" /><circle cx="12" cy="12" r="2.5" /></svg>AI-suggested outreach grounded in why the founder fits.</li>
+                  <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6"><circle cx="12" cy="12" r="9" /><circle cx="12" cy="12" r="2.5" /></svg>Discover founders through the sectors, stages, places, and signals you believe in.</li>
+                  <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6"><circle cx="12" cy="12" r="9" /><circle cx="12" cy="12" r="2.5" /></svg>Understand the proof behind a company before starting the conversation.</li>
+                  <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6"><circle cx="12" cy="12" r="9" /><circle cx="12" cy="12" r="2.5" /></svg>Use AI-suggested outreach grounded in exactly why the founder fits.</li>
                 </ul>
                 <Link className="ed-btn ed-btn-green" to="/for-vcs">Create investor profile</Link>
               </div>
@@ -397,8 +397,8 @@ export const Home = () => {
         <section className="ed-band">
           <div className="ed-inner ed-band-grid">
             <div>
-              <h2>By the time it&apos;s consensus, the round is full.</h2>
-              <p>Apparent surfaces founders who fit your thesis while they&apos;re still building, not after the deal turns competitive.</p>
+              <h2>You do not need permission to develop conviction.</h2>
+              <p>Apparent helps you find founders early, understand why they fit, and build your own point of view before the market agrees.</p>
             </div>
             <div className="ed-band-signal" aria-hidden="true">
               <LogoIcon className="ed-band-mark" />
@@ -418,7 +418,7 @@ export const Home = () => {
         {/* QUOTE */}
         <section className="ed-sec ed-quote">
           <div className="ed-inner">
-            <blockquote>&ldquo;The best sourcing advantage is knowing which builders matter before the market agrees.&rdquo;</blockquote>
+            <blockquote>&ldquo;Being a venture investor should be something you can do, not a title someone has to give you.&rdquo;</blockquote>
             <div className="ed-attr"><span className="ed-av" /><span>The Apparent thesis</span></div>
           </div>
         </section>
@@ -455,11 +455,11 @@ export const Home = () => {
         <section className="ed-sec ed-divider ed-final">
           <div className="ed-inner">
             <LogoIcon className="ed-mark" />
-            <h2>Build your private sourcing desk.</h2>
-            <p>Capture your thesis once, then let Apparent keep surfacing relevant builders with proof attached.</p>
+            <h2>Start building your venture portfolio.</h2>
+            <p>Define what you believe in, discover relevant startups, and follow the proof behind every opportunity.</p>
             <div className="ed-cta">
-              <Link className="ed-btn ed-btn-green" to="/login?role=investor">Source your deal flow</Link>
-              <Link className="ed-btn ed-btn-outline" to="/contact">Book a walkthrough</Link>
+              <Link className="ed-btn ed-btn-green" to="/login?role=investor">Explore startups</Link>
+              <Link className="ed-btn ed-btn-outline" to="/for-founders">Launch your startup</Link>
             </div>
           </div>
         </section>
