@@ -133,7 +133,7 @@ export const OurThesis = () => (
     <main>
       {/* HERO */}
       <section className="ed-subhero ed-inner">
-        <h1 className="ed-display">From conviction to <em>connection.</em></h1>
+        <h1 className="ed-display">From conviction to <em>connection.<span className="ed-display-emoji" aria-hidden="true">🤝</span></em></h1>
         <p className="ed-lede">Apparent helps founders make momentum visible and gives anyone serious about investing the tools to discover, understand, and connect with companies that fit what they believe.</p>
         <div className="ed-cta">
           <Link className="ed-btn ed-btn-blue" to="/login?role=founder">I&apos;m a founder</Link>

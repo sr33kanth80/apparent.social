@@ -111,7 +111,7 @@ export const ForVCs = () => (
       <section className="ed-subhero ed-inner ed-split">
         <div>
           <h1 className="ed-display">
-            You do not need to work at a VC firm to <em>invest like one.</em>
+            You do not need to work at a VC firm to <em>invest like one.<span className="ed-display-emoji" aria-hidden="true">💡</span></em>
           </h1>
           <p className="ed-lede">Apparent gives new and experienced investors the tools to build a thesis, discover startups, understand the evidence behind them, and connect with the founders they believe in. Your conviction is the starting point.</p>
           <div className="ed-cta">
@@ -153,7 +153,7 @@ export const ForVCs = () => (
           <div className="ed-benefits">
             <div className="ed-benefit"><svg className="ed-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="12" cy="12" r="9" /><circle cx="12" cy="12" r="5" /><circle cx="12" cy="12" r="1" /></svg><h3>Matched to your thesis</h3><p>Each company is screened against your sectors, stage, geography, check size, must-have signals, and pass reasons.</p></div>
             <div className="ed-benefit"><svg className="ed-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="11" cy="11" r="7" /><path d="m21 21-4.3-4.3" /></svg><h3>Founder proof upfront</h3><p>Review available revenue, customers, usage, pilots, launches, and shipped work before requesting a meeting.</p></div>
-            <div className="ed-benefit"><svg className="ed-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="3" y="4" width="5" height="16" rx="1" /><rect x="10" y="4" width="5" height="11" rx="1" /><rect x="17" y="4" width="4" height="7" rx="1" /></svg><h3>Permissioned business signals</h3><p>In development: founders will connect selected campaign and business tools, then decide which performance signals you can see.</p></div>
+            <div className="ed-benefit"><svg className="ed-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="3" y="4" width="5" height="16" rx="1" /><rect x="10" y="4" width="5" height="11" rx="1" /><rect x="17" y="4" width="4" height="7" rx="1" /></svg><h3>Permissioned business signals <span className="ed-copy-emoji" aria-hidden="true">📊</span></h3><p>In development: founders will connect selected campaign and business tools, then decide which performance signals you can see.</p></div>
             <div className="ed-benefit"><svg className="ed-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9" /><path d="M13.7 21a2 2 0 0 1-3.4 0" /></svg><h3>A living view of momentum</h3><p>Follow meaningful founder updates and changes as your understanding of the company develops.</p></div>
           </div>
         </div>

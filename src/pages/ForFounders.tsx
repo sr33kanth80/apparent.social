@@ -12,7 +12,7 @@ export const ForFounders = () => (
       <section className="ed-subhero ed-inner ed-split ed-founder-hero">
         <div>
           <h1 className="ed-display ed-genz-head">
-            Raise where your <em>momentum is visible.</em>
+            Raise where your <em>momentum is visible.<span className="ed-display-emoji" aria-hidden="true">📈</span></em>
           </h1>
           <p className="ed-lede">Launch your startup on Apparent, turn the work you have already done into credible proof, and get matched with people whose investment interests fit your company. You choose what becomes visible. The right investors get a reason to come to you.</p>
           <div className="ed-cta">
@@ -83,7 +83,7 @@ export const ForFounders = () => (
             <div className="ed-benefit"><svg className="ed-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="12" cy="12" r="9" /><path d="M9 12l2 2 4-4" /></svg><h3>Verified in one command</h3><p>Run npx apparent and turn what you shipped into a profile investors can actually trust.</p></div>
             <div className="ed-benefit"><svg className="ed-ic" viewBox="0 0 24 24" fill="currentColor"><path d="M12 .5A11.5 11.5 0 0 0 8.4 22.9c.6.1.8-.2.8-.6v-2c-3.2.7-3.9-1.4-3.9-1.4-.5-1.3-1.3-1.7-1.3-1.7-1-.7.1-.7.1-.7 1.2.1 1.8 1.2 1.8 1.2 1 1.8 2.8 1.3 3.5 1 .1-.8.4-1.3.7-1.6-2.6-.3-5.3-1.3-5.3-5.7 0-1.3.5-2.3 1.2-3.1-.1-.3-.5-1.5.1-3.1 0 0 1-.3 3.3 1.2a11.5 11.5 0 0 1 6 0C17 5.3 18 5.6 18 5.6c.6 1.6.2 2.8.1 3.1.8.8 1.2 1.8 1.2 3.1 0 4.4-2.7 5.4-5.3 5.7.4.4.8 1.1.8 2.2v3.3c0 .4.2.7.8.6A11.5 11.5 0 0 0 12 .5Z" /></svg><h3>Permissioned by design</h3><p>Control which details are public and which are visible only to investors.</p></div>
             <div className="ed-benefit"><svg className="ed-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="11" cy="11" r="7" /><path d="m21 21-4.3-4.3" /></svg><h3>An agent that pitches for you</h3><p>Your AI agent surfaces and reaches investors whose thesis maps to your category, stage, and traction.</p></div>
-            <div className="ed-benefit"><svg className="ed-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="9" cy="8" r="3" /><path d="M3 20a6 6 0 0 1 12 0" /><path d="M16 6a3 3 0 0 1 0 6" /><path d="M18 20a6 6 0 0 0-3-5.2" /></svg><h3>Connected business signals</h3><p>In development: connect selected campaign and business tools so approved investors can follow the momentum you choose to share.</p></div>
+            <div className="ed-benefit"><svg className="ed-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="9" cy="8" r="3" /><path d="M3 20a6 6 0 0 1 12 0" /><path d="M16 6a3 3 0 0 1 0 6" /><path d="M18 20a6 6 0 0 0-3-5.2" /></svg><h3>Connected business signals <span className="ed-copy-emoji" aria-hidden="true">📊</span></h3><p>In development: connect selected campaign and business tools so approved investors can follow the momentum you choose to share.</p></div>
           </div>
         </div>
       </section>
@@ -91,8 +91,8 @@ export const ForFounders = () => (
       {/* DARK BAND */}
       <section className="ed-band">
         <div className="ed-inner">
-          <h2>Your progress should travel farther than your network.</h2>
-          <p>Apparent turns the evidence you choose to share into a clearer fundraising story, then puts it in front of investors it actually fits.</p>
+          <h2>Your company. Your data. Your audience. <span className="ed-copy-emoji" aria-hidden="true">🔒</span></h2>
+          <p>As connected business signals roll out, you decide what is public, what approved investors can see, and what remains private.</p>
         </div>
       </section>
 

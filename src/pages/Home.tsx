@@ -235,7 +235,7 @@ export const Home = () => {
           <div className="ed-inner">
             <h1 className="ed-display">
               Back the startups{' '}
-              <em className="ed-hero-keep">you believe in.</em>
+              <em className="ed-hero-keep">you believe in.<span className="ed-display-emoji" aria-hidden="true">💸</span></em>
             </h1>
             <p className="ed-sub">Apparent opens venture investing to more people. Discover startups, understand the proof behind them, and connect with the founders building them. Founders launch once and get matched with people whose conviction fits their company.</p>
             <div className="ed-cta">
@@ -348,7 +348,7 @@ export const Home = () => {
               </div>
               <div className="ed-benefit">
                 <svg className="ed-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="3" y="4" width="5" height="16" rx="1" /><rect x="10" y="4" width="5" height="11" rx="1" /><rect x="17" y="4" width="4" height="7" rx="1" /></svg>
-                <h3>Permissioned business signals</h3><p>In development: founders will connect selected business and campaign tools, then control which signals each investor can see.</p>
+                <h3>Permissioned business signals <span className="ed-copy-emoji" aria-hidden="true">📊</span></h3><p>In development: founders will connect selected business and campaign tools, then control which signals each investor can see.</p>
               </div>
               <div className="ed-benefit">
                 <svg className="ed-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9" /><path d="M13.7 21a2 2 0 0 1-3.4 0" /></svg>
@@ -361,7 +361,7 @@ export const Home = () => {
         {/* AUDIENCE */}
         <section className="ed-sec ed-divider">
           <div className="ed-inner">
-            <h2 className="ed-sec-title">Founders bring proof. You bring conviction.</h2>
+            <h2 className="ed-sec-title">Founders bring proof. You bring conviction. <span className="ed-copy-emoji" aria-hidden="true">🤝</span></h2>
             <div className="ed-audience">
               <div className="ed-acard">
                 <div className="ed-acard-head">
@@ -397,8 +397,8 @@ export const Home = () => {
         <section className="ed-band">
           <div className="ed-inner ed-band-grid">
             <div>
-              <h2>You do not need permission to develop conviction.</h2>
-              <p>Apparent helps you find founders early, understand why they fit, and build your own point of view before the market agrees.</p>
+              <h2>Anyone can be a VC. <span className="ed-copy-emoji" aria-hidden="true">💸</span></h2>
+              <p>You bring the conviction. Apparent gives you the startups, evidence, and context to build your own investment thesis before the market agrees.</p>
             </div>
             <div className="ed-band-signal" aria-hidden="true">
               <LogoIcon className="ed-band-mark" />
