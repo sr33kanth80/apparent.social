@@ -128,7 +128,6 @@ interface InvestorAgentChatProps {
     threadId?: string | null,
   ) => Promise<string>;
   onStartNewConversation: () => void;
-  onRememberConversation: (userMessage: string, assistantReply: string, threadId: string) => Promise<void>;
   pageMode?: boolean;
   className?: string;
 }
@@ -154,7 +153,6 @@ export const InvestorAgentChat = ({
   onApplyProfilePatch,
   onPersistMessages,
   onStartNewConversation,
-  onRememberConversation,
   pageMode = false,
   className,
 }: InvestorAgentChatProps) => {
@@ -295,7 +293,7 @@ export const InvestorAgentChat = ({
       const data = await postAgentStream(
         '/api/agent',
         {
-          messages: conversation.map((m) => ({ role: m.role, content: m.content })),
+          messages: conversation.slice(-20).map((m) => ({ role: m.role, content: m.content })),
           criteria,
           memories,
           autonomy: 'autonomous',
@@ -368,7 +366,6 @@ export const InvestorAgentChat = ({
         }
       }
 
-      void onRememberConversation(trimmed, assistantReply, conversationThreadId);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'The agent is unavailable right now.');
     } finally {

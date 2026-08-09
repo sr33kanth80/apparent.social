@@ -13,6 +13,7 @@ import {
   toolErrorResult,
   runEnrichmentAdapter,
   runStandardOrthogonalTool,
+  selectDurableAgentMemories,
 } from '../server/agent/apparent-agent-runtime.js';
 import { clearOrthogonalDetailsCache, createOrthogonalSession, OrthogonalError } from '../server/agent/orthogonal.js';
 
@@ -363,6 +364,79 @@ test('the runtime rejects oversized conversation fields before inference', async
     (error) => error instanceof OrthogonalError && error.code === 'agent_context_too_large',
   );
   assert.equal(completed, false);
+});
+
+test('the runtime trims the oldest active-thread messages before aggregate context overflows', async () => {
+  let inferenceMessages = [];
+  const runtime = createApparentAgentRuntime({
+    session: { usage: () => ({ callCount: 0, spentCents: 0 }) },
+    complete: async ({ messages }) => {
+      inferenceMessages = messages.map((message) => ({ ...message }));
+      return { content: 'Recent context retained.', toolCalls: [] };
+    },
+  });
+  const messages = Array.from({ length: 20 }, (_, index) => ({
+    role: index % 2 === 0 ? 'user' : 'assistant',
+    content: `${index}:`.padEnd(6_000, String(index % 10)),
+  }));
+  messages[messages.length - 1] = { role: 'user', content: 'This is the latest user request.' };
+
+  const result = await runtime.run({
+    system: 'You are Apparent.',
+    messages,
+    tools: [],
+    executeTool: async () => null,
+  });
+
+  assert.equal(result.reply, 'Recent context retained.');
+  assert.ok(inferenceMessages.length < messages.length + 1);
+  assert.equal(inferenceMessages.at(-1).content, 'This is the latest user request.');
+  assert.ok(inferenceMessages.some((message) => message.content.includes('Earlier messages in this conversation were omitted')));
+});
+
+test('an oversized old message is omitted without blocking the latest user turn', async () => {
+  let inferenceMessages = [];
+  const runtime = createApparentAgentRuntime({
+    session: { usage: () => ({ callCount: 0, spentCents: 0 }) },
+    complete: async ({ messages }) => {
+      inferenceMessages = messages.map((message) => ({ ...message }));
+      return { content: 'Latest request answered.', toolCalls: [] };
+    },
+  });
+
+  const result = await runtime.run({
+    system: 'You are Apparent.',
+    messages: [
+      { role: 'user', content: 'x'.repeat(12_001) },
+      { role: 'assistant', content: 'Old response.' },
+      { role: 'user', content: 'Answer this newest request.' },
+    ],
+    tools: [],
+    executeTool: async () => null,
+  });
+
+  assert.equal(result.reply, 'Latest request answered.');
+  assert.equal(inferenceMessages.at(-1).content, 'Answer this newest request.');
+  assert.equal(inferenceMessages.some((message) => message.content.includes('x'.repeat(100))), false);
+});
+
+test('durable memory selection excludes transcript summaries and enforces a prompt budget', () => {
+  const memories = [
+    { scope: 'conversation_summary', key: 'chat:1', value: 'Old chat transcript.' },
+    { scope: 'profile', key: 'sector', value: 'Developer tools' },
+    { scope: 'preference', key: 'stage', value: 'Pre-seed' },
+    ...Array.from({ length: 40 }, (_, index) => ({
+      scope: 'action',
+      key: `action:${index}`,
+      value: 'x'.repeat(1_000),
+    })),
+  ];
+
+  const selected = selectDurableAgentMemories(memories);
+  assert.equal(selected.some((memory) => memory.scope === 'conversation_summary'), false);
+  assert.equal(selected[0].value, 'Developer tools');
+  assert.ok(selected.length <= 20);
+  assert.ok(Buffer.byteLength(JSON.stringify(selected), 'utf8') <= 12_000);
 });
 
 test('the runtime rechecks aggregate context after tool output', async () => {

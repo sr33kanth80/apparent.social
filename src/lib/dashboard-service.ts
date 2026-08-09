@@ -3351,7 +3351,9 @@ export const loadAgentMemories = async (
   role: DashboardRole,
 ): Promise<AgentMemory[]> => {
   if (!isSupabaseConfigured || !supabase || user.isDev) {
-    return readLocal<AgentMemory[]>(storageKey(user, 'agent-memories'), []).filter((memory) => memory.role === role);
+    return readLocal<AgentMemory[]>(storageKey(user, 'agent-memories'), []).filter(
+      (memory) => memory.role === role && memory.scope !== 'conversation_summary',
+    );
   }
 
   try {
@@ -3360,6 +3362,7 @@ export const loadAgentMemories = async (
       .select('id,role,thread_id,scope,key,value,source_url,confidence,updated_at')
       .eq('user_id', user.id)
       .eq('role', role)
+      .neq('scope', 'conversation_summary')
       .order('updated_at', { ascending: false })
       .limit(40);
     if (error || !data) return [];
@@ -3382,55 +3385,6 @@ export const loadAgentMemories = async (
 const compactMemoryValue = (value: string, max = 900): string => {
   const normalized = value.replace(/\s+/g, ' ').trim();
   return normalized.length <= max ? normalized : `${normalized.slice(0, max - 3)}...`;
-};
-
-export const saveAgentConversationMemory = async (
-  user: AppUser,
-  role: DashboardRole,
-  userMessage: string,
-  assistantReply: string,
-  threadId?: string | null,
-): Promise<AgentMemory | null> => {
-  const value = compactMemoryValue(`User asked: ${userMessage}\nAgent replied: ${assistantReply}`);
-  if (!value) return null;
-
-  const memory: AgentMemory = {
-    role,
-    threadId: threadId || undefined,
-    scope: 'conversation_summary',
-    key: `chat:${Date.now()}`,
-    value,
-    confidence: 'medium',
-    updatedAt: nowIso(),
-  };
-
-  if (!isSupabaseConfigured || !supabase || user.isDev) {
-    const memoryKey = storageKey(user, 'agent-memories');
-    const current = readLocal<AgentMemory[]>(memoryKey, []);
-    writeLocal(memoryKey, [memory, ...current].slice(0, 200));
-    return memory;
-  }
-
-  try {
-    const { data, error } = await supabase
-      .from('agent_memories')
-      .insert({
-        user_id: user.id,
-        role,
-        thread_id: memory.threadId ?? null,
-        scope: memory.scope,
-        key: memory.key,
-        value: memory.value,
-        confidence: memory.confidence,
-        updated_at: memory.updatedAt,
-      })
-      .select('id')
-      .single();
-    if (error) return null;
-    return { ...memory, id: String(data?.id ?? '') };
-  } catch {
-    return null;
-  }
 };
 
 export const saveAgentActionMemory = async (

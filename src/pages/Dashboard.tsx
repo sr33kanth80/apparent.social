@@ -105,7 +105,6 @@ import {
   setVcOutreachStage,
   deleteVcOutreach,
   saveBuilderDiscoveryState,
-  saveAgentConversationMemory,
   saveAgentActionMemory,
   createAgentChatThread,
   deleteAgentChatThread,
@@ -2800,16 +2799,6 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
       setDashboardError(reason);
       return { ok: false, reason };
     }
-  };
-
-  const handleRememberAgentConversation = async (
-    userMessage: string,
-    assistantReply: string,
-    threadId: string,
-  ): Promise<void> => {
-    const memory = await saveAgentConversationMemory(user, role, userMessage, assistantReply, threadId);
-    if (!memory) return;
-    setAgentMemories((current) => [memory, ...current].slice(0, 40));
   };
 
   const handlePersistAgentChat = async (
@@ -8603,7 +8592,6 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
           onApplyProfilePatch={handleApplyAgentProfilePatch}
           onPersistMessages={handlePersistAgentChat}
           onStartNewConversation={handleStartNewAgentConversation}
-          onRememberConversation={handleRememberAgentConversation}
           onSendOutreach={handleAgentOutreach}
           pageMode
         />
@@ -8619,7 +8607,6 @@ export const Dashboard = ({ role, user }: DashboardProps) => {
           onApplyProfilePatch={handleApplyAgentProfilePatch}
           onPersistMessages={handlePersistAgentChat}
           onStartNewConversation={handleStartNewAgentConversation}
-          onRememberConversation={handleRememberAgentConversation}
           onSendIntro={handleFounderIntro}
           onAmplify={handleFounderAmplify}
           pageMode

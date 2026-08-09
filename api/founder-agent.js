@@ -22,6 +22,7 @@ import {
   runDynamicOrthogonalTool,
   runOrthogonalRouterTool,
   runStandardOrthogonalTool,
+  selectDurableAgentMemories,
   standardOrthogonalTools,
   toolStatusLabel,
 } from '../server/agent/apparent-agent-runtime.js';
@@ -370,7 +371,7 @@ export default async function handler(req, res) {
   const body = await readJsonBody(req);
   const incoming = Array.isArray(body.messages) ? body.messages : [];
   const founder = body.founder || {};
-  const memories = Array.isArray(body.memories) ? body.memories : [];
+  const memories = selectDurableAgentMemories(body.memories);
   const contactedIds = Array.isArray(body.contacted) ? body.contacted.map(String).slice(0, 200) : [];
 
   const messages = incoming
