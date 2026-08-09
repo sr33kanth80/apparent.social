@@ -1,9 +1,11 @@
 import assert from 'node:assert/strict';
+import { EventEmitter } from 'node:events';
 import test from 'node:test';
 
 import {
   agentCallBudget,
   apparentAgentErrorResponse,
+  createAgentSse,
   createApparentAgentRuntime,
   createPublicResearchPolicy,
   isAuthorizedResearchUrl,
@@ -43,6 +45,30 @@ test('the Apparent runtime executes tools and returns the final reply', async ()
 
   assert.equal(result.reply, 'Two matching founders were found.');
   assert.deepEqual(calls, [{ name: 'lookup', input: { query: 'infra' } }]);
+});
+
+test('agent SSE sends heartbeats during long work and cleans them up', async () => {
+  const writes = [];
+  const res = Object.assign(new EventEmitter(), {
+    writableEnded: false,
+    destroyed: false,
+    writeHead: () => undefined,
+    flushHeaders: () => undefined,
+    write: (chunk) => {
+      writes.push(String(chunk));
+      return true;
+    },
+  });
+
+  const stream = createAgentSse(res, true, { heartbeatMs: 5 });
+  await new Promise((resolve) => setTimeout(resolve, 18));
+  assert.ok(writes.some((chunk) => chunk.startsWith('data: ')));
+  assert.ok(writes.some((chunk) => chunk.startsWith(': heartbeat ')));
+
+  stream.close();
+  const countAfterClose = writes.length;
+  await new Promise((resolve) => setTimeout(resolve, 12));
+  assert.equal(writes.length, countAfterClose);
 });
 
 test('Orthogonal session enforces its API allowlist before making a request', async () => {

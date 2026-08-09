@@ -816,10 +816,20 @@ export const toolStatusLabel = (name, input) => {
  * event stream immediately (so validation errors beforehand stay plain JSON)
  * and returns { streaming, emit }. emit() is a no-op when not streaming.
  */
-export const createAgentSse = (res, enabled) => {
+export const createAgentSse = (res, enabled, { heartbeatMs = 15_000 } = {}) => {
+  let heartbeat = null;
+  const close = () => {
+    if (heartbeat) clearInterval(heartbeat);
+    heartbeat = null;
+    res.off?.('close', close);
+  };
   const emit = (payload) => {
-    if (!enabled) return;
-    res.write(`data: ${JSON.stringify(payload)}\n\n`);
+    if (!enabled || res.writableEnded || res.destroyed) return;
+    try {
+      res.write(`data: ${JSON.stringify(payload)}\n\n`);
+    } catch {
+      close();
+    }
   };
   if (enabled) {
     res.writeHead(200, {
@@ -829,9 +839,22 @@ export const createAgentSse = (res, enabled) => {
       'X-Accel-Buffering': 'no',
     });
     res.flushHeaders?.();
+    heartbeat = setInterval(() => {
+      if (res.writableEnded || res.destroyed) {
+        close();
+        return;
+      }
+      try {
+        res.write(`: heartbeat ${Date.now()}\n\n`);
+      } catch {
+        close();
+      }
+    }, Math.max(Number(heartbeatMs) || 15_000, 1));
+    heartbeat.unref?.();
+    res.on?.('close', close);
     emit({ type: 'status', label: 'Thinking…' });
   }
-  return { streaming: enabled, emit };
+  return { streaming: enabled, emit, close };
 };
 
 /**

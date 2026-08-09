@@ -29,6 +29,7 @@ import {
 
 // Vercel Node functions buffer responses unless streaming is opted into.
 export const config = { supportsResponseStreaming: true };
+export const maxDuration = 300;
 
 // The Apparent runtime owns the tool loop; inference is replaceable behind Orthogonal.
 const MAX_AGENT_STEPS = 12;
@@ -413,7 +414,7 @@ export default async function handler(req, res) {
 
   // SSE progress streaming, opted into by the client. Validation errors above
   // stay plain JSON; the stream only starts once the agent loop is about to run.
-  const { streaming, emit } = createAgentSse(res, body.stream === true);
+  const { streaming, emit, close: closeStream } = createAgentSse(res, body.stream === true);
 
   try {
     // Size the Orthogonal call budget to the loop this turn is allowed to run.
@@ -503,5 +504,7 @@ export default async function handler(req, res) {
       return res.end();
     }
     return res.status(failure.status).json({ error: failure.error, code: failure.code });
+  } finally {
+    closeStream();
   }
 }

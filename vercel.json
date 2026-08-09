@@ -1,4 +1,8 @@
 {
+  "functions": {
+    "api/agent.js": { "maxDuration": 300 },
+    "api/founder-agent.js": { "maxDuration": 300 }
+  },
   "rewrites": [
     {
       "source": "/api/github/callback",
