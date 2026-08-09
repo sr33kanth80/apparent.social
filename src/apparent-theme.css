@@ -492,6 +492,17 @@ body {
   max-width: 760px;
 }
 
+.ed-hero .ed-logos {
+  width: min(1040px, calc(100vw - (2 * var(--ed-pad))));
+  position: relative;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.ed-hero .ed-logo-cloud {
+  width: 100%;
+}
+
 /* ponytail: the hero column is a tight 760px, but the single-line headline
    is wider than that. Size it to its content and center it on the viewport
    so it doesn't overflow its narrow column to the right. */
