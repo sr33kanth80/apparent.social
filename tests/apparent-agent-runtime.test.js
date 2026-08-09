@@ -465,12 +465,17 @@ test('durable memory selection excludes transcript summaries and enforces a prom
   assert.ok(Buffer.byteLength(JSON.stringify(selected), 'utf8') <= 12_000);
 });
 
-test('the runtime rechecks aggregate context after tool output', async () => {
+test('the runtime compacts aggregate research context after large tool output', async () => {
   let completionCount = 0;
+  let finalInferenceMessages = [];
   const runtime = createApparentAgentRuntime({
     session: { usage: () => ({ callCount: 0, spentCents: 0 }) },
-    complete: async () => {
+    complete: async ({ messages }) => {
       completionCount += 1;
+      if (completionCount > 1) {
+        finalInferenceMessages = messages.map((message) => ({ ...message }));
+        return { content: 'Research completed after compaction.', toolCalls: [] };
+      }
       return {
         content: '',
         toolCalls: Array.from({ length: 8 }, (_, index) => ({
@@ -482,16 +487,17 @@ test('the runtime rechecks aggregate context after tool output', async () => {
       };
     },
   });
-  await assert.rejects(
-    runtime.run({
-      system: 'You are Apparent.',
-      messages: [{ role: 'user', content: 'Research these.' }],
-      tools: [{ name: 'bulk_lookup', description: 'Bulk', input_schema: { type: 'object', properties: {} } }],
-      executeTool: async () => ({ data: 'x'.repeat(30_000) }),
-    }),
-    (error) => error instanceof OrthogonalError && error.code === 'agent_context_too_large',
-  );
-  assert.equal(completionCount, 1);
+  const result = await runtime.run({
+    system: `You are Apparent. ${'s'.repeat(20_000)}`,
+    messages: [{ role: 'user', content: 'Research these.' }],
+    tools: [{ name: 'bulk_lookup', description: 'Bulk', input_schema: { type: 'object', properties: {} } }],
+    executeTool: async () => ({ data: 'x'.repeat(30_000) }),
+  });
+
+  assert.equal(result.reply, 'Research completed after compaction.');
+  assert.equal(completionCount, 2);
+  assert.ok(Buffer.byteLength(JSON.stringify(finalInferenceMessages), 'utf8') <= 72_000);
+  assert.ok(finalInferenceMessages.some((message) => message.role === 'tool' && message.content.includes('"compacted":true')));
 });
 
 test('Orthogonal checks the catalog price before a paid run', async () => {

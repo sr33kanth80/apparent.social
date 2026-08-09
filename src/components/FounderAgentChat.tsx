@@ -15,6 +15,7 @@ import {
 import { InvestorAIPrompt } from '@/components/InvestorAIAssist';
 import { LogoIcon } from '@/components/LogoIcon';
 import { useAgentAuthHeaders } from '@/lib/agent-auth';
+import { buildAgentThreadSummary } from '@/lib/agent-context';
 import type { AgentChatHistoryMessage, AgentMemory, AgentProfilePatch } from '@/lib/apparent-types';
 
 export type IntroProposal = {
@@ -37,6 +38,7 @@ type ChatMessage = {
   amplified?: { count: number } | { error: string };
   /** Research steps that produced this reply, kept for the collapsed trail. */
   steps?: string[];
+  threadSummary?: string;
 };
 
 interface FounderAgentChatProps {
@@ -96,8 +98,9 @@ export const FounderAgentChat = ({
   const loadingRef = useRef(false);
   const activeThreadRef = useRef<string | null>(threadId);
 
-  const toHistoryMessages = (items: ChatMessage[]): AgentChatHistoryMessage[] =>
-    items.map((item) => ({
+  const toHistoryMessages = (items: ChatMessage[]): AgentChatHistoryMessage[] => {
+    const latestSummaryIndex = items.findLastIndex((item) => Boolean(item.threadSummary));
+    return items.map((item, index) => ({
       role: item.role,
       content: item.content,
       payload: {
@@ -105,8 +108,10 @@ export const FounderAgentChat = ({
         profilePatches: item.profilePatches,
         amplified: item.amplified,
         steps: item.steps,
+        threadSummary: index === latestSummaryIndex ? item.threadSummary : undefined,
       },
     }));
+  };
 
   const fromHistoryMessages = (items: AgentChatHistoryMessage[]): ChatMessage[] =>
     items.map((item) => ({
@@ -116,6 +121,7 @@ export const FounderAgentChat = ({
       profilePatches: Array.isArray(item.payload?.profilePatches) ? (item.payload.profilePatches as AgentProfilePatch[]) : undefined,
       amplified: item.payload?.amplified as ChatMessage['amplified'],
       steps: Array.isArray(item.payload?.steps) ? (item.payload.steps as string[]) : undefined,
+      threadSummary: typeof item.payload?.threadSummary === 'string' ? item.payload.threadSummary : undefined,
     }));
 
   const persistTranscript = (
@@ -175,6 +181,8 @@ export const FounderAgentChat = ({
     stopReveal();
     setStatusSteps([]);
     const conversation: ChatMessage[] = [...messages, { role: 'user', content: trimmed }];
+    const previousThreadSummary = [...messages].reverse().find((message) => message.threadSummary)?.threadSummary ?? '';
+    const threadSummary = buildAgentThreadSummary(conversation, previousThreadSummary);
     setMessages(conversation);
     setIsLoading(true);
 
@@ -186,6 +194,7 @@ export const FounderAgentChat = ({
         '/api/founder-agent',
         {
           messages: conversation.slice(-20).map((m) => ({ role: m.role, content: m.content })),
+          threadSummary,
           founder,
           memories,
           contacted: contactedInvestorIds,
@@ -211,6 +220,7 @@ export const FounderAgentChat = ({
           proposals: proposalStates.length ? proposalStates : undefined,
           profilePatches: profilePatches.length ? profilePatches : undefined,
           steps: trail.length ? trail : undefined,
+          threadSummary: threadSummary || undefined,
         },
       ];
       if (activeThreadRef.current === conversationThreadId) {
