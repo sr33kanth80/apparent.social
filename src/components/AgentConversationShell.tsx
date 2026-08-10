@@ -1,6 +1,10 @@
 import type { ReactNode, RefObject } from 'react';
 import { ShieldCheck } from 'lucide-react';
-import { InvestorAIPrompt } from '@/components/InvestorAIAssist';
+import {
+  InvestorAIPrompt,
+  type AgentPromptSkill,
+  type AgentPromptSubmitOptions,
+} from '@/components/InvestorAIAssist';
 import { LogoIcon } from '@/components/LogoIcon';
 import { cn } from '@/lib/utils';
 
@@ -8,11 +12,14 @@ type AgentConversationShellProps = {
   role: 'founder' | 'investor';
   hasConversation: boolean;
   isLoading: boolean;
-  onSubmit: (value: string) => void;
+  onSubmit: (value: string, options?: AgentPromptSubmitOptions) => void;
   suggestions: string[];
   transcript: ReactNode;
   transcriptRef: RefObject<HTMLDivElement | null>;
   toolbarExtras?: ReactNode;
+  skillCommands?: AgentPromptSkill[];
+  activeSkillId?: string;
+  onSkillCommandSelect?: (skill: AgentPromptSkill) => void;
   className?: string;
 };
 
@@ -44,6 +51,9 @@ export const AgentConversationShell = ({
   transcript,
   transcriptRef,
   toolbarExtras,
+  skillCommands,
+  activeSkillId,
+  onSkillCommandSelect,
   className,
 }: AgentConversationShellProps) => {
   const copy = roleCopy[role];
@@ -78,6 +88,9 @@ export const AgentConversationShell = ({
                 showAttachment={false}
                 surface="parchment"
                 toolbarExtras={toolbarExtras}
+                skillCommands={skillCommands}
+                activeSkillId={activeSkillId}
+                onSkillCommandSelect={onSkillCommandSelect}
               />
             </div>
 
@@ -127,6 +140,9 @@ export const AgentConversationShell = ({
                 surface="parchment"
                 threadMode
                 toolbarExtras={toolbarExtras}
+                skillCommands={skillCommands}
+                activeSkillId={activeSkillId}
+                onSkillCommandSelect={onSkillCommandSelect}
               />
             </div>
           </div>

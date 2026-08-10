@@ -13,11 +13,15 @@ import {
   ResearchTrailDisclosure,
   useTypewriterReveal,
 } from '@/components/agent-stream';
-import { InvestorAIPrompt } from '@/components/InvestorAIAssist';
+import {
+  InvestorAIPrompt,
+  type AgentPromptSkill,
+  type AgentPromptSubmitOptions,
+} from '@/components/InvestorAIAssist';
 import { LogoIcon } from '@/components/LogoIcon';
 import { useAgentAuthHeaders } from '@/lib/agent-auth';
 import { buildAgentThreadSummary } from '@/lib/agent-context';
-import type { AgentChatHistoryMessage, AgentMemory, AgentProfilePatch } from '@/lib/apparent-types';
+import type { AgentChatHistoryMessage, AgentInstalledSkill, AgentMemory, AgentProfilePatch } from '@/lib/apparent-types';
 
 export type IntroProposal = {
   investorId: string;
@@ -99,6 +103,7 @@ export const FounderAgentChat = ({
   const loadingRef = useRef(false);
   const activeThreadRef = useRef<string | null>(threadId);
   const [activeSkill, setActiveSkill] = useState<ActiveSkill>(null);
+  const [installedSkills, setInstalledSkills] = useState<AgentInstalledSkill[]>([]);
 
   const toHistoryMessages = (items: ChatMessage[]): AgentChatHistoryMessage[] => {
     const latestSummaryIndex = items.findLastIndex((item) => Boolean(item.threadSummary));
@@ -174,9 +179,10 @@ export const FounderAgentChat = ({
     }
   };
 
-  const send = async (text: string) => {
+  const send = async (text: string, options?: AgentPromptSubmitOptions) => {
     const trimmed = text.trim();
     if (!trimmed || loadingRef.current) return;
+    if (options?.skill) setActiveSkill({ id: options.skill.id, name: options.skill.name });
 
     loadingRef.current = true;
     setError('');
@@ -200,7 +206,7 @@ export const FounderAgentChat = ({
           founder,
           memories,
           contacted: contactedInvestorIds,
-          activeSkillId: activeSkill?.id,
+          activeSkillId: options?.skill?.id || activeSkill?.id,
         },
         await authHeaders(),
         (label) => {
@@ -273,6 +279,7 @@ export const FounderAgentChat = ({
     <AgentSkillsManager
       activeSkill={activeSkill}
       onActiveSkillChange={setActiveSkill}
+      onInstalledSkillsChange={setInstalledSkills}
       role="founder"
     />
   );
@@ -419,6 +426,9 @@ export const FounderAgentChat = ({
         transcript={pageTranscript}
         transcriptRef={transcriptRef}
         toolbarExtras={skillToolbar}
+        skillCommands={installedSkills}
+        activeSkillId={activeSkill?.id}
+        onSkillCommandSelect={(skill) => setActiveSkill({ id: skill.id, name: skill.name })}
       />
     );
   }
@@ -513,7 +523,14 @@ export const FounderAgentChat = ({
         </div>
       )}
 
-      <InvestorAIPrompt className="py-0" onSubmit={send} toolbarExtras={skillToolbar} />
+      <InvestorAIPrompt
+        activeSkillId={activeSkill?.id}
+        className="py-0"
+        onSkillCommandSelect={(skill: AgentPromptSkill) => setActiveSkill({ id: skill.id, name: skill.name })}
+        onSubmit={send}
+        skillCommands={installedSkills}
+        toolbarExtras={skillToolbar}
+      />
 
       {!hasConversation && (
         <div className="mt-3 flex flex-wrap gap-2">

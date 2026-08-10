@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Check, CircleAlert, ExternalLink, Loader2, Puzzle, ShieldCheck, Trash2, X } from 'lucide-react';
+import { Check, CircleAlert, ExternalLink, Loader2, Power, Puzzle, ShieldCheck, Trash2, X } from 'lucide-react';
 
 import { useAgentAuthHeaders } from '@/lib/agent-auth';
 import type { AgentInstalledSkill, AgentSkillPreview, DashboardRole } from '@/lib/apparent-types';
@@ -11,11 +11,17 @@ type AgentSkillsManagerProps = {
   role: DashboardRole;
   activeSkill: ActiveSkill;
   onActiveSkillChange: (skill: ActiveSkill) => void;
+  onInstalledSkillsChange?: (skills: AgentInstalledSkill[]) => void;
 };
 
 const apiUrl = (role: DashboardRole, params = '') => `/api/agent-skills?role=${role}${params}`;
 
-export const AgentSkillsManager = ({ role, activeSkill, onActiveSkillChange }: AgentSkillsManagerProps) => {
+export const AgentSkillsManager = ({
+  role,
+  activeSkill,
+  onActiveSkillChange,
+  onInstalledSkillsChange,
+}: AgentSkillsManagerProps) => {
   const authHeaders = useAgentAuthHeaders();
   const [open, setOpen] = useState(false);
   const [skills, setSkills] = useState<AgentInstalledSkill[]>([]);
@@ -48,13 +54,21 @@ export const AgentSkillsManager = ({ role, activeSkill, onActiveSkillChange }: A
       const payload = await request<{ skills: AgentInstalledSkill[] }>(apiUrl(role));
       const installed = Array.isArray(payload.skills) ? payload.skills : [];
       setSkills(installed);
-      if (activeSkill && !installed.some((skill) => skill.id === activeSkill.id)) onActiveSkillChange(null);
+      if (activeSkill && !installed.some((skill) => skill.id === activeSkill.id && skill.enabled)) onActiveSkillChange(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unable to load Agent Skills.');
     } finally {
       setLoading(false);
     }
   }, [activeSkill, onActiveSkillChange, request, role]);
+
+  useEffect(() => {
+    void loadSkills();
+  }, [loadSkills]);
+
+  useEffect(() => {
+    onInstalledSkillsChange?.(skills);
+  }, [onInstalledSkillsChange, skills]);
 
   useEffect(() => {
     if (!open) return;
@@ -124,6 +138,23 @@ export const AgentSkillsManager = ({ role, activeSkill, onActiveSkillChange }: A
     }
   };
 
+  const updateEnabled = async (skill: AgentInstalledSkill) => {
+    setBusyId(skill.id);
+    setError('');
+    try {
+      const payload = await request<{ skill: AgentInstalledSkill }>(apiUrl(role), {
+        method: 'PATCH',
+        body: JSON.stringify({ id: skill.id, role, enabled: !skill.enabled }),
+      });
+      setSkills((current) => current.map((item) => item.id === skill.id ? payload.skill : item));
+      if (skill.enabled && activeSkill?.id === skill.id) onActiveSkillChange(null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Unable to update this skill.');
+    } finally {
+      setBusyId('');
+    }
+  };
+
   const uninstall = async (skill: AgentInstalledSkill) => {
     if (!window.confirm(`Uninstall ${skill.name}?`)) return;
     setBusyId(skill.id);
@@ -170,7 +201,7 @@ export const AgentSkillsManager = ({ role, activeSkill, onActiveSkillChange }: A
                   <Puzzle className="h-5 w-5 text-[#003f2e]" />
                   <h2 className="text-lg font-semibold tracking-[-0.025em] text-[#252927]">Agent Skills</h2>
                 </div>
-                <p className="mt-1 text-sm leading-5 text-[#6e7673]">Install portable skills into your {role} agent. Only an activated skill is loaded into a conversation.</p>
+                <p className="mt-1 text-sm leading-5 text-[#6e7673]">Install portable skills into your {role} agent. Type <span className="font-semibold text-[#45675c]">/</span> in chat to invoke any enabled skill.</p>
               </div>
               <button type="button" onClick={() => setOpen(false)} className="rounded-full p-2 text-black/45 transition-colors hover:bg-black/5 hover:text-black" aria-label="Close Agent Skills">
                 <X className="h-4 w-4" />
@@ -238,7 +269,7 @@ export const AgentSkillsManager = ({ role, activeSkill, onActiveSkillChange }: A
 
               <div className="mt-6 flex items-center justify-between">
                 <h3 className="text-sm font-semibold text-[#252927]">Installed for this agent</h3>
-                <span className="text-xs text-[#8a908d]">{skills.length} installed</span>
+                <span className="text-xs text-[#8a908d]">{skills.filter((skill) => skill.enabled).length} enabled · {skills.length} installed</span>
               </div>
 
               <div className="mt-3 grid gap-3">
@@ -255,13 +286,14 @@ export const AgentSkillsManager = ({ role, activeSkill, onActiveSkillChange }: A
                   const active = activeSkill?.id === skill.id;
                   const busy = busyId === skill.id;
                   return (
-                    <article key={skill.id} className={`rounded-2xl border bg-white p-4 transition ${active ? 'border-[#6fa38f] shadow-[0_5px_18px_rgba(0,63,46,0.08)]' : 'border-black/10'}`}>
+                    <article key={skill.id} className={`rounded-2xl border bg-white p-4 transition ${active ? 'border-[#6fa38f] shadow-[0_5px_18px_rgba(0,63,46,0.08)]' : 'border-black/10'} ${skill.enabled ? '' : 'opacity-65'}`}>
                       <div className="flex items-start justify-between gap-4">
                         <div className="min-w-0">
                           <div className="flex flex-wrap items-center gap-2">
                             <p className="font-semibold text-[#252927]">{skill.name}</p>
                             {active && <span className="rounded-full bg-[#edf5f1] px-2 py-0.5 text-[10px] font-semibold text-[#006b4e]">Active</span>}
-                            {skill.activationMode === 'auto' && <span className="rounded-full bg-[#f1eee9] px-2 py-0.5 text-[10px] font-medium text-[#6e6760]">Auto-use</span>}
+                            {!skill.enabled && <span className="rounded-full bg-[#f1eee9] px-2 py-0.5 text-[10px] font-semibold text-[#756d65]">Disabled</span>}
+                            {skill.enabled && skill.activationMode === 'auto' && <span className="rounded-full bg-[#f1eee9] px-2 py-0.5 text-[10px] font-medium text-[#6e6760]">Auto-use</span>}
                           </div>
                           <p className="mt-1 text-sm leading-5 text-[#6e7673]">{skill.description}</p>
                           <a href={skill.sourceUrl} target="_blank" rel="noreferrer" className="mt-2 inline-flex max-w-full items-center gap-1 text-[11px] text-[#70827b] hover:text-[#003f2e]">
@@ -276,12 +308,16 @@ export const AgentSkillsManager = ({ role, activeSkill, onActiveSkillChange }: A
                         <button
                           type="button"
                           onClick={() => onActiveSkillChange(active ? null : { id: skill.id, name: skill.name })}
-                          className={active ? 'rounded-lg border border-black/10 px-3 py-1.5 text-xs font-medium text-[#5f6764] hover:bg-black/[0.03]' : 'rounded-lg bg-[#003f2e] px-3 py-1.5 text-xs font-semibold text-white shadow-[0_2px_0_rgba(0,40,30,0.18)]'}
+                          disabled={!skill.enabled}
+                          className={active ? 'rounded-lg border border-black/10 px-3 py-1.5 text-xs font-medium text-[#5f6764] hover:bg-black/[0.03]' : 'rounded-lg bg-[#003f2e] px-3 py-1.5 text-xs font-semibold text-white shadow-[0_2px_0_rgba(0,40,30,0.18)] disabled:cursor-not-allowed disabled:opacity-40'}
                         >
                           {active ? 'Stop using' : 'Use now'}
                         </button>
-                        <button type="button" onClick={() => void updateActivation(skill)} disabled={busy} className="rounded-lg border border-black/10 px-3 py-1.5 text-xs font-medium text-[#5f6764] transition-colors hover:border-black/20 hover:text-black disabled:opacity-50">
+                        <button type="button" onClick={() => void updateActivation(skill)} disabled={busy || !skill.enabled} className="rounded-lg border border-black/10 px-3 py-1.5 text-xs font-medium text-[#5f6764] transition-colors hover:border-black/20 hover:text-black disabled:cursor-not-allowed disabled:opacity-40">
                           {skill.activationMode === 'auto' ? 'Require explicit use' : 'Allow auto-use'}
+                        </button>
+                        <button type="button" onClick={() => void updateEnabled(skill)} disabled={busy} className="inline-flex items-center gap-1 rounded-lg border border-black/10 px-3 py-1.5 text-xs font-medium text-[#5f6764] transition-colors hover:border-black/20 hover:text-black disabled:opacity-50">
+                          <Power className="h-3 w-3" /> {skill.enabled ? 'Disable' : 'Enable'}
                         </button>
                         {skill.hasScripts && <span className="text-[11px] text-amber-700">Scripts disabled</span>}
                       </div>
