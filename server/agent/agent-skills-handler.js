@@ -1,12 +1,12 @@
-import { requireAgentAccess, sendAgentAccessError } from '../server/agent/agent-guard.js';
+import { requireAgentAccess, sendAgentAccessError } from './agent-guard.js';
 import {
   agentSkillStorageConfigured,
   deleteInstalledAgentSkill,
   installAgentSkill,
   listInstalledAgentSkills,
   updateInstalledAgentSkill,
-} from '../server/agent/installed-skills.js';
-import { AgentSkillSourceError, inspectAgentSkillSource } from '../server/agent/skill-source.js';
+} from './installed-skills.js';
+import { AgentSkillSourceError, inspectAgentSkillSource } from './skill-source.js';
 
 const readJsonBody = async (req) => {
   if (req.body && typeof req.body === 'object') return req.body;
@@ -38,7 +38,7 @@ const preview = (skill) => ({
   hasAssets: skill.hasAssets,
 });
 
-export default async function handler(req, res) {
+export default async function agentSkillsHandler(req, res) {
   const body = req.method === 'POST' || req.method === 'PATCH' ? await readJsonBody(req) : {};
   const role = roleFrom(req, body);
   if (!role) return res.status(400).json({ error: 'Choose the founder or investor Agent Skill library.' });

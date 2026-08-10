@@ -27,6 +27,7 @@ import {
   toolStatusLabel,
 } from '../server/agent/apparent-agent-runtime.js';
 import { orthogonalData } from '../server/agent/orthogonal.js';
+import agentSkillsHandler from '../server/agent/agent-skills-handler.js';
 import kindeProfileHandler from '../server/agent/kinde-profile.js';
 import {
   formatInstalledSkillPrompt,
@@ -560,6 +561,9 @@ const readJsonBody = async (req) => {
 export default async function handler(req, res) {
   if (req.query?.route === 'kinde-profile') {
     return kindeProfileHandler(req, res);
+  }
+  if (req.query?.route === 'agent-skills') {
+    return agentSkillsHandler(req, res);
   }
 
   if (req.method !== 'POST') {

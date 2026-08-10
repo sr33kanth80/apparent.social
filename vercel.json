@@ -1,8 +1,7 @@
 {
   "functions": {
     "api/agent.js": { "maxDuration": 300 },
-    "api/founder-agent.js": { "maxDuration": 300 },
-    "api/agent-skills.js": { "maxDuration": 60 }
+    "api/founder-agent.js": { "maxDuration": 300 }
   },
   "rewrites": [
     {
@@ -36,6 +35,10 @@
     {
       "source": "/api/kinde-profile",
       "destination": "/api/agent?route=kinde-profile"
+    },
+    {
+      "source": "/api/agent-skills",
+      "destination": "/api/agent?route=agent-skills"
     },
     {
       "source": "/",

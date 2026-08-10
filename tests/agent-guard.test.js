@@ -182,6 +182,20 @@ test('the consolidated agent function dispatches Kinde profile requests', async 
   assert.deepEqual(res.result.body, { role: 'founder' });
 });
 
+test('the consolidated agent function dispatches Agent Skill library requests', async () => {
+  const req = {
+    ...requestWith(),
+    method: 'GET',
+    query: { route: 'agent-skills', role: 'investor' },
+  };
+  const res = responseRecorder();
+
+  await agentHandler(req, res);
+
+  assert.equal(res.result.statusCode, 401);
+  assert.deepEqual(res.result.body, { error: 'Sign in to use the agent.' });
+});
+
 test('requests without a session remain blocked before agent execution', async () => {
   const access = await requireAgentAccess(requestWith(), 'founder', 'founder-agent');
 
