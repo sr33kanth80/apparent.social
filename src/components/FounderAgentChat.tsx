@@ -327,12 +327,12 @@ export const FounderAgentChat = ({
             key={index}
             className={
               message.role === 'user'
-                ? `flex justify-end pb-8 pt-10 first:pt-0 ${index > 0 ? 'border-t border-[#d6d6d6]' : ''}`
+                ? 'flex justify-end pb-8 pt-10 first:pt-0'
                 : 'pb-14'
             }
           >
             {message.role === 'user' ? (
-              <div className="max-w-[85%] rounded-2xl border border-[#d6d6d6] bg-white px-4 py-3 sm:max-w-[72%]">
+              <div className="max-w-[85%] rounded-2xl border border-black/15 bg-white px-4 py-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.8),0_3px_0_rgba(51,51,51,0.16),0_10px_24px_rgba(51,51,51,0.08)] sm:max-w-[72%]">
                 <p className="whitespace-pre-wrap text-[15px] leading-6 text-[#333333] sm:text-base">
                   {message.content}
                 </p>
