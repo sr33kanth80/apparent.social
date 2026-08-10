@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Check, CircleAlert, ExternalLink, Loader2, Power, Puzzle, ShieldCheck, Trash2, X } from 'lucide-react';
 
+import { LogoIcon } from '@/components/LogoIcon';
 import { useAgentAuthHeaders } from '@/lib/agent-auth';
 import type { AgentInstalledSkill, AgentSkillPreview, DashboardRole } from '@/lib/apparent-types';
 
@@ -189,29 +190,33 @@ export const AgentSkillsManager = ({
     <>
       {trigger}
       {createPortal(
-        <div className="fixed inset-0 z-[180] flex items-center justify-center bg-black/35 p-4 backdrop-blur-[2px]" onMouseDown={() => setOpen(false)}>
+        <div className="fixed inset-0 z-[180] flex items-center justify-center bg-[#140206]/25 p-4" onMouseDown={() => setOpen(false)}>
           <section
             aria-label="Agent Skills"
-            className="max-h-[88dvh] w-full max-w-2xl overflow-hidden rounded-[22px] border border-black/10 bg-[#fdf9f7] shadow-[0_28px_90px_rgba(30,36,33,0.24)]"
+            aria-modal="true"
+            role="dialog"
+            className="agent-page max-h-[88dvh] w-full max-w-[760px] overflow-hidden rounded-none border border-[#140206] bg-[#f7f4ef] shadow-[8px_8px_0_#140206]"
             onMouseDown={(event) => event.stopPropagation()}
           >
-            <header className="flex items-start justify-between gap-4 border-b border-black/10 bg-white px-5 py-4 sm:px-6">
-              <div>
-                <div className="flex items-center gap-2">
-                  <Puzzle className="h-5 w-5 text-[#003f2e]" />
-                  <h2 className="text-lg font-semibold tracking-[-0.025em] text-[#252927]">Agent Skills</h2>
+            <header className="flex items-start justify-between gap-5 border-b border-[#140206] bg-[#f7f4ef] px-5 py-5 sm:px-6">
+              <div className="flex min-w-0 items-start gap-3">
+                <LogoIcon className="mt-1 h-6 w-6 shrink-0 text-[#140206]" />
+                <div>
+                  <p className="agent-skills-meta text-[10px] font-medium uppercase tracking-[0.16em] text-black/45">Apparent agent</p>
+                  <h2 className="agent-skills-display mt-1 font-serif text-2xl font-normal leading-none tracking-[-0.03em] text-[#140206]">Agent Skills</h2>
+                  <p className="mt-2 max-w-xl text-sm leading-5 text-black/55">Install portable skills into your {role} agent. Type <span className="font-medium text-[#140206]">/</span> in chat to invoke any enabled skill.</p>
                 </div>
-                <p className="mt-1 text-sm leading-5 text-[#6e7673]">Install portable skills into your {role} agent. Type <span className="font-semibold text-[#45675c]">/</span> in chat to invoke any enabled skill.</p>
               </div>
-              <button type="button" onClick={() => setOpen(false)} className="rounded-full p-2 text-black/45 transition-colors hover:bg-black/5 hover:text-black" aria-label="Close Agent Skills">
+              <button type="button" onClick={() => setOpen(false)} className="flex h-9 w-9 shrink-0 items-center justify-center rounded-none border border-[#140206] bg-transparent text-[#140206] transition-colors hover:bg-[#16a34a] hover:text-white" aria-label="Close Agent Skills">
                 <X className="h-4 w-4" />
               </button>
             </header>
 
-            <div className="max-h-[calc(88dvh-92px)] overflow-y-auto px-5 py-5 sm:px-6">
-              <div className="rounded-2xl border border-black/10 bg-white p-4 shadow-[0_6px_20px_rgba(34,48,42,0.04)]">
-                <label htmlFor={`agent-skill-source-${role}`} className="text-sm font-semibold text-[#252927]">Install from a public URL</label>
-                <p className="mt-1 text-xs leading-5 text-[#6e7673]">Paste a GitHub repository, skill directory, or direct SKILL.md URL.</p>
+            <div className="max-h-[calc(88dvh-112px)] overflow-y-auto px-5 py-5 sm:px-6">
+              <div className="border-b border-[#140206] pb-6">
+                <p className="agent-skills-meta text-[10px] font-medium uppercase tracking-[0.16em] text-black/45">Install from source</p>
+                <label htmlFor={`agent-skill-source-${role}`} className="agent-skills-display mt-1 block font-serif text-xl font-normal tracking-[-0.025em] text-[#140206]">Add a portable skill</label>
+                <p className="mt-1 text-xs leading-5 text-black/55">Paste a GitHub repository, skill directory, or direct SKILL.md URL. Apparent inspects it before anything is installed.</p>
                 <div className="mt-3 flex flex-col gap-2 sm:flex-row">
                   <input
                     id={`agent-skill-source-${role}`}
@@ -225,13 +230,13 @@ export const AgentSkillsManager = ({
                       if (event.key === 'Enter') void inspect();
                     }}
                     placeholder="https://github.com/owner/skill"
-                    className="min-w-0 flex-1 rounded-xl border border-black/10 bg-[#fdf9f7] px-3 py-2.5 text-sm text-[#333333] outline-none transition focus:border-[#6fa38f] focus:ring-2 focus:ring-[#039861]/10"
+                    className="min-w-0 flex-1 rounded-none border border-[#140206] bg-transparent px-3 py-2.5 text-sm text-[#140206] outline-none transition focus:shadow-[3px_3px_0_#140206]"
                   />
                   <button
                     type="button"
                     onClick={() => void inspect()}
                     disabled={loading || !sourceUrl.trim()}
-                    className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#003f2e] px-4 py-2.5 text-sm font-semibold text-white shadow-[inset_0_1px_rgba(255,255,255,0.12),0_2px_0_rgba(0,40,30,0.24)] disabled:cursor-not-allowed disabled:opacity-50"
+                    className="inline-flex items-center justify-center gap-2 rounded-none border border-[#140206] bg-[#16a34a] px-4 py-2.5 text-sm font-medium text-white shadow-[3px_3px_0_#140206] transition-transform hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none"
                   >
                     {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <ShieldCheck className="h-4 w-4" />}
                     Inspect
@@ -239,24 +244,24 @@ export const AgentSkillsManager = ({
                 </div>
 
                 {preview && (
-                  <div className="mt-4 rounded-xl border border-[#8fb8a7]/50 bg-[#edf5f1] p-4">
+                  <div className="mt-5 rounded-none border border-[#140206] bg-[#e2f7ec] p-4">
                     <div className="flex flex-wrap items-start justify-between gap-3">
                       <div>
-                        <p className="font-semibold text-[#153e31]">{preview.name}</p>
-                        <p className="mt-1 max-w-xl text-sm leading-5 text-[#45675c]">{preview.description}</p>
+                        <p className="agent-skills-display font-serif text-lg font-normal tracking-[-0.02em] text-[#140206]">{preview.name}</p>
+                        <p className="mt-1 max-w-xl text-sm leading-5 text-black/60">{preview.description}</p>
                       </div>
-                      <button type="button" onClick={() => void install()} disabled={loading} className="rounded-xl bg-[#003f2e] px-3.5 py-2 text-xs font-semibold text-white shadow-[0_2px_0_rgba(0,40,30,0.22)] disabled:opacity-50">
+                      <button type="button" onClick={() => void install()} disabled={loading} className="rounded-none border border-[#140206] bg-[#16a34a] px-3.5 py-2 text-xs font-medium text-white shadow-[2px_2px_0_#140206] disabled:opacity-50 disabled:shadow-none">
                         Install skill
                       </button>
                     </div>
-                    <div className="mt-3 flex flex-wrap gap-2 text-[11px] text-[#45675c]">
+                    <div className="agent-skills-meta mt-3 flex flex-wrap gap-2 font-mono text-[10px] uppercase tracking-[0.08em] text-black/55">
                       <span>{preview.resourcePaths.length} text resource{preview.resourcePaths.length === 1 ? '' : 's'}</span>
                       <span>•</span>
                       <span>{preview.allowedTools.length ? `${preview.allowedTools.length} declared tool${preview.allowedTools.length === 1 ? '' : 's'}` : 'No declared tools'}</span>
                       {preview.version && <><span>•</span><span>Version {preview.version}</span></>}
                     </div>
                     {preview.hasScripts && (
-                      <div className="mt-3 flex items-start gap-2 rounded-lg border border-amber-300/70 bg-amber-50 px-3 py-2 text-xs leading-5 text-amber-900">
+                      <div className="mt-3 flex items-start gap-2 rounded-none border border-amber-700 bg-amber-50 px-3 py-2 text-xs leading-5 text-amber-900">
                         <CircleAlert className="mt-0.5 h-4 w-4 shrink-0" />
                         This skill includes scripts. Apparent will install its instructions and text references, but will not execute bundled code without a sandbox.
                       </div>
@@ -265,58 +270,61 @@ export const AgentSkillsManager = ({
                 )}
               </div>
 
-              {error && <div className="mt-4 rounded-xl border border-red-200 bg-red-50 px-3 py-2.5 text-sm text-red-700">{error}</div>}
+              {error && <div className="mt-4 rounded-none border border-red-700 bg-red-50 px-3 py-2.5 text-sm text-red-700">{error}</div>}
 
-              <div className="mt-6 flex items-center justify-between">
-                <h3 className="text-sm font-semibold text-[#252927]">Installed for this agent</h3>
-                <span className="text-xs text-[#8a908d]">{skills.filter((skill) => skill.enabled).length} enabled · {skills.length} installed</span>
+              <div className="mt-6 flex items-end justify-between gap-4">
+                <div>
+                  <p className="agent-skills-meta text-[10px] font-medium uppercase tracking-[0.16em] text-black/45">Your library</p>
+                  <h3 className="agent-skills-display mt-1 font-serif text-xl font-normal tracking-[-0.025em] text-[#140206]">Installed skills</h3>
+                </div>
+                <span className="agent-skills-meta font-mono text-[10px] uppercase tracking-[0.08em] text-black/45">{skills.filter((skill) => skill.enabled).length} enabled · {skills.length} installed</span>
               </div>
 
-              <div className="mt-3 grid gap-3">
+              <div className="mt-3 divide-y divide-[#140206]/20 border-y border-[#140206]">
                 {loading && skills.length === 0 && (
                   <div className="flex items-center justify-center gap-2 py-8 text-sm text-[#6e7673]"><Loader2 className="h-4 w-4 animate-spin" /> Loading skills</div>
                 )}
                 {!loading && skills.length === 0 && (
-                  <div className="rounded-2xl border border-dashed border-black/15 px-5 py-8 text-center">
-                    <p className="text-sm font-medium text-[#333333]">Your agent has no installed skills yet.</p>
-                    <p className="mt-1 text-xs text-[#7a817e]">Install one above. Apparent will keep it private to your account.</p>
+                  <div className="px-5 py-10 text-center">
+                    <p className="agent-skills-display font-serif text-lg font-normal text-[#140206]">Your agent has no installed skills yet.</p>
+                    <p className="mt-1 text-xs text-black/50">Install one above. Apparent will keep it private to your account.</p>
                   </div>
                 )}
                 {skills.map((skill) => {
                   const active = activeSkill?.id === skill.id;
                   const busy = busyId === skill.id;
                   return (
-                    <article key={skill.id} className={`rounded-2xl border bg-white p-4 transition ${active ? 'border-[#6fa38f] shadow-[0_5px_18px_rgba(0,63,46,0.08)]' : 'border-black/10'} ${skill.enabled ? '' : 'opacity-65'}`}>
+                    <article key={skill.id} className={`p-4 transition-colors ${active ? 'border-l-4 border-[#16a34a] bg-[#e2f7ec]' : 'bg-transparent'} ${skill.enabled ? '' : 'opacity-55'}`}>
                       <div className="flex items-start justify-between gap-4">
                         <div className="min-w-0">
                           <div className="flex flex-wrap items-center gap-2">
-                            <p className="font-semibold text-[#252927]">{skill.name}</p>
-                            {active && <span className="rounded-full bg-[#edf5f1] px-2 py-0.5 text-[10px] font-semibold text-[#006b4e]">Active</span>}
-                            {!skill.enabled && <span className="rounded-full bg-[#f1eee9] px-2 py-0.5 text-[10px] font-semibold text-[#756d65]">Disabled</span>}
-                            {skill.enabled && skill.activationMode === 'auto' && <span className="rounded-full bg-[#f1eee9] px-2 py-0.5 text-[10px] font-medium text-[#6e6760]">Auto-use</span>}
+                            <p className="agent-skills-display font-serif text-lg font-normal tracking-[-0.02em] text-[#140206]">{skill.name}</p>
+                            {active && <span className="rounded-none border border-[#140206] bg-[#16a34a] px-2 py-0.5 text-[9px] font-medium uppercase tracking-[0.08em] text-white">Active</span>}
+                            {!skill.enabled && <span className="rounded-none border border-[#140206]/50 px-2 py-0.5 text-[9px] font-medium uppercase tracking-[0.08em] text-black/55">Disabled</span>}
+                            {skill.enabled && skill.activationMode === 'auto' && <span className="rounded-none border border-[#140206]/30 px-2 py-0.5 text-[9px] font-medium uppercase tracking-[0.08em] text-black/55">Auto-use</span>}
                           </div>
-                          <p className="mt-1 text-sm leading-5 text-[#6e7673]">{skill.description}</p>
-                          <a href={skill.sourceUrl} target="_blank" rel="noreferrer" className="mt-2 inline-flex max-w-full items-center gap-1 text-[11px] text-[#70827b] hover:text-[#003f2e]">
+                          <p className="mt-1 text-sm leading-5 text-black/55">{skill.description}</p>
+                          <a href={skill.sourceUrl} target="_blank" rel="noreferrer" className="agent-skills-meta mt-2 inline-flex max-w-full items-center gap-1 font-mono text-[10px] uppercase tracking-[0.08em] text-black/45 hover:text-[#140206]">
                             <ExternalLink className="h-3 w-3 shrink-0" /><span className="truncate">Source</span>
                           </a>
                         </div>
-                        <button type="button" onClick={() => void uninstall(skill)} disabled={busy} className="shrink-0 rounded-lg p-2 text-black/35 transition-colors hover:bg-red-50 hover:text-red-600 disabled:opacity-50" aria-label={`Uninstall ${skill.name}`}>
+                        <button type="button" onClick={() => void uninstall(skill)} disabled={busy} className="flex h-8 w-8 shrink-0 items-center justify-center rounded-none border border-[#140206]/40 text-black/45 transition-colors hover:border-red-700 hover:bg-red-50 hover:text-red-700 disabled:opacity-50" aria-label={`Uninstall ${skill.name}`}>
                           {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
                         </button>
                       </div>
-                      <div className="mt-4 flex flex-wrap items-center gap-2 border-t border-black/5 pt-3">
+                      <div className="mt-4 flex flex-wrap items-center gap-2 border-t border-[#140206]/15 pt-3">
                         <button
                           type="button"
                           onClick={() => onActiveSkillChange(active ? null : { id: skill.id, name: skill.name })}
                           disabled={!skill.enabled}
-                          className={active ? 'rounded-lg border border-black/10 px-3 py-1.5 text-xs font-medium text-[#5f6764] hover:bg-black/[0.03]' : 'rounded-lg bg-[#003f2e] px-3 py-1.5 text-xs font-semibold text-white shadow-[0_2px_0_rgba(0,40,30,0.18)] disabled:cursor-not-allowed disabled:opacity-40'}
+                          className={active ? 'rounded-none border border-[#140206] px-3 py-1.5 text-xs font-medium text-[#140206] hover:bg-black/[0.04]' : 'rounded-none border border-[#140206] bg-[#16a34a] px-3 py-1.5 text-xs font-medium text-white shadow-[2px_2px_0_#140206] disabled:cursor-not-allowed disabled:opacity-40 disabled:shadow-none'}
                         >
                           {active ? 'Stop using' : 'Use now'}
                         </button>
-                        <button type="button" onClick={() => void updateActivation(skill)} disabled={busy || !skill.enabled} className="rounded-lg border border-black/10 px-3 py-1.5 text-xs font-medium text-[#5f6764] transition-colors hover:border-black/20 hover:text-black disabled:cursor-not-allowed disabled:opacity-40">
+                        <button type="button" onClick={() => void updateActivation(skill)} disabled={busy || !skill.enabled} className="rounded-none border border-[#140206]/60 px-3 py-1.5 text-xs font-medium text-[#140206] transition-colors hover:border-[#140206] disabled:cursor-not-allowed disabled:opacity-40">
                           {skill.activationMode === 'auto' ? 'Require explicit use' : 'Allow auto-use'}
                         </button>
-                        <button type="button" onClick={() => void updateEnabled(skill)} disabled={busy} className="inline-flex items-center gap-1 rounded-lg border border-black/10 px-3 py-1.5 text-xs font-medium text-[#5f6764] transition-colors hover:border-black/20 hover:text-black disabled:opacity-50">
+                        <button type="button" onClick={() => void updateEnabled(skill)} disabled={busy} className="inline-flex items-center gap-1 rounded-none border border-[#140206]/60 px-3 py-1.5 text-xs font-medium text-[#140206] transition-colors hover:border-[#140206] disabled:opacity-50">
                           <Power className="h-3 w-3" /> {skill.enabled ? 'Disable' : 'Enable'}
                         </button>
                         {skill.hasScripts && <span className="text-[11px] text-amber-700">Scripts disabled</span>}
@@ -326,8 +334,8 @@ export const AgentSkillsManager = ({
                 })}
               </div>
 
-              <div className="mt-5 flex items-start gap-2 rounded-xl bg-[#f1eee9] px-3.5 py-3 text-xs leading-5 text-[#68645f]">
-                <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-[#45675c]" />
+              <div className="mt-5 flex items-start gap-2 rounded-none border border-[#140206]/30 bg-transparent px-3.5 py-3 text-xs leading-5 text-black/55">
+                <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-[#140206]" />
                 Installed skills never gain permissions by themselves. Apparent still enforces your role, action approvals, research limits, and privacy boundaries.
               </div>
             </div>

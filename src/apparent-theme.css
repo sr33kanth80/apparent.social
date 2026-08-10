@@ -125,6 +125,20 @@ body {
   letter-spacing: 0;
 }
 
+/* Portaled Agent dialogs opt back into the editorial faces used by the page.
+   The Agent scope intentionally normalizes all descendants to the body face,
+   so these explicit hooks preserve hierarchy without leaking outside it. */
+.agent-page .agent-skills-display {
+  font-family: var(--font-apparent-display) !important;
+  font-weight: 400 !important;
+  letter-spacing: -0.025em !important;
+}
+
+.agent-page .agent-skills-meta {
+  font-family: var(--font-apparent-meta) !important;
+  letter-spacing: 0.08em !important;
+}
+
 /* Thread answers are formatted as compact research documents. The markdown
    component is shared elsewhere, so every editorial override stays beneath
    the Agent-page research-answer hook. */
