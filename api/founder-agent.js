@@ -26,6 +26,12 @@ import {
   standardOrthogonalTools,
   toolStatusLabel,
 } from '../server/agent/apparent-agent-runtime.js';
+import {
+  formatInstalledSkillPrompt,
+  installedSkillResourceTool,
+  readInstalledSkillResource,
+  selectInstalledAgentSkill,
+} from '../server/agent/installed-skills.js';
 
 // Vercel Node functions buffer responses unless streaming is opted into.
 export const config = { supportsResponseStreaming: true };
@@ -299,7 +305,7 @@ const TOOLS = [
   },
 ];
 
-const buildSystemPrompt = (founder, contactedIds, memories, threadSummary, sourceBrief) => {
+const buildSystemPrompt = (founder, contactedIds, memories, threadSummary, sourceBrief, installedSkillPrompt) => {
   const f = founder || {};
   const contacted = Array.isArray(contactedIds) ? contactedIds.filter(Boolean) : [];
   return [
@@ -329,6 +335,9 @@ const buildSystemPrompt = (founder, contactedIds, memories, threadSummary, sourc
     '',
     'Latest source-ingestion brief:',
     sourceBrief,
+    '',
+    'User-installed Agent Skill for this turn:',
+    installedSkillPrompt,
     '',
     contacted.length
       ? `- The founder has already messaged these investor ids — don't draft intros to them again: ${contacted.join(', ')}.`
@@ -411,7 +420,21 @@ export default async function handler(req, res) {
   const sendsToSelf = /\bsend\s+me\b/i.test(latestUserMessage);
   const introIntent = !actionDenied && !asksOnly && !sendsToSelf && (introPattern.test(latestUserMessage) || (confirmsPriorAction && introPattern.test(priorAssistantMessage)));
   const amplifyIntent = !actionDenied && (amplifyPattern.test(latestUserMessage) || (confirmsPriorAction && amplifyPattern.test(priorAssistantMessage)));
-  const system = buildSystemPrompt(founder, contactedIds, memories, threadSummary, sourceAnalysis.brief);
+  const activeSkill = await selectInstalledAgentSkill({
+    userId: access.userId,
+    role: 'founder',
+    requestedSkillId: str(body.activeSkillId).trim(),
+    message: latestUserMessage,
+  });
+  const system = buildSystemPrompt(
+    founder,
+    contactedIds,
+    memories,
+    threadSummary,
+    sourceAnalysis.brief,
+    formatInstalledSkillPrompt(activeSkill),
+  );
+  const runtimeTools = activeSkill?.resourcePaths?.length ? [...TOOLS, installedSkillResourceTool] : TOOLS;
   const proposals = [];
   const profilePatches = [];
   const seenInvestors = new Set();
@@ -420,6 +443,7 @@ export default async function handler(req, res) {
   // SSE progress streaming, opted into by the client. Validation errors above
   // stay plain JSON; the stream only starts once the agent loop is about to run.
   const { streaming, emit, close: closeStream } = createAgentSse(res, body.stream === true);
+  if (activeSkill) emit({ type: 'status', label: `Using ${activeSkill.name} skill…` });
 
   try {
     // Size the Orthogonal call budget to the loop this turn is allowed to run.
@@ -427,7 +451,7 @@ export default async function handler(req, res) {
     const runtimeResult = await runtime.run({
       system,
       messages,
-      tools: TOOLS,
+      tools: runtimeTools,
       maxSteps: MAX_AGENT_STEPS,
       maxTokens: 4096,
       authorizeTool: (name) => {
@@ -438,6 +462,7 @@ export default async function handler(req, res) {
       },
       executeTool: async (name, input, { session }) => {
         emit({ type: 'status', label: toolStatusLabel(name, input) });
+        if (name === 'read_installed_skill_resource') return readInstalledSkillResource(activeSkill, input);
         const external = await runStandardOrthogonalTool(session, name, input, publicResearchPolicy);
         if (external !== null) return external;
         const routed = await runOrthogonalRouterTool(session, name, input, publicResearchPolicy);
@@ -495,6 +520,7 @@ export default async function handler(req, res) {
       proposals,
       profilePatches,
       amplify: amplifyRequested,
+      skill: activeSkill ? { id: activeSkill.id, name: activeSkill.name, sourceUrl: activeSkill.sourceUrl } : null,
     };
     if (streaming) {
       emit({ type: 'done', ...responsePayload });

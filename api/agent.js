@@ -28,6 +28,12 @@ import {
 } from '../server/agent/apparent-agent-runtime.js';
 import { orthogonalData } from '../server/agent/orthogonal.js';
 import kindeProfileHandler from '../server/agent/kinde-profile.js';
+import {
+  formatInstalledSkillPrompt,
+  installedSkillResourceTool,
+  readInstalledSkillResource,
+  selectInstalledAgentSkill,
+} from '../server/agent/installed-skills.js';
 
 // Covers multi-step first-party and Orthogonal tool execution.
 const MAX_AGENT_STEPS = 12;
@@ -470,7 +476,7 @@ const autonomyGuidance = (autonomy) => {
   return 'Auto-send is OFF (draft & approve): outreach you propose is shown to the investor to review and send. Tell the investor you have drafted messages for their approval.';
 };
 
-const buildSystemPrompt = (criteria, autonomy, contactedIds, memories, threadSummary, sourceBrief) => {
+const buildSystemPrompt = (criteria, autonomy, contactedIds, memories, threadSummary, sourceBrief, installedSkillPrompt) => {
   const c = criteria || {};
   const contacted = Array.isArray(contactedIds) ? contactedIds.filter(Boolean) : [];
   const lines = [
@@ -498,6 +504,9 @@ const buildSystemPrompt = (criteria, autonomy, contactedIds, memories, threadSum
     '',
     'Latest source-ingestion brief:',
     sourceBrief,
+    '',
+    'User-installed Agent Skill for this turn:',
+    installedSkillPrompt,
     '',
     'Outreach mode:',
     `- ${autonomyGuidance(autonomy)}`,
@@ -610,7 +619,22 @@ export default async function handler(req, res) {
   const confirmedOutreach = confirmsPriorAction && /\b(?:send|reach out|contact)\b/i.test(priorAssistantMessage);
   const sendIntent = !actionDenied && !asksOnly && !sendsToSelf && sendPattern.test(latestUserMessage);
   const draftIntent = !actionDenied && (draftPattern.test(latestUserMessage) || confirmedOutreach);
-  const system = buildSystemPrompt(criteria, autonomy, contactedIds, memories, threadSummary, sourceAnalysis.brief);
+  const activeSkill = await selectInstalledAgentSkill({
+    userId: access.userId,
+    role: 'investor',
+    requestedSkillId: str(body.activeSkillId).trim(),
+    message: latestUserMessage,
+  });
+  const system = buildSystemPrompt(
+    criteria,
+    autonomy,
+    contactedIds,
+    memories,
+    threadSummary,
+    sourceAnalysis.brief,
+    formatInstalledSkillPrompt(activeSkill),
+  );
+  const runtimeTools = activeSkill?.resourcePaths?.length ? [...TOOLS, installedSkillResourceTool] : TOOLS;
   const proposals = []; // on-platform DM proposals
   const emailDrafts = []; // off-platform mailto drafts
   const profilePatches = []; // reviewable profile edits
@@ -620,6 +644,7 @@ export default async function handler(req, res) {
   // SSE progress streaming, opted into by the client. Validation errors above
   // stay plain JSON; the stream only starts once the agent loop is about to run.
   const { streaming, emit, close: closeStream } = createAgentSse(res, body.stream === true);
+  if (activeSkill) emit({ type: 'status', label: `Using ${activeSkill.name} skill…` });
 
   try {
     // Size the Orthogonal call budget to the loop this turn is allowed to run.
@@ -627,7 +652,7 @@ export default async function handler(req, res) {
     const runtimeResult = await runtime.run({
       system,
       messages,
-      tools: TOOLS,
+      tools: runtimeTools,
       maxSteps: MAX_AGENT_STEPS,
       maxTokens: 4096,
       authorizeTool: (name) => {
@@ -638,6 +663,7 @@ export default async function handler(req, res) {
       },
       executeTool: async (name, input, { session }) => {
         emit({ type: 'status', label: toolStatusLabel(name, input) });
+        if (name === 'read_installed_skill_resource') return readInstalledSkillResource(activeSkill, input);
         const external = await runStandardOrthogonalTool(session, name, input, publicResearchPolicy);
         if (external !== null) return external;
         const routed = await runOrthogonalRouterTool(session, name, input, publicResearchPolicy);
@@ -713,6 +739,7 @@ export default async function handler(req, res) {
       proposals,
       emailDrafts,
       profilePatches,
+      skill: activeSkill ? { id: activeSkill.id, name: activeSkill.name, sourceUrl: activeSkill.sourceUrl } : null,
     };
     if (streaming) {
       emit({ type: 'done', ...responsePayload });

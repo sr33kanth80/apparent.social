@@ -1,7 +1,8 @@
 {
   "functions": {
     "api/agent.js": { "maxDuration": 300 },
-    "api/founder-agent.js": { "maxDuration": 300 }
+    "api/founder-agent.js": { "maxDuration": 300 },
+    "api/agent-skills.js": { "maxDuration": 60 }
   },
   "rewrites": [
     {

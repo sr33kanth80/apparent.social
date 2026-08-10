@@ -4,6 +4,7 @@ import { Check, Loader2, Megaphone, Send, Sparkles, Trash2, X } from 'lucide-rea
 import { AgentConversationShell } from '@/components/AgentConversationShell';
 import { AgentMarkdown } from '@/components/AgentMarkdown';
 import { AgentProfilePatchCard } from '@/components/AgentProfilePatchCard';
+import { AgentSkillsManager, type ActiveSkill } from '@/components/AgentSkillsManager';
 import {
   AgentStatusTrail,
   appendStatus,
@@ -97,6 +98,7 @@ export const FounderAgentChat = ({
   const transcriptRef = useRef<HTMLDivElement>(null);
   const loadingRef = useRef(false);
   const activeThreadRef = useRef<string | null>(threadId);
+  const [activeSkill, setActiveSkill] = useState<ActiveSkill>(null);
 
   const toHistoryMessages = (items: ChatMessage[]): AgentChatHistoryMessage[] => {
     const latestSummaryIndex = items.findLastIndex((item) => Boolean(item.threadSummary));
@@ -198,6 +200,7 @@ export const FounderAgentChat = ({
           founder,
           memories,
           contacted: contactedInvestorIds,
+          activeSkillId: activeSkill?.id,
         },
         await authHeaders(),
         (label) => {
@@ -265,6 +268,14 @@ export const FounderAgentChat = ({
   };
 
   const hasConversation = messages.length > 0;
+
+  const skillToolbar = (
+    <AgentSkillsManager
+      activeSkill={activeSkill}
+      onActiveSkillChange={setActiveSkill}
+      role="founder"
+    />
+  );
 
   // The newest assistant reply is revealed progressively; older messages show in full.
   const visibleAssistantText = (message: ChatMessage, index: number) =>
@@ -407,6 +418,7 @@ export const FounderAgentChat = ({
         suggestions={SUGGESTIONS}
         transcript={pageTranscript}
         transcriptRef={transcriptRef}
+        toolbarExtras={skillToolbar}
       />
     );
   }
@@ -501,7 +513,7 @@ export const FounderAgentChat = ({
         </div>
       )}
 
-      <InvestorAIPrompt className="py-0" onSubmit={send} />
+      <InvestorAIPrompt className="py-0" onSubmit={send} toolbarExtras={skillToolbar} />
 
       {!hasConversation && (
         <div className="mt-3 flex flex-wrap gap-2">

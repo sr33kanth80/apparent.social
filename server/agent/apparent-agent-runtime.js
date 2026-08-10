@@ -846,6 +846,7 @@ export const runEnrichmentAdapter = async (session, { candidates = [], discovery
 
 /** Human-readable progress label for a tool call, streamed to the client. */
 export const toolStatusLabel = (name, input) => {
+  if (name === 'read_installed_skill_resource') return 'Reading installed skill guidance…';
   if (name === 'search_apparent_founders') {
     const q = str(input?.query).trim();
     return q ? `Searching Apparent founders for “${q.slice(0, 60)}”…` : 'Searching founders on Apparent…';

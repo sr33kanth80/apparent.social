@@ -145,6 +145,31 @@ export type AgentChatThread = {
   updatedAt: string;
 };
 
+export type AgentInstalledSkill = {
+  id: string;
+  role: DashboardRole;
+  name: string;
+  description: string;
+  sourceUrl: string;
+  sourceHash: string;
+  version: string;
+  metadata: Record<string, unknown>;
+  allowedTools: string[];
+  resourcePaths: string[];
+  hasScripts: boolean;
+  hasReferences: boolean;
+  hasAssets: boolean;
+  activationMode: 'explicit' | 'auto';
+  enabled: boolean;
+  installedAt: string;
+  updatedAt: string;
+};
+
+export type AgentSkillPreview = Omit<
+  AgentInstalledSkill,
+  'id' | 'role' | 'activationMode' | 'enabled' | 'installedAt' | 'updatedAt'
+>;
+
 export interface UserSettings {
   dailyDigestEnabled: boolean;
   slackAlertsEnabled: boolean;

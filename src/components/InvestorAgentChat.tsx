@@ -14,6 +14,7 @@ import {
   useTypewriterReveal,
 } from '@/components/agent-stream';
 import { AgentProfilePatchCard } from '@/components/AgentProfilePatchCard';
+import { AgentSkillsManager, type ActiveSkill } from '@/components/AgentSkillsManager';
 import { InvestorAIPrompt } from '@/components/InvestorAIAssist';
 import { LogoIcon } from '@/components/LogoIcon';
 import { useAgentAuthHeaders } from '@/lib/agent-auth';
@@ -170,6 +171,7 @@ export const InvestorAgentChat = ({
   const transcriptRef = useRef<HTMLDivElement>(null);
   const loadingRef = useRef(false);
   const activeThreadRef = useRef<string | null>(threadId);
+  const [activeSkill, setActiveSkill] = useState<ActiveSkill>(null);
 
   const toHistoryMessages = (items: ChatMessage[]): AgentChatHistoryMessage[] => {
     const latestSummaryIndex = items.findLastIndex((item) => Boolean(item.threadSummary));
@@ -307,6 +309,7 @@ export const InvestorAgentChat = ({
           memories,
           autonomy: 'autonomous',
           contacted: contactedFounderIds,
+          activeSkillId: activeSkill?.id,
         },
         await authHeaders(),
         (label) => {
@@ -554,12 +557,21 @@ export const InvestorAgentChat = ({
 
   // Shared element: the prompt box glides between its in-page spot and the
   // fullscreen bottom dock via framer-motion's layoutId.
+  const skillToolbar = (
+    <AgentSkillsManager
+      activeSkill={activeSkill}
+      onActiveSkillChange={setActiveSkill}
+      role="investor"
+    />
+  );
+
   const promptDock = (
     <motion.div layoutId="agent-prompt-dock" transition={DOCK_TRANSITION}>
       <InvestorAIPrompt
         className="py-0"
         onSubmit={send}
         autoFocus={expanded}
+        toolbarExtras={skillToolbar}
       />
     </motion.div>
   );
@@ -654,6 +666,7 @@ export const InvestorAgentChat = ({
         suggestions={SUGGESTIONS}
         transcript={pageTranscript}
         transcriptRef={transcriptRef}
+        toolbarExtras={skillToolbar}
       />
     );
   }
