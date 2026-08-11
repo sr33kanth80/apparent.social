@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode, type RefObject } from 'react';
-import { ArrowLeft, ArrowRight, CircleCheckBig, Search, ShieldCheck } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Clock3, ExternalLink, ShieldCheck } from 'lucide-react';
+import { AgentMarkdown } from '@/components/AgentMarkdown';
 import { AgentUseCases, type AgentUseCaseDemoSelection } from '@/components/AgentUseCases';
 import {
   InvestorAIPrompt,
@@ -7,6 +8,7 @@ import {
   type AgentPromptSubmitOptions,
 } from '@/components/InvestorAIAssist';
 import { LogoIcon } from '@/components/LogoIcon';
+import { CopyAnswerButton, ResearchTrailDisclosure } from '@/components/agent-stream';
 import { cn } from '@/lib/utils';
 
 type AgentConversationShellProps = {
@@ -40,6 +42,93 @@ const roleCopy = {
   },
 } as const;
 
+const recordingDate = new Intl.DateTimeFormat('en', {
+  day: 'numeric',
+  month: 'short',
+  year: 'numeric',
+});
+
+const formatRunDuration = (durationMs: number) => {
+  const seconds = Math.max(1, Math.round(durationMs / 1_000));
+  if (seconds < 60) return `${seconds}s`;
+  const minutes = Math.floor(seconds / 60);
+  const remainingSeconds = seconds % 60;
+  return `${minutes}m ${remainingSeconds}s`;
+};
+
+const stringValue = (record: Record<string, unknown>, key: string) => (
+  typeof record[key] === 'string' ? record[key] : ''
+);
+
+const RecordedAgentArtifacts = ({ selection }: { selection: AgentUseCaseDemoSelection }) => {
+  const { recording } = selection;
+  if (!recording.profilePatches.length && !recording.emailDrafts.length && !recording.proposals.length && !recording.amplify) return null;
+
+  return (
+    <div className="ml-0 mt-6 max-w-[800px] space-y-4 sm:ml-0">
+      {recording.profilePatches.map((patch, patchIndex) => (
+        <section key={`${patch.summary}-${patchIndex}`} className="border border-[#140206] bg-[#f7f4ef]">
+          <div className="flex flex-wrap items-start justify-between gap-3 border-b border-[#140206] px-4 py-3">
+            <div>
+              <p className="text-sm font-semibold text-[#140206]">Profile update draft</p>
+              <p className="mt-1 text-xs leading-5 text-black/55">{patch.summary}</p>
+            </div>
+            <span className="border border-[#140206]/45 px-2 py-1 text-[9px] font-medium uppercase tracking-[0.1em] text-black/50">Recorded, read only</span>
+          </div>
+          <div>
+            {patch.fields.map((field) => (
+              <div key={field.field} className="grid gap-1 border-b border-[#140206]/20 px-4 py-3 last:border-b-0 sm:grid-cols-[150px_1fr] sm:gap-5">
+                <p className="text-xs font-semibold text-[#140206]">{field.label || field.field}</p>
+                <div>
+                  <p className="whitespace-pre-wrap text-sm leading-6 text-[#333333]">{field.newValue}</p>
+                  <p className="mt-1 text-xs leading-5 text-black/45">{field.reason}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      ))}
+
+      {recording.emailDrafts.map((draft, draftIndex) => (
+        <section key={`${draft.founderName || draft.company || 'email'}-${draftIndex}`} className="border border-[#140206] bg-[#f7f4ef] px-4 py-4">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <p className="text-sm font-semibold text-[#140206]">Recorded email draft</p>
+              <p className="mt-1 text-xs text-black/50">{[draft.founderName, draft.company].filter(Boolean).join(' · ')}</p>
+            </div>
+            <span className="border border-[#140206]/45 px-2 py-1 text-[9px] font-medium uppercase tracking-[0.1em] text-black/50">Not sent</span>
+          </div>
+          {draft.toEmail && <p className="mt-4 text-xs text-black/50">Contact: {draft.toEmail}</p>}
+          {draft.subject && <p className="mt-2 text-sm font-semibold text-[#140206]">{draft.subject}</p>}
+          {draft.body && <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-[#333333]">{draft.body}</p>}
+          {draft.sourceUrl && (
+            <a className="mt-3 inline-flex items-center gap-1 text-xs font-medium text-[#16a34a] hover:underline" href={draft.sourceUrl} rel="noreferrer" target="_blank">
+              Verify source <ExternalLink className="h-3 w-3" />
+            </a>
+          )}
+        </section>
+      ))}
+
+      {recording.proposals.map((proposal, proposalIndex) => (
+        <section key={`proposal-${proposalIndex}`} className="border border-[#140206] bg-[#f7f4ef] px-4 py-4">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <p className="text-sm font-semibold text-[#140206]">Recorded outreach proposal</p>
+            <span className="border border-[#140206]/45 px-2 py-1 text-[9px] font-medium uppercase tracking-[0.1em] text-black/50">Not sent</span>
+          </div>
+          {stringValue(proposal, 'subject') && <p className="mt-3 text-sm font-semibold text-[#140206]">{stringValue(proposal, 'subject')}</p>}
+          {stringValue(proposal, 'body') && <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-[#333333]">{stringValue(proposal, 'body')}</p>}
+        </section>
+      ))}
+
+      {recording.amplify && (
+        <div className="border border-[#140206] bg-[#f7f4ef] px-4 py-3 text-sm text-[#333333]">
+          This recorded run proposed investor matching notifications. The demo did not execute them.
+        </div>
+      )}
+    </div>
+  );
+};
+
 const AgentUseCaseDemoThread = ({
   selection,
   onBack,
@@ -55,80 +144,72 @@ const AgentUseCaseDemoThread = ({
     headingRef.current?.focus();
   }, []);
 
+  const recordedMessages = selection.recording.messages?.length
+    ? selection.recording.messages
+    : [
+      { role: 'user' as const, content: selection.prompt },
+      { role: 'assistant' as const, content: selection.recording.reply },
+    ];
+
   return (
     <div>
-      <article className="flex justify-end pb-8 pt-2">
-        <div className="max-w-[85%] rounded-2xl border border-black/15 bg-white px-4 py-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.8),0_3px_0_rgba(51,51,51,0.16),0_10px_24px_rgba(51,51,51,0.08)] sm:max-w-[72%]">
-          <p className="whitespace-pre-wrap text-[15px] leading-6 text-[#333333] sm:text-base">{selection.prompt}</p>
-        </div>
-      </article>
-
-      <article className="pb-10">
+      <header className="border-b border-[#140206] pb-6 pt-2">
         <div className="flex flex-wrap items-center gap-2">
-          <p className="text-sm font-medium text-[#16a34a]">Apparent</p>
-          <span className="agent-use-cases-meta rounded-none border border-[#140206] bg-[#e2f7ec] px-2 py-1 text-[9px] font-medium uppercase tracking-[0.12em] text-[#140206]">
-            Pre-run demo
+          <span className="agent-use-cases-meta border border-[#140206] bg-[#e2f7ec] px-2 py-1 text-[9px] font-medium uppercase tracking-[0.12em] text-[#140206]">Recorded Agent run</span>
+          <span className="inline-flex items-center gap-1.5 text-[11px] text-black/45">
+            <Clock3 className="h-3.5 w-3.5" />
+            {recordingDate.format(new Date(selection.recording.recordedAt))} · completed in {formatRunDuration(selection.recording.durationMs)}
           </span>
         </div>
+        <h2 ref={headingRef} tabIndex={-1} className="agent-use-cases-display mt-4 text-[26px] leading-tight text-[#140206] outline-none">{selection.title}</h2>
+        <p className="mt-2 max-w-[760px] text-sm leading-6 text-black/60">
+          This is a saved result from the real Apparent Agent using dedicated, public-safe demo profiles. Replaying it makes no live endpoint call, performs no action, and adds nothing to your chat history.
+        </p>
+      </header>
 
-        <div className="mt-4 border border-[#140206] bg-[#e2f7ec] px-4 py-3 text-xs leading-5 text-[#140206]">
-          This is a preloaded example, not a live Agent response. No external endpoint was called, no current result was fetched, and nothing has been added to your chat history.
+      <div className="mt-8">
+        {recordedMessages.map((message, index) => (
+          message.role === 'user' ? (
+            <article key={`${index}-user`} className="flex justify-end pb-8">
+              <div className="max-w-[85%] rounded-2xl border border-black/15 bg-white px-4 py-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.8),0_3px_0_rgba(51,51,51,0.16),0_10px_24px_rgba(51,51,51,0.08)] sm:max-w-[72%]">
+                <p className="whitespace-pre-wrap text-[15px] leading-6 text-[#333333] sm:text-base">{message.content}</p>
+              </div>
+            </article>
+          ) : (
+            <article key={`${index}-assistant`} className="pb-10">
+              <div className="mb-4 flex items-center gap-3">
+                <p className="text-sm font-medium text-[#16a34a]">Apparent</p>
+                <CopyAnswerButton text={message.content} />
+              </div>
+              {index === 1 && <ResearchTrailDisclosure steps={selection.recording.steps} />}
+              <AgentMarkdown className="agent-research-answer max-w-[800px] text-base leading-6 text-[#333333]">
+                {message.content}
+              </AgentMarkdown>
+            </article>
+          )
+        ))}
+
+        <RecordedAgentArtifacts selection={selection} />
+
+        <div className="mt-8 flex max-w-[800px] flex-col-reverse gap-3 border-t border-[#140206] pb-10 pt-5 sm:flex-row sm:items-center sm:justify-between">
+          <button
+            type="button"
+            onClick={onBack}
+            className="inline-flex items-center justify-center gap-2 rounded-none border border-[#140206]/55 px-4 py-2.5 text-sm font-medium text-[#140206] transition-colors hover:border-[#140206] hover:bg-black/[0.04]"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Back to use cases
+          </button>
+          <button
+            type="button"
+            onClick={onRun}
+            className="inline-flex items-center justify-center gap-2 rounded-none border border-[#140206] bg-[#16a34a] px-4 py-2.5 text-sm font-medium text-white shadow-[3px_3px_0_#140206] transition-transform hover:-translate-y-0.5 active:translate-x-[2px] active:translate-y-[2px] active:shadow-[1px_1px_0_#140206]"
+          >
+            Run with my data
+            <ArrowRight className="h-4 w-4" />
+          </button>
         </div>
-
-        <div className="agent-research-answer mt-6 max-w-[800px] text-[#333333]">
-          <h2 ref={headingRef} tabIndex={-1} className="agent-use-cases-display text-[26px] leading-tight text-[#140206] outline-none">{selection.title}</h2>
-          <p className="mt-2 max-w-[700px] text-sm leading-6 text-black/60">
-            Here is how Apparent would approach this request and organize the result when it runs against your live workspace.
-          </p>
-
-          <section aria-labelledby="demo-research-trail" className="mt-7">
-            <h3 id="demo-research-trail" className="agent-use-cases-display text-xl text-[#140206]">Research trail</h3>
-            <div className="mt-3 max-w-[680px] border-t border-[#140206]">
-              {selection.demo.research.map((item) => (
-                <div key={item} className="flex items-start gap-3 border-b border-[#140206]/20 py-3">
-                  <Search className="mt-0.5 h-4 w-4 shrink-0 text-[#16a34a]" />
-                  <p className="text-sm leading-6 text-black/60">{item}</p>
-                </div>
-              ))}
-            </div>
-          </section>
-
-          <section aria-labelledby="demo-loaded-result" className="mt-7">
-            <h3 id="demo-loaded-result" className="agent-use-cases-display text-xl text-[#140206]">Illustrative result</h3>
-            <div className="mt-3 max-w-[760px] border border-[#140206] bg-[#f7f4ef]">
-              {selection.demo.result.map((item) => (
-                <div key={item.label} className="grid gap-1 border-b border-[#140206]/20 px-4 py-4 last:border-b-0 sm:grid-cols-[140px_1fr] sm:gap-5">
-                  <p className="text-sm font-semibold text-[#140206]">{item.label}</p>
-                  <p className="text-sm leading-6 text-black/60">{item.detail}</p>
-                </div>
-              ))}
-            </div>
-            <div className="mt-4 flex max-w-[760px] items-start gap-2 text-sm leading-6 text-black/60">
-              <CircleCheckBig className="mt-1 h-4 w-4 shrink-0 text-[#16a34a]" />
-              <p>From here, Apparent could {selection.demo.next}.</p>
-            </div>
-          </section>
-
-          <div className="mt-8 flex max-w-[760px] flex-col-reverse gap-3 border-t border-[#140206] pt-5 sm:flex-row sm:items-center sm:justify-between">
-            <button
-              type="button"
-              onClick={onBack}
-              className="inline-flex items-center justify-center gap-2 rounded-none border border-[#140206]/55 px-4 py-2.5 text-sm font-medium text-[#140206] transition-colors hover:border-[#140206] hover:bg-black/[0.04]"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              Back to use cases
-            </button>
-            <button
-              type="button"
-              onClick={onRun}
-              className="inline-flex items-center justify-center gap-2 rounded-none border border-[#140206] bg-[#16a34a] px-4 py-2.5 text-sm font-medium text-white shadow-[3px_3px_0_#140206] transition-transform hover:-translate-y-0.5 active:translate-x-[2px] active:translate-y-[2px] active:shadow-[1px_1px_0_#140206]"
-            >
-              Run with my data
-              <ArrowRight className="h-4 w-4" />
-            </button>
-          </div>
-        </div>
-      </article>
+      </div>
     </div>
   );
 };
