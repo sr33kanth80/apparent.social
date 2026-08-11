@@ -1,8 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import {
-  ArrowRight,
-  ArrowLeft,
   BookOpen,
   ChartNoAxesCombined,
   CircleCheckBig,
@@ -22,25 +20,33 @@ import { LogoIcon } from '@/components/LogoIcon';
 
 type AgentRole = 'founder' | 'investor';
 
+export type AgentUseCaseDemo = {
+  research: [string, string, string];
+  result: [
+    { label: string; detail: string },
+    { label: string; detail: string },
+    { label: string; detail: string },
+  ];
+  next: string;
+};
+
 type AgentUseCase = {
   title: string;
   description: string;
   icon: LucideIcon;
   prompts: [string, string];
-  demo: {
-    research: [string, string, string];
-    result: [
-      { label: string; detail: string },
-      { label: string; detail: string },
-      { label: string; detail: string },
-    ];
-    next: string;
-  };
+  demo: AgentUseCaseDemo;
+};
+
+export type AgentUseCaseDemoSelection = {
+  title: string;
+  prompt: string;
+  demo: AgentUseCaseDemo;
 };
 
 type AgentUseCasesProps = {
   role: AgentRole;
-  onSelectPrompt: (prompt: string) => void;
+  onPreviewDemo: (selection: AgentUseCaseDemoSelection) => void;
 };
 
 const useCasesByRole: Record<AgentRole, AgentUseCase[]> = {
@@ -277,15 +283,11 @@ const roleCopy = {
   },
 } as const;
 
-export const AgentUseCases = ({ role, onSelectPrompt }: AgentUseCasesProps) => {
+export const AgentUseCases = ({ role, onPreviewDemo }: AgentUseCasesProps) => {
   const [open, setOpen] = useState(false);
-  const [selectedDemo, setSelectedDemo] = useState<{ useCase: AgentUseCase; prompt: string } | null>(null);
   const triggerRef = useRef<HTMLButtonElement | null>(null);
   const closeRef = useRef<HTMLButtonElement | null>(null);
   const dialogRef = useRef<HTMLElement | null>(null);
-  const contentRef = useRef<HTMLDivElement | null>(null);
-  const demoBackRef = useRef<HTMLButtonElement | null>(null);
-  const libraryHeadingRef = useRef<HTMLHeadingElement | null>(null);
   const copy = roleCopy[role];
   const useCases = useCasesByRole[role];
 
@@ -330,23 +332,8 @@ export const AgentUseCases = ({ role, onSelectPrompt }: AgentUseCasesProps) => {
     };
   }, [open]);
 
-  useEffect(() => {
-    if (!selectedDemo) return;
-    contentRef.current?.scrollTo({ top: 0 });
-    demoBackRef.current?.focus();
-  }, [selectedDemo]);
-
   const previewPrompt = (useCase: AgentUseCase, prompt: string) => {
-    setSelectedDemo({ useCase, prompt });
-  };
-
-  const returnToLibrary = () => {
-    setSelectedDemo(null);
-    window.requestAnimationFrame(() => libraryHeadingRef.current?.focus());
-  };
-
-  const choosePrompt = (prompt: string) => {
-    onSelectPrompt(prompt);
+    onPreviewDemo({ title: useCase.title, prompt, demo: useCase.demo });
     setOpen(false);
   };
 
@@ -355,10 +342,7 @@ export const AgentUseCases = ({ role, onSelectPrompt }: AgentUseCasesProps) => {
       <button
         ref={triggerRef}
         type="button"
-        onClick={() => {
-          setSelectedDemo(null);
-          setOpen(true);
-        }}
+        onClick={() => setOpen(true)}
         className="inline-flex items-center gap-2 rounded-none border border-[#140206] bg-[#16a34a] px-4 py-2.5 text-sm font-medium text-white shadow-[3px_3px_0_#140206] transition-transform hover:-translate-y-0.5 active:translate-x-[2px] active:translate-y-[2px] active:shadow-[1px_1px_0_#140206]"
       >
         <BookOpen className="h-4 w-4" />
@@ -400,85 +384,7 @@ export const AgentUseCases = ({ role, onSelectPrompt }: AgentUseCasesProps) => {
               </button>
             </header>
 
-            <div ref={contentRef} className="min-h-0 flex-1 overflow-y-auto px-5 py-5 sm:px-7 sm:py-6">
-              {selectedDemo ? (
-                <section aria-labelledby="agent-demo-title">
-                  <button
-                    ref={demoBackRef}
-                    type="button"
-                    onClick={returnToLibrary}
-                    className="inline-flex items-center gap-2 rounded-none border border-[#140206]/45 px-3 py-2 text-xs font-medium text-[#140206] transition-colors hover:border-[#140206] hover:bg-black/[0.04]"
-                  >
-                    <ArrowLeft className="h-3.5 w-3.5" />
-                    Back to use cases
-                  </button>
-
-                  <div className="mt-6 border-b border-[#140206] pb-5">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span className="agent-use-cases-meta rounded-none border border-[#140206] bg-[#e2f7ec] px-2 py-1 text-[9px] font-medium uppercase tracking-[0.12em] text-[#140206]">
-                        Illustrative preview
-                      </span>
-                      <span className="text-[11px] text-black/45">No live data has been requested</span>
-                    </div>
-                    <h3 id="agent-demo-title" className="agent-use-cases-display mt-3 text-[25px] leading-tight text-[#140206] sm:text-[30px]">
-                      {selectedDemo.useCase.title}
-                    </h3>
-                    <p className="mt-2 max-w-[680px] text-sm leading-6 text-black/55">
-                      See what Apparent would investigate and how the answer would be organized before you run it with your own context.
-                    </p>
-                  </div>
-
-                  <div className="mt-5 border border-[#140206] bg-[#e2f7ec] px-4 py-4 sm:px-5">
-                    <p className="agent-use-cases-meta text-[9px] font-medium uppercase tracking-[0.12em] text-black/45">Your request</p>
-                    <p className="mt-2 text-sm font-medium leading-6 text-[#140206]">{selectedDemo.prompt}</p>
-                  </div>
-
-                  <div className="mt-6 grid gap-7 md:grid-cols-[0.85fr_1.35fr]">
-                    <section aria-labelledby="agent-demo-research">
-                      <h4 id="agent-demo-research" className="agent-use-cases-display text-xl text-[#140206]">What Apparent would check</h4>
-                      <div className="mt-3 border-t border-[#140206]">
-                        {selectedDemo.useCase.demo.research.map((item) => (
-                          <div key={item} className="flex items-start gap-3 border-b border-[#140206]/20 py-3">
-                            <Search className="mt-0.5 h-4 w-4 shrink-0 text-[#16a34a]" />
-                            <p className="text-xs leading-5 text-black/60">{item}</p>
-                          </div>
-                        ))}
-                      </div>
-                    </section>
-
-                    <section aria-labelledby="agent-demo-result">
-                      <h4 id="agent-demo-result" className="agent-use-cases-display text-xl text-[#140206]">What the answer would contain</h4>
-                      <div className="mt-3 border border-[#140206] bg-[#f7f4ef]">
-                        {selectedDemo.useCase.demo.result.map((item) => (
-                          <div key={item.label} className="grid gap-1 border-b border-[#140206]/20 px-4 py-3 last:border-b-0 sm:grid-cols-[120px_1fr] sm:gap-4">
-                            <p className="text-xs font-semibold text-[#140206]">{item.label}</p>
-                            <p className="text-xs leading-5 text-black/55">{item.detail}</p>
-                          </div>
-                        ))}
-                      </div>
-                      <div className="mt-3 flex items-start gap-2 text-xs leading-5 text-black/55">
-                        <ArrowRight className="mt-0.5 h-4 w-4 shrink-0 text-[#16a34a]" />
-                        <p>From here, Apparent could {selectedDemo.useCase.demo.next}.</p>
-                      </div>
-                    </section>
-                  </div>
-
-                  <div className="mt-7 flex flex-col-reverse gap-3 border-t border-[#140206] pt-5 sm:flex-row sm:items-center sm:justify-between">
-                    <p className="max-w-[500px] text-[11px] leading-5 text-black/45">
-                      This preview is deterministic and illustrative. Continue to place the request in your chat box, where you can edit it before sending.
-                    </p>
-                    <button
-                      type="button"
-                      onClick={() => choosePrompt(selectedDemo.prompt)}
-                      className="inline-flex shrink-0 items-center justify-center gap-2 rounded-none border border-[#140206] bg-[#16a34a] px-4 py-2.5 text-sm font-medium text-white shadow-[3px_3px_0_#140206] transition-transform hover:-translate-y-0.5 active:translate-x-[2px] active:translate-y-[2px] active:shadow-[1px_1px_0_#140206]"
-                    >
-                      Run with my data
-                      <ArrowRight className="h-4 w-4" />
-                    </button>
-                  </div>
-                </section>
-              ) : (
-                <>
+            <div className="min-h-0 flex-1 overflow-y-auto px-5 py-5 sm:px-7 sm:py-6">
               <section aria-labelledby="how-apparent-works">
                 <h3 id="how-apparent-works" className="agent-use-cases-display text-xl text-[#140206]">How it works</h3>
                 <div className="mt-3 grid border border-[#140206] sm:grid-cols-3 sm:divide-x sm:divide-[#140206]">
@@ -502,8 +408,8 @@ export const AgentUseCases = ({ role, onSelectPrompt }: AgentUseCasesProps) => {
 
               <section aria-labelledby="agent-use-case-library" className="mt-7">
                 <div>
-                  <h3 ref={libraryHeadingRef} tabIndex={-1} id="agent-use-case-library" className="agent-use-cases-display text-xl text-[#140206] outline-none">Start with a real use case</h3>
-                  <p className="mt-1 text-xs leading-5 text-black/50">Choose an example to preview the research path and answer before running it.</p>
+                  <h3 id="agent-use-case-library" className="agent-use-cases-display text-xl text-[#140206]">Start with a real use case</h3>
+                  <p className="mt-1 text-xs leading-5 text-black/50">Choose an example to open a pre-run demo in the Agent thread.</p>
                 </div>
 
                 <div className="mt-4 grid gap-x-7 sm:grid-cols-2">
@@ -547,8 +453,6 @@ export const AgentUseCases = ({ role, onSelectPrompt }: AgentUseCasesProps) => {
                   Need a specialist workflow? Install Agent Skills and type <span className="font-semibold text-[#140206]">/</span> in chat. Your role, permissions, research limits, and privacy boundaries still apply.
                 </p>
               </div>
-                </>
-              )}
             </div>
           </section>
         </div>,

@@ -9,7 +9,6 @@ import { cn } from '@/lib/utils';
 
 export type AgentPromptSkill = Pick<AgentInstalledSkill, 'id' | 'name' | 'description' | 'enabled'>;
 export type AgentPromptSubmitOptions = { skill?: AgentPromptSkill };
-export type AgentPromptDraftRequest = { id: number; value: string };
 
 type AIPromptProps = {
   placeholder?: string;
@@ -31,8 +30,6 @@ type AIPromptProps = {
   skillCommands?: AgentPromptSkill[];
   activeSkillId?: string;
   onSkillCommandSelect?: (skill: AgentPromptSkill) => void;
-  /** Places a prompt selected elsewhere in the composer without submitting it. */
-  draftRequest?: AgentPromptDraftRequest | null;
 };
 
 const promptPlaceholders = [
@@ -95,7 +92,6 @@ export const InvestorAIPrompt = ({
   skillCommands = [],
   activeSkillId,
   onSkillCommandSelect,
-  draftRequest,
 }: AIPromptProps) => {
   const [value, setValue] = useState('');
   const [slashIndex, setSlashIndex] = useState(0);
@@ -115,13 +111,6 @@ export const InvestorAIPrompt = ({
   useEffect(() => {
     setSlashIndex(0);
   }, [slashQuery]);
-
-  useEffect(() => {
-    if (!draftRequest) return;
-    setValue(draftRequest.value);
-    setSlashMenuDismissed(false);
-    window.requestAnimationFrame(() => textareaRef.current?.focus());
-  }, [draftRequest]);
 
   const selectSlashSkill = (skill: AgentPromptSkill) => {
     onSkillCommandSelect?.(skill);
