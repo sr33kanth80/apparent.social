@@ -128,13 +128,15 @@ body {
 /* Portaled Agent dialogs opt back into the editorial faces used by the page.
    The Agent scope intentionally normalizes all descendants to the body face,
    so these explicit hooks preserve hierarchy without leaking outside it. */
-.agent-page .agent-skills-display {
+.agent-page .agent-skills-display,
+.agent-page .agent-use-cases-display {
   font-family: var(--font-apparent-display) !important;
   font-weight: 400 !important;
   letter-spacing: -0.025em !important;
 }
 
-.agent-page .agent-skills-meta {
+.agent-page .agent-skills-meta,
+.agent-page .agent-use-cases-meta {
   font-family: var(--font-apparent-meta) !important;
   letter-spacing: 0.08em !important;
 }

@@ -422,7 +422,6 @@ export const FounderAgentChat = ({
         isLoading={isLoading}
         onSubmit={send}
         role="founder"
-        suggestions={SUGGESTIONS}
         transcript={pageTranscript}
         transcriptRef={transcriptRef}
         toolbarExtras={skillToolbar}

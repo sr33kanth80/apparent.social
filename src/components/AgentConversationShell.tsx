@@ -1,7 +1,9 @@
-import type { ReactNode, RefObject } from 'react';
+import { useRef, useState, type ReactNode, type RefObject } from 'react';
 import { ShieldCheck } from 'lucide-react';
+import { AgentUseCases } from '@/components/AgentUseCases';
 import {
   InvestorAIPrompt,
+  type AgentPromptDraftRequest,
   type AgentPromptSkill,
   type AgentPromptSubmitOptions,
 } from '@/components/InvestorAIAssist';
@@ -13,7 +15,6 @@ type AgentConversationShellProps = {
   hasConversation: boolean;
   isLoading: boolean;
   onSubmit: (value: string, options?: AgentPromptSubmitOptions) => void;
-  suggestions: string[];
   transcript: ReactNode;
   transcriptRef: RefObject<HTMLDivElement | null>;
   toolbarExtras?: ReactNode;
@@ -30,7 +31,6 @@ const roleCopy = {
     description: 'Research investors, sharpen your profile, and turn fundraising context into a clear next move.',
     placeholder: 'Ask Apparent about your profile, investors, outreach, or next move',
     context: 'Grounded in your founder profile and Apparent network',
-    suggestionLabels: ['Research investors', 'Improve my profile', 'Draft an introduction', 'Plan outreach'],
   },
   investor: {
     eyebrow: 'Investor research workspace',
@@ -38,7 +38,6 @@ const roleCopy = {
     description: 'Research founders, pressure-test fit, and move the strongest opportunities into your workflow.',
     placeholder: 'Ask Apparent about founders, thesis fit, diligence, or outreach',
     context: 'Grounded in your thesis and Apparent deal flow',
-    suggestionLabels: ['Source founders', 'Test thesis fit', 'Draft outreach', 'Plan diligence'],
   },
 } as const;
 
@@ -47,7 +46,6 @@ export const AgentConversationShell = ({
   hasConversation,
   isLoading,
   onSubmit,
-  suggestions,
   transcript,
   transcriptRef,
   toolbarExtras,
@@ -57,6 +55,13 @@ export const AgentConversationShell = ({
   className,
 }: AgentConversationShellProps) => {
   const copy = roleCopy[role];
+  const draftSequence = useRef(0);
+  const [draftRequest, setDraftRequest] = useState<AgentPromptDraftRequest | null>(null);
+
+  const selectUseCasePrompt = (prompt: string) => {
+    draftSequence.current += 1;
+    setDraftRequest({ id: draftSequence.current, value: prompt });
+  };
 
   return (
     <section
@@ -91,26 +96,13 @@ export const AgentConversationShell = ({
                 skillCommands={skillCommands}
                 activeSkillId={activeSkillId}
                 onSkillCommandSelect={onSkillCommandSelect}
+                draftRequest={draftRequest}
               />
             </div>
 
-            <nav aria-label="Agent capabilities" className="mt-6 flex flex-wrap items-center justify-center gap-1">
-              {copy.suggestionLabels.map((label, index) => (
-                <button
-                  key={label}
-                  type="button"
-                  onClick={() => onSubmit(suggestions[index] ?? label)}
-                  className={cn(
-                    'rounded-full px-3 py-2 text-sm transition-colors',
-                    index === 0
-                      ? 'bg-[#003f2e] text-[#fdf9f7]'
-                      : 'text-[#6e7673] hover:bg-[#f4efea] hover:text-[#333333]',
-                  )}
-                >
-                  {label}
-                </button>
-              ))}
-            </nav>
+            <div className="mt-6 flex justify-center">
+              <AgentUseCases role={role} onSelectPrompt={selectUseCasePrompt} />
+            </div>
 
             <div className="mt-5 flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-[11px] text-[#a6a6a6]">
               <span className="inline-flex items-center gap-1.5">

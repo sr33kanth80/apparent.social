@@ -673,7 +673,6 @@ export const InvestorAgentChat = ({
         isLoading={isLoading}
         onSubmit={send}
         role="investor"
-        suggestions={SUGGESTIONS}
         transcript={pageTranscript}
         transcriptRef={transcriptRef}
         toolbarExtras={skillToolbar}
