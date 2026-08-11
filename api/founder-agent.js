@@ -32,6 +32,11 @@ import {
   readInstalledSkillResource,
   selectInstalledAgentSkill,
 } from '../server/agent/installed-skills.js';
+import {
+  createTemporaryDemoCaptureBody,
+  isTemporaryDemoCapture,
+  temporaryDemoCaptureUserId,
+} from '../server/agent/temporary-demo-capture.js';
 
 // Vercel Node functions buffer responses unless streaming is opted into.
 export const config = { supportsResponseStreaming: true };
@@ -379,10 +384,14 @@ export default async function handler(req, res) {
     });
   }
 
-  const access = await requireAgentAccess(req, 'founder', 'founder-agent');
+  const demoCapture = isTemporaryDemoCapture(req, 'founder');
+  const access = demoCapture
+    ? { ok: true, userId: temporaryDemoCaptureUserId }
+    : await requireAgentAccess(req, 'founder', 'founder-agent');
   if (!access.ok) return sendAgentAccessError(res, access);
 
-  const body = await readJsonBody(req);
+  const requestBody = await readJsonBody(req);
+  const body = demoCapture ? createTemporaryDemoCaptureBody('founder', requestBody) : requestBody;
   const incoming = Array.isArray(body.messages) ? body.messages : [];
   const founder = body.founder || {};
   const memories = selectDurableAgentMemories(body.memories);

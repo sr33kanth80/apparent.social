@@ -30,6 +30,11 @@ import { orthogonalData } from '../server/agent/orthogonal.js';
 import agentSkillsHandler from '../server/agent/agent-skills-handler.js';
 import kindeProfileHandler from '../server/agent/kinde-profile.js';
 import {
+  createTemporaryDemoCaptureBody,
+  isTemporaryDemoCapture,
+  temporaryDemoCaptureUserId,
+} from '../server/agent/temporary-demo-capture.js';
+import {
   formatInstalledSkillPrompt,
   installedSkillResourceTool,
   readInstalledSkillResource,
@@ -577,10 +582,14 @@ export default async function handler(req, res) {
     });
   }
 
-  const access = await requireAgentAccess(req, 'investor', 'investor-agent');
+  const demoCapture = isTemporaryDemoCapture(req, 'investor');
+  const access = demoCapture
+    ? { ok: true, userId: temporaryDemoCaptureUserId }
+    : await requireAgentAccess(req, 'investor', 'investor-agent');
   if (!access.ok) return sendAgentAccessError(res, access);
 
-  const body = await readJsonBody(req);
+  const requestBody = await readJsonBody(req);
+  const body = demoCapture ? createTemporaryDemoCaptureBody('investor', requestBody) : requestBody;
   const incoming = Array.isArray(body.messages) ? body.messages : [];
   const criteria = body.criteria || {};
   const memories = selectDurableAgentMemories(body.memories);
