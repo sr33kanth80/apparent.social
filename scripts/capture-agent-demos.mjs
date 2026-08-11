@@ -4,6 +4,17 @@ import { dirname, resolve } from 'node:path';
 const BASE_URL = process.env.APPARENT_DEMO_CAPTURE_URL || 'https://apparent.social';
 const CAPTURE_KEY = 'record-agent-demos-4c7fb52e8a164c0aa87ad8c95a4d83d6';
 const OUTPUT_PATH = resolve('src/data/agent-demo-recordings.generated.json');
+const FORCE_ROLE = String(process.env.APPARENT_DEMO_CAPTURE_FORCE_ROLE || '').trim();
+const FORCE_IDS = new Set(String(process.env.APPARENT_DEMO_CAPTURE_FORCE_IDS || '').split(',').map((value) => value.trim()).filter(Boolean));
+
+const followUps = {
+  'investor-pressure-checklist': 'Use PostHog (posthog.com) as the demo opportunity. Assess it against the saved developer-tools and AI-infrastructure thesis.',
+  'investor-diligence-company': 'Use PostHog and its co-founder and CEO James Hawkins for this recorded demo. Research only public, current evidence.',
+  'investor-diligence-momentum': 'Use PostHog (posthog.com) as the startup for this recorded demo.',
+  'investor-profile-setup': 'Use this public-safe demo biography: Apparent Demo Fund invests $250k to $1m at Seed and Series A in developer tools, AI infrastructure, and B2B workflow software across North America and Europe. It values technical founders, customer proof, open-source adoption, and early revenue.',
+  'founder-profile-setup': 'Use this public-safe demo information: Alex Morgan is building Apparent Demo Company, a Seed-stage B2B fundraising and investor-research workspace in the United States. The public product is at https://apparent.social. The company is raising a Seed round; no private revenue, customer, or round-size claims should be added.',
+  'founder-intro-rewrite': 'Here is the demo introduction to improve: Hi, I am building a fundraising tool and looking for investors. We are at Seed stage. Would you like to chat?',
+};
 
 const definitions = [
   ['investor-source-raising', 'investor', 'Source thesis-fit founders', 'Show me founders raising now on Apparent who fit my thesis, and explain the fit.'],
@@ -30,21 +41,7 @@ const definitions = [
   ['founder-intro-rewrite', 'founder', 'Draft targeted introductions', 'Rewrite my investor introduction using my strongest traction and product evidence.'],
   ['founder-discovery-count', 'founder', 'Get discovered by the right investors', 'Show me how many investors currently match my profile before I choose to notify them.'],
   ['founder-discovery-amplify', 'founder', 'Get discovered by the right investors', 'Put me in front of investors whose thesis matches what I am building.'],
-].map(([id, role, title, prompt]) => ({ id, role, title, prompt }));
-
-const parseSse = async (response) => {
-  const text = await response.text();
-  const events = text
-    .split(/\n\n+/)
-    .map((block) => block.split('\n').find((line) => line.startsWith('data: '))?.slice(6))
-    .filter(Boolean)
-    .map((value) => JSON.parse(value));
-  const steps = events.filter((event) => event.type === 'status').map((event) => event.label);
-  const done = events.findLast((event) => event.type === 'done');
-  const failed = events.findLast((event) => event.type === 'error');
-  if (!done) throw new Error(failed?.error || `Agent recording ended without a result (${response.status}).`);
-  return { steps: [...new Set(steps)], result: done };
-};
+].map(([id, role, title, prompt]) => ({ id, role, title, prompt, followUp: followUps[id] || '' }));
 
 const saveRecordings = async (recordings) => {
   await mkdir(dirname(OUTPUT_PATH), { recursive: true });
@@ -59,7 +56,32 @@ try {
   // Start a new capture when no prior output exists.
 }
 
+if (FORCE_ROLE || FORCE_IDS.size) {
+  recordings = recordings.filter((recording) => (
+    !(FORCE_ROLE && recording.role === FORCE_ROLE)
+    && !FORCE_IDS.has(recording.id)
+  ));
+  await saveRecordings(recordings);
+}
+
 const completedIds = new Set(recordings.map((recording) => recording.id));
+const runAgent = async (definition, body) => {
+  const response = await fetch(`${BASE_URL}/api/${definition.role === 'investor' ? 'agent' : 'founder-agent'}?demoCapture=${definition.role}`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-apparent-demo-capture': CAPTURE_KEY,
+    },
+    body: JSON.stringify(body),
+  });
+  if (!response.ok) throw new Error(`${definition.id} failed with HTTP ${response.status}: ${await response.text()}`);
+  const result = await response.json();
+  if (result.error) throw new Error(`${definition.id} failed: ${result.error}`);
+  const reply = String(result.reply || '').trim();
+  if (!reply) throw new Error(`${definition.id} returned an empty reply.`);
+  return { result, reply };
+};
+
 for (const [index, definition] of definitions.entries()) {
   if (completedIds.has(definition.id)) {
     console.log(`[${index + 1}/${definitions.length}] ${definition.id} already captured`);
@@ -67,31 +89,34 @@ for (const [index, definition] of definitions.entries()) {
   }
   process.stdout.write(`[${index + 1}/${definitions.length}] ${definition.id}... `);
   const startedAt = Date.now();
-  const response = await fetch(`${BASE_URL}/api/${definition.role === 'investor' ? 'agent' : 'founder-agent'}?demoCapture=${definition.role}`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'x-apparent-demo-capture': CAPTURE_KEY,
-    },
-    body: JSON.stringify({ prompt: definition.prompt, stream: true }),
-  });
-  if (!response.ok) throw new Error(`${definition.id} failed with HTTP ${response.status}: ${await response.text()}`);
-  const { steps, result } = await parseSse(response);
-  const reply = String(result.reply || '').trim();
-  if (!reply) throw new Error(`${definition.id} returned an empty reply.`);
+  const first = await runAgent(definition, { prompt: definition.prompt });
+  const messages = [
+    { role: 'user', content: definition.prompt },
+    { role: 'assistant', content: first.reply },
+  ];
+  let captured = first;
+  if (definition.followUp) {
+    messages.push({ role: 'user', content: definition.followUp });
+    captured = await runAgent(definition, { messages });
+    messages.push({ role: 'assistant', content: captured.reply });
+  }
   recordings.push({
-    ...definition,
+    id: definition.id,
+    role: definition.role,
+    title: definition.title,
+    prompt: definition.prompt,
     recordedAt: new Date().toISOString(),
     durationMs: Date.now() - startedAt,
-    steps,
-    reply,
-    proposals: Array.isArray(result.proposals) ? result.proposals : [],
-    emailDrafts: Array.isArray(result.emailDrafts) ? result.emailDrafts : [],
-    profilePatches: Array.isArray(result.profilePatches) ? result.profilePatches : [],
-    amplify: result.amplify === true,
+    steps: [],
+    messages,
+    reply: captured.reply,
+    proposals: Array.isArray(captured.result.proposals) ? captured.result.proposals : [],
+    emailDrafts: Array.isArray(captured.result.emailDrafts) ? captured.result.emailDrafts : [],
+    profilePatches: Array.isArray(captured.result.profilePatches) ? captured.result.profilePatches : [],
+    amplify: captured.result.amplify === true,
   });
   await saveRecordings(recordings);
-  process.stdout.write(`${Math.round((Date.now() - startedAt) / 1000)}s, ${reply.length} chars\n`);
+  process.stdout.write(`${Math.round((Date.now() - startedAt) / 1000)}s, ${captured.reply.length} chars\n`);
 }
 
 console.log(`Saved ${recordings.length} real Agent recordings to ${OUTPUT_PATH}`);

@@ -5,6 +5,7 @@ const INVESTOR_CRITERIA = {
   firm: 'Apparent Demo Fund',
   thesis: 'Seed and Series A developer tools, AI infrastructure, and workflow software with technical founders, early customer proof, and open-source or developer adoption signals.',
   sectors: ['Developer tools', 'AI infrastructure', 'B2B software'],
+  stage: 'Seed, Series A',
   stages: ['Seed', 'Series A'],
   geographies: ['United States', 'Canada', 'Europe'],
   checkSize: '$250k to $1m',
@@ -12,17 +13,20 @@ const INVESTOR_CRITERIA = {
 };
 
 const FOUNDER_PROFILE = {
-  founderName: 'Alex Morgan',
-  companyName: 'Apparent Demo Company',
+  name: 'Alex Morgan',
+  profileName: 'Alex Morgan',
+  headline: 'Building a fundraising and investor-research workspace for startups',
+  currentBuild: 'Apparent Demo Company, a workflow product for startup fundraising and investor research',
   website: 'https://apparent.social',
-  oneLiner: 'A public-safe sample workspace used to demonstrate how Apparent matches founder proof with investor thesis.',
-  description: 'The demo company builds workflow software for startup fundraising and investor research. Its profile is intentionally representative and contains no private customer or financial data.',
-  sector: 'B2B software',
+  bio: 'A public-safe sample founder profile used to demonstrate how Apparent matches founder proof with investor thesis. It contains no private customer or financial data.',
+  category: 'B2B software and fundraising infrastructure',
   stage: 'Seed',
-  geography: 'United States',
+  location: 'United States',
   fundraisingStatus: 'Raising',
-  round: 'Seed',
-  traction: 'Public product and launch evidence only; no private revenue or customer claims are included.',
+  raisingRound: 'Seed',
+  raisingAmount: 'Not disclosed',
+  traction: 'Public product and launch evidence only. No private revenue or customer claims are included in this demo profile.',
+  dossier: 'Demo dossier: product workflow, public launch evidence, and founder-supplied profile context. Treat all private commercial metrics as unknown.',
 };
 
 const header = (req, name) => String(req.headers?.[name] || req.headers?.[name.toLowerCase()] || '');
@@ -34,10 +38,19 @@ export const isTemporaryDemoCapture = (req, role) => (
 
 export const createTemporaryDemoCaptureBody = (role, requestBody) => {
   const prompt = String(requestBody?.prompt || '').trim().slice(0, 4_000);
-  if (!prompt) throw new Error('A demo capture prompt is required.');
+  const suppliedMessages = Array.isArray(requestBody?.messages)
+    ? requestBody.messages
+      .filter((message) => message && (message.role === 'user' || message.role === 'assistant') && String(message.content || '').trim())
+      .slice(-20)
+      .map((message) => ({ role: message.role, content: String(message.content).trim().slice(0, 12_000) }))
+    : [];
+  const messages = suppliedMessages.length ? suppliedMessages : (prompt ? [{ role: 'user', content: prompt }] : []);
+  if (!messages.length || messages[messages.length - 1].role !== 'user') {
+    throw new Error('A demo capture conversation ending with a user message is required.');
+  }
 
   const shared = {
-    messages: [{ role: 'user', content: prompt }],
+    messages,
     memories: [],
     contacted: [],
     stream: requestBody?.stream === true,
