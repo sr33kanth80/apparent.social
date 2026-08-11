@@ -40,6 +40,7 @@ export const createTemporaryDemoCaptureBody = (role, requestBody) => {
     messages: [{ role: 'user', content: prompt }],
     memories: [],
     contacted: [],
+    stream: requestBody?.stream === true,
   };
 
   return role === 'investor'
