@@ -13,15 +13,65 @@ export const postAgentStream = async (
   body: Record<string, unknown>,
   headers: Record<string, string>,
   onStatus: (label: string) => void,
+  signal?: AbortSignal,
 ): Promise<Record<string, unknown>> => {
+  const requestId = typeof body.requestId === 'string' && body.requestId
+    ? body.requestId
+    : globalThis.crypto?.randomUUID?.() || `agent_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+  const role = url.includes('founder-agent') ? 'founder' : 'investor';
+  const wait = (milliseconds: number) => new Promise<void>((resolve, reject) => {
+    const onAbort = () => {
+      window.clearTimeout(timer);
+      reject(new DOMException('Agent run cancelled.', 'AbortError'));
+    };
+    const timer = window.setTimeout(() => {
+      signal?.removeEventListener('abort', onAbort);
+      resolve();
+    }, milliseconds);
+    signal?.addEventListener('abort', onAbort, { once: true });
+  });
+  const recoverCompletedRun = async (): Promise<Record<string, unknown>> => {
+    onStatus('Reconnecting to the active research run…');
+    const deadline = Date.now() + 285_000;
+    let delay = 1_500;
+    while (Date.now() < deadline) {
+      if (signal?.aborted) throw new DOMException('Agent run cancelled.', 'AbortError');
+      const statusResponse = await fetch(`/api/agent-run?requestId=${encodeURIComponent(requestId)}&role=${role}`, {
+        headers,
+        signal,
+      });
+      const statusData = await statusResponse.json().catch(() => ({}));
+      if (statusResponse.ok && statusData.status === 'completed' && statusData.responsePayload) {
+        return statusData.responsePayload as Record<string, unknown>;
+      }
+      if (statusResponse.ok && ['failed', 'cancelled', 'expired'].includes(String(statusData.status))) {
+        throw new Error(
+          statusData.status === 'cancelled'
+            ? 'The Agent run was cancelled.'
+            : statusData.status === 'expired'
+              ? 'The Agent run expired safely before completion. Please try a narrower question.'
+              : 'The Agent could not finish this research. Please retry or narrow the question.',
+        );
+      }
+      if (statusResponse.status !== 202 && statusResponse.status !== 503) {
+        throw new Error(String(statusData.error || 'The Agent run could not be recovered.'));
+      }
+      await wait(delay);
+      delay = Math.min(delay + 500, 5_000);
+    }
+    throw new Error('The Agent reached its safe research deadline. Please try a narrower question.');
+  };
+
   const res = await fetch(url, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', ...headers },
-    body: JSON.stringify({ ...body, stream: true }),
+    headers: { 'Content-Type': 'application/json', 'Idempotency-Key': requestId, ...headers },
+    body: JSON.stringify({ ...body, requestId, stream: true }),
+    signal,
   });
 
   if (!(res.ok && res.body && (res.headers.get('content-type') || '').includes('text/event-stream'))) {
     const data = await res.json().catch(() => ({}));
+    if (res.status === 409 && data?.status === 'running') return recoverCompletedRun();
     if (!res.ok || data?.error) throw new Error(String(data?.error || `Request failed (${res.status})`));
     return data;
   }
@@ -51,7 +101,7 @@ export const postAgentStream = async (
     }
   }
   if (errorEvent) throw new Error(String(errorEvent.error || 'The agent is unavailable right now.'));
-  if (!doneEvent) throw new Error('The agent connection dropped — please retry.');
+  if (!doneEvent) return recoverCompletedRun();
   return doneEvent;
 };
 

@@ -21,6 +21,7 @@
 
 import { createClient } from '@supabase/supabase-js';
 import { requireAgentAccess, sendAgentAccessError } from './agent-guard.js';
+import { beginAgentRun, finishAgentRun } from './agent-run-control.js';
 import {
   createApparentAgentRuntime,
   createPublicResearchPolicy,
@@ -35,7 +36,9 @@ const ANON_KEY = process.env.VITE_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON
 
 // Sourced facts change slowly — a long cache keeps the bill down. force bypasses.
 const CACHE_TTL_MS = 14 * 24 * 60 * 60 * 1000;
+const FORCE_COOLDOWN_MS = 15 * 60 * 1000;
 const MAX_AGENT_STEPS = 10;
+const SAFE_RUNTIME_MS = Math.min(Math.max(Number(process.env.AGENT_SAFE_RUNTIME_MS) || 240_000, 60_000), 270_000);
 
 const str = (v) => (v == null ? '' : String(v));
 
@@ -168,9 +171,26 @@ export default async function handler(req, res) {
   // Serve the cached dossier unless stale or a refresh was asked for.
   const cachedAt = row.dossier_at ? new Date(row.dossier_at).getTime() : 0;
   const isFresh = cachedAt && Date.now() - cachedAt < CACHE_TTL_MS;
-  if (row.dossier && isFresh && !force) {
+  if (row.dossier && isFresh && (!force || Date.now() - cachedAt < FORCE_COOLDOWN_MS)) {
     return res.status(200).json({ ok: true, cached: true, dossier: row.dossier });
   }
+
+  const requestKey = str(body?.requestId).trim().slice(0, 160)
+    || `sourced-enrich:${access.userId}:${signalId}:${Math.floor(Date.now() / FORCE_COOLDOWN_MS)}`;
+  let admission;
+  try {
+    admission = await beginAgentRun({ requestKey, userKey: access.userId, role: access.role || 'investor', endpoint: 'sourced-enrich' });
+  } catch (error) {
+    return res.status(error?.status || 503).json({ ok: false, error: error?.code || 'agent_run_control_unavailable' });
+  }
+  if (admission.action === 'completed' && admission.responsePayload) return res.status(200).json(admission.responsePayload);
+  if (admission.action !== 'started') {
+    if (admission.retryAfter) res.setHeader('Retry-After', String(admission.retryAfter));
+    return res.status(admission.action.includes('quota') ? 429 : 409).json({ ok: false, error: admission.errorCode || admission.action });
+  }
+  const runStartedAt = Date.now();
+  const controller = new AbortController();
+  res.on?.('close', () => { if (!res.writableEnded) controller.abort(); });
 
   const seed = {
     company: str(row.company),
@@ -186,9 +206,11 @@ export default async function handler(req, res) {
   const publicResearchPolicy = createPublicResearchPolicy({ publicContext: JSON.stringify(seed) });
 
   let dossier = null;
+  let runtime;
+  let runtimeResult;
   try {
-    const runtime = createApparentAgentRuntime();
-    await runtime.run({
+    runtime = createApparentAgentRuntime({ sessionOptions: { signal: controller.signal, deadlineAt: runStartedAt + SAFE_RUNTIME_MS } });
+    runtimeResult = await runtime.run({
       system,
       messages,
       tools: TOOLS,
@@ -216,17 +238,40 @@ export default async function handler(req, res) {
       },
     });
   } catch (err) {
+    await finishAgentRun({
+      runId: admission.runId, requestKey, userKey: access.userId,
+      status: err?.code === 'agent_cancelled' ? 'cancelled' : 'failed',
+      usage: runtime?.session?.usage?.() || {}, durationMs: Date.now() - runStartedAt,
+      errorCode: err?.code || 'sourced_enrich_failed',
+    });
     return res.status(200).json({ ok: false, error: `enrich_failed: ${err?.message ?? 'unknown'}` });
   }
 
-  if (!dossier) return res.status(200).json({ ok: false, error: 'no_dossier' });
+  if (!dossier) {
+    await finishAgentRun({
+      runId: admission.runId, requestKey, userKey: access.userId, status: 'failed',
+      usage: runtimeResult?.usage || {}, durationMs: Date.now() - runStartedAt, errorCode: 'no_dossier',
+    });
+    return res.status(200).json({ ok: false, error: 'no_dossier' });
+  }
 
   const { error: saveErr } = await admin
     .from('source_signals')
     .update({ dossier, dossier_at: dossier.generatedAt })
     .eq('id', signalId);
 
-  if (saveErr) return res.status(200).json({ ok: false, error: `save_failed: ${saveErr.message}` });
+  if (saveErr) {
+    await finishAgentRun({
+      runId: admission.runId, requestKey, userKey: access.userId, status: 'failed',
+      usage: runtimeResult?.usage || {}, durationMs: Date.now() - runStartedAt, errorCode: 'save_failed',
+    });
+    return res.status(200).json({ ok: false, error: `save_failed: ${saveErr.message}` });
+  }
 
-  return res.status(200).json({ ok: true, cached: false, dossier });
+  const responsePayload = { ok: true, cached: false, dossier };
+  await finishAgentRun({
+    runId: admission.runId, requestKey, userKey: access.userId, status: 'completed',
+    usage: runtimeResult?.usage || {}, durationMs: Date.now() - runStartedAt, responsePayload,
+  });
+  return res.status(200).json(responsePayload);
 }

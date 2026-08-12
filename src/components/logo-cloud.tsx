@@ -1,73 +1,32 @@
-import { useEffect, useState } from 'react';
-
 import { InfiniteSlider } from '@/components/ui/infinite-slider';
-import type { VCContact } from '@/lib/apparent-types';
 
 type InvestorLogo = {
   name: string;
-  stage: string;
-  location: string;
-  score: number;
   domain: string;
   src: string;
 };
 
-const isInvestorLogo = (investor: InvestorLogo | null): investor is InvestorLogo => investor !== null;
-
-const logoUrlFromWebsite = (website: string) => {
-  const trimmed = website.trim();
-  if (!trimmed) return '';
-  const withProtocol = /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
-
-  try {
-    const domain = new URL(withProtocol).hostname.replace(/^www\./, '');
-    return {
-      domain,
-      src: `https://www.google.com/s2/favicons?domain=${domain}&sz=256`,
-    };
-  } catch {
-    return '';
-  }
-};
-
-const buildLogoCloudInvestors = (contacts: VCContact[]) =>
-  contacts
-    .filter((contact) => contact.latitude !== null && contact.longitude !== null)
-    .filter((contact) => /venture|vc/i.test(contact.fundType))
-    .map((contact) => {
-      const logo = logoUrlFromWebsite(contact.website);
-      if (!logo) return null;
-
-      return {
-        name: contact.investorName,
-        stage: contact.fundStage,
-        location: contact.normalizedCity || contact.location,
-        score: contact.numberOfInvestments * 2 + contact.numberOfExits * 6,
-        ...logo,
-      };
-    })
-    .filter(isInvestorLogo)
-    .sort((a, b) => b.score - a.score)
-    .filter((investor, index, investors) => investors.findIndex((item) => item.domain === investor.domain) === index)
-    .slice(0, 42);
+// Precomputed from the private VC seed at build time. The landing page only
+// needs these 42 public names/domains; shipping the full multi-megabyte contact
+// dataset here exposed unrelated fields and slowed every first visit.
+const investors: InvestorLogo[] = [
+  ['500 Startups', '500.co'], ['New Enterprise Associates', 'nea.com'], ['Accel', 'accel.com'],
+  ['Sequoia Capital', 'sequoiacap.com'], ['SV Angel', 'svangel.com'], ['Kleiner Perkins', 'kleinerperkins.com'],
+  ['Bessemer Venture Partners', 'bvp.com'], ['Andreessen Horowitz', 'a16z.com'], ['Lightspeed Venture Partners', 'lsvp.com'],
+  ['Right Side Capital Management', 'rightsidecapital.com'], ['Index Ventures', 'indexventures.com'], ['GV', 'gv.com'],
+  ['General Catalyst', 'generalcatalyst.com'], ['Venrock', 'venrock.com'], ['Greylock', 'greylock.com'],
+  ['Threshold', 'threshold.vc'], ['Insight Partners', 'insightpartners.com'], ['Khosla Ventures', 'khoslaventures.com'],
+  ['Tiger Global Management', 'tigerglobal.com'], ['Alumni Ventures', 'av.vc'], ['First Round Capital', 'firstround.com'],
+  ['Battery Ventures', 'battery.com'], ['Norwest Venture Partners', 'nvp.com'], ['Menlo Ventures', 'menlovc.com'],
+  ['GGV Capital', 'ggvc.com'], ['OrbiMed', 'orbimed.com'], ['Summit Partners', 'summitpartners.com'],
+  ['Redpoint', 'redpoint.com'], ['Founders Fund', 'foundersfund.com'], ['Benchmark', 'benchmark.com'],
+  ['Canaan Partners', 'canaan.com'], ['Mayfield Fund', 'mayfield.com'], ['Polaris Partners', 'polarispartners.com'],
+  ['Foundation Capital', 'foundationcapital.com'], ['Atlas Venture', 'atlasventure.com'], ['CRV', 'crv.com'],
+  ['Greycroft', 'greycroft.com'], ['Matrix Partners', 'matrixpartners.com'], ['Global Founders Capital', 'globalfounderscapital.com'],
+  ['U.S. Venture Partners', 'usvp.com'], ['Lerer Hippeau', 'lererhippeau.com'], ['Felicis Ventures', 'felicis.com'],
+].map(([name, domain]) => ({ name, domain, src: `https://www.google.com/s2/favicons?domain=${domain}&sz=256` }));
 
 export function LogoCloud({ className = '' }: { className?: string }) {
-  const [investors, setInvestors] = useState<InvestorLogo[]>([]);
-
-  useEffect(() => {
-    let isMounted = true;
-
-    import('@/data/vc-contact-seed').then(({ vcContactSeed }) => {
-      if (isMounted) {
-        setInvestors(buildLogoCloudInvestors(vcContactSeed as VCContact[]));
-      }
-    });
-
-    return () => {
-      isMounted = false;
-    };
-  }, []);
-
   return (
     <section className={`alden-logo-cloud ${className}`} aria-label="VC firms mapped in the heat map" data-reveal>
       <div className="alden-logo-cloud__mask">

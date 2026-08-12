@@ -12,6 +12,7 @@
 // Env: ORTHOGONAL_API_KEY (required), VITE_SUPABASE_URL + VITE_SUPABASE_ANON_KEY.
 
 import { requireAgentAccess, sendAgentAccessError } from '../server/agent/agent-guard.js';
+import { beginAgentRun, finishAgentRun } from '../server/agent/agent-run-control.js';
 import {
   apparentAgentErrorResponse,
   createAgentSse,
@@ -36,6 +37,7 @@ import {
 // Vercel Node functions buffer responses unless streaming is opted into.
 export const config = { supportsResponseStreaming: true };
 export const maxDuration = 300;
+const SAFE_AGENT_RUNTIME_MS = Math.min(Math.max(Number(process.env.AGENT_SAFE_RUNTIME_MS) || 240_000, 60_000), 270_000);
 
 // The Apparent runtime owns the tool loop; inference is replaceable behind Orthogonal.
 const MAX_AGENT_STEPS = 12;
@@ -367,6 +369,22 @@ const readJsonBody = async (req) => {
   }
 };
 
+const agentRequestKey = (req, body) => String(body?.requestId || req.headers['idempotency-key'] || '').trim().slice(0, 160);
+
+const sendAdmissionResult = (res, admission) => {
+  if (admission.action === 'completed' && admission.responsePayload) return res.status(200).json(admission.responsePayload);
+  const quota = admission.action === 'user_quota' || admission.action === 'global_quota';
+  const busy = admission.action === 'user_busy' || admission.action === 'global_busy' || admission.action === 'running';
+  const status = quota ? 429 : busy || admission.action === 'conflict' ? 409 : 503;
+  if (admission.retryAfter) res.setHeader('Retry-After', String(admission.retryAfter));
+  const error = quota
+    ? 'Your Agent research allowance is exhausted for today. It resets at midnight UTC.'
+    : busy
+      ? 'An Agent run is already active or Apparent is at safe capacity. Please wait a moment.'
+      : 'The Agent could not safely start this run.';
+  return res.status(status).json({ error, code: admission.errorCode || `agent_run_${admission.action}`, status: admission.action });
+};
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     res.setHeader('Allow', 'POST');
@@ -398,6 +416,7 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'Expected a non-empty conversation ending with a user message.' });
   }
 
+  const requestKey = agentRequestKey(req, body);
   const sourceAnalysis = analyzeSourceIngestion(messages[messages.length - 1]?.content || '');
   const latestUserMessage = messages[messages.length - 1].content;
   // Feed the whole conversation, the founder's profile, and agent memories into
@@ -440,14 +459,30 @@ export default async function handler(req, res) {
   const seenInvestors = new Set();
   let amplifyRequested = false;
 
+  // Only reserve shared capacity after all local/database context preparation
+  // succeeds, so a setup error cannot strand a paid-run lease.
+  let admission;
+  try {
+    admission = await beginAgentRun({ requestKey, userKey: access.userId, role: 'founder', endpoint: 'founder-agent' });
+  } catch (error) {
+    if (error?.retryAfter) res.setHeader('Retry-After', String(error.retryAfter));
+    return res.status(error?.status || 503).json({ error: error?.message || 'The Agent safety service is unavailable.', code: error?.code || 'agent_run_control_unavailable' });
+  }
+  if (admission.action !== 'started') return sendAdmissionResult(res, admission);
+  const runStartedAt = Date.now();
+  let runtime;
+
   // SSE progress streaming, opted into by the client. Validation errors above
   // stay plain JSON; the stream only starts once the agent loop is about to run.
-  const { streaming, emit, close: closeStream } = createAgentSse(res, body.stream === true);
+  const { streaming, emit, close: closeStream, signal } = createAgentSse(res, body.stream === true);
   if (activeSkill) emit({ type: 'status', label: `Using ${activeSkill.name} skill…` });
 
   try {
     // Size the Orthogonal call budget to the loop this turn is allowed to run.
-    const runtime = createApparentAgentRuntime({ maxSteps: MAX_AGENT_STEPS });
+    runtime = createApparentAgentRuntime({
+      maxSteps: MAX_AGENT_STEPS,
+      sessionOptions: { signal, deadlineAt: runStartedAt + SAFE_AGENT_RUNTIME_MS },
+    });
     const runtimeResult = await runtime.run({
       system,
       messages,
@@ -522,6 +557,15 @@ export default async function handler(req, res) {
       amplify: amplifyRequested,
       skill: activeSkill ? { id: activeSkill.id, name: activeSkill.name, sourceUrl: activeSkill.sourceUrl } : null,
     };
+    await finishAgentRun({
+      runId: admission.runId,
+      requestKey,
+      userKey: access.userId,
+      status: 'completed',
+      usage: runtimeResult.usage,
+      durationMs: Date.now() - runStartedAt,
+      responsePayload,
+    });
     if (streaming) {
       emit({ type: 'done', ...responsePayload });
       return res.end();
@@ -530,6 +574,15 @@ export default async function handler(req, res) {
   } catch (err) {
     logApparentAgentError(err, 'founder-agent');
     const failure = apparentAgentErrorResponse(err);
+    await finishAgentRun({
+      runId: admission.runId,
+      requestKey,
+      userKey: access.userId,
+      status: err?.code === 'agent_cancelled' ? 'cancelled' : 'failed',
+      usage: runtime?.session?.usage?.() || {},
+      durationMs: Date.now() - runStartedAt,
+      errorCode: failure.code,
+    });
     if (streaming) {
       emit({ type: 'error', error: failure.error, code: failure.code });
       return res.end();

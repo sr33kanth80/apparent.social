@@ -7,7 +7,7 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
-    "test": "node --test tests/apparent-agent-runtime.test.js tests/agent-guard.test.js tests/agent-skills.test.js tests/fut-card.test.js tests/sourced-founder.test.js && node scripts/ingest-signals.test.mjs",
+    "test": "node --test tests/apparent-agent-runtime.test.js tests/agent-guard.test.js tests/agent-run-control.test.js tests/agent-skills.test.js tests/fut-card.test.js tests/sourced-founder.test.js && node scripts/ingest-signals.test.mjs",
     "preview": "vite preview"
   },
   "dependencies": {
@@ -34,13 +34,13 @@
     "react": "^19.2.6",
     "react-dom": "^19.2.6",
     "react-markdown": "^10.1.0",
-    "react-router-dom": "^7.15.1",
+    "react-router-dom": "^7.18.2",
     "react-tooltip": "^6.0.4",
     "react-use-measure": "^2.1.7",
     "remark-gfm": "^4.0.1",
     "tailwind-merge": "^3.6.0",
     "three": "^0.184.0",
-    "yaml": "^2.8.1"
+    "yaml": "^2.9.0"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

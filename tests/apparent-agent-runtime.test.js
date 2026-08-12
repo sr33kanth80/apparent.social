@@ -19,6 +19,44 @@ import {
 } from '../server/agent/apparent-agent-runtime.js';
 import { clearOrthogonalDetailsCache, createOrthogonalSession, OrthogonalError } from '../server/agent/orthogonal.js';
 
+test('Orthogonal refuses work after the parent Agent run is cancelled', async () => {
+  const controller = new AbortController();
+  controller.abort();
+  let fetched = false;
+  const session = createOrthogonalSession({
+    apiKey: 'test',
+    signal: controller.signal,
+    fetchImpl: async () => {
+      fetched = true;
+      return new Response('{}');
+    },
+  });
+
+  await assert.rejects(
+    session.search('cancelled research'),
+    (error) => error instanceof OrthogonalError && error.code === 'agent_cancelled',
+  );
+  assert.equal(fetched, false);
+});
+
+test('Orthogonal refuses work after the Agent run deadline', async () => {
+  let fetched = false;
+  const session = createOrthogonalSession({
+    apiKey: 'test',
+    deadlineAt: Date.now() - 1,
+    fetchImpl: async () => {
+      fetched = true;
+      return new Response('{}');
+    },
+  });
+
+  await assert.rejects(
+    session.search('late research'),
+    (error) => error instanceof OrthogonalError && error.code === 'agent_deadline_reached',
+  );
+  assert.equal(fetched, false);
+});
+
 test('the Apparent runtime executes tools and returns the final reply', async () => {
   const completions = [
     {

@@ -11,6 +11,7 @@
 // (or SUPABASE_URL / SUPABASE_ANON_KEY) for the founder search tool.
 
 import { requireAgentAccess, sendAgentAccessError } from '../server/agent/agent-guard.js';
+import { beginAgentRun, finishAgentRun, getAgentRun } from '../server/agent/agent-run-control.js';
 import {
   apparentAgentErrorResponse,
   createAgentSse,
@@ -546,6 +547,7 @@ const buildSystemPrompt = (criteria, autonomy, contactedIds, memories, threadSum
 // Vercel Node functions buffer responses unless streaming is opted into.
 export const config = { supportsResponseStreaming: true };
 export const maxDuration = 300;
+const SAFE_AGENT_RUNTIME_MS = Math.min(Math.max(Number(process.env.AGENT_SAFE_RUNTIME_MS) || 240_000, 60_000), 270_000);
 
 const readJsonBody = async (req) => {
   if (req.body && typeof req.body === 'object') return req.body;
@@ -558,12 +560,52 @@ const readJsonBody = async (req) => {
   }
 };
 
+const agentRequestKey = (req, body) => String(body?.requestId || req.headers['idempotency-key'] || '').trim().slice(0, 160);
+
+const sendAdmissionResult = (res, admission) => {
+  if (admission.action === 'completed' && admission.responsePayload) return res.status(200).json(admission.responsePayload);
+  const quota = admission.action === 'user_quota' || admission.action === 'global_quota';
+  const busy = admission.action === 'user_busy' || admission.action === 'global_busy' || admission.action === 'running';
+  const status = quota ? 429 : busy ? 409 : admission.action === 'conflict' ? 409 : 503;
+  if (admission.retryAfter) res.setHeader('Retry-After', String(admission.retryAfter));
+  const error = quota
+    ? 'Your Agent research allowance is exhausted for today. It resets at midnight UTC.'
+    : busy
+      ? 'An Agent run is already active or Apparent is at safe capacity. Please wait a moment.'
+      : 'The Agent could not safely start this run.';
+  return res.status(status).json({ error, code: admission.errorCode || `agent_run_${admission.action}`, status: admission.action });
+};
+
+const handleAgentRunStatus = async (req, res) => {
+  if (req.method !== 'GET') {
+    res.setHeader('Allow', 'GET');
+    return res.status(405).json({ error: 'Method not allowed' });
+  }
+  const role = req.query?.role === 'founder' ? 'founder' : 'investor';
+  const access = await requireAgentAccess(req, role, 'agent-run-status', { rateLimit: false });
+  if (!access.ok) return sendAgentAccessError(res, access);
+  const requestKey = String(req.query?.requestId || '').trim().slice(0, 160);
+  if (!requestKey) return res.status(400).json({ error: 'requestId is required.', code: 'agent_request_key_required' });
+  try {
+    const run = await getAgentRun({ requestKey, userKey: access.userId });
+    if (!run) return res.status(404).json({ error: 'Agent run not found.', code: 'agent_run_not_found' });
+    if (run.retryAfter) res.setHeader('Retry-After', String(run.retryAfter));
+    return res.status(run.status === 'running' ? 202 : 200).json(run);
+  } catch {
+    res.setHeader('Retry-After', '15');
+    return res.status(503).json({ error: 'Agent run status is temporarily unavailable.', code: 'agent_run_control_unavailable' });
+  }
+};
+
 export default async function handler(req, res) {
   if (req.query?.route === 'kinde-profile') {
     return kindeProfileHandler(req, res);
   }
   if (req.query?.route === 'agent-skills') {
     return agentSkillsHandler(req, res);
+  }
+  if (req.query?.route === 'agent-run') {
+    return handleAgentRunStatus(req, res);
   }
 
   if (req.method !== 'POST') {
@@ -598,6 +640,7 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'Expected a non-empty conversation ending with a user message.' });
   }
 
+  const requestKey = agentRequestKey(req, body);
   const sourceAnalysis = analyzeSourceIngestion(messages[messages.length - 1]?.content || '');
   const latestUserMessage = messages[messages.length - 1].content;
   // Research is a read: always authorized. The policy's query allowlist is fed
@@ -645,14 +688,30 @@ export default async function handler(req, res) {
   const seenProposalFounders = new Set();
   const seenEmailKeys = new Set();
 
+  // Only reserve shared capacity after all local/database context preparation
+  // succeeds, so a setup error cannot strand a paid-run lease.
+  let admission;
+  try {
+    admission = await beginAgentRun({ requestKey, userKey: access.userId, role: 'investor', endpoint: 'investor-agent' });
+  } catch (error) {
+    if (error?.retryAfter) res.setHeader('Retry-After', String(error.retryAfter));
+    return res.status(error?.status || 503).json({ error: error?.message || 'The Agent safety service is unavailable.', code: error?.code || 'agent_run_control_unavailable' });
+  }
+  if (admission.action !== 'started') return sendAdmissionResult(res, admission);
+  const runStartedAt = Date.now();
+  let runtime;
+
   // SSE progress streaming, opted into by the client. Validation errors above
   // stay plain JSON; the stream only starts once the agent loop is about to run.
-  const { streaming, emit, close: closeStream } = createAgentSse(res, body.stream === true);
+  const { streaming, emit, close: closeStream, signal } = createAgentSse(res, body.stream === true);
   if (activeSkill) emit({ type: 'status', label: `Using ${activeSkill.name} skill…` });
 
   try {
     // Size the Orthogonal call budget to the loop this turn is allowed to run.
-    const runtime = createApparentAgentRuntime({ maxSteps: MAX_AGENT_STEPS });
+    runtime = createApparentAgentRuntime({
+      maxSteps: MAX_AGENT_STEPS,
+      sessionOptions: { signal, deadlineAt: runStartedAt + SAFE_AGENT_RUNTIME_MS },
+    });
     const runtimeResult = await runtime.run({
       system,
       messages,
@@ -745,6 +804,15 @@ export default async function handler(req, res) {
       profilePatches,
       skill: activeSkill ? { id: activeSkill.id, name: activeSkill.name, sourceUrl: activeSkill.sourceUrl } : null,
     };
+    await finishAgentRun({
+      runId: admission.runId,
+      requestKey,
+      userKey: access.userId,
+      status: 'completed',
+      usage: runtimeResult.usage,
+      durationMs: Date.now() - runStartedAt,
+      responsePayload,
+    });
     if (streaming) {
       emit({ type: 'done', ...responsePayload });
       return res.end();
@@ -753,6 +821,15 @@ export default async function handler(req, res) {
   } catch (err) {
     logApparentAgentError(err, 'investor-agent');
     const failure = apparentAgentErrorResponse(err);
+    await finishAgentRun({
+      runId: admission.runId,
+      requestKey,
+      userKey: access.userId,
+      status: err?.code === 'agent_cancelled' ? 'cancelled' : 'failed',
+      usage: runtime?.session?.usage?.() || {},
+      durationMs: Date.now() - runStartedAt,
+      errorCode: failure.code,
+    });
     if (streaming) {
       emit({ type: 'error', error: failure.error, code: failure.code });
       return res.end();

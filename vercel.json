@@ -1,7 +1,9 @@
 {
   "functions": {
     "api/agent.js": { "maxDuration": 300 },
-    "api/founder-agent.js": { "maxDuration": 300 }
+    "api/founder-agent.js": { "maxDuration": 300 },
+    "api/founder-enrich.js": { "maxDuration": 300 },
+    "api/ingest-signals.js": { "maxDuration": 300 }
   },
   "rewrites": [
     {
@@ -39,6 +41,10 @@
     {
       "source": "/api/agent-skills",
       "destination": "/api/agent?route=agent-skills"
+    },
+    {
+      "source": "/api/agent-run",
+      "destination": "/api/agent?route=agent-run"
     },
     {
       "source": "/",

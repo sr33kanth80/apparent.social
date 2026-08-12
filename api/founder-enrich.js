@@ -19,12 +19,18 @@
 import { createClient } from '@supabase/supabase-js';
 import { decryptToken } from '../server/github-crypto.js';
 import { createApparentAgentRuntime } from '../server/agent/apparent-agent-runtime.js';
+import { requireAgentAccess, sendAgentAccessError } from '../server/agent/agent-guard.js';
+import { beginAgentRun, finishAgentRun } from '../server/agent/agent-run-control.js';
+
+export const maxDuration = 300;
 
 const SUPABASE_URL = (process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || '').replace(/\/$/, '');
 const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
 const ANON_KEY = process.env.VITE_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY || '';
 const GITHUB_SECRET = process.env.GITHUB_OAUTH_SECRET || '';
 const CACHE_TTL_MS = 12 * 60 * 60 * 1000; // don't re-burn the GitHub token / credits within 12h
+const FORCE_COOLDOWN_MS = 15 * 60 * 1000;
+const SAFE_RUNTIME_MS = Math.min(Math.max(Number(process.env.AGENT_SAFE_RUNTIME_MS) || 240_000, 60_000), 270_000);
 
 const str = (v) => (v == null ? '' : String(v));
 
@@ -120,11 +126,11 @@ const deterministicGithubSummary = (d) => {
 
 // ---------- LLM narrative ----------
 
-const synthesizeNarrative = async (profile, launches, gd) => {
+const synthesizeNarrative = async (profile, launches, gd, sessionOptions = {}) => {
   if (!process.env.ORTHOGONAL_API_KEY) {
     // No key — fall back to a deterministic blurb so the dossier still populates.
     const lead = str(profile.headline) || str(profile.current_build) || 'Building on Apparent.';
-    return `${lead} ${deterministicGithubSummary(gd)}`.trim();
+    return { text: `${lead} ${deterministicGithubSummary(gd)}`.trim(), usage: {} };
   }
 
   const facts = {
@@ -155,8 +161,9 @@ const synthesizeNarrative = async (profile, launches, gd) => {
     "Lead with what they're building and the strongest real signal, then concrete GitHub evidence (notable repos, languages, traction). " +
     "Be specific and grounded; if signal is thin, say so plainly rather than padding.";
 
+  let runtime;
   try {
-    const runtime = createApparentAgentRuntime();
+    runtime = createApparentAgentRuntime({ sessionOptions });
     const result = await runtime.run({
       system,
       messages: [{ role: 'user', content: `Write the dossier from these facts:\n\n${JSON.stringify(facts, null, 2)}` }],
@@ -166,9 +173,13 @@ const synthesizeNarrative = async (profile, launches, gd) => {
       executeTool: async () => ({ error: 'No tools are available for this factual synthesis.' }),
     });
     const text = result.reply.trim();
-    return text || `${str(profile.headline)} ${deterministicGithubSummary(gd)}`.trim();
-  } catch {
-    return `${str(profile.headline) || str(profile.current_build)} ${deterministicGithubSummary(gd)}`.trim();
+    return { text: text || `${str(profile.headline)} ${deterministicGithubSummary(gd)}`.trim(), usage: result.usage };
+  } catch (error) {
+    if (error?.code === 'agent_cancelled') throw error;
+    return {
+      text: `${str(profile.headline) || str(profile.current_build)} ${deterministicGithubSummary(gd)}`.trim(),
+      usage: runtime?.session?.usage?.() || {},
+    };
   }
 };
 
@@ -193,15 +204,9 @@ export default async function handler(req, res) {
     return res.status(200).json({ ok: false, error: 'server_misconfigured' });
   }
 
-  // Resolve the caller's identity from their Supabase JWT.
-  const authHeader = str(req.headers.authorization);
-  const jwt = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : '';
-  if (!jwt) return res.status(401).json({ ok: false, error: 'unauthenticated' });
-
-  const anon = createClient(SUPABASE_URL, ANON_KEY, { auth: { persistSession: false } });
-  const { data: userData, error: userErr } = await anon.auth.getUser(jwt);
-  const userId = userData?.user?.id;
-  if (userErr || !userId) return res.status(401).json({ ok: false, error: 'invalid_token' });
+  const access = await requireAgentAccess(req, 'founder', 'founder-enrich');
+  if (!access.ok) return sendAgentAccessError(res, access);
+  const userId = access.userId;
 
   const body = await readJsonBody(req);
   const force = body?.force === true;
@@ -225,7 +230,7 @@ export default async function handler(req, res) {
   // Serve the cached dossier unless it's stale or a refresh was requested.
   const updatedAt = profile.dossier_updated_at ? new Date(profile.dossier_updated_at).getTime() : 0;
   const isFresh = updatedAt && Date.now() - updatedAt < CACHE_TTL_MS;
-  if (isFresh && !force && profile.agent_dossier) {
+  if (isFresh && profile.agent_dossier && (!force || Date.now() - updatedAt < FORCE_COOLDOWN_MS)) {
     return res.status(200).json({
       ok: true,
       cached: true,
@@ -236,13 +241,40 @@ export default async function handler(req, res) {
     });
   }
 
+  const requestKey = str(body?.requestId).trim().slice(0, 160)
+    || `founder-enrich:${userId}:${Math.floor(Date.now() / FORCE_COOLDOWN_MS)}`;
+  let admission;
+  try {
+    admission = await beginAgentRun({ requestKey, userKey: userId, role: 'founder', endpoint: 'founder-enrich' });
+  } catch (error) {
+    return res.status(error?.status || 503).json({ ok: false, error: error?.code || 'agent_run_control_unavailable' });
+  }
+  if (admission.action === 'completed' && admission.responsePayload) return res.status(200).json(admission.responsePayload);
+  if (admission.action !== 'started') {
+    if (admission.retryAfter) res.setHeader('Retry-After', String(admission.retryAfter));
+    return res.status(admission.action.includes('quota') ? 429 : 409).json({ ok: false, error: admission.errorCode || admission.action });
+  }
+  const runStartedAt = Date.now();
+  const controller = new AbortController();
+  res.on?.('close', () => { if (!res.writableEnded) controller.abort(); });
+
   const token = decryptToken(profile.github_access_token_enc, GITHUB_SECRET);
-  if (!token) return res.status(200).json({ ok: false, error: 'token_decrypt_failed' });
+  if (!token) {
+    await finishAgentRun({
+      runId: admission.runId, requestKey, userKey: userId, status: 'failed',
+      durationMs: Date.now() - runStartedAt, errorCode: 'token_decrypt_failed',
+    });
+    return res.status(200).json({ ok: false, error: 'token_decrypt_failed' });
+  }
 
   let githubData;
   try {
     githubData = await buildGithubDossier(token);
   } catch (err) {
+    await finishAgentRun({
+      runId: admission.runId, requestKey, userKey: userId, status: 'failed',
+      durationMs: Date.now() - runStartedAt, errorCode: 'github_fetch_failed',
+    });
     return res.status(200).json({ ok: false, error: `github_fetch_failed: ${err?.message ?? 'unknown'}` });
   }
 
@@ -254,7 +286,21 @@ export default async function handler(req, res) {
     .order('updated_at', { ascending: false })
     .limit(5);
 
-  const narrative = await synthesizeNarrative(profile, launchRows || [], githubData);
+  let synthesis;
+  try {
+    synthesis = await synthesizeNarrative(profile, launchRows || [], githubData, {
+      signal: controller.signal,
+      deadlineAt: runStartedAt + SAFE_RUNTIME_MS,
+    });
+  } catch (error) {
+    await finishAgentRun({
+      runId: admission.runId, requestKey, userKey: userId,
+      status: error?.code === 'agent_cancelled' ? 'cancelled' : 'failed',
+      durationMs: Date.now() - runStartedAt, errorCode: error?.code || 'narrative_failed',
+    });
+    return res.status(200).json({ ok: false, error: error?.code || 'narrative_failed' });
+  }
+  const narrative = synthesis.text;
   const githubSummary = deterministicGithubSummary(githubData);
   const nowIso = new Date().toISOString();
 
@@ -268,14 +314,25 @@ export default async function handler(req, res) {
     })
     .eq('user_id', userId);
 
-  if (saveErr) return res.status(200).json({ ok: false, error: `save_failed: ${saveErr.message}` });
+  if (saveErr) {
+    await finishAgentRun({
+      runId: admission.runId, requestKey, userKey: userId, status: 'failed',
+      usage: synthesis.usage, durationMs: Date.now() - runStartedAt, errorCode: 'save_failed',
+    });
+    return res.status(200).json({ ok: false, error: `save_failed: ${saveErr.message}` });
+  }
 
-  return res.status(200).json({
+  const responsePayload = {
     ok: true,
     cached: false,
     dossier: githubData,
     summary: narrative,
     githubSummary,
     updatedAt: nowIso,
+  };
+  await finishAgentRun({
+    runId: admission.runId, requestKey, userKey: userId, status: 'completed',
+    usage: synthesis.usage, durationMs: Date.now() - runStartedAt, responsePayload,
   });
+  return res.status(200).json(responsePayload);
 }

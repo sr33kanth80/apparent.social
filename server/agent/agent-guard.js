@@ -26,6 +26,9 @@ const RATE_WINDOW_MS = numEnv('AGENT_RATE_LIMIT_WINDOW_MS', DEFAULT_WINDOW_MS);
 const USER_LIMIT = numEnv('AGENT_RATE_LIMIT_USER_MAX', DEFAULT_USER_LIMIT);
 const IP_LIMIT = numEnv('AGENT_RATE_LIMIT_IP_MAX', DEFAULT_IP_LIMIT);
 const MAX_BODY_BYTES = numEnv('AGENT_MAX_BODY_BYTES', DEFAULT_MAX_BODY_BYTES);
+const REQUIRE_PERSISTENT_LIMITER = process.env.VERCEL === '1'
+  || process.env.NODE_ENV === 'production'
+  || process.env.AGENT_REQUIRE_PERSISTENT_RATE_LIMIT === 'true';
 
 const state = globalThis.__apparentAgentRateLimits || new Map();
 globalThis.__apparentAgentRateLimits = state;
@@ -109,7 +112,15 @@ const enforceRateLimit = async (key, max) => {
     const persistent = await checkPersistentRateLimit(key, max);
     if (persistent) return persistent;
   } catch {
-    /* fall back to process-local limiter */
+    /* handled below */
+  }
+  if (REQUIRE_PERSISTENT_LIMITER) {
+    return {
+      ok: false,
+      status: 503,
+      error: 'The Agent safety service is temporarily unavailable. Please retry shortly.',
+      retryAfter: 15,
+    };
   }
   return checkRateLimit(key, max);
 };
@@ -267,13 +278,15 @@ export const verifyKindeRequest = async (req) => {
   return identity || invalidSession();
 };
 
-export const requireAgentAccess = async (req, expectedRole, endpoint) => {
+export const requireAgentAccess = async (req, expectedRole, endpoint, { rateLimit = true } = {}) => {
   const size = checkBodySize(req);
   if (!size.ok) return size;
 
   const ip = getIp(req);
-  const ipLimit = await enforceRateLimit(`ip:${endpoint}:${ip}`, IP_LIMIT);
-  if (!ipLimit.ok) return ipLimit;
+  if (rateLimit) {
+    const ipLimit = await enforceRateLimit(`ip:${endpoint}:${ip}`, IP_LIMIT);
+    if (!ipLimit.ok) return ipLimit;
+  }
 
   const token = getBearerToken(req);
   const verified = await verifyAgentToken(token);
@@ -291,8 +304,10 @@ export const requireAgentAccess = async (req, expectedRole, endpoint) => {
       : { ok: false, status: 403, error: 'Your profile is not ready for agent access yet.' };
   }
 
-  const userLimit = await enforceRateLimit(`user:${endpoint}:${verified.userId}`, USER_LIMIT);
-  if (!userLimit.ok) return userLimit;
+  if (rateLimit) {
+    const userLimit = await enforceRateLimit(`user:${endpoint}:${verified.userId}`, USER_LIMIT);
+    if (!userLimit.ok) return userLimit;
+  }
 
   return { ok: true, userId: verified.userId, role, ip };
 };

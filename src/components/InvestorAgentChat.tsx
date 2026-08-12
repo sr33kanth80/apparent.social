@@ -48,8 +48,10 @@ type ProposalStatus = 'pending' | 'sending' | 'sent' | 'skipped' | 'error';
 type ProposalState = OutreachProposal & { status: ProposalStatus; reason?: string };
 
 type ChatMessage = {
+  id: string;
   role: 'user' | 'assistant';
   content: string;
+  createdAt: string;
   proposals?: ProposalState[];
   emailDrafts?: EmailDraft[];
   profilePatches?: AgentProfilePatch[];
@@ -174,6 +176,7 @@ export const InvestorAgentChat = ({
   const [expanded, setExpanded] = useState(false);
   const transcriptRef = useRef<HTMLDivElement>(null);
   const loadingRef = useRef(false);
+  const runControllerRef = useRef<AbortController | null>(null);
   const activeThreadRef = useRef<string | null>(threadId);
   const [activeSkill, setActiveSkill] = useState<ActiveSkill>(null);
   const [installedSkills, setInstalledSkills] = useState<AgentInstalledSkill[]>([]);
@@ -181,8 +184,10 @@ export const InvestorAgentChat = ({
   const toHistoryMessages = (items: ChatMessage[]): AgentChatHistoryMessage[] => {
     const latestSummaryIndex = items.findLastIndex((item) => Boolean(item.threadSummary));
     return items.map((item, index) => ({
+      id: item.id,
       role: item.role,
       content: item.content,
+      createdAt: item.createdAt,
       payload: {
         proposals: item.proposals,
         emailDrafts: item.emailDrafts,
@@ -195,8 +200,10 @@ export const InvestorAgentChat = ({
 
   const fromHistoryMessages = (items: AgentChatHistoryMessage[]): ChatMessage[] =>
     items.map((item) => ({
+      id: item.id || crypto.randomUUID(),
       role: item.role,
       content: item.content,
+      createdAt: item.createdAt || new Date().toISOString(),
       proposals: Array.isArray(item.payload?.proposals) ? (item.payload.proposals as ProposalState[]) : undefined,
       emailDrafts: Array.isArray(item.payload?.emailDrafts) ? (item.payload.emailDrafts as EmailDraft[]) : undefined,
       profilePatches: Array.isArray(item.payload?.profilePatches) ? (item.payload.profilePatches as AgentProfilePatch[]) : undefined,
@@ -292,11 +299,18 @@ export const InvestorAgentChat = ({
     if (options?.skill) setActiveSkill({ id: options.skill.id, name: options.skill.name });
 
     loadingRef.current = true;
+    const runController = new AbortController();
+    runControllerRef.current = runController;
     if (!pageMode) setExpanded(true);
     setError('');
     stopReveal();
     setStatusSteps([]);
-    const conversation: ChatMessage[] = [...messages, { role: 'user', content: trimmed }];
+    const conversation: ChatMessage[] = [...messages, {
+      id: crypto.randomUUID(),
+      role: 'user',
+      content: trimmed,
+      createdAt: new Date().toISOString(),
+    }];
     const previousThreadSummary = [...messages].reverse().find((message) => message.threadSummary)?.threadSummary ?? '';
     const threadSummary = buildAgentThreadSummary(conversation, previousThreadSummary);
     setMessages(conversation);
@@ -322,6 +336,7 @@ export const InvestorAgentChat = ({
           if (trail[trail.length - 1] !== label) trail.push(label);
           setStatusSteps((steps) => appendStatus(steps, label));
         },
+        runController.signal,
       );
 
       const assistantReply = String(data.reply ?? '');
@@ -338,8 +353,10 @@ export const InvestorAgentChat = ({
       let nextConversation: ChatMessage[] = [
         ...conversation,
         {
+          id: crypto.randomUUID(),
           role: 'assistant',
           content: assistantReply,
+          createdAt: new Date().toISOString(),
           proposals: proposalStates.length ? proposalStates : undefined,
           emailDrafts: emailDrafts.length ? emailDrafts : undefined,
           profilePatches: profilePatches.length ? profilePatches : undefined,
@@ -386,13 +403,16 @@ export const InvestorAgentChat = ({
       }
 
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'The agent is unavailable right now.');
+      if (!runController.signal.aborted) setError(err instanceof Error ? err.message : 'The agent is unavailable right now.');
     } finally {
       setIsLoading(false);
       setStatusSteps([]);
       loadingRef.current = false;
+      if (runControllerRef.current === runController) runControllerRef.current = null;
     }
   };
+
+  useEffect(() => () => runControllerRef.current?.abort(), []);
 
   const clear = () => {
     setMessages([]);
@@ -551,6 +571,13 @@ export const InvestorAgentChat = ({
             }`}
           >
             {statusTrail}
+            <button
+              type="button"
+              onClick={() => runControllerRef.current?.abort()}
+              className="mt-2 text-xs font-medium text-gray-500 transition-colors hover:text-black"
+            >
+              Stop research
+            </button>
           </div>
         </motion.div>
       )}
@@ -659,6 +686,13 @@ export const InvestorAgentChat = ({
           >
             <p className="mb-3 text-sm font-medium text-[#333333]">Apparent</p>
             {statusTrail}
+            <button
+              type="button"
+              onClick={() => runControllerRef.current?.abort()}
+              className="mt-3 text-xs font-medium text-gray-500 transition-colors hover:text-black"
+            >
+              Stop research
+            </button>
           </motion.div>
         )}
 

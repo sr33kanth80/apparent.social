@@ -1,27 +1,31 @@
-import { useEffect } from 'react';
+import { lazy, Suspense, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import { EditorialNavbar } from './components/editorial/EditorialNavbar';
 import { EditorialFooter } from './components/editorial/EditorialFooter';
-import { Home } from './pages/Home';
-import { OurThesis } from './pages/OurThesis';
-import { ForFounders } from './pages/ForFounders';
-import { ForVCs } from './pages/ForVCs';
-import { HeatMap } from './pages/HeatMap';
-import { AboutUs } from './pages/AboutUs';
-import { Blog, BlogPost } from './pages/Blog';
-import { Contact } from './pages/Contact';
-import { ProjectDetail } from './pages/ProjectDetail';
-import { SourcedDetail } from './pages/SourcedDetail';
-import { PublicProfile } from './pages/PublicProfile';
 import { PublicPageShell } from './components/PublicPageShell';
-import { Resources } from './pages/Resources';
-import { ClaimProfile } from './pages/ClaimProfile';
-import { ClaimBuild } from './pages/ClaimBuild';
-import { Login } from './pages/Login';
-import { Dashboard } from './pages/Dashboard';
-import { CookiePolicy, PrivacyPolicy, TermsOfService } from './pages/Legal';
 import { ProtectedDashboardRoute } from './components/ProtectedDashboardRoute';
-import NotFound4042 from './components/4042';
+
+const Home = lazy(() => import('./pages/Home').then((module) => ({ default: module.Home })));
+const OurThesis = lazy(() => import('./pages/OurThesis').then((module) => ({ default: module.OurThesis })));
+const ForFounders = lazy(() => import('./pages/ForFounders').then((module) => ({ default: module.ForFounders })));
+const ForVCs = lazy(() => import('./pages/ForVCs').then((module) => ({ default: module.ForVCs })));
+const HeatMap = lazy(() => import('./pages/HeatMap').then((module) => ({ default: module.HeatMap })));
+const AboutUs = lazy(() => import('./pages/AboutUs').then((module) => ({ default: module.AboutUs })));
+const Blog = lazy(() => import('./pages/Blog').then((module) => ({ default: module.Blog })));
+const BlogPost = lazy(() => import('./pages/Blog').then((module) => ({ default: module.BlogPost })));
+const Contact = lazy(() => import('./pages/Contact').then((module) => ({ default: module.Contact })));
+const ProjectDetail = lazy(() => import('./pages/ProjectDetail').then((module) => ({ default: module.ProjectDetail })));
+const SourcedDetail = lazy(() => import('./pages/SourcedDetail').then((module) => ({ default: module.SourcedDetail })));
+const PublicProfile = lazy(() => import('./pages/PublicProfile').then((module) => ({ default: module.PublicProfile })));
+const Resources = lazy(() => import('./pages/Resources').then((module) => ({ default: module.Resources })));
+const ClaimProfile = lazy(() => import('./pages/ClaimProfile').then((module) => ({ default: module.ClaimProfile })));
+const ClaimBuild = lazy(() => import('./pages/ClaimBuild').then((module) => ({ default: module.ClaimBuild })));
+const Login = lazy(() => import('./pages/Login').then((module) => ({ default: module.Login })));
+const Dashboard = lazy(() => import('./pages/Dashboard').then((module) => ({ default: module.Dashboard })));
+const CookiePolicy = lazy(() => import('./pages/Legal').then((module) => ({ default: module.CookiePolicy })));
+const PrivacyPolicy = lazy(() => import('./pages/Legal').then((module) => ({ default: module.PrivacyPolicy })));
+const TermsOfService = lazy(() => import('./pages/Legal').then((module) => ({ default: module.TermsOfService })));
+const NotFound4042 = lazy(() => import('./components/4042'));
 
 const ScrollToHash = () => {
   const location = useLocation();
@@ -62,6 +66,7 @@ function App() {
     <Router>
       <div className="min-h-screen bg-background text-foreground">
         <ScrollToHash />
+        <Suspense fallback={<div className="min-h-screen bg-background" aria-label="Loading page" />}>
         <Routes>
           <Route path="/login" element={<Login />} />
           <Route
@@ -155,6 +160,7 @@ function App() {
             }
           />
         </Routes>
+        </Suspense>
       </div>
     </Router>
   );

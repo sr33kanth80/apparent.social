@@ -36,6 +36,7 @@ const BUDGET_STOP_CODES = new Set([
   'orthogonal_call_limit',
   'orthogonal_budget_reached',
   'orthogonal_insufficient_credits',
+  'agent_deadline_reached',
 ]);
 
 /**
@@ -56,8 +57,9 @@ export const toolErrorResult = (error) => {
   const message = str(error?.message || 'Tool failed.').slice(0, 400);
 
   if (BUDGET_STOP_CODES.has(code)) {
-    return { error: code, retryable: false, guidance: 'Research budget is spent. Answer from what you already have and say what is unverified.' };
+    return { error: code, retryable: false, guidance: 'Research time or budget is spent. Answer from what you already have and say what is unverified.' };
   }
+  if (code === 'agent_cancelled') return { error: code, retryable: false, guidance: 'The user cancelled this run. Stop immediately.' };
   if (code === 'orthogonal_timeout' || code === 'orthogonal_network_error') {
     return {
       error: code,
@@ -888,10 +890,12 @@ export const toolStatusLabel = (name, input) => {
  */
 export const createAgentSse = (res, enabled, { heartbeatMs = 15_000 } = {}) => {
   let heartbeat = null;
+  const controller = new AbortController();
   const close = () => {
     if (heartbeat) clearInterval(heartbeat);
     heartbeat = null;
     res.off?.('close', close);
+    if (!res.writableEnded && !controller.signal.aborted) controller.abort();
   };
   const emit = (payload) => {
     if (!enabled || res.writableEnded || res.destroyed) return;
@@ -924,7 +928,7 @@ export const createAgentSse = (res, enabled, { heartbeatMs = 15_000 } = {}) => {
     res.on?.('close', close);
     emit({ type: 'status', label: 'Thinking…' });
   }
-  return { streaming: enabled, emit, close };
+  return { streaming: enabled, emit, close, signal: controller.signal };
 };
 
 /**
@@ -1026,9 +1030,15 @@ export const createApparentAgentRuntime = ({
         // NEXT inference call threw, discarding a turn that had already done
         // its work. Each ceiling now reserves just enough to answer.
         const usage = orthogonal.usage?.() ?? {};
+        if (Number.isFinite(usage.remainingMs) && usage.remainingMs <= 0) {
+          const salvaged = lastAssistantText(history);
+          if (salvaged) return { reply: salvaged, usage, steps: step, deadlineStopped: true };
+          throw new OrthogonalError('Agent run deadline reached.', { status: 504, code: 'agent_deadline_reached' });
+        }
         const outOfCalls = Number.isFinite(usage.remainingCalls) && usage.remainingCalls <= 1;
         const outOfSpend = Number.isFinite(usage.remainingCents) && usage.remainingCents <= INFERENCE_RESERVE_CENTS;
-        const outOfBudget = outOfCalls || outOfSpend || step === maxSteps;
+        const outOfTime = Number.isFinite(usage.remainingMs) && usage.remainingMs <= 30_000;
+        const outOfBudget = outOfCalls || outOfSpend || outOfTime || step === maxSteps;
         let completion;
         try {
           completion = await callInference({
@@ -1096,6 +1106,8 @@ export const apparentAgentErrorResponse = (error) => {
       orthogonal_call_limit: 'Apparent hit its research limit for this message. Please try again, or narrow the question so it needs fewer lookups.',
       orthogonal_budget_reached: 'Apparent hit its research budget for this message. Please try again, or narrow the question so it needs fewer lookups.',
       orthogonal_timeout: 'Apparent took longer than expected to answer. Please retry your message.',
+      agent_deadline_reached: 'Apparent reached the safe time limit for this research. Try a narrower question so it can finish reliably.',
+      agent_cancelled: 'This Agent run was cancelled.',
       orthogonal_rate_limited: 'Apparent is handling unusually high demand. Please retry your message in a moment.',
     }[error.code] || (error.retryable ? 'The Apparent agent is temporarily unavailable. Please try again.' : error.message);
     return { status: error.status >= 500 ? 503 : error.status, error: userMessage, code: error.code };

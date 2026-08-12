@@ -100,6 +100,8 @@ export const createOrthogonalSession = ({
   timeoutMs = positiveInt(process.env.ORTHOGONAL_TIMEOUT_MS, 90_000),
   maxRetries = nonNegativeInt(process.env.ORTHOGONAL_MAX_RETRIES, 1),
   retryBaseDelayMs = positiveInt(process.env.ORTHOGONAL_RETRY_BASE_DELAY_MS, 300),
+  signal: parentSignal,
+  deadlineAt = 0,
   allowedApis = [],
   // Defaults to the process-wide catalog cache. Pass a fresh Map to isolate a
   // session (tests that count /v1/details traffic).
@@ -151,8 +153,31 @@ export const createOrthogonalSession = ({
     callCount += 1;
 
     for (let attempt = 0; attempt <= maxRetries; attempt += 1) {
+      if (parentSignal?.aborted) {
+        throw new OrthogonalError('Agent request was cancelled.', {
+          status: 499,
+          code: 'agent_cancelled',
+        });
+      }
+      const remainingMs = deadlineAt > 0 ? deadlineAt - Date.now() : Number.POSITIVE_INFINITY;
+      if (remainingMs <= 0) {
+        throw new OrthogonalError('Agent run deadline reached.', {
+          status: 504,
+          code: 'agent_deadline_reached',
+        });
+      }
       const controller = new AbortController();
-      const timer = setTimeout(() => controller.abort(), timeoutMs);
+      let abortReason = '';
+      const effectiveTimeoutMs = Math.max(1, Math.min(timeoutMs, remainingMs));
+      const timer = setTimeout(() => {
+        abortReason = deadlineAt > 0 && effectiveTimeoutMs >= remainingMs ? 'deadline' : 'timeout';
+        controller.abort();
+      }, effectiveTimeoutMs);
+      const cancelFromParent = () => {
+        abortReason = 'cancelled';
+        controller.abort();
+      };
+      parentSignal?.addEventListener?.('abort', cancelFromParent, { once: true });
       let response;
       try {
         response = await fetchImpl(`${String(baseUrl).replace(/\/$/, '')}${path}`, {
@@ -167,6 +192,18 @@ export const createOrthogonalSession = ({
         });
       } catch (error) {
         const timedOut = error?.name === 'AbortError';
+        if (abortReason === 'cancelled' || parentSignal?.aborted) {
+          throw new OrthogonalError('Agent request was cancelled.', {
+            status: 499,
+            code: 'agent_cancelled',
+          });
+        }
+        if (abortReason === 'deadline') {
+          throw new OrthogonalError('Agent run deadline reached.', {
+            status: 504,
+            code: 'agent_deadline_reached',
+          });
+        }
         if (attempt < maxRetries) {
           await wait(retryDelay(null, attempt, retryBaseDelayMs));
           continue;
@@ -179,6 +216,7 @@ export const createOrthogonalSession = ({
         });
       } finally {
         clearTimeout(timer);
+        parentSignal?.removeEventListener?.('abort', cancelFromParent);
       }
 
       const rawPayload = await response.text().catch(() => '');
@@ -332,6 +370,7 @@ export const createOrthogonalSession = ({
         maxSpendCents,
         remainingCalls: Math.max(maxCalls - callCount, 0),
         remainingCents: Math.max(maxSpendCents - spentCents, 0),
+        remainingMs: deadlineAt > 0 ? Math.max(deadlineAt - Date.now(), 0) : null,
       };
     },
   };

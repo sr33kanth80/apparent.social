@@ -3479,7 +3479,8 @@ export const loadAgentChatThreads = async (
       .select('id,role,title,created_at,updated_at')
       .eq('user_id', user.id)
       .eq('role', role)
-      .order('updated_at', { ascending: false });
+      .order('updated_at', { ascending: false })
+      .limit(50);
     if (error || !data) return [];
     return data.map((row) => ({
       id: String(row.id),
@@ -3575,10 +3576,10 @@ export const loadAgentChatMessages = async (
       .eq('user_id', user.id)
       .eq('role', role)
       .eq('thread_id', threadId)
-      .order('created_at', { ascending: true })
+      .order('created_at', { ascending: false })
       .limit(80);
     if (error || !data) return [];
-    return data.map((row) => ({
+    return [...data].reverse().map((row) => ({
       id: String(row.id ?? ''),
       role: row.message_role === 'assistant' ? 'assistant' : 'user',
       content: String(row.content ?? ''),
@@ -3613,19 +3614,22 @@ export const saveAgentChatMessages = async (
   }
 
   try {
-    await supabase.from('agent_chat_messages').delete().eq('user_id', user.id).eq('role', role).eq('thread_id', threadId);
     if (trimmed.length === 0) return;
-    await supabase.from('agent_chat_messages').insert(
-      trimmed.map((message, index) => ({
-        user_id: user.id,
-        role,
-        thread_id: threadId,
-        message_role: message.role,
-        content: message.content,
-        payload: message.payload ?? {},
-        created_at: message.createdAt || new Date(Date.now() + index).toISOString(),
-      })),
+    const rows = trimmed.map((message, index) => ({
+      id: message.id || crypto.randomUUID(),
+      user_id: user.id,
+      role,
+      thread_id: threadId,
+      message_role: message.role,
+      content: message.content,
+      payload: message.payload ?? {},
+      created_at: message.createdAt || new Date(Date.now() + index).toISOString(),
+    }));
+    const { error } = await supabase.from('agent_chat_messages').upsert(
+      rows,
+      { onConflict: 'id' },
     );
+    if (error) throw error;
     await supabase.from('agent_chat_threads').update({ updated_at: new Date().toISOString() }).eq('id', threadId).eq('user_id', user.id);
   } catch {
     // Transcript persistence should never break the live agent interaction.

@@ -36,10 +36,12 @@ import {
   standardOrthogonalTools,
 } from '../server/agent/apparent-agent-runtime.js';
 import { requireAgentAccess, sendAgentAccessError } from '../server/agent/agent-guard.js';
+import { beginAgentRun, finishAgentRun } from '../server/agent/agent-run-control.js';
 
 // A full scout loop legitimately runs minutes. Without this the platform kills
 // the function mid-loop and the partial-save in the catch block never runs.
 export const maxDuration = 300;
+const SAFE_RUNTIME_MS = Math.min(Math.max(Number(process.env.AGENT_SAFE_RUNTIME_MS) || 240_000, 60_000), 270_000);
 
 const SUPABASE_URL = (process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL || '').replace(/\/$/, '');
 const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
@@ -257,12 +259,14 @@ export default async function handler(req, res) {
   //      For that path we verify the JWT against Supabase and throttle by the
   //      freshest source_signals row so double-taps don't stack runs.
   const cronOk = req.headers['x-agent-cron-secret'] === CRON_SECRET;
+  let callerUserKey = 'cron:dealflow';
   if (!cronOk) {
     // Same Kinde-or-Supabase verifier the chat agent uses. Investor-only so a
     // founder account can't trigger it. requireAgentAccess also rate-limits by
     // IP + user, so the manual-refresh path picks that up for free.
     const access = await requireAgentAccess(req, 'investor', 'ingest-signals');
     if (!access.ok) return sendAgentAccessError(res, access);
+    callerUserKey = access.userId;
     // Throttle: refuse if the freshest row is younger than the cooldown.
     const freshRes = await fetch(
       `${SUPABASE_URL}/rest/v1/source_signals?select=freshness_at&order=freshness_at.desc&limit=1`,
@@ -283,6 +287,8 @@ export default async function handler(req, res) {
     return res.status(200).json({ skipped: 'ingest-signals needs ORTHOGONAL_API_KEY.' });
   }
 
+  const requestWindowMs = cronOk ? 12 * 60 * 60 * 1000 : MANUAL_COOLDOWN_MS;
+  const requestKey = `ingest-signals:${callerUserKey}:${Math.floor(Date.now() / requestWindowMs)}`;
   const startedAt = new Date().toISOString();
   const sectors = await loadTargetSectors();
   const sinceLabel = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
@@ -304,18 +310,46 @@ export default async function handler(req, res) {
   // nothing should say why rather than looking like the scout found nothing.
   const skipped = [];
 
+  // Prepare the server-authored scout prompt before reserving shared provider
+  // capacity. Everything after admission is covered by the completion/failure
+  // ledger below.
+  let admission;
+  try {
+    admission = await beginAgentRun({
+      requestKey,
+      userKey: callerUserKey,
+      role: 'investor',
+      endpoint: 'ingest-signals',
+      reservedSpendCents: INGEST_MAX_SPEND_CENTS,
+    });
+  } catch (error) {
+    return res.status(error?.status || 503).json({ error: error?.code || 'agent_run_control_unavailable' });
+  }
+  if (admission.action === 'completed' && admission.responsePayload) return res.status(200).json(admission.responsePayload);
+  if (admission.action !== 'started') {
+    if (admission.retryAfter) res.setHeader('Retry-After', String(admission.retryAfter));
+    return res.status(admission.action.includes('quota') ? 429 : 409).json({ error: admission.errorCode || admission.action });
+  }
+  const runStartedAt = Date.now();
+  const controller = new AbortController();
+  res.on?.('close', () => { if (!res.writableEnded) controller.abort(); });
+
+  let runtime;
+  let runtimeResult;
   try {
     // The shared session defaults (20 calls / 100¢) are sized for a short chat
     // turn. This loop spends one call per inference step plus one per tool call,
     // so it exhausted 20 within a few steps and threw away everything it had
     // found. Size the budget to the loop instead.
-    const runtime = createApparentAgentRuntime({
+    runtime = createApparentAgentRuntime({
       sessionOptions: {
         maxCalls: INGEST_MAX_CALLS,
         maxSpendCents: INGEST_MAX_SPEND_CENTS,
+        signal: controller.signal,
+        deadlineAt: runStartedAt + SAFE_RUNTIME_MS,
       },
     });
-    await runtime.run({
+    runtimeResult = await runtime.run({
       system,
       messages,
       tools: TOOLS,
@@ -413,7 +447,12 @@ export default async function handler(req, res) {
       input_json: { sectors, target: TARGET_COUNT, since: sinceLabel, provider: 'orthogonal', skipped: skipped.slice(0, 40) },
     });
 
-    return res.status(200).json({ ok: true, discovered: rows.length, upserted, skipped: skipped.length, sectors });
+    const responsePayload = { ok: true, discovered: rows.length, upserted, skipped: skipped.length, sectors };
+    await finishAgentRun({
+      runId: admission.runId, requestKey, userKey: callerUserKey, status: 'completed',
+      usage: runtimeResult?.usage || {}, durationMs: Date.now() - runStartedAt, responsePayload,
+    });
+    return res.status(200).json(responsePayload);
   } catch (err) {
     const message = err?.message ?? 'unknown';
     // The agent loop hit a wall (call limit, step limit, budget, timeout). Whatever
@@ -440,15 +479,26 @@ export default async function handler(req, res) {
     });
 
     if (upserted) {
-      return res.status(200).json({
+      const responsePayload = {
         ok: true,
         partial: true,
         discovered: rows.length,
         upserted,
         sectors,
         note: `Scout stopped early (${message}) — saved what it verified.`,
+      };
+      await finishAgentRun({
+        runId: admission.runId, requestKey, userKey: callerUserKey, status: 'completed',
+        usage: runtime?.session?.usage?.() || {}, durationMs: Date.now() - runStartedAt, responsePayload,
       });
+      return res.status(200).json(responsePayload);
     }
+    await finishAgentRun({
+      runId: admission.runId, requestKey, userKey: callerUserKey,
+      status: err?.code === 'agent_cancelled' ? 'cancelled' : 'failed',
+      usage: runtime?.session?.usage?.() || {}, durationMs: Date.now() - runStartedAt,
+      errorCode: err?.code || 'ingest_signals_failed',
+    });
     return res.status(500).json({ error: `ingest-signals failed: ${message}` });
   }
 }

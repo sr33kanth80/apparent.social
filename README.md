@@ -52,6 +52,11 @@ agent requests authorize against that server-side binding. Signed Kinde roles
 with keys `founder`, `investor`, `apparent-founder`, or `apparent-investor` are
 also accepted when the Roles additional claim is enabled.
 
+Before enabling Apparent Agent for the public, follow the
+[Agent launch runbook](docs/agent-launch-runbook.md). It covers the shared
+Supabase admission ledger, concurrency and daily-spend limits, deployment order,
+operational queries, alerts, and incident controls.
+
 ## Project layout
 - src/ — application code
   - components/ — UI components and sections (Navbar, Hero, Footer, etc.)
