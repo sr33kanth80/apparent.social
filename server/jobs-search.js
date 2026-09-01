@@ -395,14 +395,22 @@ const discoverAndRun = async (query, city, geocode) => {
   let lastRunShape = null;
   for (const candidate of affordable.slice(0, 4)) {
     try {
+      const runBody = buildRunBody(candidate, query, city);
       const run = await session.run({
         api: candidate.api,
         path: candidate.path,
-        body: buildRunBody(candidate, query, city),
+        body: runBody,
         query: {},
       });
       const mapped = aggregateCompanies(extractItems(run), city, geocode).slice(0, MAX_UPSERT_ROWS);
-      if (mapped.length) return { companies: mapped, usage: session.usage(), shape };
+      if (mapped.length) {
+        return {
+          companies: mapped,
+          usage: session.usage(),
+          shape,
+          used: { api: candidate.api, path: candidate.path, body: runBody, params: candidate.params },
+        };
+      }
       lastRunShape = { api: candidate.api, path: candidate.path, ...runShape(run) };
     } catch (error) {
       // Out of budget stops everything; a single bad endpoint just loses its turn.
@@ -490,7 +498,7 @@ export default async function jobsSearchHandler(req, res, { geocode }) {
   }
 
   try {
-    const { companies, unaffordable, budgetCents, shape, lastRunShape, candidates } = await discoverAndRun(query, city, geocode);
+    const { companies, unaffordable, budgetCents, shape, lastRunShape, candidates, used } = await discoverAndRun(query, city, geocode);
 
     // Nothing in the catalog fits the cap. Report what the endpoints actually
     // cost so the cap can be set from real numbers (and so this doesn't look
@@ -521,7 +529,7 @@ export default async function jobsSearchHandler(req, res, { geocode }) {
       });
     }
     await upsertCompanies(companies);
-    return res.status(200).json({ ok: true, source: 'orthogonal', companies: companies.map(toClient) });
+    return res.status(200).json({ ok: true, source: 'orthogonal', companies: companies.map(toClient), used });
   } catch (error) {
     const status = error instanceof OrthogonalError ? error.status : 502;
     const code = error instanceof OrthogonalError ? error.code : 'jobs_search_failed';
