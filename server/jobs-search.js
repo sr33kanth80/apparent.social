@@ -51,6 +51,20 @@ const safeUrl = (value) => {
   }
 };
 
+/**
+ * Providers commonly return a bare host ("example.com") rather than an absolute
+ * URL, which new URL() rejects outright. Coerce those to https:// before
+ * validating, so a scheme-less website is usable instead of silently dropped.
+ */
+const toAbsoluteUrl = (value) => {
+  const raw = clean(value, 500);
+  if (!raw) return '';
+  if (/^https?:\/\//i.test(raw)) return safeUrl(raw);
+  // Only host-looking strings get a scheme; this must not rescue "javascript:".
+  if (/^[a-z0-9-]+(\.[a-z0-9-]+)+(\/.*)?$/i.test(raw)) return safeUrl(`https://${raw}`);
+  return '';
+};
+
 /** Dedup key: lowercased host without www, no scheme/path. "" if unusable. */
 const canonicalDomain = (website, careersUrl) => {
   for (const candidate of [website, careersUrl]) {
@@ -174,20 +188,17 @@ const aggregateCompanies = (items, fallbackCity, geocode) => {
     // The dedup key must come from the COMPANY's own domain. Deriving it from a
     // job URL would collapse every posting on a job board into one row keyed by
     // the board's domain.
-    const rawDomain = clean(item?.companyDomain ?? item?.domain ?? item?.company_domain, 200)
-      .replace(/^https?:\/\//, '')
-      .replace(/\/.*$/, '');
-    const website =
-      safeUrl(item?.companyWebsite ?? item?.website ?? item?.company_url) ||
-      (rawDomain && rawDomain.includes('.') && !rawDomain.includes(' ') ? safeUrl(`https://${rawDomain}`) : '');
+    const website = toAbsoluteUrl(
+      item?.companyWebsite ?? item?.website ?? item?.company_url ?? item?.companyDomain ?? item?.domain ?? item?.company_domain,
+    );
     const domain = canonicalDomain(website, '');
     if (!domain) continue;
 
-    const jobUrl = safeUrl(item?.jobUrl ?? item?.job_url ?? item?.url ?? item?.applyUrl);
-    const careersUrl = safeUrl(item?.careers_url ?? item?.careersUrl ?? item?.jobs_url ?? item?.job_board_url) || jobUrl;
+    const jobUrl = toAbsoluteUrl(item?.jobUrl ?? item?.job_url ?? item?.url ?? item?.applyUrl);
+    const careersUrl = toAbsoluteUrl(item?.careers_url ?? item?.careersUrl ?? item?.jobs_url ?? item?.job_board_url) || jobUrl;
     const city = clean(item?.city ?? item?.location ?? item?.region ?? item?.headquarters ?? fallbackCity, 120);
     const oneLiner = clean(
-      item?.one_liner ?? item?.companyIndustry ?? item?.industry ?? item?.description ?? item?.summary ?? item?.tagline,
+      item?.one_liner ?? item?.companyDescription ?? item?.companyIndustry ?? item?.industry ?? item?.description ?? item?.summary ?? item?.tagline,
       280,
     );
     // An explicit count, when the provider gives one, beats counting rows.

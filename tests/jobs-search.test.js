@@ -127,7 +127,8 @@ test('stale cache falls through to Orthogonal, sanitizes URLs, and upserts', asy
         priceCents: 2,
         data: {
           results: [
-            { companyName: 'Linear', companyWebsite: 'https://linear.app', jobUrl: 'https://jobs.example/1', city: 'Berlin, Germany', title: 'Engineer', companyIndustry: 'Software' },
+            // Bare host with no scheme — the real signalbase shape.
+            { companyName: 'Linear', companyWebsite: 'linear.app', jobUrl: 'https://jobs.example/1', city: 'Berlin, Germany', title: 'Engineer', companyIndustry: 'Software' },
             { companyName: 'Linear', companyWebsite: 'https://linear.app', jobUrl: 'https://jobs.example/2', city: 'Berlin, Germany', title: 'Designer' },
             { companyName: 'Linear', companyWebsite: 'https://linear.app', jobUrl: 'https://jobs.example/3', city: 'Berlin, Germany', title: 'PM' },
             { companyName: 'Evil', companyWebsite: 'javascript:alert(1)', jobUrl: 'javascript:alert(1)', city: 'London' },
@@ -156,6 +157,8 @@ test('stale cache falls through to Orthogonal, sanitizes URLs, and upserts', asy
   // Three job rows for one company must become one pin with three roles.
   assert.equal(linear.open_roles, 3);
   assert.equal(linear.one_liner, 'Software');
+  // A scheme-less host must be coerced to https, not dropped.
+  assert.equal(linear.website, 'https://linear.app/');
   // "Berlin, Germany" must still resolve to the Berlin centroid.
   assert.equal(Math.round(linear.latitude), 53);
 
