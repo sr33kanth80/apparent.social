@@ -333,6 +333,11 @@ const priceCandidates = async (session, prompt) => {
     for (const endpoint of endpoints.slice(0, 4)) {
       const path = clean(endpoint?.path ?? endpoint?.endpoint, 200);
       if (!api || !path.startsWith('/')) continue;
+      // Templated paths ("/v3/companies/{company_id_or_domain}/job_openings")
+      // need an identifier a discovery search does not have, so they can never
+      // be satisfied here — and being cheap, they otherwise crowd out the
+      // endpoints that can actually answer.
+      if (path.includes('{')) continue;
       try {
         const details = await session.details({ api, path });
         const info = details?.endpoint ?? details?.data?.endpoint ?? {};
@@ -388,7 +393,7 @@ const discoverAndRun = async (query, city, geocode) => {
   }
 
   let lastRunShape = null;
-  for (const candidate of affordable.slice(0, 3)) {
+  for (const candidate of affordable.slice(0, 4)) {
     try {
       const run = await session.run({
         api: candidate.api,
