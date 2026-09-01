@@ -394,6 +394,7 @@ const discoverAndRun = async (query, city, geocode) => {
   }
 
   let lastRunShape = null;
+  const attemptErrors = [];
   for (const candidate of affordable.slice(0, 4)) {
     try {
       // A GET endpoint takes its filters as query parameters. Sending them in
@@ -420,9 +421,16 @@ const discoverAndRun = async (query, city, geocode) => {
     } catch (error) {
       // Out of budget stops everything; a single bad endpoint just loses its turn.
       if (error instanceof OrthogonalError && BUDGET_STOP.has(error.code)) throw error;
+      attemptErrors.push({
+        api: candidate.api,
+        path: candidate.path,
+        code: error?.code || 'error',
+        status: error?.status || 0,
+        message: clean(error?.message, 160),
+      });
     }
   }
-  return { companies: [], usage: session.usage(), shape, lastRunShape, candidates: candidates.slice(0, 10) };
+  return { companies: [], usage: session.usage(), shape, lastRunShape, candidates: candidates.slice(0, 10), attemptErrors };
 };
 
 /** Structure-only trace of a run response, for the same reason as `shape`. */
@@ -503,7 +511,7 @@ export default async function jobsSearchHandler(req, res, { geocode }) {
   }
 
   try {
-    const { companies, unaffordable, budgetCents, shape, lastRunShape, candidates, used } = await discoverAndRun(query, city, geocode);
+    const { companies, unaffordable, budgetCents, shape, lastRunShape, candidates, used, attemptErrors } = await discoverAndRun(query, city, geocode);
 
     // Nothing in the catalog fits the cap. Report what the endpoints actually
     // cost so the cap can be set from real numbers (and so this doesn't look
@@ -531,6 +539,7 @@ export default async function jobsSearchHandler(req, res, { geocode }) {
         shape,
         lastRunShape,
         candidates,
+        attemptErrors,
       });
     }
     await upsertCompanies(companies);
