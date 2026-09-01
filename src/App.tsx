@@ -10,6 +10,7 @@ const OurThesis = lazy(() => import('./pages/OurThesis').then((module) => ({ def
 const ForFounders = lazy(() => import('./pages/ForFounders').then((module) => ({ default: module.ForFounders })));
 const ForVCs = lazy(() => import('./pages/ForVCs').then((module) => ({ default: module.ForVCs })));
 const HeatMap = lazy(() => import('./pages/HeatMap').then((module) => ({ default: module.HeatMap })));
+const JobMap = lazy(() => import('./pages/JobMap'));
 const AboutUs = lazy(() => import('./pages/AboutUs').then((module) => ({ default: module.AboutUs })));
 const Blog = lazy(() => import('./pages/Blog').then((module) => ({ default: module.Blog })));
 const BlogPost = lazy(() => import('./pages/Blog').then((module) => ({ default: module.BlogPost })));
@@ -102,6 +103,15 @@ function App() {
               <div className="ed-page ed-page-no-grid flex h-screen flex-col overflow-hidden">
                 <EditorialNavbar />
                 <HeatMap includeVCContacts vcOnly fullBleed fillParent lockContacts />
+              </div>
+            }
+          />
+          <Route
+            path="/jobs"
+            element={
+              <div className="ed-page ed-page-no-grid flex h-screen flex-col overflow-hidden">
+                <EditorialNavbar />
+                <JobMap />
               </div>
             }
           />

@@ -11,6 +11,7 @@ const NAV_LINKS: [string, string][] = [
   ['/for-founders', 'For founders'],
   ['/our-thesis', 'Thesis'],
   ['/heat-map', 'Heat Map'],
+  ['/jobs', 'Jobs'],
   ['/blog', 'Blog'],
   ['/about', 'About'],
 ];

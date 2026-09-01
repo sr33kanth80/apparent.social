@@ -111,6 +111,17 @@
       "destination": "/api/og?type=static&path=/heat-map"
     },
     {
+      "source": "/jobs",
+      "has": [
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": ".*(facebookexternalhit|Facebot|Twitterbot|LinkedInBot|Slackbot|Slack-ImgProxy|WhatsApp|Discordbot|TelegramBot|Pinterest|redditbot|Googlebot|bingbot|Applebot|Embedly|vkShare|W3C_Validator|Nuzzel|Skype|Qwantify|Yeti|Iframely|SkypeUriPreview|GPTBot|ChatGPT-User|OAI-SearchBot|PerplexityBot|ClaudeBot|Claude-SearchBot|anthropic-ai|CCBot|Bytespider|Amazonbot|YouBot|cohere-ai|Diffbot).*"
+        }
+      ],
+      "destination": "/api/og?type=static&path=/jobs"
+    },
+    {
       "source": "/about",
       "has": [
         {

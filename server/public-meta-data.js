@@ -35,6 +35,12 @@ export const staticPageMeta = {
       'Explore a searchable map of venture investors by geography, stage, sector focus, and founder fit.',
     image: siteMeta.image,
   },
+  '/jobs': {
+    title: 'Jobs Map - Apparent',
+    description:
+      'A map of startups and companies that are hiring, by city. Find who is building near you and go straight to their careers page.',
+    image: siteMeta.image,
+  },
   '/about': {
     title: 'About Apparent',
     description:

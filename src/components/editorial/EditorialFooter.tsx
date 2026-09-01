@@ -22,6 +22,7 @@ export const EditorialFooter = () => (
             <Link to="/for-vcs">For investors</Link>
             <Link to="/for-founders">Founder profiles</Link>
             <Link to="/heat-map">Builder Radar</Link>
+            <Link to="/jobs">Jobs Map</Link>
             <Link to="/our-thesis">How it works</Link>
           </div>
           <div>

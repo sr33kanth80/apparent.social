@@ -672,3 +672,18 @@ export interface DashboardData {
   /** For founders: how many investors are tracking them (the come-back loop). */
   founderInterest: { saveCount: number; recentSaverNames: string[] };
 }
+
+/** A company pin on the Jobs Map (/jobs). Company-level, not per-role. */
+export interface HiringCompany {
+  /** Lowercased registrable host — the dedup key ("ramp.com"). */
+  domain: string;
+  name: string;
+  website: string;
+  careersUrl: string;
+  oneLiner: string;
+  city: string;
+  /** Null when the city couldn't be geocoded — listed but not pinned. */
+  latitude: number | null;
+  longitude: number | null;
+  openRoles: number;
+}
