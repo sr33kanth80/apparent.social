@@ -198,9 +198,24 @@ const jobsBudgetCents = () => Number.parseInt(process.env.JOBS_MAX_SPEND_CENTS |
  */
 const priceCandidates = async (session, prompt) => {
   const found = await session.search(prompt, 10);
+  const items = extractItems(found);
+
+  // Structure-only trace of what discovery returned. The catalog response shape
+  // is not contractual, so when nothing parses this is what says why — keys and
+  // counts only, never values, since this is served on a public endpoint.
+  const shape = {
+    topLevelKeys: Object.keys(orthogonalData(found) || {}).slice(0, 15),
+    itemCount: items.length,
+    firstItemKeys: items.length ? Object.keys(items[0] || {}).slice(0, 20) : [],
+    firstItemEndpointKeys:
+      items.length && Array.isArray(items[0]?.endpoints) && items[0].endpoints.length
+        ? Object.keys(items[0].endpoints[0] || {}).slice(0, 20)
+        : [],
+  };
+
   const priced = [];
 
-  for (const entry of extractItems(found).slice(0, 5)) {
+  for (const entry of items.slice(0, 5)) {
     const api = clean(entry?.slug ?? entry?.api ?? entry?.provider, 80).toLowerCase();
     const endpoints = Array.isArray(entry?.endpoints) ? entry.endpoints : [entry];
     for (const endpoint of endpoints.slice(0, 4)) {
@@ -223,7 +238,7 @@ const priceCandidates = async (session, prompt) => {
   }
 
   priced.sort((a, b) => (a.priceCents ?? Infinity) - (b.priceCents ?? Infinity));
-  return priced;
+  return { priced, shape };
 };
 
 /**
@@ -240,13 +255,14 @@ const discoverAndRun = async (query, city, geocode) => {
     ? `companies hiring in ${city} with open job postings and careers page: ${query}`
     : `companies hiring with open job postings and careers page: ${query}`;
 
-  const candidates = await priceCandidates(session, prompt);
+  const { priced: candidates, shape } = await priceCandidates(session, prompt);
   const affordable = candidates.filter((c) => !c.dynamic && c.priceCents != null && c.priceCents <= budgetCents);
 
   if (!affordable.length) {
-    return { companies: [], unaffordable: candidates.slice(0, 8), budgetCents };
+    return { companies: [], unaffordable: candidates.slice(0, 8), budgetCents, shape };
   }
 
+  let lastRunShape = null;
   for (const candidate of affordable.slice(0, 3)) {
     try {
       const run = await session.run({
@@ -259,13 +275,23 @@ const discoverAndRun = async (query, city, geocode) => {
         .slice(0, MAX_UPSERT_ROWS)
         .map((item) => mapCompany(item, city, geocode))
         .filter(Boolean);
-      if (mapped.length) return { companies: mapped, usage: session.usage() };
+      if (mapped.length) return { companies: mapped, usage: session.usage(), shape };
+      lastRunShape = { api: candidate.api, path: candidate.path, ...runShape(run) };
     } catch (error) {
       // Out of budget stops everything; a single bad endpoint just loses its turn.
       if (error instanceof OrthogonalError && BUDGET_STOP.has(error.code)) throw error;
     }
   }
-  return { companies: [], usage: session.usage() };
+  return { companies: [], usage: session.usage(), shape, lastRunShape };
+};
+
+/** Structure-only trace of a run response, for the same reason as `shape`. */
+const runShape = (run) => {
+  const items = extractItems(run);
+  return {
+    itemCount: items.length,
+    firstItemKeys: items.length ? Object.keys(items[0] || {}).slice(0, 25) : [],
+  };
 };
 
 const BUDGET_STOP = new Set(['orthogonal_budget_reached', 'orthogonal_insufficient_credits', 'orthogonal_call_limit']);
@@ -324,25 +350,34 @@ export default async function jobsSearchHandler(req, res, { geocode }) {
   }
 
   try {
-    const { companies, unaffordable, budgetCents } = await discoverAndRun(query, city, geocode);
+    const { companies, unaffordable, budgetCents, shape, lastRunShape } = await discoverAndRun(query, city, geocode);
 
     // Nothing in the catalog fits the cap. Report what the endpoints actually
     // cost so the cap can be set from real numbers (and so this doesn't look
     // like a generic outage).
-    if (unaffordable?.length) {
+    if (unaffordable) {
       return res.status(200).json({
         ok: true,
         source: 'cache',
         companies: cached.map(toClient),
-        degraded: 'over_budget',
+        degraded: unaffordable.length ? 'over_budget' : 'no_endpoints',
         budgetCents,
         endpointPrices: unaffordable,
+        shape,
       });
     }
 
     if (!companies.length) {
-      // Nothing new; stale rows still beat an empty map.
-      return res.status(200).json({ ok: true, source: 'cache', companies: cached.map(toClient) });
+      // Nothing new; stale rows still beat an empty map. The shape trace says
+      // whether discovery found nothing or the response just didn't map.
+      return res.status(200).json({
+        ok: true,
+        source: 'cache',
+        companies: cached.map(toClient),
+        degraded: 'no_results',
+        shape,
+        lastRunShape,
+      });
     }
     await upsertCompanies(companies);
     return res.status(200).json({ ok: true, source: 'orthogonal', companies: companies.map(toClient) });
