@@ -148,11 +148,17 @@ const upsertCompanies = async (rows) => {
  * different providers. Anything we can't identify is skipped rather than stored
  * half-formed.
  */
-const mapCompany = (item, fallbackCity, geocode) => {
-  const name = clean(item?.name ?? item?.company ?? item?.company_name ?? item?.organization, 200);
+const mapCompany = (raw, fallbackCity, geocode) => {
+  // JSON:API style ({ id, type, attributes }) is common in this catalog, so the
+  // real fields live one level down. Flatten before reading anything.
+  const item = raw?.attributes && typeof raw.attributes === 'object' ? { ...raw, ...raw.attributes } : raw;
+
+  const name = clean(item?.name ?? item?.company_name ?? item?.company ?? item?.organization ?? item?.title, 200);
   if (!name) return null;
 
-  const website = safeUrl(item?.website ?? item?.url ?? item?.domain ?? item?.company_url);
+  const rawDomain = clean(item?.domain ?? item?.company_domain, 200);
+  const website = safeUrl(item?.website ?? item?.company_url ?? item?.url)
+    || (rawDomain && !rawDomain.includes(' ') ? safeUrl(`https://${rawDomain.replace(/^https?:\/\//, '')}`) : '');
   const careersUrl = safeUrl(item?.careers_url ?? item?.careersUrl ?? item?.jobs_url ?? item?.apply_url ?? item?.job_board_url);
   const domain = canonicalDomain(website, careersUrl);
   if (!domain) return null; // no stable dedup key => not storable
@@ -185,6 +191,9 @@ const extractItems = (payload) => {
   }
   return [];
 };
+
+// Endpoint relevance signal for a hiring search.
+const JOB_TERMS = ['job_opening', 'job-opening', 'job', 'hiring', 'career', 'vacanc', 'employment', 'recruit'];
 
 const jobsBudgetCents = () => Number.parseInt(process.env.JOBS_MAX_SPEND_CENTS || '', 10) || 25;
 
@@ -225,9 +234,12 @@ const priceCandidates = async (session, prompt) => {
         const details = await session.details({ api, path });
         const info = details?.endpoint ?? details?.data?.endpoint ?? {};
         const priceUsd = Number(info?.price);
+        const haystack = `${path} ${clean(endpoint?.description, 200)}`.toLowerCase();
         priced.push({
           api,
           path,
+          jobScore: JOB_TERMS.reduce((n, term) => (haystack.includes(term) ? n + 1 : n), 0),
+          description: clean(endpoint?.description, 120),
           priceCents: Number.isFinite(priceUsd) && priceUsd >= 0 ? Math.round(priceUsd * 100) : null,
           dynamic: info?.hasDynamicPricing === true || !Number.isFinite(priceUsd) || priceUsd < 0,
         });
@@ -237,7 +249,9 @@ const priceCandidates = async (session, prompt) => {
     }
   }
 
-  priced.sort((a, b) => (a.priceCents ?? Infinity) - (b.priceCents ?? Infinity));
+  // Relevance before price: the cheapest endpoint in a jobs search was a
+  // "startup platform posts" feed, which is not hiring data at any price.
+  priced.sort((a, b) => (b.jobScore - a.jobScore) || ((a.priceCents ?? Infinity) - (b.priceCents ?? Infinity)));
   return { priced, shape };
 };
 
@@ -282,7 +296,7 @@ const discoverAndRun = async (query, city, geocode) => {
       if (error instanceof OrthogonalError && BUDGET_STOP.has(error.code)) throw error;
     }
   }
-  return { companies: [], usage: session.usage(), shape, lastRunShape };
+  return { companies: [], usage: session.usage(), shape, lastRunShape, candidates: candidates.slice(0, 10) };
 };
 
 /** Structure-only trace of a run response, for the same reason as `shape`. */
@@ -350,7 +364,7 @@ export default async function jobsSearchHandler(req, res, { geocode }) {
   }
 
   try {
-    const { companies, unaffordable, budgetCents, shape, lastRunShape } = await discoverAndRun(query, city, geocode);
+    const { companies, unaffordable, budgetCents, shape, lastRunShape, candidates } = await discoverAndRun(query, city, geocode);
 
     // Nothing in the catalog fits the cap. Report what the endpoints actually
     // cost so the cap can be set from real numbers (and so this doesn't look
@@ -377,6 +391,7 @@ export default async function jobsSearchHandler(req, res, { geocode }) {
         degraded: 'no_results',
         shape,
         lastRunShape,
+        candidates,
       });
     }
     await upsertCompanies(companies);
