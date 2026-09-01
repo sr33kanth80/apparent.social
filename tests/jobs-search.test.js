@@ -122,13 +122,18 @@ test('stale cache falls through to Orthogonal, sanitizes URLs, and upserts', asy
     orthogonal: {
       search: { data: { results: [{ slug: 'jobsapi', endpoints: [{ path: '/companies' }] }] } },
       details: { endpoint: { price: 0.02 } },
+      // Real signalbase /signals/hiring shape: one row per JOB, camelCase.
       run: {
         priceCents: 2,
         data: {
           results: [
-            { name: 'Linear', website: 'https://linear.app', careers_url: 'https://linear.app/careers', city: 'Berlin, Germany', open_roles: 5 },
-            { name: 'Evil', website: 'javascript:alert(1)', careers_url: 'javascript:alert(1)', city: 'London' },
-            { name: '', website: 'https://nameless.com' },
+            { companyName: 'Linear', companyWebsite: 'https://linear.app', jobUrl: 'https://jobs.example/1', city: 'Berlin, Germany', title: 'Engineer', companyIndustry: 'Software' },
+            { companyName: 'Linear', companyWebsite: 'https://linear.app', jobUrl: 'https://jobs.example/2', city: 'Berlin, Germany', title: 'Designer' },
+            { companyName: 'Linear', companyWebsite: 'https://linear.app', jobUrl: 'https://jobs.example/3', city: 'Berlin, Germany', title: 'PM' },
+            { companyName: 'Evil', companyWebsite: 'javascript:alert(1)', jobUrl: 'javascript:alert(1)', city: 'London' },
+            { companyName: '', companyWebsite: 'https://nameless.com' },
+            // JSON:API envelope must be flattened.
+            { id: 'x', type: 'job', attributes: { companyName: 'Wrapped', companyWebsite: 'https://wrapped.io', city: 'London', jobUrl: 'https://jobs.example/9' } },
           ],
         },
       },
@@ -142,13 +147,25 @@ test('stale cache falls through to Orthogonal, sanitizes URLs, and upserts', asy
   assert.equal(res.body.source, 'orthogonal');
   assert.equal(calls.upsert, 1);
 
-  // Only the well-formed row survives: javascript: yields no usable domain, and
-  // the nameless row is skipped outright.
-  assert.equal(upserted.length, 1);
-  assert.equal(upserted[0].canonical_domain, 'linear.app');
-  assert.equal(upserted[0].open_roles, 5);
+  // javascript: yields no usable domain and the nameless row is skipped, so
+  // only Linear (3 jobs, collapsed) and the JSON:API-wrapped row survive.
+  assert.equal(upserted.length, 2);
+
+  const linear = upserted.find((r) => r.canonical_domain === 'linear.app');
+  assert.ok(linear, 'Linear should be aggregated');
+  // Three job rows for one company must become one pin with three roles.
+  assert.equal(linear.open_roles, 3);
+  assert.equal(linear.one_liner, 'Software');
   // "Berlin, Germany" must still resolve to the Berlin centroid.
-  assert.equal(Math.round(upserted[0].latitude), 53);
+  assert.equal(Math.round(linear.latitude), 53);
+
+  // The {id,type,attributes} envelope must be flattened, not dropped.
+  const wrapped = upserted.find((r) => r.canonical_domain === 'wrapped.io');
+  assert.ok(wrapped, 'JSON:API-wrapped row should be read');
+  assert.equal(wrapped.name, 'Wrapped');
+
+  // A job-board URL must never become the dedup key (it would merge companies).
+  assert.ok(!upserted.some((r) => r.canonical_domain === 'jobs.example'));
 
   for (const row of upserted) {
     for (const url of [row.website, row.careers_url]) {

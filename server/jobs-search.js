@@ -148,39 +148,85 @@ const upsertCompanies = async (rows) => {
  * different providers. Anything we can't identify is skipped rather than stored
  * half-formed.
  */
-const mapCompany = (raw, fallbackCity, geocode) => {
-  // JSON:API style ({ id, type, attributes }) is common in this catalog, so the
-  // real fields live one level down. Flatten before reading anything.
-  const item = raw?.attributes && typeof raw.attributes === 'object' ? { ...raw, ...raw.attributes } : raw;
+/**
+ * Hiring endpoints return one row per JOB, but the map is company-level, so
+ * rows are grouped by company and the group size becomes the open-role count.
+ *
+ * Note this is roles *seen in this response* — a lower bound, not the company's
+ * true total, since the endpoint pages. A real lower bound beats both a zero and
+ * an invented number.
+ *
+ * Field names are read defensively: the catalog routes to different providers
+ * and no response shape is contractual. JSON:API envelopes are flattened first.
+ */
+const aggregateCompanies = (items, fallbackCity, geocode) => {
+  const byDomain = {};
 
-  const name = clean(item?.name ?? item?.company_name ?? item?.company ?? item?.organization ?? item?.title, 200);
-  if (!name) return null;
+  for (const raw of items) {
+    const item = raw?.attributes && typeof raw.attributes === 'object' ? { ...raw, ...raw.attributes } : raw;
 
-  const rawDomain = clean(item?.domain ?? item?.company_domain, 200);
-  const website = safeUrl(item?.website ?? item?.company_url ?? item?.url)
-    || (rawDomain && !rawDomain.includes(' ') ? safeUrl(`https://${rawDomain.replace(/^https?:\/\//, '')}`) : '');
-  const careersUrl = safeUrl(item?.careers_url ?? item?.careersUrl ?? item?.jobs_url ?? item?.apply_url ?? item?.job_board_url);
-  const domain = canonicalDomain(website, careersUrl);
-  if (!domain) return null; // no stable dedup key => not storable
+    const name = clean(
+      item?.companyName ?? item?.company_name ?? item?.name ?? item?.company ?? item?.organization,
+      200,
+    );
+    if (!name) continue;
 
-  const city = clean(item?.city ?? item?.location ?? item?.headquarters ?? fallbackCity, 120);
-  const coords = geocode(city);
-  const openRoles = nonNegativeInt(item?.open_roles ?? item?.openRoles ?? item?.job_count ?? item?.jobs_count ?? item?.total_jobs);
+    // The dedup key must come from the COMPANY's own domain. Deriving it from a
+    // job URL would collapse every posting on a job board into one row keyed by
+    // the board's domain.
+    const rawDomain = clean(item?.companyDomain ?? item?.domain ?? item?.company_domain, 200)
+      .replace(/^https?:\/\//, '')
+      .replace(/\/.*$/, '');
+    const website =
+      safeUrl(item?.companyWebsite ?? item?.website ?? item?.company_url) ||
+      (rawDomain && rawDomain.includes('.') && !rawDomain.includes(' ') ? safeUrl(`https://${rawDomain}`) : '');
+    const domain = canonicalDomain(website, '');
+    if (!domain) continue;
 
-  return {
-    canonical_domain: domain,
-    name,
-    website,
-    careers_url: careersUrl,
-    one_liner: clean(item?.one_liner ?? item?.description ?? item?.summary ?? item?.tagline, 280),
-    city,
-    latitude: coords?.latitude ?? null,
-    longitude: coords?.longitude ?? null,
-    open_roles: openRoles,
-    is_hiring: openRoles > 0 || Boolean(careersUrl),
-    source: 'orthogonal',
-    last_enriched_at: new Date().toISOString(),
-  };
+    const jobUrl = safeUrl(item?.jobUrl ?? item?.job_url ?? item?.url ?? item?.applyUrl);
+    const careersUrl = safeUrl(item?.careers_url ?? item?.careersUrl ?? item?.jobs_url ?? item?.job_board_url) || jobUrl;
+    const city = clean(item?.city ?? item?.location ?? item?.region ?? item?.headquarters ?? fallbackCity, 120);
+    const oneLiner = clean(
+      item?.one_liner ?? item?.companyIndustry ?? item?.industry ?? item?.description ?? item?.summary ?? item?.tagline,
+      280,
+    );
+    // An explicit count, when the provider gives one, beats counting rows.
+    const stated = nonNegativeInt(
+      item?.open_roles ?? item?.openRoles ?? item?.job_count ?? item?.jobs_count ?? item?.total_jobs,
+    );
+
+    const existing = byDomain[domain];
+    if (existing) {
+      existing.open_roles += stated || 1;
+      if (!existing.careers_url && careersUrl) existing.careers_url = careersUrl;
+      if (!existing.one_liner && oneLiner) existing.one_liner = oneLiner;
+      if (!existing.city && city) {
+        existing.city = city;
+        const coords = geocode(city);
+        existing.latitude = coords?.latitude ?? null;
+        existing.longitude = coords?.longitude ?? null;
+      }
+      continue;
+    }
+
+    const coords = geocode(city);
+    byDomain[domain] = {
+      canonical_domain: domain,
+      name,
+      website,
+      careers_url: careersUrl,
+      one_liner: oneLiner,
+      city,
+      latitude: coords?.latitude ?? null,
+      longitude: coords?.longitude ?? null,
+      open_roles: stated || 1,
+      is_hiring: true,
+      source: 'orthogonal',
+      last_enriched_at: new Date().toISOString(),
+    };
+  }
+
+  return Object.values(byDomain);
 };
 
 const extractItems = (payload) => {
@@ -285,10 +331,7 @@ const discoverAndRun = async (query, city, geocode) => {
         body: { query, location: city || undefined, limit: MAX_UPSERT_ROWS },
         query: {},
       });
-      const mapped = extractItems(run)
-        .slice(0, MAX_UPSERT_ROWS)
-        .map((item) => mapCompany(item, city, geocode))
-        .filter(Boolean);
+      const mapped = aggregateCompanies(extractItems(run), city, geocode).slice(0, MAX_UPSERT_ROWS);
       if (mapped.length) return { companies: mapped, usage: session.usage(), shape };
       lastRunShape = { api: candidate.api, path: candidate.path, ...runShape(run) };
     } catch (error) {
