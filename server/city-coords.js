@@ -322,6 +322,17 @@ export const geocodeCity = (value) => {
   const direct = CITY_COORDS[raw];
   if (direct) return { latitude: direct[0], longitude: direct[1] };
 
+  // Metro-area phrasings ("Greater Boston", "Boston Metropolitan Area") should
+  // land on the city itself.
+  const metro = raw
+    .replace(/\b(greater|metropolitan|metro|area|region|surrounds)\b/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+  if (metro && metro !== raw && CITY_COORDS[metro]) {
+    const hit = CITY_COORDS[metro];
+    return { latitude: hit[0], longitude: hit[1] };
+  }
+
   const segments = raw
     .split(/[,/|]|\s[-–]\s/)
     .map((part) => part.replace(/[^a-zà-ú\s]/gi, ' ').replace(/\s+/g, ' ').trim())

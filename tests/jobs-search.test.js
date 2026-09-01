@@ -181,6 +181,11 @@ test('geocodeCity resolves decorated city strings and rejects unknowns', () => {
   assert.equal(geocodeCity('Berlin, Germany').latitude, 52.52);
   assert.equal(geocodeCity('SAN FRANCISCO, CA').latitude, 37.7749);
   assert.equal(geocodeCity('Remote - London').latitude, 51.5072);
+  // Metro phrasings must land on the city itself.
+  assert.equal(geocodeCity('Greater Boston').latitude, 42.3601);
+  assert.equal(geocodeCity('Boston Metropolitan Area').latitude, 42.3601);
   assert.equal(geocodeCity('Atlantis'), null);
   assert.equal(geocodeCity(''), null);
+  // A country is not a place to put a pin.
+  assert.equal(geocodeCity('United States'), null);
 });

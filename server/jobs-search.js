@@ -298,6 +298,13 @@ const buildRunBody = (candidate, query, city) => {
   return body;
 };
 
+// Catalog structure, prices and endpoint errors are useful when tuning this
+// integration but should not be public by default: set JOBS_DEBUG=1 to include
+// them in responses.
+const debugEnabled = () => process.env.JOBS_DEBUG === '1';
+
+const withDebug = (payload, extra) => (debugEnabled() ? { ...payload, ...extra } : payload);
+
 const jobsBudgetCents = () => Number.parseInt(process.env.JOBS_MAX_SPEND_CENTS || '', 10) || 25;
 
 /**
@@ -520,33 +527,33 @@ export default async function jobsSearchHandler(req, res, { geocode }) {
     // cost so the cap can be set from real numbers (and so this doesn't look
     // like a generic outage).
     if (unaffordable) {
-      return res.status(200).json({
-        ok: true,
-        source: 'cache',
-        companies: cached.map(toClient),
-        degraded: unaffordable.length ? 'over_budget' : 'no_endpoints',
-        budgetCents,
-        endpointPrices: unaffordable,
-        shape,
-      });
+      return res.status(200).json(
+        withDebug(
+          {
+            ok: true,
+            source: 'cache',
+            companies: cached.map(toClient),
+            degraded: unaffordable.length ? 'over_budget' : 'no_endpoints',
+          },
+          { budgetCents, endpointPrices: unaffordable, shape },
+        ),
+      );
     }
 
     if (!companies.length) {
       // Nothing new; stale rows still beat an empty map. The shape trace says
       // whether discovery found nothing or the response just didn't map.
-      return res.status(200).json({
-        ok: true,
-        source: 'cache',
-        companies: cached.map(toClient),
-        degraded: 'no_results',
-        shape,
-        lastRunShape,
-        candidates,
-        attemptErrors,
-      });
+      return res.status(200).json(
+        withDebug(
+          { ok: true, source: 'cache', companies: cached.map(toClient), degraded: 'no_results' },
+          { shape, lastRunShape, candidates, attemptErrors },
+        ),
+      );
     }
     await upsertCompanies(companies);
-    return res.status(200).json({ ok: true, source: 'orthogonal', companies: companies.map(toClient), used });
+    return res.status(200).json(
+      withDebug({ ok: true, source: 'orthogonal', companies: companies.map(toClient) }, { used }),
+    );
   } catch (error) {
     const status = error instanceof OrthogonalError ? error.status : 502;
     const code = error instanceof OrthogonalError ? error.code : 'jobs_search_failed';
