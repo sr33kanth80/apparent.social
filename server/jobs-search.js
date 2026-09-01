@@ -186,53 +186,89 @@ const extractItems = (payload) => {
   return [];
 };
 
+const jobsBudgetCents = () => Number.parseInt(process.env.JOBS_MAX_SPEND_CENTS || '', 10) || 25;
+
 /**
- * One discovery call, then one paid run against the best-priced fixed-price
- * endpoint the catalog offers. The session enforces the spend cap; dynamic
- * (unbounded) pricing is refused by the wrapper, so a runaway endpoint can't be
- * executed here at all.
+ * Price the candidate endpoints before running any of them.
+ *
+ * /v1/search and /v1/details are unpaid, so the catalog's prices can be read for
+ * free and the cheapest usable endpoint picked deliberately — rather than paying
+ * whatever the first result happens to cost. Endpoints without a fixed price are
+ * skipped: the session wrapper refuses to auto-execute unbounded pricing anyway.
+ */
+const priceCandidates = async (session, prompt) => {
+  const found = await session.search(prompt, 10);
+  const priced = [];
+
+  for (const entry of extractItems(found).slice(0, 5)) {
+    const api = clean(entry?.slug ?? entry?.api ?? entry?.provider, 80).toLowerCase();
+    const endpoints = Array.isArray(entry?.endpoints) ? entry.endpoints : [entry];
+    for (const endpoint of endpoints.slice(0, 4)) {
+      const path = clean(endpoint?.path ?? endpoint?.endpoint, 200);
+      if (!api || !path.startsWith('/')) continue;
+      try {
+        const details = await session.details({ api, path });
+        const info = details?.endpoint ?? details?.data?.endpoint ?? {};
+        const priceUsd = Number(info?.price);
+        priced.push({
+          api,
+          path,
+          priceCents: Number.isFinite(priceUsd) && priceUsd >= 0 ? Math.round(priceUsd * 100) : null,
+          dynamic: info?.hasDynamicPricing === true || !Number.isFinite(priceUsd) || priceUsd < 0,
+        });
+      } catch {
+        // Not priceable (not allowlisted, lookup failed) — it simply isn't a candidate.
+      }
+    }
+  }
+
+  priced.sort((a, b) => (a.priceCents ?? Infinity) - (b.priceCents ?? Infinity));
+  return priced;
+};
+
+/**
+ * Discovery, then at most one paid run against the cheapest affordable endpoint.
+ *
+ * When nothing is affordable the prices found are returned rather than a bare
+ * failure, so the cap can be set from real catalog numbers instead of guesswork.
  */
 const discoverAndRun = async (query, city, geocode) => {
-  const session = createOrthogonalSession({
-    maxCalls: 6,
-    maxSpendCents: Number.parseInt(process.env.JOBS_MAX_SPEND_CENTS || '', 10) || 25,
-  });
+  const budgetCents = jobsBudgetCents();
+  const session = createOrthogonalSession({ maxCalls: 12, maxSpendCents: budgetCents });
 
   const prompt = city
     ? `companies hiring in ${city} with open job postings and careers page: ${query}`
     : `companies hiring with open job postings and careers page: ${query}`;
 
-  const found = await session.search(prompt, 10);
-  const results = extractItems(found);
+  const candidates = await priceCandidates(session, prompt);
+  const affordable = candidates.filter((c) => !c.dynamic && c.priceCents != null && c.priceCents <= budgetCents);
 
-  for (const entry of results.slice(0, 4)) {
-    const api = clean(entry?.slug ?? entry?.api ?? entry?.provider, 80).toLowerCase();
-    const endpoints = Array.isArray(entry?.endpoints) ? entry.endpoints : [entry];
-    for (const endpoint of endpoints.slice(0, 3)) {
-      const path = clean(endpoint?.path ?? endpoint?.endpoint, 200);
-      if (!api || !path.startsWith('/')) continue;
-      try {
-        const run = await session.run({
-          api,
-          path,
-          body: { query, location: city || undefined, limit: MAX_UPSERT_ROWS },
-          query: {},
-        });
-        const items = extractItems(run);
-        const mapped = items
-          .slice(0, MAX_UPSERT_ROWS)
-          .map((item) => mapCompany(item, city, geocode))
-          .filter(Boolean);
-        if (mapped.length) return { companies: mapped, usage: session.usage() };
-      } catch (error) {
-        // Unbounded price, budget exhausted, or a shape we can't use — try the
-        // next candidate rather than failing the whole search.
-        if (error instanceof OrthogonalError && error.code === 'orthogonal_budget_reached') throw error;
-      }
+  if (!affordable.length) {
+    return { companies: [], unaffordable: candidates.slice(0, 8), budgetCents };
+  }
+
+  for (const candidate of affordable.slice(0, 3)) {
+    try {
+      const run = await session.run({
+        api: candidate.api,
+        path: candidate.path,
+        body: { query, location: city || undefined, limit: MAX_UPSERT_ROWS },
+        query: {},
+      });
+      const mapped = extractItems(run)
+        .slice(0, MAX_UPSERT_ROWS)
+        .map((item) => mapCompany(item, city, geocode))
+        .filter(Boolean);
+      if (mapped.length) return { companies: mapped, usage: session.usage() };
+    } catch (error) {
+      // Out of budget stops everything; a single bad endpoint just loses its turn.
+      if (error instanceof OrthogonalError && BUDGET_STOP.has(error.code)) throw error;
     }
   }
   return { companies: [], usage: session.usage() };
 };
+
+const BUDGET_STOP = new Set(['orthogonal_budget_reached', 'orthogonal_insufficient_credits', 'orthogonal_call_limit']);
 
 // ---------- handler ----------
 
@@ -288,7 +324,22 @@ export default async function jobsSearchHandler(req, res, { geocode }) {
   }
 
   try {
-    const { companies } = await discoverAndRun(query, city, geocode);
+    const { companies, unaffordable, budgetCents } = await discoverAndRun(query, city, geocode);
+
+    // Nothing in the catalog fits the cap. Report what the endpoints actually
+    // cost so the cap can be set from real numbers (and so this doesn't look
+    // like a generic outage).
+    if (unaffordable?.length) {
+      return res.status(200).json({
+        ok: true,
+        source: 'cache',
+        companies: cached.map(toClient),
+        degraded: 'over_budget',
+        budgetCents,
+        endpointPrices: unaffordable,
+      });
+    }
+
     if (!companies.length) {
       // Nothing new; stale rows still beat an empty map.
       return res.status(200).json({ ok: true, source: 'cache', companies: cached.map(toClient) });
