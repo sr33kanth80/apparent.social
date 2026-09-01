@@ -296,7 +296,13 @@ const priceCandidates = async (session, prompt) => {
           api,
           path,
           jobScore: JOB_TERMS.reduce((n, term) => (haystack.includes(term) ? n + 1 : n), 0),
-          description: clean(endpoint?.description, 120),
+          description: clean(endpoint?.description, 200),
+          params: (() => {
+            const raw = info?.parameters ?? info?.params ?? info?.queryParams ?? info?.schema;
+            if (Array.isArray(raw)) return raw.map((x) => clean(x?.name ?? x, 40)).slice(0, 25);
+            if (raw && typeof raw === 'object') return Object.keys(raw).slice(0, 25);
+            return [];
+          })(),
           priceCents: Number.isFinite(priceUsd) && priceUsd >= 0 ? Math.round(priceUsd * 100) : null,
           dynamic: info?.hasDynamicPricing === true || !Number.isFinite(priceUsd) || priceUsd < 0,
         });
