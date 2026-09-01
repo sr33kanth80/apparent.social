@@ -469,8 +469,13 @@ body {
 }
 
 .ed-footer .ed-btn-outline-blue {
+  background: transparent;
   border-color: var(--ed-canvas);
   color: var(--ed-canvas);
+}
+.ed-footer .ed-btn-outline-blue:hover {
+  background: var(--ed-canvas);
+  color: var(--ed-ink);
 }
 
 .ed-footer :where(.ed-bf-cols a, .ed-bf-legal a) {
