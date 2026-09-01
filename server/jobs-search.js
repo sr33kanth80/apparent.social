@@ -402,11 +402,14 @@ const discoverAndRun = async (query, city, geocode) => {
       // page came back for every search.
       const runBody = buildRunBody(candidate, query, city);
       const isGet = candidate.method !== 'POST' && candidate.method !== 'PUT' && candidate.method !== 'PATCH';
+      // Query parameters must be strings — a numeric limit is rejected with
+      // "Expected string, received number".
+      const asQuery = Object.fromEntries(Object.entries(runBody).map(([k, v]) => [k, String(v)]));
       const run = await session.run({
         api: candidate.api,
         path: candidate.path,
         body: isGet ? {} : runBody,
-        query: isGet ? runBody : {},
+        query: isGet ? asQuery : {},
       });
       const mapped = aggregateCompanies(extractItems(run), city, geocode).slice(0, MAX_UPSERT_ROWS);
       if (mapped.length) {
