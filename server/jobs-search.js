@@ -345,9 +345,22 @@ const discoverAndRun = async (query, city, geocode) => {
 /** Structure-only trace of a run response, for the same reason as `shape`. */
 const runShape = (run) => {
   const items = extractItems(run);
+  // Keys alone proved insufficient: a field can be present but null for every
+  // row, which is indistinguishable from a naming mismatch. Count how many rows
+  // actually carry a value for the fields the mapper depends on.
+  const fill = {};
+  for (const raw of items.slice(0, 40)) {
+    const item = raw?.attributes && typeof raw.attributes === 'object' ? { ...raw, ...raw.attributes } : raw;
+    for (const key of Object.keys(item || {})) {
+      const value = item[key];
+      const present = value != null && String(value).trim() !== '';
+      if (present) fill[key] = (fill[key] || 0) + 1;
+    }
+  }
   return {
     itemCount: items.length,
     firstItemKeys: items.length ? Object.keys(items[0] || {}).slice(0, 25) : [],
+    nonEmptyCounts: fill,
   };
 };
 
