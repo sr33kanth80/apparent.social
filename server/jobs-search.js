@@ -346,6 +346,7 @@ const priceCandidates = async (session, prompt) => {
         priced.push({
           api,
           path,
+          method: (clean(endpoint?.method, 10) || 'GET').toUpperCase(),
           jobScore: JOB_TERMS.reduce((n, term) => (haystack.includes(term) ? n + 1 : n), 0),
           description: clean(endpoint?.description, 200),
           params: (() => {
@@ -395,12 +396,16 @@ const discoverAndRun = async (query, city, geocode) => {
   let lastRunShape = null;
   for (const candidate of affordable.slice(0, 4)) {
     try {
+      // A GET endpoint takes its filters as query parameters. Sending them in
+      // the body meant every filter was silently ignored and the same default
+      // page came back for every search.
       const runBody = buildRunBody(candidate, query, city);
+      const isGet = candidate.method !== 'POST' && candidate.method !== 'PUT' && candidate.method !== 'PATCH';
       const run = await session.run({
         api: candidate.api,
         path: candidate.path,
-        body: runBody,
-        query: {},
+        body: isGet ? {} : runBody,
+        query: isGet ? runBody : {},
       });
       const mapped = aggregateCompanies(extractItems(run), city, geocode).slice(0, MAX_UPSERT_ROWS);
       if (mapped.length) {
@@ -408,7 +413,7 @@ const discoverAndRun = async (query, city, geocode) => {
           companies: mapped,
           usage: session.usage(),
           shape,
-          used: { api: candidate.api, path: candidate.path, body: runBody, params: candidate.params },
+          used: { api: candidate.api, path: candidate.path, method: candidate.method, sent: runBody },
         };
       }
       lastRunShape = { api: candidate.api, path: candidate.path, ...runShape(run) };
