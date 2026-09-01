@@ -24,7 +24,22 @@ const MAX_QUERY_CHARS = 200;
 const MAX_UPSERT_ROWS = 40;
 
 const str = (v) => (v == null ? '' : String(v));
-const clean = (v, max = 300) => str(v).replace(/\s+/g, ' ').trim().slice(0, max);
+/**
+ * Some providers return UTF-8 that was already decoded as Latin-1 ("â€”" for an
+ * em dash). Repair only when those telltale sequences appear, so genuinely
+ * accented text is left alone.
+ */
+const fixMojibake = (value) => {
+  if (!/Ã.|â€|Â./.test(value)) return value;
+  try {
+    const repaired = Buffer.from(value, 'latin1').toString('utf8');
+    return repaired.includes('�') ? value : repaired;
+  } catch {
+    return value;
+  }
+};
+
+const clean = (v, max = 300) => fixMojibake(str(v)).replace(/\s+/g, ' ').trim().slice(0, max);
 
 const serviceHeaders = () => ({
   apikey: SERVICE_KEY,
@@ -198,8 +213,8 @@ const aggregateCompanies = (items, fallbackCity, geocode) => {
     const careersUrl = toAbsoluteUrl(item?.careers_url ?? item?.careersUrl ?? item?.jobs_url ?? item?.job_board_url) || jobUrl;
     const city = clean(item?.city ?? item?.location ?? item?.region ?? item?.headquarters ?? fallbackCity, 120);
     const oneLiner = clean(
-      item?.one_liner ?? item?.companyDescription ?? item?.companyIndustry ?? item?.industry ?? item?.description ?? item?.summary ?? item?.tagline,
-      280,
+      item?.one_liner ?? item?.companyIndustry ?? item?.industry ?? item?.companyDescription ?? item?.description ?? item?.summary ?? item?.tagline,
+      180,
     );
     // An explicit count, when the provider gives one, beats counting rows.
     const stated = nonNegativeInt(
@@ -251,6 +266,37 @@ const extractItems = (payload) => {
 
 // Endpoint relevance signal for a hiring search.
 const JOB_TERMS = ['job_opening', 'job-opening', 'job', 'hiring', 'career', 'vacanc', 'employment', 'recruit'];
+
+/**
+ * Build the request body from the endpoint's OWN declared parameter names.
+ *
+ * The location filter was silently ignored because the body hardcoded
+ * `location`, while signalbase declares `city` and `search`. Guessing a common
+ * shape does not work across providers, so intent is mapped onto whatever each
+ * endpoint actually accepts.
+ */
+const buildRunBody = (candidate, query, city) => {
+  const declared = Array.isArray(candidate?.params) ? candidate.params : [];
+  // No schema published: fall back to the broadest common spelling.
+  if (!declared.length) return { query, location: city || undefined, limit: MAX_UPSERT_ROWS };
+
+  const has = (name) => declared.includes(name);
+  const body = {};
+
+  const queryKey = ['search', 'query', 'title', 'q'].find(has);
+  if (queryKey && query) body[queryKey] = query;
+
+  if (city) {
+    const cityKey = ['city', 'location'].find(has);
+    if (cityKey) body[cityKey] = city;
+  }
+
+  if (has('limit')) body.limit = MAX_UPSERT_ROWS;
+  if (has('active_only')) body.active_only = true;
+  if (has('not_closed')) body.not_closed = true;
+
+  return body;
+};
 
 const jobsBudgetCents = () => Number.parseInt(process.env.JOBS_MAX_SPEND_CENTS || '', 10) || 25;
 
@@ -326,7 +372,9 @@ const priceCandidates = async (session, prompt) => {
  */
 const discoverAndRun = async (query, city, geocode) => {
   const budgetCents = jobsBudgetCents();
-  const session = createOrthogonalSession({ maxCalls: 12, maxSpendCents: budgetCents });
+  // search/details are unpaid, and pricing a cold catalog needs many of them,
+  // so the call ceiling is generous. Spending stays bounded by maxSpendCents.
+  const session = createOrthogonalSession({ maxCalls: 40, maxSpendCents: budgetCents });
 
   const prompt = city
     ? `companies hiring in ${city} with open job postings and careers page: ${query}`
@@ -345,7 +393,7 @@ const discoverAndRun = async (query, city, geocode) => {
       const run = await session.run({
         api: candidate.api,
         path: candidate.path,
-        body: { query, location: city || undefined, limit: MAX_UPSERT_ROWS },
+        body: buildRunBody(candidate, query, city),
         query: {},
       });
       const mapped = aggregateCompanies(extractItems(run), city, geocode).slice(0, MAX_UPSERT_ROWS);
