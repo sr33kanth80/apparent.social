@@ -34,13 +34,47 @@ const fromRow = (row: CompanyRow): HiringCompany => ({
   openRoles: Number(row.open_roles ?? 0),
 });
 
+const SELECT_COLUMNS =
+  'canonical_domain,name,website,careers_url,one_liner,city,latitude,longitude,open_roles';
+
 /** Everything already discovered — the free path that paints the map on load. */
 export const browseCompanies = async (limit = 500): Promise<HiringCompany[]> => {
   if (!supabase) return [];
   const { data, error } = await supabase
     .from('companies')
-    .select('canonical_domain,name,website,careers_url,one_liner,city,latitude,longitude,open_roles')
+    .select(SELECT_COLUMNS)
     .eq('is_hiring', true)
+    .order('open_roles', { ascending: false })
+    .limit(limit);
+  if (error || !data) return [];
+  return (data as CompanyRow[]).map(fromRow);
+};
+
+export type MapBounds = { west: number; south: number; east: number; north: number };
+
+/**
+ * Companies inside the current viewport, densest first.
+ *
+ * This is what makes the map behave like a property search: panning or zooming
+ * loads what is actually in view instead of one fixed global page. It stays a
+ * direct anon read (public RLS), so moving the map never costs anything.
+ *
+ * ponytail: a viewport crossing the antimeridian is not split into two ranges;
+ * add that if the map ever opens centred on the Pacific.
+ */
+export const browseCompaniesInBounds = async (
+  bounds: MapBounds,
+  limit = 300,
+): Promise<HiringCompany[]> => {
+  if (!supabase) return [];
+  const { data, error } = await supabase
+    .from('companies')
+    .select(SELECT_COLUMNS)
+    .eq('is_hiring', true)
+    .gte('latitude', bounds.south)
+    .lte('latitude', bounds.north)
+    .gte('longitude', bounds.west)
+    .lte('longitude', bounds.east)
     .order('open_roles', { ascending: false })
     .limit(limit);
   if (error || !data) return [];
