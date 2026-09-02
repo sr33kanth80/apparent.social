@@ -20,6 +20,22 @@ import type { HiringCompany } from '@/lib/apparent-types';
 const BLUE = '#1d9bf0';
 const MAX_LOADED = 2000;
 
+/**
+ * OpenStreetMap vector tiles via OpenFreeMap — keyless and free, unlike the
+ * CARTO basemap this replaced, and its Liberty style already ships a
+ * `building-3d` fill-extrusion layer driven by real OSM building heights. That
+ * is what gives the city view actual 3D massing rather than a flat plan.
+ *
+ * ponytail: OpenFreeMap is a free community service with no SLA. If the map
+ * ever needs an uptime guarantee, swap this URL for MapTiler or Protomaps —
+ * both serve the same OpenMapTiles schema, so nothing else here changes.
+ */
+const OSM_3D_STYLE = 'https://tiles.openfreemap.org/styles/liberty';
+
+/** Buildings only exist from z14, so the camera tilts in to show them off. */
+const BUILDINGS_ZOOM = 14;
+const TILTED_PITCH = 55;
+
 type PlacedCompany = HiringCompany & { lat: number; lng: number };
 
 const viewKey = (b: MapBounds, zoom: number) =>
@@ -79,6 +95,17 @@ function ViewportWatcher({ onSettle }: { onSettle: (bounds: MapBounds, zoom: num
     let timer: ReturnType<typeof setTimeout> | undefined;
 
     const report = () => {
+      const zoom = map.getZoom();
+
+      // Tilt in once buildings exist so their extrusions read as massing, and
+      // lie back down when zoomed out where a pitched globe just looks skewed.
+      // Only acted on when the camera is actually far from the target pitch, so
+      // the easeTo cannot feed its own moveend back into a loop.
+      const wantPitch = zoom >= BUILDINGS_ZOOM ? TILTED_PITCH : 0;
+      if (Math.abs(map.getPitch() - wantPitch) > 6) {
+        map.easeTo({ pitch: wantPitch, duration: 600 });
+      }
+
       const bounds = map.getBounds();
       onSettle(
         {
@@ -87,7 +114,7 @@ function ViewportWatcher({ onSettle }: { onSettle: (bounds: MapBounds, zoom: num
           east: bounds.getEast(),
           north: bounds.getNorth(),
         },
-        map.getZoom(),
+        zoom,
       );
     };
 
@@ -250,8 +277,12 @@ export default function JobMap() {
         zoom={1.8}
         projection={{ type: 'globe' }}
         minZoom={1.2}
-        maxZoom={14}
+        // Past 14 the OSM building extrusions appear; stopping at 14 would have
+        // meant never actually seeing them.
+        maxZoom={18}
+        maxPitch={70}
         theme="light"
+        styles={{ light: OSM_3D_STYLE, dark: OSM_3D_STYLE }}
       >
         <ViewportWatcher onSettle={handleViewport} />
         <MapClusterLayer
