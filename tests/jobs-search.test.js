@@ -189,3 +189,53 @@ test('geocodeCity resolves decorated city strings and rejects unknowns', () => {
   // A country is not a place to put a pin.
   assert.equal(geocodeCity('United States'), null);
 });
+
+test('discovery pages through results and stops when a page is empty', async () => {
+  const pagesSeen = [];
+  let upserted = [];
+
+  globalThis.fetch = async (url, options = {}) => {
+    const href = String(url);
+    const json = (value) => ({ ok: true, status: 200, text: async () => JSON.stringify(value), json: async () => value });
+
+    if (href.includes('/rpc/consume_agent_rate_limit')) return json([{ allowed: true }]);
+    if (href.includes('/rest/v1/companies')) {
+      const method = options.method || 'GET';
+      if (method === 'POST') { upserted = JSON.parse(options.body); return json({}); }
+      if (method === 'PATCH') return json({});
+      return json([]); // empty cache => must discover
+    }
+    if (href.endsWith('/v1/search')) {
+      return json({ results: [{ slug: 'signalbase', endpoints: [{ path: '/signals/hiring', method: 'GET' }] }] });
+    }
+    if (href.endsWith('/v1/details')) {
+      return json({ endpoint: { price: 0.02, parameters: ['page', 'limit', 'search', 'city'] } });
+    }
+    if (href.endsWith('/v1/run')) {
+      const page = Number(JSON.parse(options.body).query.page || 1);
+      pagesSeen.push(page);
+      // Two pages of data, then an empty page that must halt the loop.
+      if (page > 2) return json({ results: [] });
+      return json({
+        priceCents: 2,
+        results: [
+          { companyName: `Co A${page}`, companyWebsite: `a${page}.com`, city: 'Boston', jobUrl: 'https://j.example/1' },
+          { companyName: `Co B${page}`, companyWebsite: `b${page}.com`, city: 'Boston', jobUrl: 'https://j.example/2' },
+        ],
+      });
+    }
+    throw new Error(`unexpected fetch: ${href}`);
+  };
+
+  const res = makeRes();
+  await jobsSearchHandler(makeReq({ query: 'engineer', city: 'Boston' }), res, { geocode: geocodeCity });
+
+  assert.equal(res.body.source, 'orthogonal');
+  // Page 1 plus further pages, halting at the empty one rather than burning
+  // every allowed page.
+  assert.deepEqual(pagesSeen, [1, 2, 3]);
+  // Both pages contributed distinct companies instead of only the first.
+  assert.equal(upserted.length, 4);
+  assert.ok(upserted.some((r) => r.canonical_domain === 'a1.com'));
+  assert.ok(upserted.some((r) => r.canonical_domain === 'b2.com'));
+});

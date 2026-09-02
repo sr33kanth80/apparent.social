@@ -221,6 +221,56 @@ const CITY_COORDS = {
   wilmington: [39.7391, -75.5398],
   harrisburg: [40.2732, -76.8867],
   honolulu: [21.3069, -157.8583],
+  // Suburbs and smaller cities that showed up in real job data and were
+  // silently unpinnable.
+  'new berlin': [42.9764, -88.1084],
+  oberlin: [41.294, -82.2171],
+  'beverly hills': [34.0736, -118.4004],
+  'hermosa beach': [33.8622, -118.3995],
+  'santa barbara': [34.4208, -119.6982],
+  'palo alto ca': [37.4419, -122.143],
+  'menlo park': [37.4538, -122.1822],
+  'redwood city': [37.4852, -122.2364],
+  'foster city': [37.5585, -122.2711],
+  'san mateo': [37.563, -122.3255],
+  'daly city': [37.6879, -122.4702],
+  'walnut creek': [37.9101, -122.0652],
+  'palm beach': [26.7056, -80.0364],
+  'boca raton': [26.3683, -80.1289],
+  'fort lauderdale': [26.1224, -80.1373],
+  'st petersburg': [27.7676, -82.6403],
+  'ann arbor mi': [42.2808, -83.743],
+  'grand rapids': [42.9634, -85.6681],
+  'sioux falls': [43.55, -96.7003],
+  fargo: [46.8772, -96.7898],
+  'cedar rapids': [41.9779, -91.6656],
+  'overland park': [38.9822, -94.6708],
+  'colorado boulder': [40.015, -105.2705],
+  'fort collins': [40.5853, -105.0844],
+  'santa fe': [35.687, -105.9378],
+  'el paso': [31.7619, -106.485],
+  'corpus christi': [27.8006, -97.3964],
+  'baton rouge': [30.4515, -91.1871],
+  huntsville: [34.7304, -86.5861],
+  'winston salem': [36.0999, -80.2442],
+  'chapel hill': [35.9132, -79.0558],
+  'virginia richmond': [37.5407, -77.436],
+  'newport news': [36.9788, -76.428],
+  'silver spring': [38.9907, -77.0261],
+  'college park': [38.9807, -76.937],
+  princeton: [40.3573, -74.6672],
+  hoboken: [40.744, -74.0324],
+  'white plains': [41.034, -73.7629],
+  yonkers: [40.9312, -73.8988],
+  'new haven': [41.3083, -72.9279],
+  bridgeport: [41.1865, -73.1952],
+  worcester: [42.2626, -71.8023],
+  springfield: [42.1015, -72.5898],
+  lowell: [42.6334, -71.3162],
+  quincy: [42.2529, -71.0023],
+  waltham: [42.3765, -71.2356],
+  burlington: [44.4759, -73.2121],
+  portsmouth: [43.0718, -70.7626],
 
   // More Canada
   ottawa: [45.4215, -75.6972],
@@ -315,6 +365,93 @@ const CITY_COORDS = {
  * the same entry, so each comma/dash segment is tried, longest first (so
  * "new york" wins over a stray "ny" fragment).
  */
+/**
+ * Region-level fallbacks, tried only after every city candidate fails.
+ *
+ * Job data is full of these: "California" alone accounted for more unpinnable
+ * rows than any city. A state centroid is a coarse pin, but a coarse pin beats
+ * an invisible company — and the segment matcher still prefers a real city when
+ * the string carries one ("Hermosa Beach, California").
+ *
+ * Countries are deliberately absent: "United States" is too broad to place
+ * honestly, so those rows stay unpinned and searchable instead.
+ */
+const REGION_COORDS = {
+  // US states
+  alabama: [32.8067, -86.7911],
+  alaska: [64.0685, -152.2782],
+  arizona: [34.2744, -111.6602],
+  arkansas: [34.8938, -92.4426],
+  california: [36.7783, -119.4179],
+  colorado: [38.9972, -105.5478],
+  connecticut: [41.6219, -72.7273],
+  delaware: [38.9896, -75.505],
+  florida: [28.6305, -82.4497],
+  georgia: [32.6415, -83.4426],
+  hawaii: [20.2927, -156.3737],
+  idaho: [44.3509, -114.613],
+  illinois: [40.0417, -89.1965],
+  indiana: [39.8942, -86.2816],
+  iowa: [42.0751, -93.496],
+  kansas: [38.4937, -98.3804],
+  kentucky: [37.5347, -85.3021],
+  louisiana: [31.0689, -91.9968],
+  maine: [45.3695, -69.2428],
+  maryland: [39.055, -76.7909],
+  massachusetts: [42.2596, -71.8083],
+  michigan: [44.3467, -85.4102],
+  minnesota: [46.2807, -94.3053],
+  mississippi: [32.7364, -89.6678],
+  missouri: [38.3566, -92.458],
+  montana: [47.0527, -109.6333],
+  nebraska: [41.5378, -99.7951],
+  nevada: [39.3289, -116.6312],
+  'new hampshire': [43.6805, -71.5811],
+  'new jersey': [40.1907, -74.6728],
+  'new mexico': [34.4071, -106.1126],
+  'new york state': [42.9538, -75.5268],
+  'north carolina': [35.5557, -79.3877],
+  'north dakota': [47.4501, -100.4659],
+  ohio: [40.2862, -82.7937],
+  oklahoma: [35.5889, -97.4943],
+  oregon: [43.9336, -120.5583],
+  pennsylvania: [40.8781, -77.7996],
+  'rhode island': [41.6762, -71.5562],
+  'south carolina': [33.9169, -80.8964],
+  'south dakota': [44.4443, -100.2263],
+  tennessee: [35.8582, -86.3505],
+  texas: [31.4757, -99.3312],
+  utah: [39.3055, -111.6703],
+  vermont: [44.0687, -72.6658],
+  virginia: [37.5215, -78.8537],
+  'west virginia': [38.6409, -80.6227],
+  wisconsin: [44.6243, -89.9941],
+  wyoming: [43.0, -107.5512],
+
+  // Canadian provinces
+  ontario: [50.0, -85.0],
+  quebec: [52.0, -72.0],
+  'british columbia': [53.7267, -127.6476],
+  alberta: [55.0, -115.0],
+
+  // Broad regions that still place better than nothing
+  'silicon valley': [37.3875, -122.0575],
+  'bay area': [37.7749, -122.4194],
+  'greater london': [51.5072, -0.1276],
+  'new england': [43.5, -71.5],
+  scotland: [56.4907, -4.2026],
+  wales: [52.1307, -3.7837],
+  bavaria: [48.7904, 11.4979],
+  catalonia: [41.5912, 1.5209],
+  randstad: [52.1326, 4.9041],
+};
+
+export const geocodeRegion = (value) => {
+  const raw = String(value ?? '').toLowerCase().trim();
+  const hit = REGION_COORDS[raw];
+  return hit ? { latitude: hit[0], longitude: hit[1] } : null;
+};
+
 export const geocodeCity = (value) => {
   const raw = String(value ?? '').toLowerCase().trim();
   if (!raw) return null;
@@ -342,6 +479,13 @@ export const geocodeCity = (value) => {
   for (const segment of segments) {
     const hit = CITY_COORDS[segment];
     if (hit) return { latitude: hit[0], longitude: hit[1] };
+  }
+
+  // Every city candidate failed. Fall back to a region centroid so a row like
+  // "California" is placed coarsely rather than dropped off the map entirely.
+  for (const segment of [raw, ...segments]) {
+    const region = geocodeRegion(segment);
+    if (region) return region;
   }
   return null;
 };

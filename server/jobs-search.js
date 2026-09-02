@@ -21,7 +21,13 @@ const STALE_MS = 7 * 24 * 60 * 60 * 1000;
 const RATE_WINDOW_MS = 60_000;
 const RATE_MAX = 5; // per IP per minute — this route can spend money.
 const MAX_QUERY_CHARS = 200;
-const MAX_UPSERT_ROWS = 40;
+// Companies kept per discovery. One page of jobs collapses to a handful of
+// companies, so the ceiling has to sit well above a single page.
+const MAX_UPSERT_ROWS = 150;
+// Job rows requested per page, and how many pages one discovery may pull. The
+// spend cap is still the real limit; this just stops a runaway crawl.
+const PAGE_SIZE = 50;
+const MAX_DISCOVERY_PAGES = 4;
 
 const str = (v) => (v == null ? '' : String(v));
 /**
@@ -169,6 +175,50 @@ const upsertCompanies = async (rows) => {
   }).catch(() => null);
 };
 
+/**
+ * Re-geocode rows that were stored before the geocoder knew their location.
+ *
+ * Coordinates are resolved at write time, so widening the geocoder does nothing
+ * for rows already saved with a null latitude — they stay permanently invisible
+ * on the map despite being perfectly good companies. ("California" alone
+ * accounted for 15 such rows.) This heals them in place.
+ *
+ * Grouped by city so one PATCH fixes every row sharing a location, rather than
+ * one request per row. Costs no Orthogonal spend, and once the table is clean
+ * the initial select returns nothing and this is a single cheap query.
+ */
+const backfillMissingCoordinates = async (geocode) => {
+  if (!SUPABASE_URL || !SERVICE_KEY) return 0;
+  try {
+    const res = await fetch(
+      `${SUPABASE_URL}/rest/v1/companies?select=city&latitude=is.null&city=neq.&limit=200`,
+      { headers: serviceHeaders() },
+    );
+    if (!res.ok) return 0;
+    const rows = (await res.json().catch(() => [])) || [];
+
+    const cities = [...new Set(rows.map((row) => clean(row?.city, 120)).filter(Boolean))];
+    let healed = 0;
+
+    for (const city of cities.slice(0, 15)) {
+      const coords = geocode(city);
+      if (!coords) continue; // still unplaceable (a bare country, say)
+      const patched = await fetch(
+        `${SUPABASE_URL}/rest/v1/companies?latitude=is.null&city=eq.${encodeURIComponent(city)}`,
+        {
+          method: 'PATCH',
+          headers: { ...serviceHeaders(), Prefer: 'return=minimal' },
+          body: JSON.stringify({ latitude: coords.latitude, longitude: coords.longitude }),
+        },
+      );
+      if (patched.ok) healed += 1;
+    }
+    return healed;
+  } catch {
+    return 0;
+  }
+};
+
 // ---------- Orthogonal ----------
 
 /**
@@ -278,7 +328,7 @@ const JOB_TERMS = ['job_opening', 'job-opening', 'job', 'hiring', 'career', 'vac
 const buildRunBody = (candidate, query, city) => {
   const declared = Array.isArray(candidate?.params) ? candidate.params : [];
   // No schema published: fall back to the broadest common spelling.
-  if (!declared.length) return { query, location: city || undefined, limit: MAX_UPSERT_ROWS };
+  if (!declared.length) return { query, location: city || undefined, limit: PAGE_SIZE };
 
   const has = (name) => declared.includes(name);
   const body = {};
@@ -291,7 +341,7 @@ const buildRunBody = (candidate, query, city) => {
     if (cityKey) body[cityKey] = city;
   }
 
-  if (has('limit')) body.limit = MAX_UPSERT_ROWS;
+  if (has('limit')) body.limit = PAGE_SIZE;
   if (has('active_only')) body.active_only = true;
   if (has('not_closed')) body.not_closed = true;
 
@@ -418,13 +468,53 @@ const discoverAndRun = async (query, city, geocode) => {
         body: isGet ? {} : runBody,
         query: isGet ? asQuery : {},
       });
-      const mapped = aggregateCompanies(extractItems(run), city, geocode).slice(0, MAX_UPSERT_ROWS);
+
+      let items = extractItems(run);
+
+      // One page of job rows collapses to only a handful of companies once
+      // grouped, which is why the corpus grew so slowly. Pull further pages
+      // while the endpoint supports paging and the budget allows; the session
+      // throws once spending is exhausted, and that is the natural stop.
+      const supportsPaging = Array.isArray(candidate.params) && candidate.params.includes('page');
+      if (supportsPaging && items.length) {
+        for (let page = 2; page <= MAX_DISCOVERY_PAGES; page += 1) {
+          try {
+            const pageBody = { ...runBody, page };
+            const pageQuery = Object.fromEntries(
+              Object.entries(pageBody).map(([k, v]) => [k, String(v)]),
+            );
+            const more = await session.run({
+              api: candidate.api,
+              path: candidate.path,
+              body: isGet ? {} : pageBody,
+              query: isGet ? pageQuery : {},
+            });
+            const moreItems = extractItems(more);
+            if (!moreItems.length) break; // ran out of results
+            items = items.concat(moreItems);
+          } catch (error) {
+            // Budget or call ceiling reached: keep what earlier pages returned
+            // rather than losing the whole search.
+            if (error instanceof OrthogonalError && BUDGET_STOP.has(error.code)) break;
+            break;
+          }
+        }
+      }
+
+      const mapped = aggregateCompanies(items, city, geocode).slice(0, MAX_UPSERT_ROWS);
       if (mapped.length) {
         return {
           companies: mapped,
           usage: session.usage(),
           shape,
-          used: { api: candidate.api, path: candidate.path, method: candidate.method, sent: runBody },
+          used: {
+            api: candidate.api,
+            path: candidate.path,
+            method: candidate.method,
+            sent: runBody,
+            pagesFetched: supportsPaging ? Math.ceil(items.length / Math.max(runBody.limit || 40, 1)) : 1,
+            jobRows: items.length,
+          },
         };
       }
       lastRunShape = { api: candidate.api, path: candidate.path, ...runShape(run) };
@@ -512,6 +602,10 @@ export default async function jobsSearchHandler(req, res, { geocode }) {
     res.setHeader('Retry-After', String(limit.retryAfter));
     return res.status(429).json({ ok: false, error: 'rate_limited', retryAfter: limit.retryAfter });
   }
+
+  // Heal rows the geocoder can place now but could not when they were written.
+  // Cheap, unpaid, and self-terminating once the table has no null rows left.
+  await backfillMissingCoordinates(geocode);
 
   // Cache first — never spend if the corpus already answers this.
   const cached = await selectCompanies(query, city);
