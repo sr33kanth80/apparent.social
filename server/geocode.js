@@ -109,12 +109,31 @@ const readPlaceName = (raw) => {
   );
 };
 
-/** Score how well an endpoint matches the direction we need. */
-const scoreEndpoint = (haystack, terms, wantReverse) => {
-  const hasReverse = haystack.includes('reverse');
-  // A reverse endpoint answering a forward lookup (or vice versa) is worse than
-  // useless, so direction dominates the score.
-  if (wantReverse !== hasReverse) return -1;
+// "reverse lookup" is a phrase used by plenty of non-geographic services. The
+// catalog's top reverse match was an email lookup, which scored well on words
+// and could never answer a coordinate.
+const NON_GEO_TERMS = ['email', 'phone', 'person', 'people', 'linkedin', 'domain', 'dns', 'ip '];
+
+const LAT_KEYS = ['lat', 'latitude'];
+const LNG_KEYS = ['lon', 'lng', 'long', 'longitude'];
+
+/**
+ * Score how well an endpoint matches the direction we need.
+ *
+ * Parameters are trusted over prose: a reverse geocoder must accept a latitude
+ * and a longitude, and nothing that fails that test can do the job regardless
+ * of how well its description reads.
+ */
+const scoreEndpoint = (haystack, terms, wantReverse, declaredParams) => {
+  if (NON_GEO_TERMS.some((term) => haystack.includes(term))) return -1;
+
+  const declared = Array.isArray(declaredParams) ? declaredParams : [];
+  if (wantReverse) {
+    const takesLat = LAT_KEYS.some((k) => declared.includes(k));
+    const takesLng = LNG_KEYS.some((k) => declared.includes(k));
+    if (!takesLat || !takesLng) return -1;
+  }
+
   return terms.reduce((n, term) => (haystack.includes(term) ? n + 1 : n), 0);
 };
 
@@ -136,8 +155,7 @@ const discoverEndpoint = async (session, wantReverse, budgetCents) => {
       if (!api || !path.startsWith('/') || path.includes('{')) continue;
 
       const haystack = `${path} ${clean(endpoint?.description, 300)}`.toLowerCase();
-      const score = scoreEndpoint(haystack, terms, wantReverse);
-      if (score < 0) continue;
+      if (NON_GEO_TERMS.some((term) => haystack.includes(term))) continue;
 
       try {
         const details = await session.details({ api, path });
@@ -155,6 +173,9 @@ const discoverEndpoint = async (session, wantReverse, budgetCents) => {
           if (raw && typeof raw === 'object') return Object.keys(raw);
           return [];
         })();
+
+        const score = scoreEndpoint(haystack, terms, wantReverse, params);
+        if (score < 0) continue;
 
         priced.push({
           api,
