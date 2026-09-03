@@ -172,3 +172,45 @@ export const loadJobsForCompany = async (domain: string, limit = 25): Promise<Co
     postedAt: row.posted_at,
   }));
 };
+
+export type CompanySubmission = {
+  companyName: string;
+  website: string;
+  officeAddress: string;
+  area: string;
+  careersUrl: string;
+  description: string;
+  submitterName: string;
+  submitterEmail: string;
+};
+
+/**
+ * Submissions are insert-only under RLS: anyone may file one, nobody may read
+ * them back, because they carry the submitter's name and email.
+ */
+export const submitCompany = async (submission: CompanySubmission): Promise<boolean> => {
+  if (!supabase) return false;
+  const { error } = await supabase.from('company_submissions').insert({
+    company_name: submission.companyName,
+    website: submission.website,
+    office_address: submission.officeAddress,
+    area: submission.area,
+    careers_url: submission.careersUrl,
+    description: submission.description,
+    submitter_name: submission.submitterName,
+    submitter_email: submission.submitterEmail,
+  });
+  return !error;
+};
+
+/** Email is optional: the form promises reports can be anonymous. */
+export const submitProblemReport = async (report: {
+  details: string;
+  email: string;
+}): Promise<boolean> => {
+  if (!supabase) return false;
+  const { error } = await supabase
+    .from('problem_reports')
+    .insert({ details: report.details, email: report.email });
+  return !error;
+};
