@@ -885,19 +885,24 @@ const fetchCompanyRoles = async ({ domain, name, city }) => {
       continue;
     }
 
-    // Fill the placeholder with the company we are asking about.
-    const path = isTemplated
-      ? candidate.path.replace(/\{[^}]+\}/, encodeURIComponent(domain))
-      : candidate.path;
+    /**
+     * The placeholder is filled by PARAMETER, not by rewriting the path.
+     * Orthogonal looks an endpoint up by its catalog path, so substituting the
+     * value inline turns it into a path the catalog has never heard of:
+     * "Endpoint not found: /v3/companies/wonder.com/job_openings".
+     */
+    const placeholder = isTemplated ? candidate.path.match(/\{([^}]+)\}/)?.[1] : null;
 
     try {
       const runBody = buildRunBody(candidate, name, city, domain);
+      // Name the path variable exactly as the catalog declares it.
+      if (placeholder) runBody[placeholder] = domain;
       const isGet =
         candidate.method !== 'POST' && candidate.method !== 'PUT' && candidate.method !== 'PATCH';
       const asQuery = Object.fromEntries(Object.entries(runBody).map(([k, v]) => [k, String(v)]));
       const run = await session.run({
         api: candidate.api,
-        path,
+        path: candidate.path,
         body: isGet ? {} : runBody,
         query: isGet ? asQuery : {},
       });
@@ -935,7 +940,7 @@ const fetchCompanyRoles = async ({ domain, name, city }) => {
 
       trace.push({
         step: 'ran',
-        endpoint: `${candidate.api}${path}`,
+        endpoint: `${candidate.api}${candidate.path}`,
         sent: runBody,
         itemsBack: extractItems(run).length,
         companiesBack: found.map((c) => `${c.name}|${c.canonical_domain}`).slice(0, 6),
