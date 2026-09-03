@@ -16,7 +16,7 @@
 //      JOBS_MAX_SPEND_CENTS (per-request cap, default 25).
 
 import { createOrthogonalSession, orthogonalData, OrthogonalError } from './agent/orthogonal.js';
-import { geocodeCompany } from './geocode.js';
+import { geocodeCompany, geocodePlace } from './geocode.js';
 
 const SUPABASE_URL = (process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || '').replace(/\/$/, '');
 const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
@@ -44,6 +44,23 @@ const MAX_DISCOVERY_PAGES = 4;
 // Precise geocodes per request. Each is a paid lookup, so the map asks for what
 // it is showing rather than the whole city.
 const MAX_RESOLVE_PER_REQUEST = 12;
+/**
+ * How far a resolved office may sit from its city before we refuse to believe
+ * it. Asking for "NVIDIA, Seattle" came back with an office in Zurich: the
+ * geocoder matched the company and quietly ignored the city. Without this, a
+ * marker silently teleports to another continent.
+ */
+const MAX_OFFICE_DRIFT_KM = 75;
+
+const distanceKm = (aLat, aLng, bLat, bLng) => {
+  const toRad = (deg) => (deg * Math.PI) / 180;
+  const dLat = toRad(bLat - aLat);
+  const dLng = toRad(bLng - aLng);
+  const h =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(toRad(aLat)) * Math.cos(toRad(bLat)) * Math.sin(dLng / 2) ** 2;
+  return 2 * 6371 * Math.asin(Math.min(1, Math.sqrt(h)));
+};
 
 const str = (v) => (v == null ? '' : String(v));
 /**
@@ -269,6 +286,21 @@ const resolvePreciseLocations = async (requests) => {
   const pending = requests.slice(0, MAX_RESOLVE_PER_REQUEST);
   if (!pending.length) return out;
 
+  // Each distinct city is geocoded once (memoised) to give the drift check
+  // something to measure against.
+  const cities = [...new Set(pending.map((entry) => clean(entry?.city, 120)).filter(Boolean))];
+  const cityPoints = new Map(
+    await Promise.all(
+      cities.map(async (city) => {
+        try {
+          return [city, await geocodePlace(city)];
+        } catch {
+          return [city, null];
+        }
+      }),
+    ),
+  );
+
   // Independent lookups, so in parallel; serial would blow the time budget.
   const resolved = await Promise.all(
     pending.map(async (entry) => {
@@ -278,7 +310,15 @@ const resolvePreciseLocations = async (requests) => {
       if (!domain || !name) return null;
       try {
         const point = await geocodeCompany(name, city);
-        return point ? { domain, ...point } : null;
+        if (!point) return null;
+
+        const anchor = cityPoints.get(city);
+        if (anchor) {
+          const km = distanceKm(anchor.latitude, anchor.longitude, point.latitude, point.longitude);
+          // A different continent is not a better answer than the city centre.
+          if (km > MAX_OFFICE_DRIFT_KM) return null;
+        }
+        return { domain, ...point };
       } catch {
         return null;
       }
