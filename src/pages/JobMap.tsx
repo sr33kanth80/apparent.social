@@ -104,13 +104,24 @@ export default function JobMap() {
     [all, activeCity],
   );
 
-  /** Where to point the camera: the middle of whatever is on screen. */
+  /**
+   * Where to point the camera when the city changes.
+   *
+   * Median, not mean: office coordinates are allowed to sit up to 75km from
+   * their city, and a single outlying suburb drags an average to a point
+   * halfway between — which is some field with nothing in it. The median
+   * ignores the outlier and lands where the companies actually are.
+   */
   const centre = useMemo(() => {
     const points = visible.filter((c) => c.latitude != null && c.longitude != null);
     if (!points.length) return null;
+    const middle = (values: number[]) => {
+      const sorted = [...values].sort((a, b) => a - b);
+      return sorted[Math.floor(sorted.length / 2)];
+    };
     return {
-      latitude: points.reduce((sum, c) => sum + (c.latitude as number), 0) / points.length,
-      longitude: points.reduce((sum, c) => sum + (c.longitude as number), 0) / points.length,
+      latitude: middle(points.map((c) => c.latitude as number)),
+      longitude: middle(points.map((c) => c.longitude as number)),
     };
   }, [visible]);
 
@@ -218,6 +229,7 @@ export default function JobMap() {
         selectedDomain={selected?.domain ?? null}
         onSelect={setSelected}
         centre={centre}
+        centreKey={activeCity}
       />
 
       <JobsHeader

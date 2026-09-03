@@ -36,10 +36,13 @@ type Props = {
   selectedDomain: string | null;
   onSelect: (company: HiringCompany | null) => void;
   centre: { latitude: number; longitude: number } | null;
+  /** Identity of the place `centre` describes. The camera moves when THIS
+   *  changes, never merely because the coordinates were recomputed. */
+  centreKey: string;
 };
 
 export const CityMap3D = forwardRef<CityMap3DHandle, Props>(function CityMap3D(
-  { companies, selectedDomain, onSelect, centre },
+  { companies, selectedDomain, onSelect, centre, centreKey },
   ref,
 ) {
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -74,7 +77,18 @@ export const CityMap3D = forwardRef<CityMap3DHandle, Props>(function CityMap3D(
 
     map.addControl(new maplibregl.NavigationControl({ visualizePitch: true }), 'bottom-right');
 
-    map.on('load', () => {
+    /**
+     * Applied on `styledata`, not `load`.
+     *
+     * `load` waits for the initial TILES as well as the style, so a slow or
+     * flaky tile server leaves it unfired indefinitely — and everything hung
+     * off it never happens: no 3D buildings, no sky, no markers. The layer
+     * only actually needs the style, which arrives much earlier and on its
+     * own event.
+     */
+    const applyStyle = () => {
+      if (!map.isStyleLoaded()) return false;
+      if (map.getLayer('osm-buildings-3d')) return true; // already applied
       readyRef.current = true;
 
       // Liberty ships its own building-3d layer, but only from z14 with flat
@@ -172,11 +186,39 @@ export const CityMap3D = forwardRef<CityMap3DHandle, Props>(function CityMap3D(
       }
 
       map.setLight({ anchor: 'viewport', color: '#ffffff', intensity: 0.42, position: [1.4, 200, 40] });
-    });
+      return true;
+    };
+
+    /**
+     * Keep trying until it takes.
+     *
+     * A single `styledata` listener is not enough: the event can fire while
+     * isStyleLoaded() is still false and then never fire again, leaving the
+     * custom layer unapplied and Liberty's flat default rendering in its
+     * place. Several signals plus a slow interval backstop mean no single
+     * missed event loses the layer.
+     */
+    let applyTimer: ReturnType<typeof setInterval> | undefined;
+    const stopApplying = () => {
+      if (applyTimer) clearInterval(applyTimer);
+      applyTimer = undefined;
+      map.off('styledata', tryApply);
+      map.off('idle', tryApply);
+    };
+    function tryApply() {
+      if (applyStyle()) stopApplying();
+    }
+
+    if (!applyStyle()) {
+      map.on('styledata', tryApply);
+      map.on('idle', tryApply);
+      applyTimer = setInterval(tryApply, 400);
+    }
 
     // Captured now: the ref may point elsewhere by the time cleanup runs.
     const markers = markersRef.current;
     return () => {
+      stopApplying();
       readyRef.current = false;
       markers.forEach((entry) => entry.marker.remove());
       markers.clear();
@@ -330,8 +372,10 @@ export const CityMap3D = forwardRef<CityMap3DHandle, Props>(function CityMap3D(
       relayout();
     };
 
-    if (readyRef.current) paint();
-    else map.once('load', paint);
+    // Painted immediately. Markers are DOM overlays, not style layers, so they
+    // never needed the map to finish loading — gating them behind it meant a
+    // slow tile server showed an empty map with no companies on it.
+    paint();
   }, [companies, selectedDomain, buildMarkerElement, relayout]);
 
   // What overlaps changes with every pan and zoom, so re-pack on camera move.
@@ -348,9 +392,24 @@ export const CityMap3D = forwardRef<CityMap3DHandle, Props>(function CityMap3D(
   }, [relayout]);
 
   // ---- camera ----------------------------------------------------------
+  /**
+   * Fly only when the place changes, not when its coordinates do.
+   *
+   * `centre` is recomputed from the company list, and precise geocoding
+   * resolves companies in batches — so every batch produced a slightly
+   * different centre and another flyTo, yanking the camera around while the
+   * data settled and dragging the viewer off any company they had just
+   * searched for. Keying on the place makes the camera follow intent instead.
+   */
+  const flownTo = useRef<string | null>(null);
   useEffect(() => {
     const map = mapRef.current;
-    if (!map || !centre) return;
+    // No centre yet means the city's data has not arrived; stay put and let a
+    // later render fly, rather than recording this place as already visited.
+    if (!map || !centre || !centreKey) return;
+    if (flownTo.current === centreKey) return;
+    flownTo.current = centreKey;
+
     map.flyTo({
       center: [centre.longitude, centre.latitude],
       zoom: CITY_ZOOM,
@@ -359,13 +418,20 @@ export const CityMap3D = forwardRef<CityMap3DHandle, Props>(function CityMap3D(
       duration: 1600,
       essential: true,
     });
-  }, [centre]);
+  }, [centre, centreKey]);
 
   useImperativeHandle(ref, () => ({
     focusCompany: (domain: string) => {
       const map = mapRef.current;
       const company = companies.find((entry) => entry.domain === domain);
       if (!map || !company || company.latitude == null || company.longitude == null) return;
+
+      // Searching a company in another city switches the city too, which would
+      // otherwise queue a second flyTo to that city's centre and fight this
+      // one. Claiming the place here means the city move is skipped and the
+      // camera goes where the viewer actually asked.
+      if (company.city) flownTo.current = company.city;
+
       map.flyTo({
         center: [company.longitude, company.latitude],
         zoom: FOCUS_ZOOM,
