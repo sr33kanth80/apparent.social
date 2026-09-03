@@ -1,10 +1,10 @@
 // Jobs Map search — the only writer of public.companies.
 //
-// Cache-first by design: a search reads the companies table and only calls
-// Orthogonal when the local corpus can't answer (no fresh rows for the query).
-// Results are upserted, so the map self-populates: the next visitor who browses
-// that area gets the same pins for free. Orthogonal spend therefore scales with
-// novel discovery, not with traffic.
+// The companies/company_jobs tables are a READ-THROUGH CACHE, not a corpus.
+// Every result originates live from Orthogonal; storing it only stops the same
+// place being re-billed within the cache window (JOBS_CACHE_TTL_MINUTES, 30 by
+// default). Past that, the next look at an area refetches it. Spend therefore
+// scales with distinct places and time, not with traffic.
 //
 // Request:  POST { query?, city? }  -- search, or discovery for a named place
 //
@@ -16,7 +16,6 @@
 //      JOBS_MAX_SPEND_CENTS (per-request cap, default 25).
 
 import { createOrthogonalSession, orthogonalData, OrthogonalError } from './agent/orthogonal.js';
-import { geocodePlace, reverseGeocode, geocodeEndpointsInUse, geocodeCandidates, lastReverseShape } from './geocode.js';
 
 const SUPABASE_URL = (process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || '').replace(/\/$/, '');
 const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
@@ -727,15 +726,6 @@ export default async function jobsSearchHandler(req, res, { geocode }) {
   if (!limit.ok) {
     res.setHeader('Retry-After', String(limit.retryAfter));
     return res.status(429).json({ ok: false, error: 'rate_limited', retryAfter: limit.retryAfter });
-  }
-
-  // TEMPORARY: proves the live geocoder against the real catalog before the
-  // hand-written coordinate table is removed. Deleted once verified.
-  if (body?.probe === 'geocode') {
-    const forward = body?.place ? await geocodePlace(body.place) : null;
-    const reverse =
-      body?.lat != null && body?.lng != null ? await reverseGeocode(body.lat, body.lng) : null;
-    return res.status(200).json({ ok: true, forward, reverse, endpoints: geocodeEndpointsInUse(), candidates: geocodeCandidates(), reverseShape: lastReverseShape() });
   }
 
   // Heal rows the geocoder can place now but could not when they were written.

@@ -151,7 +151,6 @@ const discoverEndpoint = async (session, wantReverse, budgetCents) => {
   const found = await session.search(prompt, 6);
   const terms = wantReverse ? REVERSE_TERMS : FORWARD_TERMS;
   const priced = [];
-  const seenEndpoints = [];
 
   for (const entry of extractItems(found).slice(0, 3)) {
     const api = clean(entry?.slug ?? entry?.api ?? entry?.provider, 80).toLowerCase();
@@ -162,7 +161,6 @@ const discoverEndpoint = async (session, wantReverse, budgetCents) => {
       if (!api || !path.startsWith('/') || path.includes('{')) continue;
 
       const haystack = `${path} ${clean(endpoint?.description, 300)}`.toLowerCase();
-      seenEndpoints.push({ api, path });
 
       try {
         const details = await session.details({ api, path });
@@ -200,23 +198,10 @@ const discoverEndpoint = async (session, wantReverse, budgetCents) => {
   }
 
   priced.sort((a, b) => b.score - a.score || a.priceCents - b.priceCents);
-  lastCandidates[wantReverse ? 'reverse' : 'forward'] = { scored: priced.slice(0, 10), seen: seenEndpoints.slice(0, 20) };
   return priced[0] || null;
 };
 
-/** Diagnostics: what discovery actually had to choose between. */
-const lastCandidates = { forward: [], reverse: [] };
-export const geocodeCandidates = () => lastCandidates;
 
-/** Diagnostics: keys of the last reverse payload, to find the place-name field. */
-export const lastReverseShape = () => lastShape;
-let lastShape = null;
-export const recordReverseShape = (items) => {
-  lastShape = items.slice(0, 2).map((raw) => {
-    const item = raw?.attributes && typeof raw.attributes === 'object' ? { ...raw, ...raw.attributes } : raw;
-    return Object.keys(item || {}).slice(0, 25);
-  });
-};
 
 /** Map our intent onto whatever parameter names the endpoint declares. */
 const buildParams = (endpoint, { place, latitude, longitude }) => {
@@ -331,9 +316,7 @@ export const reverseGeocode = async (latitude, longitude, options = {}) => {
     }
 
     const result = await runEndpoint(session, endpoint, params);
-    const items = extractItems(result);
-    recordReverseShape(items);
-    for (const item of items) {
+    for (const item of extractItems(result)) {
       const name = readPlaceName(item);
       if (name) return rememberPlace(key, { name, latitude: lat, longitude: lng });
     }
