@@ -145,6 +145,7 @@ const discoverEndpoint = async (session, wantReverse, budgetCents) => {
   const found = await session.search(prompt, 10);
   const terms = wantReverse ? REVERSE_TERMS : FORWARD_TERMS;
   const priced = [];
+  const seenEndpoints = [];
 
   for (const entry of extractItems(found).slice(0, 5)) {
     const api = clean(entry?.slug ?? entry?.api ?? entry?.provider, 80).toLowerCase();
@@ -155,6 +156,7 @@ const discoverEndpoint = async (session, wantReverse, budgetCents) => {
       if (!api || !path.startsWith('/') || path.includes('{')) continue;
 
       const haystack = `${path} ${clean(endpoint?.description, 300)}`.toLowerCase();
+      seenEndpoints.push({ api, path, excluded: NON_GEO_TERMS.find((t) => haystack.includes(t)) || null });
       if (NON_GEO_TERMS.some((term) => haystack.includes(term))) continue;
 
       try {
@@ -193,8 +195,13 @@ const discoverEndpoint = async (session, wantReverse, budgetCents) => {
   }
 
   priced.sort((a, b) => b.score - a.score || a.priceCents - b.priceCents);
+  lastCandidates[wantReverse ? 'reverse' : 'forward'] = { scored: priced.slice(0, 10), seen: seenEndpoints.slice(0, 20) };
   return priced[0] || null;
 };
+
+/** Diagnostics: what discovery actually had to choose between. */
+const lastCandidates = { forward: [], reverse: [] };
+export const geocodeCandidates = () => lastCandidates;
 
 /** Map our intent onto whatever parameter names the endpoint declares. */
 const buildParams = (endpoint, { place, latitude, longitude }) => {

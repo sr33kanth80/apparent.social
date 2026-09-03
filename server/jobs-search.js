@@ -14,7 +14,7 @@
 //      JOBS_MAX_SPEND_CENTS (per-request cap, default 25).
 
 import { createOrthogonalSession, orthogonalData, OrthogonalError } from './agent/orthogonal.js';
-import { geocodePlace, reverseGeocode, geocodeEndpointsInUse } from './geocode.js';
+import { geocodePlace, reverseGeocode, geocodeEndpointsInUse, geocodeCandidates } from './geocode.js';
 
 const SUPABASE_URL = (process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || '').replace(/\/$/, '');
 const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
@@ -704,7 +704,7 @@ export default async function jobsSearchHandler(req, res, { geocode, nearestCity
     const forward = body?.place ? await geocodePlace(body.place) : null;
     const reverse =
       body?.lat != null && body?.lng != null ? await reverseGeocode(body.lat, body.lng) : null;
-    return res.status(200).json({ ok: true, forward, reverse, endpoints: geocodeEndpointsInUse() });
+    return res.status(200).json({ ok: true, forward, reverse, endpoints: geocodeEndpointsInUse(), candidates: geocodeCandidates() });
   }
 
   // Heal rows the geocoder can place now but could not when they were written.
