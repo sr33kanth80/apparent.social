@@ -482,7 +482,9 @@ test('fetching one company\'s roles targets that company and stores them', async
           // The provider's website field routinely differs from the domain we
           // store; these must still be recognised as Wonder by name.
           { jobId: 'r1', companyName: 'Wonder', companyWebsite: 'wonder-careers.io', city: 'Boston', title: 'Chef', jobUrl: 'https://j/1' },
-          { jobId: 'r2', companyName: 'Wonder', companyWebsite: 'wonder-careers.io', city: 'Boston', title: 'Driver', jobUrl: 'https://j/2' },
+          // Providers send HTML-escaped text; it is rendered as text, so it
+          // must be decoded rather than shown raw.
+          { jobId: 'r2', companyName: 'Wonder', companyWebsite: 'wonder-careers.io', city: 'Boston', title: 'Ops &amp; Logistics', jobUrl: 'https://j/2' },
           // A neighbour the endpoint threw in; must not be stored under Wonder.
           { jobId: 'r3', companyName: 'Other', companyWebsite: 'other.com', city: 'Boston', title: 'Analyst', jobUrl: 'https://j/3' },
         ],
@@ -509,7 +511,7 @@ test('fetching one company\'s roles targets that company and stores them', async
   // domain so the foreign key resolves — and the neighbour is still excluded.
   assert.equal(jobRows.length, 2);
   assert.ok(jobRows.every((j) => j.company_domain === 'wonder.com'));
-  assert.deepEqual(jobRows.map((j) => j.title).sort(), ['Chef', 'Driver']);
+  assert.deepEqual(jobRows.map((j) => j.title).sort(), ['Chef', 'Ops & Logistics']);
 });
 
 test('a roles request without a domain is refused', async () => {

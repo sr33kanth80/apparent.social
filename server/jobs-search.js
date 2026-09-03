@@ -78,7 +78,29 @@ const fixMojibake = (value) => {
   }
 };
 
-const clean = (v, max = 300) => fixMojibake(str(v)).replace(/\s+/g, ' ').trim().slice(0, max);
+/**
+ * Provider text arrives HTML-escaped: a role called "Deployment & Applications
+ * Engineer" came through as "Deployment &amp; Applications Engineer". These
+ * strings are rendered as text, never as markup, so decoding them is display
+ * correctness rather than a way to smuggle HTML in.
+ */
+const decodeEntities = (value) => {
+  if (!value.includes('&')) return value;
+  return value
+    .replace(/&(?:amp|AMP);/g, '&')
+    .replace(/&(?:lt|LT);/g, '<')
+    .replace(/&(?:gt|GT);/g, '>')
+    .replace(/&(?:quot|QUOT);/g, '"')
+    .replace(/&(?:apos|#0?39);/g, "'")
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&#(\d{1,6});/g, (_, code) => {
+      const point = Number(code);
+      return point > 0 && point < 0x110000 ? String.fromCodePoint(point) : '';
+    });
+};
+
+const clean = (v, max = 300) =>
+  decodeEntities(fixMojibake(str(v))).replace(/\s+/g, ' ').trim().slice(0, max);
 
 const serviceHeaders = () => ({
   apikey: SERVICE_KEY,
@@ -1028,9 +1050,9 @@ export default async function jobsSearchHandler(req, res, { geocode }) {
       name: clean(body.roles.name, 200),
       city: clean(body.roles.city, 120),
     });
-    // TEMPORARY: trace returned unconditionally while this path is diagnosed.
-    // Gated behind JOBS_DEBUG once it works.
-    return res.status(200).json({ ok: true, stored: result.stored, trace: result.trace });
+    return res.status(200).json(
+      withDebug({ ok: true, stored: result.stored }, { trace: result.trace }),
+    );
   }
 
   if (Array.isArray(body?.resolve)) {
