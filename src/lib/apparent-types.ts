@@ -688,6 +688,8 @@ export interface HiringCompany {
   openRoles: number;
   /** When this row was last refreshed from Orthogonal; drives cache staleness. */
   lastEnrichedAt?: string | null;
+  /** 'exact' once resolved to a real office; 'city' means a centroid. */
+  geoPrecision?: 'city' | 'exact';
 }
 
 /** One open role at a company on the Jobs Map. */

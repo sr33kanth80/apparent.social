@@ -21,6 +21,7 @@ type CompanyRow = {
   longitude: number | null;
   open_roles: number | null;
   last_enriched_at?: string | null;
+  geo_precision?: string | null;
 };
 
 const fromRow = (row: CompanyRow): HiringCompany => ({
@@ -34,22 +35,46 @@ const fromRow = (row: CompanyRow): HiringCompany => ({
   longitude: row.longitude,
   openRoles: Number(row.open_roles ?? 0),
   lastEnrichedAt: row.last_enriched_at ?? null,
+  geoPrecision: row.geo_precision === 'exact' ? 'exact' : 'city',
 });
 
-const SELECT_COLUMNS =
+/**
+ * Columns every deployment is guaranteed to have.
+ *
+ * geo_precision arrives with a later migration, and selecting a column that
+ * does not exist yet makes PostgREST reject the whole query — which would
+ * empty the map until the migration ran. It is requested separately and
+ * dropped if the database has not caught up.
+ */
+const BASE_COLUMNS =
   'canonical_domain,name,website,careers_url,one_liner,city,latitude,longitude,open_roles,last_enriched_at';
+const OPTIONAL_COLUMNS = 'geo_precision';
+
+/** Run a select with the optional columns, retrying without them on failure. */
+const selectWithFallback = async (
+  build: (columns: string) => PromiseLike<{ data: unknown; error: unknown }>,
+): Promise<CompanyRow[]> => {
+  const withOptional = await build(`${BASE_COLUMNS},${OPTIONAL_COLUMNS}`);
+  if (!withOptional.error && withOptional.data) return withOptional.data as CompanyRow[];
+
+  const base = await build(BASE_COLUMNS);
+  if (!base.error && base.data) return base.data as CompanyRow[];
+  return [];
+};
 
 /** Everything already discovered — the free path that paints the map on load. */
 export const browseCompanies = async (limit = 500): Promise<HiringCompany[]> => {
-  if (!supabase) return [];
-  const { data, error } = await supabase
-    .from('companies')
-    .select(SELECT_COLUMNS)
-    .eq('is_hiring', true)
-    .order('open_roles', { ascending: false })
-    .limit(limit);
-  if (error || !data) return [];
-  return (data as CompanyRow[]).map(fromRow);
+  const client = supabase;
+  if (!client) return [];
+  const rows = await selectWithFallback((columns) =>
+    client
+      .from('companies')
+      .select(columns)
+      .eq('is_hiring', true)
+      .order('open_roles', { ascending: false })
+      .limit(limit),
+  );
+  return rows.map(fromRow);
 };
 
 export type MapBounds = { west: number; south: number; east: number; north: number };
@@ -68,19 +93,21 @@ export const browseCompaniesInBounds = async (
   bounds: MapBounds,
   limit = 300,
 ): Promise<HiringCompany[]> => {
-  if (!supabase) return [];
-  const { data, error } = await supabase
-    .from('companies')
-    .select(SELECT_COLUMNS)
-    .eq('is_hiring', true)
-    .gte('latitude', bounds.south)
-    .lte('latitude', bounds.north)
-    .gte('longitude', bounds.west)
-    .lte('longitude', bounds.east)
-    .order('open_roles', { ascending: false })
-    .limit(limit);
-  if (error || !data) return [];
-  return (data as CompanyRow[]).map(fromRow);
+  const client = supabase;
+  if (!client) return [];
+  const rows = await selectWithFallback((columns) =>
+    client
+      .from('companies')
+      .select(columns)
+      .eq('is_hiring', true)
+      .gte('latitude', bounds.south)
+      .lte('latitude', bounds.north)
+      .gte('longitude', bounds.west)
+      .lte('longitude', bounds.east)
+      .order('open_roles', { ascending: false })
+      .limit(limit),
+  );
+  return rows.map(fromRow);
 };
 
 export type JobsSearchResult = {
@@ -213,4 +240,27 @@ export const submitProblemReport = async (report: {
     .from('problem_reports')
     .insert({ details: report.details, email: report.email });
   return !error;
+};
+
+/**
+ * Ask the server to resolve companies to their real office coordinates.
+ *
+ * Each is a paid geocode, so the map requests only what it is showing; the
+ * server stores the answer, making it a one-time cost per company.
+ */
+export const resolvePreciseLocations = async (
+  entries: Array<{ domain: string; name: string; city: string }>,
+): Promise<Array<{ domain: string; latitude: number; longitude: number }>> => {
+  if (!entries.length) return [];
+  try {
+    const res = await fetch('/api/jobs', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ resolve: entries }),
+    });
+    const data = await res.json().catch(() => null);
+    return Array.isArray(data?.located) ? data.located : [];
+  } catch {
+    return [];
+  }
 };

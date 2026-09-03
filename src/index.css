@@ -2924,3 +2924,70 @@ a.rounded-full:hover {
     @apply hidden!;
   }
 }
+
+/* ---------- Jobs map markers (3D OSM city) ---------- */
+/* Markers are DOM, not canvas, so they stay crisp and clickable over a
+   pitched WebGL scene. */
+.jobs-marker {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  cursor: pointer;
+  border: 0;
+  background: none;
+  padding: 0;
+  transform-origin: bottom center;
+  transition: transform 140ms ease;
+}
+.jobs-marker:hover { transform: translateY(-2px) scale(1.04); z-index: 5; }
+
+.jobs-marker-body {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 190px;
+  padding: 4px 8px;
+  border: 1px solid rgb(0 0 0 / 10%);
+  border-radius: 7px;
+  background: rgb(255 255 255 / 96%);
+  box-shadow: 0 4px 14px rgb(0 0 0 / 18%);
+  font: 500 11.5px/1.25 ui-sans-serif, system-ui, sans-serif;
+  color: #1c1a17;
+  white-space: nowrap;
+}
+.jobs-marker-name { overflow: hidden; text-overflow: ellipsis; }
+
+.jobs-marker-count {
+  flex: none;
+  padding: 1px 5px;
+  border-radius: 999px;
+  background: #1d9bf0;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 600;
+}
+
+/* The stem is what visually plants a marker on its building. */
+.jobs-marker-stem {
+  width: 1px;
+  height: 14px;
+  background: linear-gradient(to bottom, rgb(0 0 0 / 32%), rgb(0 0 0 / 6%));
+}
+
+.jobs-marker[data-selected='true'] { z-index: 10; }
+.jobs-marker[data-selected='true'] .jobs-marker-body {
+  border-color: #1d9bf0;
+  background: #1d9bf0;
+  color: #fff;
+  box-shadow: 0 6px 20px rgb(29 155 240 / 45%);
+}
+.jobs-marker[data-selected='true'] .jobs-marker-count {
+  background: rgb(255 255 255 / 25%);
+}
+
+/* Approximate placement: a marker on a city centroid must not look as certain
+   as one resolved to a real address. */
+.jobs-marker[data-approx='true'] .jobs-marker-body {
+  border-style: dashed;
+  opacity: 0.9;
+}

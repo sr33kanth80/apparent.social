@@ -1,19 +1,19 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { browseCompanies, discoverArea } from '@/lib/jobs-service';
+import { browseCompanies, discoverArea, resolvePreciseLocations } from '@/lib/jobs-service';
 import type { HiringCompany } from '@/lib/apparent-types';
-import { IsoMap, type IsoMapHandle } from '@/components/jobs/IsoMap';
+import { CityMap3D, type CityMap3DHandle } from '@/components/jobs/CityMap3D';
 import { CompanyPanel } from '@/components/jobs/CompanyPanel';
 import { CommandPalette } from '@/components/jobs/CommandPalette';
 import { JobsHeader } from '@/components/jobs/JobsHeader';
 import { AddCompanyModal, ReportProblemModal } from '@/components/jobs/SubmissionModals';
 
 /**
- * Jobs Map — a stylised isometric city of companies that are hiring.
+ * Jobs Map — a real 3D city of companies that are hiring.
  *
- * Buildings are grid plots, not real geography: the data resolves a company to
- * a CITY, and pretending to know its exact building would be a lie the map
- * tells confidently. Storey count is real, though — it comes from how many
- * roles are open, so the skyline is the data.
+ * Buildings are genuine OpenStreetMap footprints extruded to their tagged
+ * heights, and companies are placed on the actual office the geocoder resolves
+ * for them. Markers that could not be resolved fall back to the city centroid
+ * and are drawn as approximate, so the map never claims a precision it lacks.
  *
  * Everything shown originates live from Orthogonal; the table behind it is a
  * read-through cache, not a corpus.
@@ -41,7 +41,7 @@ export default function JobMap() {
   const [searchOpen, setSearchOpen] = useState(false);
   const [addOpen, setAddOpen] = useState(false);
   const [reportOpen, setReportOpen] = useState(false);
-  const mapRef = useRef<IsoMapHandle | null>(null);
+  const mapRef = useRef<CityMap3DHandle | null>(null);
   // Cities already refreshed this session, so switching back and forth does not
   // re-bill the same place.
   const refreshed = useRef<Set<string>>(new Set());
@@ -104,6 +104,59 @@ export default function JobMap() {
     [all, activeCity],
   );
 
+  /** Where to point the camera: the middle of whatever is on screen. */
+  const centre = useMemo(() => {
+    const points = visible.filter((c) => c.latitude != null && c.longitude != null);
+    if (!points.length) return null;
+    return {
+      latitude: points.reduce((sum, c) => sum + (c.latitude as number), 0) / points.length,
+      longitude: points.reduce((sum, c) => sum + (c.longitude as number), 0) / points.length,
+    };
+  }, [visible]);
+
+  /**
+   * Pull the visible companies onto their real buildings.
+   *
+   * Batched and capped because each is a paid geocode, and only ever requested
+   * for companies still sitting on a city centroid — the server stores the
+   * result, so a company is resolved once and never again.
+   */
+  const resolving = useRef<Set<string>>(new Set());
+  useEffect(() => {
+    const pending = visible
+      .filter((c) => c.geoPrecision !== 'exact' && !resolving.current.has(c.domain))
+      .slice(0, 12);
+    if (!pending.length) return;
+
+    pending.forEach((c) => resolving.current.add(c.domain));
+    let mounted = true;
+    resolvePreciseLocations(
+      pending.map((c) => ({ domain: c.domain, name: c.name, city: c.city })),
+    )
+      .then((located) => {
+        if (!mounted || !located.length) return;
+        setCompanies((prev) => {
+          const next = { ...prev };
+          for (const hit of located) {
+            const row = next[hit.domain];
+            if (row) {
+              next[hit.domain] = {
+                ...row,
+                latitude: hit.latitude,
+                longitude: hit.longitude,
+                geoPrecision: 'exact',
+              };
+            }
+          }
+          return next;
+        });
+      })
+      .catch(() => undefined);
+    return () => {
+      mounted = false;
+    };
+  }, [visible]);
+
   /** Read-through: opening a city refreshes it when what we hold has gone stale. */
   useEffect(() => {
     if (!activeCity || refreshed.current.has(activeCity)) return;
@@ -158,12 +211,13 @@ export default function JobMap() {
   );
 
   return (
-    <div className="relative flex-1 overflow-hidden bg-[#f4efe9]">
-      <IsoMap
+    <div className="relative flex-1 overflow-hidden bg-[#e9e3d9]">
+      <CityMap3D
         ref={mapRef}
         companies={visible}
         selectedDomain={selected?.domain ?? null}
         onSelect={setSelected}
+        centre={centre}
       />
 
       <JobsHeader
@@ -185,7 +239,7 @@ export default function JobMap() {
             (visible.length
               ? `${visible.length} ${visible.length === 1 ? 'company' : 'companies'} hiring${
                   activeCity ? ` in ${activeCity}` : ''
-                } · drag to pan, scroll to zoom, double-click to enter`
+                } · drag to pan, right-drag to orbit, scroll to zoom`
               : 'Pick a city to start')}
         </p>
       </div>
