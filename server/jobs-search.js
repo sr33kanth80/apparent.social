@@ -6,8 +6,9 @@
 // that area gets the same pins for free. Orthogonal spend therefore scales with
 // novel discovery, not with traffic.
 //
-// Request:  POST { query: string, city?: string }
-// Response: { ok, companies: [...], source: 'cache' | 'orthogonal' }
+// Request:  POST { query?, city? }            -- explicit search
+//           POST { lat, lng }                 -- discovery while exploring the map
+// Response: { ok, companies: [...], source: 'cache' | 'orthogonal', resolvedCity? }
 //
 // Env: SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY (writes), ORTHOGONAL_API_KEY,
 //      JOBS_MAX_SPEND_CENTS (per-request cap, default 25).
@@ -582,7 +583,7 @@ const toClient = (row) => ({
   openRoles: Number(row.open_roles ?? row.openRoles ?? 0),
 });
 
-export default async function jobsSearchHandler(req, res, { geocode }) {
+export default async function jobsSearchHandler(req, res, { geocode, nearestCity }) {
   res.setHeader('Cache-Control', 'no-store');
 
   if (req.method !== 'POST') {
@@ -592,7 +593,23 @@ export default async function jobsSearchHandler(req, res, { geocode }) {
 
   const body = await readJsonBody(req);
   const query = clean(body?.query, MAX_QUERY_CHARS);
-  const city = clean(body?.city, 120);
+  let city = clean(body?.city, 120);
+
+  // Exploring the map sends a coordinate rather than a place name. Resolve it to
+  // a known city, or refuse: the endpoints filter by city name, and without a
+  // nearby match there is nothing meaningful to ask for. Refusing here is what
+  // stops a pan over open ocean from spending anything.
+  let resolvedCity = '';
+  if (!city && body?.lat != null && body?.lng != null) {
+    const near = typeof nearestCity === 'function' ? nearestCity(body.lat, body.lng) : null;
+    if (!near) {
+      return res.status(200).json({ ok: true, source: 'cache', companies: [], degraded: 'no_city_nearby' });
+    }
+    // Stored city strings are capitalised, so match that when discovering.
+    city = near.name.replace(/\b[a-z]/g, (ch) => ch.toUpperCase());
+    resolvedCity = city;
+  }
+
   if (!query && !city) {
     return res.status(400).json({ ok: false, error: 'query_required' });
   }
@@ -611,7 +628,7 @@ export default async function jobsSearchHandler(req, res, { geocode }) {
   const cached = await selectCompanies(query, city);
   const fresh = cached.filter(isFresh);
   if (fresh.length) {
-    return res.status(200).json({ ok: true, source: 'cache', companies: fresh.map(toClient) });
+    return res.status(200).json({ ok: true, source: 'cache', companies: fresh.map(toClient), resolvedCity });
   }
 
   try {
@@ -646,7 +663,7 @@ export default async function jobsSearchHandler(req, res, { geocode }) {
     }
     await upsertCompanies(companies);
     return res.status(200).json(
-      withDebug({ ok: true, source: 'orthogonal', companies: companies.map(toClient) }, { used }),
+      withDebug({ ok: true, source: 'orthogonal', companies: companies.map(toClient), resolvedCity }, { used }),
     );
   } catch (error) {
     const status = error instanceof OrthogonalError ? error.status : 502;

@@ -1,7 +1,12 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ArrowUpRight, Briefcase, MapPin, Search, X } from 'lucide-react';
 import { Map, MapClusterLayer, useMap } from '@/components/ui/map';
-import { browseCompaniesInBounds, searchCompanies, type MapBounds } from '@/lib/jobs-service';
+import {
+  browseCompaniesInBounds,
+  discoverArea,
+  searchCompanies,
+  type MapBounds,
+} from '@/lib/jobs-service';
 import type { HiringCompany } from '@/lib/apparent-types';
 
 /**
@@ -13,8 +18,11 @@ import type { HiringCompany } from '@/lib/apparent-types';
  * Loading is viewport-driven, the way a property search behaves: panning or
  * zooming fetches what is actually in view rather than one fixed global page.
  * Those reads hit the companies table directly under public RLS, so moving the
- * map is free; only an explicit search can call Orthogonal and discover new
- * companies.
+ * map is free.
+ *
+ * Zooming into an area the corpus does not cover additionally triggers
+ * discovery, which CAN spend. See the guards below for what keeps that in
+ * check.
  */
 
 const BLUE = '#1d9bf0';
@@ -35,6 +43,19 @@ const OSM_3D_STYLE = 'https://tiles.openfreemap.org/styles/liberty';
 /** Buildings only exist from z14, so the camera tilts in to show them off. */
 const BUILDINGS_ZOOM = 14;
 const TILTED_PITCH = 55;
+
+/**
+ * Auto-discovery guards. Exploring the map can spend money, so it only fires
+ * when someone has zoomed to a specific place (not a continent), the area is
+ * genuinely empty rather than merely sparse, and that area has not already been
+ * tried this session. The server adds its own guards on top: it refuses when no
+ * known city is nearby, answers from cache when the area was discovered
+ * recently, and rate-limits per IP.
+ */
+const DISCOVER_MIN_ZOOM = 8;
+const DISCOVER_WHEN_FEWER_THAN = 4;
+/** Areas are deduped on a coarse grid so nudging the map is not a new area. */
+const DISCOVER_GRID = 0.5;
 
 type PlacedCompany = HiringCompany & { lat: number; lng: number };
 
@@ -191,6 +212,9 @@ export default function JobMap() {
   const [notice, setNotice] = useState('');
   // Viewports already fetched: panning back somewhere seen costs no query.
   const seenViews = useRef<Set<string>>(new Set());
+  // Areas already offered to discovery this session, on a coarse grid.
+  const triedAreas = useRef<Set<string>>(new Set());
+  const [discovering, setDiscovering] = useState('');
 
   const merge = useCallback((rows: HiringCompany[]) => {
     if (!rows.length) return;
@@ -226,6 +250,32 @@ export default function JobMap() {
       const rows = await browseCompaniesInBounds(bounds, zoom >= 6 ? 400 : 200);
       setLoadingView(false);
       merge(rows);
+
+      // Nothing here yet and the user has zoomed somewhere specific: go find out
+      // who is hiring. Deliberately gated -- this is the one path where moving
+      // the map can cost money.
+      if (zoom < DISCOVER_MIN_ZOOM || rows.length >= DISCOVER_WHEN_FEWER_THAN) return;
+
+      const lat = (bounds.north + bounds.south) / 2;
+      const lng = (bounds.east + bounds.west) / 2;
+      const areaKey = `${Math.round(lat / DISCOVER_GRID)},${Math.round(lng / DISCOVER_GRID)}`;
+      if (triedAreas.current.has(areaKey)) return;
+      triedAreas.current.add(areaKey);
+
+      setDiscovering('Looking for companies hiring here…');
+      const found = await discoverArea(lat, lng);
+      setDiscovering('');
+
+      if (found.companies.length) {
+        merge(found.companies);
+        setNotice(
+          found.resolvedCity
+            ? `Found ${found.companies.length} hiring in ${found.resolvedCity}.`
+            : `Found ${found.companies.length} hiring here.`,
+        );
+      } else if (!found.error) {
+        setNotice('Nothing hiring found in this area yet.');
+      }
     },
     [merge],
   );
@@ -321,7 +371,8 @@ export default function JobMap() {
         </div>
 
         <p className="mt-2 bg-[#fdf9f7]/90 px-2 py-1 text-xs text-black/55 backdrop-blur">
-          {notice ||
+          {discovering ||
+            notice ||
             (loadingView
               ? 'Loading this area…'
               : placed.length > 0

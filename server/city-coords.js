@@ -490,4 +490,38 @@ export const geocodeCity = (value) => {
   return null;
 };
 
+/**
+ * Nearest known city to a coordinate, or null if nothing is close enough.
+ *
+ * Exploring the map gives coordinates, but the hiring endpoints filter by city
+ * NAME, so a viewport has to be resolved back to a city before it can be
+ * searched. The distance ceiling is the important part: without it, panning
+ * over an ocean would resolve to whatever landmass happened to be least far
+ * away and spend real money discovering it.
+ *
+ * A linear scan over a few hundred entries is nothing next to the network call
+ * it gates.
+ */
+export const nearestCity = (latitude, longitude, maxKm = 120) => {
+  const lat = Number(latitude);
+  const lng = Number(longitude);
+  if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null;
+
+  const toRad = (deg) => (deg * Math.PI) / 180;
+  const EARTH_KM = 6371;
+
+  let best = null;
+  for (const [name, [cityLat, cityLng]] of Object.entries(CITY_COORDS)) {
+    const dLat = toRad(cityLat - lat);
+    const dLng = toRad(cityLng - lng);
+    const a =
+      Math.sin(dLat / 2) ** 2 +
+      Math.cos(toRad(lat)) * Math.cos(toRad(cityLat)) * Math.sin(dLng / 2) ** 2;
+    const km = 2 * EARTH_KM * Math.asin(Math.min(1, Math.sqrt(a)));
+    if (!best || km < best.km) best = { name, km, latitude: cityLat, longitude: cityLng };
+  }
+
+  return best && best.km <= maxKm ? best : null;
+};
+
 export default geocodeCity;

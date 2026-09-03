@@ -5,8 +5,8 @@
 // under its own Orthogonal budget cap.
 
 import jobsSearchHandler from '../server/jobs-search.js';
-import { geocodeCity } from '../server/city-coords.js';
+import { geocodeCity, nearestCity } from '../server/city-coords.js';
 
 export default async function handler(req, res) {
-  return jobsSearchHandler(req, res, { geocode: geocodeCity });
+  return jobsSearchHandler(req, res, { geocode: geocodeCity, nearestCity });
 }

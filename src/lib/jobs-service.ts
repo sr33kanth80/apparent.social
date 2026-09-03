@@ -85,30 +85,50 @@ export type JobsSearchResult = {
   companies: HiringCompany[];
   /** 'cache' means the corpus answered it; 'orthogonal' means we discovered new rows. */
   source: 'cache' | 'orthogonal';
+  /** City an exploration resolved the viewport to, when it could name one. */
+  resolvedCity?: string;
   error?: string;
 };
 
-/** Explicit search — the only path that can spend. */
-export const searchCompanies = async (query: string, city = ''): Promise<JobsSearchResult> => {
+const postJobs = async (payload: Record<string, unknown>): Promise<JobsSearchResult> => {
   try {
     const res = await fetch('/api/jobs', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ query, city }),
+      body: JSON.stringify(payload),
     });
-    const payload = await res.json().catch(() => null);
+    const data = await res.json().catch(() => null);
 
-    if (!res.ok || !payload?.ok) {
-      const code = payload?.error === 'rate_limited'
-        ? 'Too many searches — give it a minute.'
-        : 'Search is unavailable right now.';
-      return { companies: [], source: 'cache', error: code };
+    if (!res.ok || !data?.ok) {
+      return {
+        companies: [],
+        source: 'cache',
+        error:
+          data?.error === 'rate_limited'
+            ? 'Too many searches - give it a minute.'
+            : 'Search is unavailable right now.',
+      };
     }
     return {
-      companies: Array.isArray(payload.companies) ? (payload.companies as HiringCompany[]) : [],
-      source: payload.source === 'orthogonal' ? 'orthogonal' : 'cache',
+      companies: Array.isArray(data.companies) ? (data.companies as HiringCompany[]) : [],
+      source: data.source === 'orthogonal' ? 'orthogonal' : 'cache',
+      resolvedCity: typeof data.resolvedCity === 'string' ? data.resolvedCity : '',
     };
   } catch {
     return { companies: [], source: 'cache', error: 'Search is unavailable right now.' };
   }
 };
+
+/**
+ * Discover whoever is hiring around a map coordinate.
+ *
+ * The server resolves the point to a nearby city and refuses if there is none,
+ * so panning over open water cannot trigger a paid lookup. It is still
+ * cache-first: an area discovered recently is answered from the table for free.
+ */
+export const discoverArea = async (latitude: number, longitude: number): Promise<JobsSearchResult> =>
+  postJobs({ lat: latitude, lng: longitude });
+
+/** Explicit text search. Like discovery, this can spend. */
+export const searchCompanies = async (query: string, city = ''): Promise<JobsSearchResult> =>
+  postJobs({ query, city });

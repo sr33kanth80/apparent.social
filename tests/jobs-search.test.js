@@ -12,7 +12,7 @@ process.env.SUPABASE_SERVICE_ROLE_KEY = 'service-key';
 process.env.ORTHOGONAL_API_KEY = 'test-key';
 
 const { default: jobsSearchHandler } = await import('../server/jobs-search.js');
-const { geocodeCity } = await import('../server/city-coords.js');
+const { geocodeCity, nearestCity } = await import('../server/city-coords.js');
 
 const makeRes = () => {
   const res = {
@@ -238,4 +238,63 @@ test('discovery pages through results and stops when a page is empty', async () 
   assert.equal(upserted.length, 4);
   assert.ok(upserted.some((r) => r.canonical_domain === 'a1.com'));
   assert.ok(upserted.some((r) => r.canonical_domain === 'b2.com'));
+});
+
+test('exploring open water resolves no city and never spends', async () => {
+  let orthogonalCalls = 0;
+  globalThis.fetch = async (url, options = {}) => {
+    const href = String(url);
+    const json = (v) => ({ ok: true, status: 200, text: async () => JSON.stringify(v), json: async () => v });
+    if (href.includes('/rpc/consume_agent_rate_limit')) return json([{ allowed: true }]);
+    if (href.includes('/rest/v1/companies')) return json([]);
+    if (href.includes('api.orthogonal.com')) { orthogonalCalls += 1; return json({}); }
+    throw new Error(`unexpected fetch: ${href}`);
+  };
+
+  const res = makeRes();
+  // Middle of the Atlantic.
+  await jobsSearchHandler(makeReq({ lat: 30, lng: -40 }), res, { geocode: geocodeCity, nearestCity });
+
+  assert.equal(res.statusCode, 200);
+  assert.equal(res.body.degraded, 'no_city_nearby');
+  assert.equal(res.body.companies.length, 0);
+  assert.equal(orthogonalCalls, 0, 'must not spend where there is no city');
+});
+
+test('exploring near a city resolves it and discovers there', async () => {
+  let sentCity = null;
+  let upserted = [];
+  globalThis.fetch = async (url, options = {}) => {
+    const href = String(url);
+    const json = (v) => ({ ok: true, status: 200, text: async () => JSON.stringify(v), json: async () => v });
+    if (href.includes('/rpc/consume_agent_rate_limit')) return json([{ allowed: true }]);
+    if (href.includes('/rest/v1/companies')) {
+      const method = options.method || 'GET';
+      if (method === 'POST') { upserted = JSON.parse(options.body); return json({}); }
+      if (method === 'PATCH') return json({});
+      return json([]);
+    }
+    if (href.endsWith('/v1/search')) {
+      return json({ results: [{ slug: 'signalbase', endpoints: [{ path: '/signals/hiring', method: 'GET' }] }] });
+    }
+    if (href.endsWith('/v1/details')) return json({ endpoint: { price: 0.02, parameters: ['limit', 'city'] } });
+    if (href.endsWith('/v1/run')) {
+      sentCity = JSON.parse(options.body).query.city;
+      return json({ priceCents: 2, results: [
+        { companyName: 'Wonder', companyWebsite: 'wonder.com', city: 'Boston', jobUrl: 'https://j.example/1' },
+      ] });
+    }
+    throw new Error(`unexpected fetch: ${href}`);
+  };
+
+  const res = makeRes();
+  // A point in Boston, sent as coordinates the way the map does it.
+  await jobsSearchHandler(makeReq({ lat: 42.36, lng: -71.06 }), res, { geocode: geocodeCity, nearestCity });
+
+  assert.equal(res.body.source, 'orthogonal');
+  // The coordinate must be reverse-geocoded into the city filter.
+  assert.equal(sentCity, 'Boston');
+  assert.equal(res.body.resolvedCity, 'Boston');
+  assert.equal(upserted.length, 1);
+  assert.equal(upserted[0].canonical_domain, 'wonder.com');
 });
