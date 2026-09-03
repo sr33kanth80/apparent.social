@@ -479,8 +479,10 @@ test('fetching one company\'s roles targets that company and stores them', async
       return json({
         priceCents: 2,
         results: [
-          { jobId: 'r1', companyName: 'Wonder', companyWebsite: 'wonder.com', city: 'Boston', title: 'Chef', jobUrl: 'https://j/1' },
-          { jobId: 'r2', companyName: 'Wonder', companyWebsite: 'wonder.com', city: 'Boston', title: 'Driver', jobUrl: 'https://j/2' },
+          // The provider's website field routinely differs from the domain we
+          // store; these must still be recognised as Wonder by name.
+          { jobId: 'r1', companyName: 'Wonder', companyWebsite: 'wonder-careers.io', city: 'Boston', title: 'Chef', jobUrl: 'https://j/1' },
+          { jobId: 'r2', companyName: 'Wonder', companyWebsite: 'wonder-careers.io', city: 'Boston', title: 'Driver', jobUrl: 'https://j/2' },
           // A neighbour the endpoint threw in; must not be stored under Wonder.
           { jobId: 'r3', companyName: 'Other', companyWebsite: 'other.com', city: 'Boston', title: 'Analyst', jobUrl: 'https://j/3' },
         ],
@@ -503,7 +505,8 @@ test('fetching one company\'s roles targets that company and stores them', async
   // match anyone who merely mentions the company.
   assert.equal(sentQuery.company_domain, 'wonder.com');
 
-  // Only this company's roles are written, not the neighbour's.
+  // Matched by name despite a different website, re-keyed to our canonical
+  // domain so the foreign key resolves — and the neighbour is still excluded.
   assert.equal(jobRows.length, 2);
   assert.ok(jobRows.every((j) => j.company_domain === 'wonder.com'));
   assert.deepEqual(jobRows.map((j) => j.title).sort(), ['Chef', 'Driver']);

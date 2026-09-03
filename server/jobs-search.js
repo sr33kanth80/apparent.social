@@ -878,13 +878,40 @@ const fetchCompanyRoles = async ({ domain, name, city }) => {
         query: isGet ? asQuery : {},
       });
 
-      const { jobs } = aggregateCompanies(extractItems(run), city);
-      // The endpoint may answer with neighbours too; keep only this company's.
-      const mine = jobs.filter((job) => job.company_domain === domain);
+      const { companies: found, jobs } = aggregateCompanies(extractItems(run), city);
+
+      /**
+       * Decide which of the returned companies is actually ours.
+       *
+       * Matching on domain alone threw away every role we had just paid for:
+       * the provider's website field routinely differs from the domain we
+       * store, so nothing matched. Matching on the NAME as well recovers those
+       * while still refusing rows for a genuinely different company, which a
+       * filtered feed can still include.
+       */
+      const wantedName = clean(name, 200).toLowerCase();
+      const mineDomains = new Set(
+        found
+          .filter(
+            (c) =>
+              c.canonical_domain === domain ||
+              (wantedName && c.name.toLowerCase() === wantedName),
+          )
+          .map((c) => c.canonical_domain),
+      );
+
+      // Re-keyed to OUR canonical domain so the foreign key resolves, whatever
+      // the provider called them.
+      const mine = jobs
+        .filter((job) => mineDomains.has(job.company_domain))
+        .map((job) => ({ ...job, company_domain: domain }));
+
       if (!mine.length) continue;
 
-      await upsertJobs(mine.slice(0, MAX_UPSERT_ROWS));
-      return mine.length;
+      // Same job_key can arrive twice once re-keyed; keep one row each.
+      const unique = [...new Map(mine.map((job) => [job.job_key, job])).values()];
+      await upsertJobs(unique.slice(0, MAX_UPSERT_ROWS));
+      return unique.length;
     } catch (error) {
       if (error instanceof OrthogonalError && BUDGET_STOP.has(error.code)) break;
     }
