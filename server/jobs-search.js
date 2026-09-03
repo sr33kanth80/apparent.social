@@ -6,8 +6,10 @@
 // that area gets the same pins for free. Orthogonal spend therefore scales with
 // novel discovery, not with traffic.
 //
-// Request:  POST { query?, city? }            -- explicit search
-//           POST { lat, lng }                 -- discovery while exploring the map
+// Request:  POST { query?, city? }  -- search, or discovery for a named place
+//
+// Coordinates are resolved live through Orthogonal's catalog; the city name a
+// request carries comes from the map's own OpenStreetMap labels.
 // Response: { ok, companies: [...], source: 'cache' | 'orthogonal', resolvedCity? }
 //
 // Env: SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY (writes), ORTHOGONAL_API_KEY,
@@ -224,7 +226,7 @@ const backfillMissingCoordinates = async (geocode) => {
     let healed = 0;
 
     for (const city of cities.slice(0, 15)) {
-      const coords = geocode(city);
+      const coords = await geocode(city);
       if (!coords) continue; // still unplaceable (a bare country, say)
       const patched = await fetch(
         `${SUPABASE_URL}/rest/v1/companies?latitude=is.null&city=eq.${encodeURIComponent(city)}`,
@@ -261,7 +263,7 @@ const backfillMissingCoordinates = async (geocode) => {
  * Field names are read defensively: the catalog routes to different providers
  * and no response shape is contractual. JSON:API envelopes are flattened first.
  */
-const aggregateCompanies = (items, fallbackCity, geocode) => {
+const aggregateCompanies = (items, fallbackCity) => {
   const byDomain = {};
   const jobs = [];
 
@@ -322,16 +324,10 @@ const aggregateCompanies = (items, fallbackCity, geocode) => {
       existing.open_roles += stated || 1;
       if (!existing.careers_url && careersUrl) existing.careers_url = careersUrl;
       if (!existing.one_liner && oneLiner) existing.one_liner = oneLiner;
-      if (!existing.city && city) {
-        existing.city = city;
-        const coords = geocode(city);
-        existing.latitude = coords?.latitude ?? null;
-        existing.longitude = coords?.longitude ?? null;
-      }
+      if (!existing.city && city) existing.city = city;
       continue;
     }
 
-    const coords = geocode(city);
     byDomain[domain] = {
       canonical_domain: domain,
       name,
@@ -339,8 +335,8 @@ const aggregateCompanies = (items, fallbackCity, geocode) => {
       careers_url: careersUrl,
       one_liner: oneLiner,
       city,
-      latitude: coords?.latitude ?? null,
-      longitude: coords?.longitude ?? null,
+      latitude: null,
+      longitude: null,
       open_roles: stated || 1,
       is_hiring: true,
       source: 'orthogonal',
@@ -376,6 +372,35 @@ const aggregateCompanies = (items, fallbackCity, geocode) => {
   );
 
   return { companies: Object.values(byDomain), jobs: uniqueJobs };
+};
+
+/**
+ * Fill in coordinates for aggregated rows.
+ *
+ * Geocoding is a paid live lookup now rather than a table read, so it runs once
+ * per DISTINCT city rather than once per company — a city search typically
+ * yields a handful of distinct place strings across dozens of companies. Rows
+ * whose city cannot be resolved keep null coordinates: still listed, just not
+ * pinned.
+ */
+const attachCoordinates = async (rows, geocode) => {
+  const cities = [...new Set(rows.map((row) => row.city).filter(Boolean))];
+  const resolved = new Map();
+
+  for (const city of cities) {
+    try {
+      resolved.set(city, await geocode(city));
+    } catch {
+      resolved.set(city, null);
+    }
+  }
+
+  for (const row of rows) {
+    const coords = resolved.get(row.city);
+    row.latitude = coords?.latitude ?? null;
+    row.longitude = coords?.longitude ?? null;
+  }
+  return rows;
 };
 
 const extractItems = (payload) => {
@@ -574,8 +599,8 @@ const discoverAndRun = async (query, city, geocode) => {
         }
       }
 
-      const aggregated = aggregateCompanies(items, city, geocode);
-      const mapped = aggregated.companies.slice(0, MAX_UPSERT_ROWS);
+      const aggregated = aggregateCompanies(items, city);
+      const mapped = await attachCoordinates(aggregated.companies.slice(0, MAX_UPSERT_ROWS), geocode);
       // Only keep roles whose company survived the cap, so the foreign key
       // always has a parent.
       const keptDomains = new Set(mapped.map((row) => row.canonical_domain));
@@ -661,7 +686,7 @@ const toClient = (row) => ({
   openRoles: Number(row.open_roles ?? row.openRoles ?? 0),
 });
 
-export default async function jobsSearchHandler(req, res, { geocode, nearestCity }) {
+export default async function jobsSearchHandler(req, res, { geocode }) {
   res.setHeader('Cache-Control', 'no-store');
 
   if (req.method !== 'POST') {
@@ -671,22 +696,12 @@ export default async function jobsSearchHandler(req, res, { geocode, nearestCity
 
   const body = await readJsonBody(req);
   const query = clean(body?.query, MAX_QUERY_CHARS);
-  let city = clean(body?.city, 120);
+  const city = clean(body?.city, 120);
 
-  // Exploring the map sends a coordinate rather than a place name. Resolve it to
-  // a known city, or refuse: the endpoints filter by city name, and without a
-  // nearby match there is nothing meaningful to ask for. Refusing here is what
-  // stops a pan over open ocean from spending anything.
-  let resolvedCity = '';
-  if (!city && body?.lat != null && body?.lng != null) {
-    const near = typeof nearestCity === 'function' ? nearestCity(body.lat, body.lng) : null;
-    if (!near) {
-      return res.status(200).json({ ok: true, source: 'cache', companies: [], degraded: 'no_city_nearby' });
-    }
-    // Stored city strings are capitalised, so match that when discovering.
-    city = near.name.replace(/\b[a-z]/g, (ch) => ch.toUpperCase());
-    resolvedCity = city;
-  }
+  // Exploration sends the place name the basemap's own OpenStreetMap labels
+  // report, so there is no reverse geocoding to do here. A viewport with no
+  // place label under it never reaches this endpoint.
+  const resolvedCity = city;
 
   if (!query && !city) {
     return res.status(400).json({ ok: false, error: 'query_required' });

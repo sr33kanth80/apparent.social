@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ArrowUpRight, Briefcase, MapPin, Search, X } from 'lucide-react';
+import type { Map as MapLibreMap } from 'maplibre-gl';
 import { Map, MapClusterLayer, useMap } from '@/components/ui/map';
 import {
   browseCompaniesInBounds,
@@ -49,14 +50,13 @@ const TILTED_PITCH = 55;
  * Auto-discovery guards. Exploring the map can spend money, so it only fires
  * when someone has zoomed to a specific place (not a continent), the area is
  * genuinely empty rather than merely sparse, and that area has not already been
- * tried this session. The server adds its own guards on top: it refuses when no
- * known city is nearby, answers from cache when the area was discovered
- * recently, and rate-limits per IP.
+ * tried this session -- deduped by the place name the basemap reports, so
+ * nudging the map is not a new area. The server adds its own guards on top: it
+ * answers from cache when the place was discovered recently, and rate-limits
+ * per IP.
  */
 const DISCOVER_MIN_ZOOM = 8;
 const DISCOVER_WHEN_FEWER_THAN = 4;
-/** Areas are deduped on a coarse grid so nudging the map is not a new area. */
-const DISCOVER_GRID = 0.5;
 
 type PlacedCompany = HiringCompany & { lat: number; lng: number };
 
@@ -106,10 +106,66 @@ const fanOutCoLocated = (companies: HiringCompany[]): PlacedCompany[] => {
 };
 
 /**
+ * Name of the place under the middle of the map, read from the OSM vector
+ * tiles already on screen.
+ *
+ * The hiring endpoints filter by city NAME while the map only knows
+ * coordinates, so something has to bridge the two. Orthogonal's catalog has no
+ * reverse geocoder, and a hand-written coordinate table is exactly what we are
+ * getting rid of — but the basemap is OpenStreetMap and its `place` layer
+ * carries city, town and village names. Reading them costs nothing and is as
+ * live as the tiles.
+ */
+const placeNameAtCentre = (map: MapLibreMap): string => {
+  let layerIds: string[];
+  try {
+    layerIds = map
+      .getStyle()
+      .layers.filter((layer) => (layer as { 'source-layer'?: string })['source-layer'] === 'place')
+      .map((layer) => layer.id)
+      .filter((id) => map.getLayer(id));
+  } catch {
+    return '';
+  }
+  if (!layerIds.length) return '';
+
+  const features = map.queryRenderedFeatures(undefined, { layers: layerIds });
+  if (!features.length) return '';
+
+  const centre = map.project(map.getCenter());
+  // A city beats a town beats a village; ties break on distance from centre, so
+  // the label the viewer is actually looking at wins.
+  const rank: Record<string, number> = { city: 3, town: 2, village: 1 };
+
+  let best: { name: string; score: number; distance: number } | null = null;
+  for (const feature of features) {
+    const props = (feature.properties ?? {}) as Record<string, unknown>;
+    const score = rank[String(props.class ?? '')] ?? 0;
+    if (!score) continue; // states and countries are too coarse to search on
+    const name = String(props['name:en'] ?? props.name ?? '').trim();
+    if (!name) continue;
+
+    const geometry = feature.geometry as { type: string; coordinates?: [number, number] };
+    if (geometry?.type !== 'Point' || !geometry.coordinates) continue;
+    const point = map.project(geometry.coordinates);
+    const distance = Math.hypot(point.x - centre.x, point.y - centre.y);
+
+    if (!best || score > best.score || (score === best.score && distance < best.distance)) {
+      best = { name, score, distance };
+    }
+  }
+  return best?.name ?? '';
+};
+
+/**
  * Reports the viewport once the map settles. Debounced so a drag or pinch
  * issues one query instead of one per frame.
  */
-function ViewportWatcher({ onSettle }: { onSettle: (bounds: MapBounds, zoom: number) => void }) {
+function ViewportWatcher({
+  onSettle,
+}: {
+  onSettle: (bounds: MapBounds, zoom: number, placeName: string) => void;
+}) {
   const { map, isLoaded } = useMap();
 
   useEffect(() => {
@@ -137,6 +193,7 @@ function ViewportWatcher({ onSettle }: { onSettle: (bounds: MapBounds, zoom: num
           north: bounds.getNorth(),
         },
         zoom,
+        placeNameAtCentre(map),
       );
     };
 
@@ -314,7 +371,7 @@ export default function JobMap() {
   }, []);
 
   const handleViewport = useCallback(
-    async (bounds: MapBounds, zoom: number) => {
+    async (bounds: MapBounds, zoom: number, placeName: string) => {
       const key = viewKey(bounds, zoom);
       if (seenViews.current.has(key)) return;
       seenViews.current.add(key);
@@ -331,14 +388,16 @@ export default function JobMap() {
       // the map can cost money.
       if (zoom < DISCOVER_MIN_ZOOM || rows.length >= DISCOVER_WHEN_FEWER_THAN) return;
 
-      const lat = (bounds.north + bounds.south) / 2;
-      const lng = (bounds.east + bounds.west) / 2;
-      const areaKey = `${Math.round(lat / DISCOVER_GRID)},${Math.round(lng / DISCOVER_GRID)}`;
+      // No place label under the centre means open water or somewhere too
+      // coarse to search, and there is nothing meaningful to ask for.
+      if (!placeName) return;
+
+      const areaKey = placeName.toLowerCase();
       if (triedAreas.current.has(areaKey)) return;
       triedAreas.current.add(areaKey);
 
-      setDiscovering('Looking for companies hiring here…');
-      const found = await discoverArea(lat, lng);
+      setDiscovering(`Looking for companies hiring in ${placeName}…`);
+      const found = await discoverArea(placeName);
       setDiscovering('');
 
       if (found.companies.length) {

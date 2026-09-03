@@ -12,8 +12,17 @@ process.env.SUPABASE_SERVICE_ROLE_KEY = 'service-key';
 process.env.ORTHOGONAL_API_KEY = 'test-key';
 
 const { default: jobsSearchHandler } = await import('../server/jobs-search.js');
-const { geocodeCity, nearestCity } = await import('../server/city-coords.js');
 const { clearOrthogonalDetailsCache } = await import('../server/agent/orthogonal.js');
+
+// Geocoding is a live catalog lookup in production. Tests stub it so they stay
+// offline and deterministic, and so a failing assertion points at the handler
+// rather than at someone else's API.
+const CITY_POINTS = {
+  'Berlin, Germany': { latitude: 52.52, longitude: 13.405 },
+  Boston: { latitude: 42.3601, longitude: -71.0589 },
+  London: { latitude: 51.5072, longitude: -0.1276 },
+};
+const geocode = async (city) => CITY_POINTS[city] ?? null;
 
 // The Orthogonal wrapper caches endpoint details and paid run results
 // PROCESS-wide, by design, so repeats across turns are not re-charged. In tests
@@ -100,7 +109,7 @@ test('fresh cache is served without calling Orthogonal', async () => {
   const { calls } = installFetch({ companies: [freshRow] });
   const res = makeRes();
 
-  await jobsSearchHandler(makeReq({ query: 'fintech', city: 'New York' }), res, { geocode: geocodeCity });
+  await jobsSearchHandler(makeReq({ query: 'fintech', city: 'New York' }), res, { geocode });
 
   assert.equal(res.statusCode, 200);
   assert.equal(res.body.source, 'cache');
@@ -113,7 +122,7 @@ test('rate-limited request 429s before any lookup or spend', async () => {
   const { calls } = installFetch({ rateAllowed: false, companies: [freshRow] });
   const res = makeRes();
 
-  await jobsSearchHandler(makeReq({ query: 'fintech' }), res, { geocode: geocodeCity });
+  await jobsSearchHandler(makeReq({ query: 'fintech' }), res, { geocode });
 
   assert.equal(res.statusCode, 429);
   assert.equal(res.body.error, 'rate_limited');
@@ -149,7 +158,7 @@ test('stale cache falls through to Orthogonal, sanitizes URLs, and upserts', asy
   });
   const res = makeRes();
 
-  await jobsSearchHandler(makeReq({ query: 'startups', city: 'Berlin' }), res, { geocode: geocodeCity });
+  await jobsSearchHandler(makeReq({ query: 'startups', city: 'Berlin' }), res, { geocode });
 
   assert.equal(res.statusCode, 200);
   assert.equal(res.body.source, 'orthogonal');
@@ -182,19 +191,6 @@ test('stale cache falls through to Orthogonal, sanitizes URLs, and upserts', asy
       assert.ok(url === '' || url.startsWith('http'), `unsafe url stored: ${url}`);
     }
   }
-});
-
-test('geocodeCity resolves decorated city strings and rejects unknowns', () => {
-  assert.equal(geocodeCity('Berlin, Germany').latitude, 52.52);
-  assert.equal(geocodeCity('SAN FRANCISCO, CA').latitude, 37.7749);
-  assert.equal(geocodeCity('Remote - London').latitude, 51.5072);
-  // Metro phrasings must land on the city itself.
-  assert.equal(geocodeCity('Greater Boston').latitude, 42.3601);
-  assert.equal(geocodeCity('Boston Metropolitan Area').latitude, 42.3601);
-  assert.equal(geocodeCity('Atlantis'), null);
-  assert.equal(geocodeCity(''), null);
-  // A country is not a place to put a pin.
-  assert.equal(geocodeCity('United States'), null);
 });
 
 test('discovery pages through results and stops when a page is empty', async () => {
@@ -235,7 +231,7 @@ test('discovery pages through results and stops when a page is empty', async () 
   };
 
   const res = makeRes();
-  await jobsSearchHandler(makeReq({ query: 'engineer', city: 'Boston' }), res, { geocode: geocodeCity });
+  await jobsSearchHandler(makeReq({ query: 'engineer', city: 'Boston' }), res, { geocode });
 
   assert.equal(res.body.source, 'orthogonal');
   // Page 1 plus further pages, halting at the empty one rather than burning
@@ -247,7 +243,7 @@ test('discovery pages through results and stops when a page is empty', async () 
   assert.ok(upserted.some((r) => r.canonical_domain === 'b2.com'));
 });
 
-test('exploring open water resolves no city and never spends', async () => {
+test('a request naming no place and no query is refused before spending', async () => {
   let orthogonalCalls = 0;
   globalThis.fetch = async (url, options = {}) => {
     const href = String(url);
@@ -259,16 +255,14 @@ test('exploring open water resolves no city and never spends', async () => {
   };
 
   const res = makeRes();
-  // Middle of the Atlantic.
-  await jobsSearchHandler(makeReq({ lat: 30, lng: -40 }), res, { geocode: geocodeCity, nearestCity });
+  await jobsSearchHandler(makeReq({}), res, { geocode });
 
-  assert.equal(res.statusCode, 200);
-  assert.equal(res.body.degraded, 'no_city_nearby');
-  assert.equal(res.body.companies.length, 0);
-  assert.equal(orthogonalCalls, 0, 'must not spend where there is no city');
+  assert.equal(res.statusCode, 400);
+  assert.equal(res.body.error, 'query_required');
+  assert.equal(orthogonalCalls, 0, 'must not spend with nothing to search for');
 });
 
-test('exploring near a city resolves it and discovers there', async () => {
+test('discovery for a named place searches that place', async () => {
   let sentCity = null;
   let upserted = [];
   globalThis.fetch = async (url, options = {}) => {
@@ -295,11 +289,11 @@ test('exploring near a city resolves it and discovers there', async () => {
   };
 
   const res = makeRes();
-  // A point in Boston, sent as coordinates the way the map does it.
-  await jobsSearchHandler(makeReq({ lat: 42.36, lng: -71.06 }), res, { geocode: geocodeCity, nearestCity });
+  // The map sends the place name its own OSM labels report.
+  await jobsSearchHandler(makeReq({ city: 'Boston' }), res, { geocode });
 
   assert.equal(res.body.source, 'orthogonal');
-  // The coordinate must be reverse-geocoded into the city filter.
+  // The place name must reach the endpoint's city filter.
   assert.equal(sentCity, 'Boston');
   assert.equal(res.body.resolvedCity, 'Boston');
   assert.equal(upserted.length, 1);
@@ -346,7 +340,7 @@ test('roles are stored per job, not collapsed into the company', async () => {
   };
 
   const res = makeRes();
-  await jobsSearchHandler(makeReq({ query: 'engineer', city: 'Boston' }), res, { geocode: geocodeCity, nearestCity });
+  await jobsSearchHandler(makeReq({ query: 'engineer', city: 'Boston' }), res, { geocode });
 
   assert.equal(res.body.source, 'orthogonal');
 

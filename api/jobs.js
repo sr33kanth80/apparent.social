@@ -5,8 +5,10 @@
 // under its own Orthogonal budget cap.
 
 import jobsSearchHandler from '../server/jobs-search.js';
-import { geocodeCity, nearestCity } from '../server/city-coords.js';
+import { geocodePlace } from '../server/geocode.js';
 
 export default async function handler(req, res) {
-  return jobsSearchHandler(req, res, { geocode: geocodeCity, nearestCity });
+  // Geocoding is a live catalog lookup, memoised per place, replacing a
+  // hand-written table of ~400 coordinates.
+  return jobsSearchHandler(req, res, { geocode: geocodePlace });
 }

@@ -120,14 +120,13 @@ const postJobs = async (payload: Record<string, unknown>): Promise<JobsSearchRes
 };
 
 /**
- * Discover whoever is hiring around a map coordinate.
+ * Discover whoever is hiring in a place, named by the map's own OSM labels.
  *
- * The server resolves the point to a nearby city and refuses if there is none,
- * so panning over open water cannot trigger a paid lookup. It is still
- * cache-first: an area discovered recently is answered from the table for free.
+ * Passing a name rather than a coordinate means no reverse geocoding is needed
+ * anywhere: the basemap already knows what city the viewer is looking at.
  */
-export const discoverArea = async (latitude: number, longitude: number): Promise<JobsSearchResult> =>
-  postJobs({ lat: latitude, lng: longitude });
+export const discoverArea = async (placeName: string): Promise<JobsSearchResult> =>
+  postJobs({ city: placeName });
 
 /** Explicit text search. Like discovery, this can spend. */
 export const searchCompanies = async (query: string, city = ''): Promise<JobsSearchResult> =>
