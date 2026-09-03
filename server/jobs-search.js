@@ -16,6 +16,7 @@
 //      JOBS_MAX_SPEND_CENTS (per-request cap, default 25).
 
 import { createOrthogonalSession, orthogonalData, OrthogonalError } from './agent/orthogonal.js';
+import { geocodeCompany } from './geocode.js';
 
 const SUPABASE_URL = (process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || '').replace(/\/$/, '');
 const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
@@ -40,6 +41,9 @@ const MAX_UPSERT_ROWS = 150;
 // spend cap is still the real limit; this just stops a runaway crawl.
 const PAGE_SIZE = 50;
 const MAX_DISCOVERY_PAGES = 4;
+// Precise geocodes per request. Each is a paid lookup, so the map asks for what
+// it is showing rather than the whole city.
+const MAX_RESOLVE_PER_REQUEST = 12;
 
 const str = (v) => (v == null ? '' : String(v));
 /**
@@ -250,6 +254,73 @@ const backfillMissingCoordinates = async (geocode) => {
   } catch {
     return 0;
   }
+};
+
+/**
+ * Resolve companies to their real office coordinates, on demand.
+ *
+ * Not done during discovery: a city yields dozens of companies and geocoding
+ * every one of them up front would cost more than the hiring lookup itself.
+ * The map asks for the handful it is actually showing, and the answer is
+ * stored, so each company is paid for once ever.
+ */
+const resolvePreciseLocations = async (requests) => {
+  const out = [];
+  const pending = requests.slice(0, MAX_RESOLVE_PER_REQUEST);
+  if (!pending.length) return out;
+
+  // Independent lookups, so in parallel; serial would blow the time budget.
+  const resolved = await Promise.all(
+    pending.map(async (entry) => {
+      const domain = clean(entry?.domain, 200).toLowerCase();
+      const name = clean(entry?.name, 200);
+      const city = clean(entry?.city, 120);
+      if (!domain || !name) return null;
+      try {
+        const point = await geocodeCompany(name, city);
+        return point ? { domain, ...point } : null;
+      } catch {
+        return null;
+      }
+    }),
+  );
+
+  const rows = [];
+  for (const hit of resolved) {
+    if (!hit) continue;
+    out.push(hit);
+    rows.push({
+      canonical_domain: hit.domain,
+      latitude: hit.latitude,
+      longitude: hit.longitude,
+      geo_precision: 'exact',
+      geo_resolved_at: new Date().toISOString(),
+    });
+  }
+
+  // PATCH per row: an upsert would need every NOT NULL column, and these
+  // companies already exist.
+  if (SUPABASE_URL && SERVICE_KEY) {
+    await Promise.all(
+      rows.map((row) =>
+        fetch(
+          `${SUPABASE_URL}/rest/v1/companies?canonical_domain=eq.${encodeURIComponent(row.canonical_domain)}`,
+          {
+            method: 'PATCH',
+            headers: { ...serviceHeaders(), Prefer: 'return=minimal' },
+            body: JSON.stringify({
+              latitude: row.latitude,
+              longitude: row.longitude,
+              geo_precision: row.geo_precision,
+              geo_resolved_at: row.geo_resolved_at,
+            }),
+          },
+        ).catch(() => null),
+      ),
+    );
+  }
+
+  return out;
 };
 
 // ---------- Orthogonal ----------
@@ -710,6 +781,17 @@ export default async function jobsSearchHandler(req, res, { geocode }) {
   }
 
   const body = await readJsonBody(req);
+
+  if (Array.isArray(body?.resolve)) {
+    const gate = await rateLimitOk(req);
+    if (!gate.ok) {
+      res.setHeader('Retry-After', String(gate.retryAfter));
+      return res.status(429).json({ ok: false, error: 'rate_limited', retryAfter: gate.retryAfter });
+    }
+    const located = await resolvePreciseLocations(body.resolve);
+    return res.status(200).json({ ok: true, located });
+  }
+
   const query = clean(body?.query, MAX_QUERY_CHARS);
   const city = clean(body?.city, 120);
 

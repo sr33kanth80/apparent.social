@@ -280,6 +280,20 @@ export const geocodePlace = async (place, options = {}) => {
   }
 };
 
+/**
+ * Resolve one company to its actual office coordinates.
+ *
+ * The same forward lookup as a city, but asked a narrower question. A maps
+ * endpoint answers "Stripe, Seattle" with the office rather than the city
+ * centre, which is the difference between a marker on the right building and a
+ * pile of markers downtown.
+ */
+export const geocodeCompany = async (name, city, options = {}) => {
+  const label = [clean(name, 120), clean(city, 120)].filter(Boolean).join(', ');
+  if (!label) return null;
+  return geocodePlace(label, options);
+};
+
 /** Coordinates to a city name, for turning a viewport into a searchable place. */
 export const reverseGeocode = async (latitude, longitude, options = {}) => {
   const lat = Number(latitude);
