@@ -850,12 +850,19 @@ const BUDGET_STOP = new Set(['orthogonal_budget_reached', 'orthogonal_insufficie
 const fetchCompanyRoles = async ({ domain, name, city }) => {
   const budgetCents = jobsBudgetCents();
   const session = createOrthogonalSession({ maxCalls: 20, maxSpendCents: budgetCents });
+  // What was attempted, so a zero result can be explained rather than guessed at.
+  const trace = [];
 
   const prompt = `open job postings at a specific company: ${name || domain}`;
   const { priced } = await priceCandidates(session, prompt);
   const affordable = priced.filter(
     (c) => !c.dynamic && c.priceCents != null && c.priceCents <= budgetCents,
   );
+  trace.push({
+    step: 'candidates',
+    priced: priced.map((c) => `${c.api}${c.path}`).slice(0, 6),
+    affordable: affordable.map((c) => `${c.api}${c.path}`).slice(0, 6),
+  });
 
   for (const candidate of affordable.slice(0, 3)) {
     // Only endpoints that can actually narrow to one company are worth paying
@@ -864,7 +871,10 @@ const fetchCompanyRoles = async ({ domain, name, city }) => {
     const canTargetCompany = ['company_domain', 'domain', 'organization', 'company_name'].some((k) =>
       declared.includes(k),
     );
-    if (!canTargetCompany) continue;
+    if (!canTargetCompany) {
+      trace.push({ step: 'skipped', endpoint: `${candidate.api}${candidate.path}`, params: declared.slice(0, 12) });
+      continue;
+    }
 
     try {
       const runBody = buildRunBody(candidate, name, city, domain);
@@ -906,17 +916,33 @@ const fetchCompanyRoles = async ({ domain, name, city }) => {
         .filter((job) => mineDomains.has(job.company_domain))
         .map((job) => ({ ...job, company_domain: domain }));
 
+      trace.push({
+        step: 'ran',
+        endpoint: `${candidate.api}${candidate.path}`,
+        sent: runBody,
+        itemsBack: extractItems(run).length,
+        companiesBack: found.map((c) => `${c.name}|${c.canonical_domain}`).slice(0, 6),
+        jobsBack: jobs.length,
+        matched: mine.length,
+      });
+
       if (!mine.length) continue;
 
       // Same job_key can arrive twice once re-keyed; keep one row each.
       const unique = [...new Map(mine.map((job) => [job.job_key, job])).values()];
       await upsertJobs(unique.slice(0, MAX_UPSERT_ROWS));
-      return unique.length;
+      return { stored: unique.length, trace };
     } catch (error) {
+      trace.push({
+        step: 'error',
+        endpoint: `${candidate.api}${candidate.path}`,
+        code: error?.code || 'error',
+        message: clean(error?.message, 140),
+      });
       if (error instanceof OrthogonalError && BUDGET_STOP.has(error.code)) break;
     }
   }
-  return 0;
+  return { stored: 0, trace };
 };
 
 // ---------- handler ----------
@@ -966,12 +992,14 @@ export default async function jobsSearchHandler(req, res, { geocode }) {
     const domain = clean(body.roles.domain, 200).toLowerCase();
     if (!domain) return res.status(400).json({ ok: false, error: 'domain_required' });
 
-    const stored = await fetchCompanyRoles({
+    const result = await fetchCompanyRoles({
       domain,
       name: clean(body.roles.name, 200),
       city: clean(body.roles.city, 120),
     });
-    return res.status(200).json({ ok: true, stored });
+    // TEMPORARY: trace returned unconditionally while this path is diagnosed.
+    // Gated behind JOBS_DEBUG once it works.
+    return res.status(200).json({ ok: true, stored: result.stored, trace: result.trace });
   }
 
   if (Array.isArray(body?.resolve)) {
