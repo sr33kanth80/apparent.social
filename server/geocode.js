@@ -109,10 +109,14 @@ const readPlaceName = (raw) => {
   );
 };
 
-// "reverse lookup" is a phrase used by plenty of non-geographic services. The
-// catalog's top reverse match was an email lookup, which scored well on words
-// and could never answer a coordinate.
-const NON_GEO_TERMS = ['email', 'phone', 'person', 'people', 'linkedin', 'domain', 'dns', 'ip '];
+// Exclusions are matched against the PATH only. Matching descriptions instead
+// threw away every good candidate: a geocoder was dropped for the word
+// "person", a maps endpoint for "phone", and a /geo/cities endpoint for
+// "people" -- all words that appear harmlessly in geo endpoint prose.
+const NON_GEO_PATH_TERMS = ['email', 'phone', 'linkedin', 'dns', 'whois'];
+
+// A usable endpoint has to be geographic in the first place.
+const GEO_PATH_TERMS = ['geocod', 'geo', 'map', 'place', 'cities', 'city', 'location', 'address'];
 
 const LAT_KEYS = ['lat', 'latitude'];
 const LNG_KEYS = ['lon', 'lng', 'long', 'longitude'];
@@ -124,8 +128,10 @@ const LNG_KEYS = ['lon', 'lng', 'long', 'longitude'];
  * and a longitude, and nothing that fails that test can do the job regardless
  * of how well its description reads.
  */
-const scoreEndpoint = (haystack, terms, wantReverse, declaredParams) => {
-  if (NON_GEO_TERMS.some((term) => haystack.includes(term))) return -1;
+const scoreEndpoint = (haystack, path, terms, wantReverse, declaredParams) => {
+  const lowerPath = path.toLowerCase();
+  if (NON_GEO_PATH_TERMS.some((term) => lowerPath.includes(term))) return -1;
+  if (!GEO_PATH_TERMS.some((term) => lowerPath.includes(term))) return -1;
 
   const declared = Array.isArray(declaredParams) ? declaredParams : [];
   if (wantReverse) {
@@ -156,8 +162,7 @@ const discoverEndpoint = async (session, wantReverse, budgetCents) => {
       if (!api || !path.startsWith('/') || path.includes('{')) continue;
 
       const haystack = `${path} ${clean(endpoint?.description, 300)}`.toLowerCase();
-      seenEndpoints.push({ api, path, excluded: NON_GEO_TERMS.find((t) => haystack.includes(t)) || null });
-      if (NON_GEO_TERMS.some((term) => haystack.includes(term))) continue;
+      seenEndpoints.push({ api, path });
 
       try {
         const details = await session.details({ api, path });
@@ -176,7 +181,7 @@ const discoverEndpoint = async (session, wantReverse, budgetCents) => {
           return [];
         })();
 
-        const score = scoreEndpoint(haystack, terms, wantReverse, params);
+        const score = scoreEndpoint(haystack, path, terms, wantReverse, params);
         if (score < 0) continue;
 
         priced.push({
