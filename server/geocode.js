@@ -148,15 +148,15 @@ const discoverEndpoint = async (session, wantReverse, budgetCents) => {
     ? 'reverse geocode latitude and longitude coordinates into a city name'
     : 'geocode a city or place name into latitude and longitude coordinates';
 
-  const found = await session.search(prompt, 10);
+  const found = await session.search(prompt, 6);
   const terms = wantReverse ? REVERSE_TERMS : FORWARD_TERMS;
   const priced = [];
   const seenEndpoints = [];
 
-  for (const entry of extractItems(found).slice(0, 5)) {
+  for (const entry of extractItems(found).slice(0, 3)) {
     const api = clean(entry?.slug ?? entry?.api ?? entry?.provider, 80).toLowerCase();
     const endpoints = Array.isArray(entry?.endpoints) ? entry.endpoints : [entry];
-    for (const endpoint of endpoints.slice(0, 4)) {
+    for (const endpoint of endpoints.slice(0, 2)) {
       const path = clean(endpoint?.path ?? endpoint?.endpoint, 200);
       // Templated paths need an id a lookup does not have.
       if (!api || !path.startsWith('/') || path.includes('{')) continue;

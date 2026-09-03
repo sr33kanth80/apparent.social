@@ -385,15 +385,19 @@ const aggregateCompanies = (items, fallbackCity) => {
  */
 const attachCoordinates = async (rows, geocode) => {
   const cities = [...new Set(rows.map((row) => row.city).filter(Boolean))];
-  const resolved = new Map();
 
-  for (const city of cities) {
-    try {
-      resolved.set(city, await geocode(city));
-    } catch {
-      resolved.set(city, null);
-    }
-  }
+  // Resolved in parallel: these are independent network calls and doing them in
+  // series pushed the request past its time limit.
+  const pairs = await Promise.all(
+    cities.map(async (city) => {
+      try {
+        return [city, await geocode(city)];
+      } catch {
+        return [city, null];
+      }
+    }),
+  );
+  const resolved = new Map(pairs);
 
   for (const row of rows) {
     const coords = resolved.get(row.city);
