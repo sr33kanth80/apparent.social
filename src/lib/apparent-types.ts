@@ -687,3 +687,16 @@ export interface HiringCompany {
   longitude: number | null;
   openRoles: number;
 }
+
+/** One open role at a company on the Jobs Map. */
+export interface CompanyJob {
+  jobKey: string;
+  title: string;
+  jobUrl: string;
+  location: string;
+  employmentType: string;
+  seniority: string;
+  jobFunction: string;
+  /** ISO date, or null when the provider gave nothing parseable. */
+  postedAt: string | null;
+}

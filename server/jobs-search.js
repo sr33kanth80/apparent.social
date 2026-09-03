@@ -102,6 +102,14 @@ const canonicalDomain = (website, careersUrl) => {
   return '';
 };
 
+/** Provider dates arrive in mixed shapes; anything unparseable becomes null. */
+const toTimestamp = (value) => {
+  const raw = clean(value, 60);
+  if (!raw) return null;
+  const ms = Date.parse(raw);
+  return Number.isFinite(ms) ? new Date(ms).toISOString() : null;
+};
+
 const nonNegativeInt = (value) => {
   const parsed = Number.parseInt(str(value), 10);
   return Number.isFinite(parsed) && parsed > 0 ? parsed : 0;
@@ -177,6 +185,19 @@ const upsertCompanies = async (rows) => {
 };
 
 /**
+ * Roles are written after companies because company_jobs references
+ * companies.canonical_domain: the parent row has to exist first.
+ */
+const upsertJobs = async (rows) => {
+  if (!rows.length || !SUPABASE_URL || !SERVICE_KEY) return;
+  await fetch(`${SUPABASE_URL}/rest/v1/company_jobs?on_conflict=job_key`, {
+    method: 'POST',
+    headers: { ...serviceHeaders(), Prefer: 'resolution=merge-duplicates,return=minimal' },
+    body: JSON.stringify(rows),
+  }).catch(() => null);
+};
+
+/**
  * Re-geocode rows that were stored before the geocoder knew their location.
  *
  * Coordinates are resolved at write time, so widening the geocoder does nothing
@@ -241,6 +262,7 @@ const backfillMissingCoordinates = async (geocode) => {
  */
 const aggregateCompanies = (items, fallbackCity, geocode) => {
   const byDomain = {};
+  const jobs = [];
 
   for (const raw of items) {
     const item = raw?.attributes && typeof raw.attributes === 'object' ? { ...raw, ...raw.attributes } : raw;
@@ -272,6 +294,28 @@ const aggregateCompanies = (items, fallbackCity, geocode) => {
       item?.open_roles ?? item?.openRoles ?? item?.job_count ?? item?.jobs_count ?? item?.total_jobs,
     );
 
+    // Keep the role itself, not just the fact that one exists. job_key gives a
+    // posting stable identity so re-discovering a city updates rows instead of
+    // duplicating them.
+    const title = clean(item?.title ?? item?.jobTitle ?? item?.position ?? item?.role, 200);
+    const jobKey = clean(item?.jobId ?? item?.job_id ?? item?.id, 160) || jobUrl;
+    if (title && jobKey) {
+      jobs.push({
+        job_key: jobKey,
+        company_domain: domain,
+        title,
+        job_url: jobUrl,
+        location: clean(item?.location, 200),
+        city,
+        employment_type: clean(item?.employmentType ?? item?.employment_type, 60),
+        seniority: clean(item?.seniorityLevel ?? item?.seniority ?? item?.seniority_level, 60),
+        job_function: clean(item?.jobFunction ?? item?.job_function ?? item?.department, 120),
+        posted_at: toTimestamp(item?.datePosted ?? item?.date_posted ?? item?.postedAt),
+        valid_through: toTimestamp(item?.validThrough ?? item?.valid_through),
+        applicants: Number.isFinite(Number(item?.numApplicants)) ? Number(item.numApplicants) : null,
+      });
+    }
+
     const existing = byDomain[domain];
     if (existing) {
       existing.open_roles += stated || 1;
@@ -300,10 +344,37 @@ const aggregateCompanies = (items, fallbackCity, geocode) => {
       is_hiring: true,
       source: 'orthogonal',
       last_enriched_at: new Date().toISOString(),
+      logo_url: toAbsoluteUrl(item?.companyLogoUrl ?? item?.companyLogo ?? item?.logo_url),
+      industry: clean(item?.companyIndustry ?? item?.industry, 120),
+      linkedin_url: toAbsoluteUrl(item?.companyLinkedin ?? item?.company_linkedin_url),
+      employee_count: Number.isFinite(Number(item?.companyEmployeeCount))
+        ? Number(item.companyEmployeeCount)
+        : null,
+      founded_year: Number.isFinite(Number(item?.companyFoundedYear))
+        ? Number(item.companyFoundedYear)
+        : null,
     };
   }
 
-  return Object.values(byDomain);
+  // A posting can legitimately appear on more than one page, and the repeat is
+  // often thinner than the first sighting. Merge instead of overwriting, or a
+  // sparse duplicate erases the title, seniority and date already captured.
+  const uniqueJobs = Object.values(
+    jobs.reduce((acc, job) => {
+      const existingJob = acc[job.job_key];
+      if (!existingJob) {
+        acc[job.job_key] = job;
+        return acc;
+      }
+      for (const [key, value] of Object.entries(job)) {
+        const alreadySet = existingJob[key] !== '' && existingJob[key] != null;
+        if (!alreadySet && value !== '' && value != null) existingJob[key] = value;
+      }
+      return acc;
+    }, {}),
+  );
+
+  return { companies: Object.values(byDomain), jobs: uniqueJobs };
 };
 
 const extractItems = (payload) => {
@@ -502,10 +573,16 @@ const discoverAndRun = async (query, city, geocode) => {
         }
       }
 
-      const mapped = aggregateCompanies(items, city, geocode).slice(0, MAX_UPSERT_ROWS);
+      const aggregated = aggregateCompanies(items, city, geocode);
+      const mapped = aggregated.companies.slice(0, MAX_UPSERT_ROWS);
+      // Only keep roles whose company survived the cap, so the foreign key
+      // always has a parent.
+      const keptDomains = new Set(mapped.map((row) => row.canonical_domain));
+      const mappedJobs = aggregated.jobs.filter((job) => keptDomains.has(job.company_domain));
       if (mapped.length) {
         return {
           companies: mapped,
+          jobs: mappedJobs,
           usage: session.usage(),
           shape,
           used: {
@@ -632,7 +709,7 @@ export default async function jobsSearchHandler(req, res, { geocode, nearestCity
   }
 
   try {
-    const { companies, unaffordable, budgetCents, shape, lastRunShape, candidates, used, attemptErrors } = await discoverAndRun(query, city, geocode);
+    const { companies, jobs, unaffordable, budgetCents, shape, lastRunShape, candidates, used, attemptErrors } = await discoverAndRun(query, city, geocode);
 
     // Nothing in the catalog fits the cap. Report what the endpoints actually
     // cost so the cap can be set from real numbers (and so this doesn't look
@@ -662,6 +739,7 @@ export default async function jobsSearchHandler(req, res, { geocode, nearestCity
       );
     }
     await upsertCompanies(companies);
+    await upsertJobs(jobs || []);
     return res.status(200).json(
       withDebug({ ok: true, source: 'orthogonal', companies: companies.map(toClient), resolvedCity }, { used }),
     );

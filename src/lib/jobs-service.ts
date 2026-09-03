@@ -1,5 +1,5 @@
 import { supabase } from './supabase';
-import type { HiringCompany } from './apparent-types';
+import type { CompanyJob, HiringCompany } from './apparent-types';
 
 /**
  * Jobs Map data access.
@@ -132,3 +132,42 @@ export const discoverArea = async (latitude: number, longitude: number): Promise
 /** Explicit text search. Like discovery, this can spend. */
 export const searchCompanies = async (query: string, city = ''): Promise<JobsSearchResult> =>
   postJobs({ query, city });
+
+type JobRow = {
+  job_key: string;
+  title: string;
+  job_url: string | null;
+  location: string | null;
+  employment_type: string | null;
+  seniority: string | null;
+  job_function: string | null;
+  posted_at: string | null;
+};
+
+/**
+ * The actual open roles at one company, newest first.
+ *
+ * Read straight from the table under public RLS, so opening a pin costs
+ * nothing. Before roles were stored, the panel could only say how many were
+ * open and link to one arbitrary posting.
+ */
+export const loadJobsForCompany = async (domain: string, limit = 25): Promise<CompanyJob[]> => {
+  if (!supabase || !domain) return [];
+  const { data, error } = await supabase
+    .from('company_jobs')
+    .select('job_key,title,job_url,location,employment_type,seniority,job_function,posted_at')
+    .eq('company_domain', domain)
+    .order('posted_at', { ascending: false, nullsFirst: false })
+    .limit(limit);
+  if (error || !data) return [];
+  return (data as JobRow[]).map((row) => ({
+    jobKey: row.job_key,
+    title: row.title,
+    jobUrl: row.job_url ?? '',
+    location: row.location ?? '',
+    employmentType: row.employment_type ?? '',
+    seniority: row.seniority ?? '',
+    jobFunction: row.job_function ?? '',
+    postedAt: row.posted_at,
+  }));
+};

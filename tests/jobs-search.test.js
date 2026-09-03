@@ -4,7 +4,7 @@
 //   3. non-http(s) URLs must never be stored
 //   4. stale cache falls through to Orthogonal and upserts
 
-import test from 'node:test';
+import test, { beforeEach } from 'node:test';
 import assert from 'node:assert/strict';
 
 process.env.SUPABASE_URL = 'https://example.supabase.co';
@@ -13,6 +13,13 @@ process.env.ORTHOGONAL_API_KEY = 'test-key';
 
 const { default: jobsSearchHandler } = await import('../server/jobs-search.js');
 const { geocodeCity, nearestCity } = await import('../server/city-coords.js');
+const { clearOrthogonalDetailsCache } = await import('../server/agent/orthogonal.js');
+
+// The Orthogonal wrapper caches endpoint details and paid run results
+// PROCESS-wide, by design, so repeats across turns are not re-charged. In tests
+// that means one case's cached endpoint schema and results leak into the next.
+// Clearing before each test keeps them independent.
+beforeEach(() => clearOrthogonalDetailsCache());
 
 const makeRes = () => {
   const res = {
@@ -297,4 +304,72 @@ test('exploring near a city resolves it and discovers there', async () => {
   assert.equal(res.body.resolvedCity, 'Boston');
   assert.equal(upserted.length, 1);
   assert.equal(upserted[0].canonical_domain, 'wonder.com');
+});
+
+test('roles are stored per job, not collapsed into the company', async () => {
+  let companyRows = [];
+  let jobRows = [];
+
+  globalThis.fetch = async (url, options = {}) => {
+    const href = String(url);
+    const json = (v) => ({ ok: true, status: 200, text: async () => JSON.stringify(v), json: async () => v });
+
+    if (href.includes('/rpc/consume_agent_rate_limit')) return json([{ allowed: true }]);
+    if (href.includes('/rest/v1/company_jobs')) { jobRows = JSON.parse(options.body); return json({}); }
+    if (href.includes('/rest/v1/companies')) {
+      const method = options.method || 'GET';
+      if (method === 'POST') { companyRows = JSON.parse(options.body); return json({}); }
+      if (method === 'PATCH') return json({});
+      return json([]);
+    }
+    if (href.endsWith('/v1/search')) {
+      return json({ results: [{ slug: 'signalbase', endpoints: [{ path: '/signals/hiring', method: 'GET' }] }] });
+    }
+    if (href.endsWith('/v1/details')) return json({ endpoint: { price: 0.02, parameters: ['limit', 'city'] } });
+    if (href.endsWith('/v1/run')) {
+      return json({ priceCents: 2, results: [
+        { jobId: 'j1', companyName: 'Wonder', companyWebsite: 'wonder.com', city: 'Boston',
+          title: 'Senior Backend Engineer', jobUrl: 'https://j.example/1', employmentType: 'Full-time',
+          seniorityLevel: 'Senior', jobFunction: 'Engineering', datePosted: '2026-08-20',
+          numApplicants: 12, companyLogoUrl: 'https://logo.example/w.png', companyEmployeeCount: 240 },
+        { jobId: 'j2', companyName: 'Wonder', companyWebsite: 'wonder.com', city: 'Boston',
+          title: 'Product Designer', jobUrl: 'https://j.example/2', employmentType: 'Contract',
+          seniorityLevel: 'Mid-Senior level', datePosted: 'not-a-date' },
+        // Same posting seen again on another page: must not duplicate.
+        { jobId: 'j1', companyName: 'Wonder', companyWebsite: 'wonder.com', city: 'Boston',
+          title: 'Senior Backend Engineer', jobUrl: 'https://j.example/1' },
+        // No title: not a storable role, but still counts toward the company.
+        { companyName: 'Wonder', companyWebsite: 'wonder.com', city: 'Boston' },
+      ] });
+    }
+    throw new Error(`unexpected fetch: ${href}`);
+  };
+
+  const res = makeRes();
+  await jobsSearchHandler(makeReq({ query: 'engineer', city: 'Boston' }), res, { geocode: geocodeCity, nearestCity });
+
+  assert.equal(res.body.source, 'orthogonal');
+
+  // One company pin, but its individual roles are kept.
+  assert.equal(companyRows.length, 1);
+  assert.equal(companyRows[0].canonical_domain, 'wonder.com');
+  // Company-level extras that used to be discarded.
+  assert.equal(companyRows[0].employee_count, 240);
+  assert.equal(companyRows[0].logo_url, 'https://logo.example/w.png');
+
+  // The repeated posting is deduped by job_key.
+  assert.equal(jobRows.length, 2);
+  const eng = jobRows.find((j) => j.job_key === 'j1');
+  assert.equal(eng.title, 'Senior Backend Engineer');
+  assert.equal(eng.seniority, 'Senior');
+  assert.equal(eng.employment_type, 'Full-time');
+  assert.equal(eng.job_function, 'Engineering');
+  assert.equal(eng.applicants, 12);
+  assert.ok(eng.posted_at.startsWith('2026-08-20'));
+  assert.equal(eng.company_domain, 'wonder.com');
+
+  // An unparseable date must become null rather than a bad timestamp.
+  const design = jobRows.find((j) => j.job_key === 'j2');
+  assert.equal(design.posted_at, null);
+  assert.equal(design.employment_type, 'Contract');
 });
