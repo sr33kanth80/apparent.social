@@ -2,6 +2,7 @@ import { useCallback, useEffect, useImperativeHandle, useRef, forwardRef } from 
 import maplibregl, { type Map as MapLibreMap, type Marker } from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import type { HiringCompany } from '@/lib/apparent-types';
+import { fanOffset, layoutMarkers, type MarkerState } from './marker-layout';
 
 /**
  * Real-world 3D city, built on OpenStreetMap.
@@ -28,6 +29,8 @@ export type CityMap3DHandle = {
   flyToCity: (latitude: number, longitude: number) => void;
 };
 
+type MarkerEntry = { marker: Marker; company: HiringCompany };
+
 type Props = {
   companies: HiringCompany[];
   selectedDomain: string | null;
@@ -41,7 +44,9 @@ export const CityMap3D = forwardRef<CityMap3DHandle, Props>(function CityMap3D(
 ) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<MapLibreMap | null>(null);
-  const markersRef = useRef<Map<string, Marker>>(new Map());
+  const markersRef = useRef<Map<string, MarkerEntry>>(new Map());
+  /** Which stack, if any, the viewer has fanned open. */
+  const expandedRef = useRef<string | null>(null);
   const readyRef = useRef(false);
   const onSelectRef = useRef(onSelect);
   onSelectRef.current = onSelect;
@@ -173,7 +178,7 @@ export const CityMap3D = forwardRef<CityMap3DHandle, Props>(function CityMap3D(
     const markers = markersRef.current;
     return () => {
       readyRef.current = false;
-      markers.forEach((marker) => marker.remove());
+      markers.forEach((entry) => entry.marker.remove());
       markers.clear();
       map.remove();
       mapRef.current = null;
@@ -181,25 +186,99 @@ export const CityMap3D = forwardRef<CityMap3DHandle, Props>(function CityMap3D(
   }, []);
 
   // ---- markers ---------------------------------------------------------
-  const buildMarkerElement = useCallback((company: HiringCompany, isSelected: boolean) => {
+  const buildMarkerElement = useCallback((company: HiringCompany) => {
     const el = document.createElement('button');
     el.type = 'button';
     el.className = 'jobs-marker';
-    el.dataset.selected = String(isSelected);
-    // Approximate placements are shown differently: a marker sitting on a city
-    // centroid must not look as certain as one on a resolved address.
-    el.dataset.approx = String(company.geoPrecision !== 'exact');
     el.setAttribute('aria-label', `${company.name}, ${company.openRoles} open roles`);
     el.innerHTML = `
       <span class="jobs-marker-body">
         <span class="jobs-marker-name"></span>
-        ${company.openRoles > 0 ? `<span class="jobs-marker-count">${company.openRoles}</span>` : ''}
+        <span class="jobs-marker-count"></span>
+        <span class="jobs-marker-stack"></span>
       </span>
       <span class="jobs-marker-stem"></span>`;
     const nameEl = el.querySelector('.jobs-marker-name');
     if (nameEl) nameEl.textContent = company.name;
+    const countEl = el.querySelector('.jobs-marker-count') as HTMLElement | null;
+    if (countEl) {
+      countEl.textContent = String(company.openRoles);
+      countEl.style.display = company.openRoles > 0 ? '' : 'none';
+    }
     return el;
   }, []);
+
+  /**
+   * Decide how each marker draws itself for the current camera.
+   *
+   * Overlap is a screen-space property, so this runs on every move rather than
+   * once when the data arrives.
+   */
+  const relayout = useCallback(() => {
+    const map = mapRef.current;
+    const entries = markersRef.current;
+    if (!map || !entries.size) return;
+
+    const projected = [...entries.entries()]
+      .filter(([, entry]) => entry.company.latitude != null && entry.company.longitude != null)
+      .map(([domain, entry]) => {
+        const point = map.project([
+          entry.company.longitude as number,
+          entry.company.latitude as number,
+        ]);
+        return { domain, company: entry.company, x: point.x, y: point.y };
+      });
+
+    const { states, stacks } = layoutMarkers(projected, selectedDomain);
+    const expanded = expandedRef.current;
+
+    // Which anchor each folded marker belongs to, so a fanned stack can place
+    // its members.
+    const parentOf = new Map<string, { anchor: string; index: number; total: number }>();
+    for (const [anchor, members] of stacks) {
+      members.forEach((domain, index) =>
+        parentOf.set(domain, { anchor, index, total: members.length }),
+      );
+    }
+
+    for (const [domain, entry] of entries) {
+      const el = entry.marker.getElement();
+      const state: MarkerState = states.get(domain) ?? 'full';
+      const members = stacks.get(domain);
+      const isOpenAnchor = expanded === domain;
+
+      el.dataset.selected = String(domain === selectedDomain);
+      el.dataset.approx = String(entry.company.geoPrecision !== 'exact');
+
+      if (state === 'stacked') {
+        const parent = parentOf.get(domain);
+        if (parent && expanded === parent.anchor) {
+          // Fanned open: a pixel offset makes each member separately clickable
+          // without moving it off its real coordinate.
+          entry.marker.setOffset(fanOffset(parent.index, parent.total));
+          el.dataset.state = 'full';
+          el.dataset.fanned = 'true';
+        } else {
+          entry.marker.setOffset([0, 0]);
+          el.dataset.state = 'hidden';
+          el.dataset.fanned = 'false';
+        }
+      } else {
+        entry.marker.setOffset([0, 0]);
+        el.dataset.state = state;
+        el.dataset.fanned = 'false';
+      }
+
+      // A folded anchor advertises how many are hiding beneath it.
+      const stackEl = el.querySelector('.jobs-marker-stack') as HTMLElement | null;
+      const hidden = members && !isOpenAnchor ? members.length : 0;
+      if (stackEl) {
+        stackEl.textContent = hidden ? `+${hidden}` : '';
+        stackEl.style.display = hidden ? '' : 'none';
+      }
+      el.dataset.stack = hidden ? 'true' : 'false';
+    }
+  }, [selectedDomain]);
 
   useEffect(() => {
     const map = mapRef.current;
@@ -213,40 +292,60 @@ export const CityMap3D = forwardRef<CityMap3DHandle, Props>(function CityMap3D(
         if (company.latitude == null || company.longitude == null) continue;
         wanted.add(company.domain);
 
-        const isSelected = company.domain === selectedDomain;
         const current = existing.get(company.domain);
         if (current) {
-          current.setLngLat([company.longitude, company.latitude]);
-          const el = current.getElement();
-          el.dataset.selected = String(isSelected);
-          el.dataset.approx = String(company.geoPrecision !== 'exact');
+          current.company = company;
+          current.marker.setLngLat([company.longitude, company.latitude]);
           continue;
         }
 
-        const el = buildMarkerElement(company, isSelected);
+        const el = buildMarkerElement(company);
         el.addEventListener('click', (event) => {
           event.stopPropagation();
+          // A folded marker opens its stack first. The company underneath is
+          // then one more click away, which beats it being unreachable.
+          if (el.dataset.stack === 'true') {
+            expandedRef.current = company.domain;
+            relayout();
+            return;
+          }
+          expandedRef.current = null;
           onSelectRef.current(company);
+          relayout();
         });
 
         const marker = new maplibregl.Marker({ element: el, anchor: 'bottom' })
           .setLngLat([company.longitude, company.latitude])
           .addTo(map);
-        existing.set(company.domain, marker);
+        existing.set(company.domain, { marker, company });
       }
 
       // Drop markers for companies no longer in view (a city change).
-      for (const [domain, marker] of existing) {
+      for (const [domain, entry] of existing) {
         if (!wanted.has(domain)) {
-          marker.remove();
+          entry.marker.remove();
           existing.delete(domain);
         }
       }
+      relayout();
     };
 
     if (readyRef.current) paint();
     else map.once('load', paint);
-  }, [companies, selectedDomain, buildMarkerElement]);
+  }, [companies, selectedDomain, buildMarkerElement, relayout]);
+
+  // What overlaps changes with every pan and zoom, so re-pack on camera move.
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return undefined;
+    const onMove = () => relayout();
+    map.on('move', onMove);
+    map.on('zoom', onMove);
+    return () => {
+      map.off('move', onMove);
+      map.off('zoom', onMove);
+    };
+  }, [relayout]);
 
   // ---- camera ----------------------------------------------------------
   useEffect(() => {
@@ -290,7 +389,10 @@ export const CityMap3D = forwardRef<CityMap3DHandle, Props>(function CityMap3D(
   useEffect(() => {
     const map = mapRef.current;
     if (!map) return undefined;
-    const onClick = () => onSelectRef.current(null);
+    const onClick = () => {
+      expandedRef.current = null;
+      onSelectRef.current(null);
+    };
     map.on('click', onClick);
     return () => {
       map.off('click', onClick);

@@ -2991,3 +2991,46 @@ a.rounded-full:hover {
   border-style: dashed;
   opacity: 0.9;
 }
+
+/* Marker packing states, set by the map's screen-space layout pass.
+   `full` shows the name plate, `dot` collapses to a point when a neighbour
+   already claimed that space, and `hidden` is folded under a stack anchor. */
+.jobs-marker[data-state='hidden'] { display: none; }
+
+.jobs-marker[data-state='dot'] .jobs-marker-name,
+.jobs-marker[data-state='dot'] .jobs-marker-count { display: none; }
+.jobs-marker[data-state='dot'] .jobs-marker-body {
+  width: 13px;
+  height: 13px;
+  padding: 0;
+  border-radius: 999px;
+  background: #fff;
+  border: 2px solid #1d9bf0;
+  box-shadow: 0 2px 8px rgb(0 0 0 / 25%);
+}
+.jobs-marker[data-state='dot'] .jobs-marker-stem { height: 8px; }
+/* A collapsed marker still deserves its name on hover. */
+.jobs-marker[data-state='dot']:hover { z-index: 20; }
+
+/* Count of markers folded underneath this one. */
+.jobs-marker-stack {
+  flex: none;
+  margin-left: 2px;
+  padding: 1px 5px;
+  border-radius: 999px;
+  background: #2c2a26;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 600;
+}
+.jobs-marker[data-stack='true'] .jobs-marker-body { border-color: #2c2a26; }
+
+/* Fanned-out members get a leader line back toward their real position. */
+.jobs-marker[data-fanned='true'] { z-index: 15; }
+.jobs-marker[data-fanned='true'] .jobs-marker-body {
+  box-shadow: 0 6px 18px rgb(0 0 0 / 26%);
+}
+.jobs-marker[data-fanned='true'] .jobs-marker-stem {
+  height: 20px;
+  background: linear-gradient(to bottom, rgb(29 155 240 / 70%), rgb(29 155 240 / 10%));
+}
