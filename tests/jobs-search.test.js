@@ -58,7 +58,7 @@ const makeReq = (body) => ({
 
 /** Routes fetch by URL so a test can assert exactly what was called. */
 const installFetch = ({ rateAllowed = true, companies = [], orthogonal = null }) => {
-  const calls = { rate: 0, select: 0, upsert: 0, orthogonal: 0 };
+  const calls = { rate: 0, select: 0, upsert: 0, orthogonal: 0, coordinatePatches: [] };
   const upserted = [];
 
   globalThis.fetch = async (url, options = {}) => {
@@ -70,9 +70,16 @@ const installFetch = ({ rateAllowed = true, companies = [], orthogonal = null })
       return json([{ allowed: rateAllowed, retry_after: 42 }]);
     }
     if (href.includes('/rest/v1/companies')) {
-      if ((options.method || 'GET') === 'POST') {
+      const method = options.method || 'GET';
+      if (method === 'POST') {
         calls.upsert += 1;
         upserted.push(...JSON.parse(options.body));
+        return json({});
+      }
+      if (method === 'PATCH') {
+        // Coordinates are written separately so a resolved office is not
+        // dragged back to the city centre.
+        calls.coordinatePatches.push({ url: href, body: JSON.parse(options.body) });
         return json({});
       }
       calls.select += 1;
@@ -175,8 +182,23 @@ test('stale cache falls through to Orthogonal, sanitizes URLs, and upserts', asy
   assert.equal(linear.one_liner, 'Software');
   // A scheme-less host must be coerced to https, not dropped.
   assert.equal(linear.website, 'https://linear.app/');
-  // "Berlin, Germany" must still resolve to the Berlin centroid.
-  assert.equal(Math.round(linear.latitude), 53);
+  // Coordinates are no longer in the upsert: they arrive in a follow-up PATCH
+  // guarded so a precisely resolved office is never overwritten.
+  assert.equal(linear.latitude, undefined, 'upsert must not carry coordinates');
+
+  // Two cities in this batch, so find Berlin's write rather than the last one.
+  const berlinPatch = calls.coordinatePatches.find((p) => Math.round(p.body.latitude) === 53);
+  assert.ok(berlinPatch, 'Berlin coordinates should still be written');
+
+  // Every coordinate write must carry the guard, or a resolved office gets
+  // dragged back to the city centre on the next refresh.
+  assert.ok(calls.coordinatePatches.length > 0);
+  for (const patch of calls.coordinatePatches) {
+    assert.ok(
+      patch.url.includes('geo_precision=neq.exact'),
+      'must refuse to move a company already resolved to a real office',
+    );
+  }
 
   // The {id,type,attributes} envelope must be flattened, not dropped.
   const wrapped = upserted.find((r) => r.canonical_domain === 'wrapped.io');

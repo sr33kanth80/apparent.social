@@ -3,6 +3,7 @@ import maplibregl, { type Map as MapLibreMap, type Marker } from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import type { HiringCompany } from '@/lib/apparent-types';
 import { fanOffset, layoutMarkers, type MarkerState } from './marker-layout';
+import { assignBuildings, metresBetween, ringCentre, scatterAround, type Point } from './scatter';
 
 /**
  * Real-world 3D city, built on OpenStreetMap.
@@ -50,6 +51,13 @@ export const CityMap3D = forwardRef<CityMap3DHandle, Props>(function CityMap3D(
   const markersRef = useRef<Map<string, MarkerEntry>>(new Map());
   /** Which stack, if any, the viewer has fanned open. */
   const expandedRef = useRef<string | null>(null);
+  /**
+   * Display positions for companies with no resolved office, one per
+   * building. Cached so a marker does not hop to a different rooftop every
+   * time tiles reload.
+   */
+  const scatterRef = useRef<Map<string, Point>>(new Map());
+  const takenBuildingsRef = useRef<Set<string>>(new Set());
   const readyRef = useRef(false);
   const onSelectRef = useRef(onSelect);
   onSelectRef.current = onSelect;
@@ -251,6 +259,92 @@ export const CityMap3D = forwardRef<CityMap3DHandle, Props>(function CityMap3D(
   }, []);
 
   /**
+   * Give every unresolved company its own building.
+   *
+   * Footprints come from the vector tiles already loaded, so a marker lands on
+   * a real structure instead of the middle of a road or a river. Runs only for
+   * companies without a position yet and keeps what it assigns, so pins stay
+   * put as tiles come and go.
+   */
+  const assignScatter = useCallback((list: HiringCompany[]) => {
+    const map = mapRef.current;
+    if (!map) return false;
+
+    const pending = list.filter(
+      (c) =>
+        c.geoPrecision !== 'exact' &&
+        c.latitude != null &&
+        c.longitude != null &&
+        !scatterRef.current.has(c.domain),
+    );
+    if (!pending.length) return false;
+
+    const centre: Point = [pending[0].longitude as number, pending[0].latitude as number];
+
+    let footprints: Point[] = [];
+    try {
+      const features = map.querySourceFeatures('openmaptiles', { sourceLayer: 'building' });
+      const seen = new Set<string>();
+      for (const feature of features) {
+        const geometry = feature.geometry as { type: string; coordinates?: unknown };
+        let ring: Point[] | undefined;
+        if (geometry?.type === 'Polygon') {
+          ring = (geometry.coordinates as Point[][])?.[0];
+        } else if (geometry?.type === 'MultiPolygon') {
+          ring = (geometry.coordinates as Point[][][])?.[0]?.[0];
+        }
+        const centroid = ring ? ringCentre(ring) : null;
+        if (!centroid) continue;
+        // Keep it in the city, not whatever else sits in a loaded tile.
+        if (metresBetween(centre, centroid) > 2500) continue;
+        // Tiles repeat features across boundaries; dedupe on rounded position.
+        const key = `${centroid[0].toFixed(5)},${centroid[1].toFixed(5)}`;
+        if (seen.has(key)) continue;
+        seen.add(key);
+        footprints.push(centroid);
+      }
+    } catch {
+      footprints = [];
+    }
+
+    // Sorted for a stable candidate order regardless of tile arrival order.
+    footprints.sort((a, b) => a[0] - b[0] || a[1] - b[1]);
+
+    const free = footprints.filter(
+      (point) => !takenBuildingsRef.current.has(`${point[0].toFixed(5)},${point[1].toFixed(5)}`),
+    );
+
+    if (free.length >= 2) {
+      const assigned = assignBuildings(
+        pending.map((c) => c.domain),
+        free,
+      );
+      for (const [domain, point] of assigned) {
+        scatterRef.current.set(domain, point);
+        takenBuildingsRef.current.add(`${point[0].toFixed(5)},${point[1].toFixed(5)}`);
+      }
+    }
+
+    // Anything still unplaced (no buildings loaded, or more companies than
+    // rooftops) gets spread anyway rather than left stacked on the centroid.
+    pending
+      .filter((c) => !scatterRef.current.has(c.domain))
+      .forEach((c, i) => scatterRef.current.set(c.domain, scatterAround(c.domain, centre, i)));
+
+    return true;
+  }, []);
+
+  /** Where a marker actually draws: its real office, or its assigned building. */
+  const positionOf = useCallback((company: HiringCompany): Point | null => {
+    if (company.geoPrecision !== 'exact') {
+      const scattered = scatterRef.current.get(company.domain);
+      if (scattered) return scattered;
+    }
+    if (company.latitude == null || company.longitude == null) return null;
+    return [company.longitude, company.latitude];
+  }, []);
+
+  /**
    * Decide how each marker draws itself for the current camera.
    *
    * Overlap is a screen-space property, so this runs on every move rather than
@@ -262,12 +356,10 @@ export const CityMap3D = forwardRef<CityMap3DHandle, Props>(function CityMap3D(
     if (!map || !entries.size) return;
 
     const projected = [...entries.entries()]
-      .filter(([, entry]) => entry.company.latitude != null && entry.company.longitude != null)
-      .map(([domain, entry]) => {
-        const point = map.project([
-          entry.company.longitude as number,
-          entry.company.latitude as number,
-        ]);
+      .map(([domain, entry]) => ({ domain, entry, at: positionOf(entry.company) }))
+      .filter((row): row is { domain: string; entry: MarkerEntry; at: Point } => row.at !== null)
+      .map(({ domain, entry, at }) => {
+        const point = map.project(at);
         return { domain, company: entry.company, x: point.x, y: point.y };
       });
 
@@ -332,7 +424,7 @@ export const CityMap3D = forwardRef<CityMap3DHandle, Props>(function CityMap3D(
       }
       el.dataset.stack = hidden ? 'true' : 'false';
     }
-  }, [selectedDomain]);
+  }, [selectedDomain, positionOf]);
 
   useEffect(() => {
     const map = mapRef.current;
@@ -342,14 +434,17 @@ export const CityMap3D = forwardRef<CityMap3DHandle, Props>(function CityMap3D(
       const existing = markersRef.current;
       const wanted = new Set<string>();
 
+      assignScatter(companies);
+
       for (const company of companies) {
-        if (company.latitude == null || company.longitude == null) continue;
+        const at = positionOf(company);
+        if (!at) continue;
         wanted.add(company.domain);
 
         const current = existing.get(company.domain);
         if (current) {
           current.company = company;
-          current.marker.setLngLat([company.longitude, company.latitude]);
+          current.marker.setLngLat(at);
           continue;
         }
 
@@ -370,7 +465,7 @@ export const CityMap3D = forwardRef<CityMap3DHandle, Props>(function CityMap3D(
         });
 
         const marker = new maplibregl.Marker({ element: el, anchor: 'bottom' })
-          .setLngLat([company.longitude, company.latitude])
+          .setLngLat(at)
           .addTo(map);
         existing.set(company.domain, { marker, company });
       }
@@ -389,7 +484,7 @@ export const CityMap3D = forwardRef<CityMap3DHandle, Props>(function CityMap3D(
     // never needed the map to finish loading — gating them behind it meant a
     // slow tile server showed an empty map with no companies on it.
     paint();
-  }, [companies, selectedDomain, buildMarkerElement, relayout]);
+  }, [companies, selectedDomain, buildMarkerElement, relayout, assignScatter, positionOf]);
 
   // What overlaps changes with every pan and zoom, so re-pack on camera move.
   useEffect(() => {
@@ -437,7 +532,8 @@ export const CityMap3D = forwardRef<CityMap3DHandle, Props>(function CityMap3D(
     focusCompany: (domain: string) => {
       const map = mapRef.current;
       const company = companies.find((entry) => entry.domain === domain);
-      if (!map || !company || company.latitude == null || company.longitude == null) return;
+      const at = company ? positionOf(company) : null;
+      if (!map || !company || !at) return;
 
       // Searching a company in another city switches the city too, which would
       // otherwise queue a second flyTo to that city's centre and fight this
@@ -446,7 +542,7 @@ export const CityMap3D = forwardRef<CityMap3DHandle, Props>(function CityMap3D(
       if (company.city) flownTo.current = company.city;
 
       map.flyTo({
-        center: [company.longitude, company.latitude],
+        center: at,
         zoom: FOCUS_ZOOM,
         pitch: 62,
         duration: 1500,

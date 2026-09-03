@@ -207,13 +207,59 @@ const isFresh = (row) => {
   return Number.isFinite(at) && Date.now() - at < STALE_MS;
 };
 
+/**
+ * Write discovered companies without trampling resolved offices.
+ *
+ * Discovery only knows a company's CITY, so it carries the city centroid for
+ * every row. Upserting that directly overwrote coordinates that had been
+ * resolved to a real office — and since geo_precision was not in the payload
+ * it survived as 'exact', leaving rows that claimed to be a street address
+ * while sitting on the city centre. Every company in a city ended up on one
+ * point, labelled precise.
+ *
+ * So coordinates are written in a second pass that skips anything already
+ * resolved. New rows still get the centroid; resolved ones keep their office.
+ */
 const upsertCompanies = async (rows) => {
   if (!rows.length || !SUPABASE_URL || !SERVICE_KEY) return;
+
+  const withoutCoordinates = rows.map((row) => {
+    const { latitude, longitude, ...rest } = row;
+    return rest;
+  });
+
   await fetch(`${SUPABASE_URL}/rest/v1/companies?on_conflict=canonical_domain`, {
     method: 'POST',
     headers: { ...serviceHeaders(), Prefer: 'resolution=merge-duplicates,return=minimal' },
-    body: JSON.stringify(rows),
+    body: JSON.stringify(withoutCoordinates),
   }).catch(() => null);
+
+  // Group by the coordinate they'd take, so one PATCH covers a whole city.
+  const byPoint = new Map();
+  for (const row of rows) {
+    if (row.latitude == null || row.longitude == null) continue;
+    const key = `${row.latitude},${row.longitude}`;
+    const group = byPoint.get(key) ?? { latitude: row.latitude, longitude: row.longitude, domains: [] };
+    group.domains.push(row.canonical_domain);
+    byPoint.set(key, group);
+  }
+
+  await Promise.all(
+    [...byPoint.values()].map((group) => {
+      const list = group.domains.map((d) => `"${d}"`).join(',');
+      // geo_precision=neq.exact is the guard: a resolved office is never
+      // dragged back to the city centre.
+      const url =
+        `${SUPABASE_URL}/rest/v1/companies` +
+        `?canonical_domain=in.(${encodeURIComponent(list)})` +
+        `&geo_precision=neq.exact`;
+      return fetch(url, {
+        method: 'PATCH',
+        headers: { ...serviceHeaders(), Prefer: 'return=minimal' },
+        body: JSON.stringify({ latitude: group.latitude, longitude: group.longitude }),
+      }).catch(() => null);
+    }),
+  );
 };
 
 /**
