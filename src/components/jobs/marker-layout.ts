@@ -43,16 +43,17 @@ const LABEL_H = 30;
 const DOT_HALF_W = 9;
 const DOT_H = 20;
 
-export const layoutMarkers = (
-  markers: LayoutInput[],
-  selectedDomain: string | null,
-): LayoutResult => {
-  // Most important first: the selection, then the biggest hirers. Whoever is
-  // placed first keeps its label; later collisions yield to it.
-  const ordered = [...markers].sort((a, b) => {
-    const rank = (entry: LayoutInput) => (entry.domain === selectedDomain ? 1 : 0);
-    return rank(b) - rank(a) || b.company.openRoles - a.company.openRoles;
-  });
+export const layoutMarkers = (markers: LayoutInput[]): LayoutResult => {
+  /**
+   * Ordered by size alone, deliberately independent of what is selected.
+   *
+   * Ranking the selection first meant clicking a company made it the anchor of
+   * its stack, which re-keyed the stack and collapsed any fan the viewer had
+   * opened — so exploring one company's roles made every other pin vanish.
+   * Packing has to stay put while you read. A selected marker that would be
+   * hidden is surfaced by opening its stack instead (see CityMap3D).
+   */
+  const ordered = [...markers].sort((a, b) => b.company.openRoles - a.company.openRoles);
 
   type Placed = { x: number; y: number; x1: number; y1: number; x2: number; y2: number; domain: string };
   const placed: Placed[] = [];

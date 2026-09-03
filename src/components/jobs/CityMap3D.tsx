@@ -271,7 +271,19 @@ export const CityMap3D = forwardRef<CityMap3DHandle, Props>(function CityMap3D(
         return { domain, company: entry.company, x: point.x, y: point.y };
       });
 
-    const { states, stacks } = layoutMarkers(projected, selectedDomain);
+    const { states, stacks } = layoutMarkers(projected);
+
+    // A selected company must never be one of the hidden ones. If it sits
+    // under a folded stack, open that stack rather than leaving the viewer
+    // looking at a panel whose pin they cannot see.
+    if (selectedDomain && states.get(selectedDomain) === 'stacked') {
+      for (const [anchor, members] of stacks) {
+        if (members.includes(selectedDomain)) {
+          expandedRef.current = anchor;
+          break;
+        }
+      }
+    }
     const expanded = expandedRef.current;
 
     // Which anchor each folded marker belongs to, so a fanned stack can place
@@ -351,7 +363,8 @@ export const CityMap3D = forwardRef<CityMap3DHandle, Props>(function CityMap3D(
             relayout();
             return;
           }
-          expandedRef.current = null;
+          // The fan deliberately stays open: picking a company to read its
+          // roles should not sweep every other pin off the map.
           onSelectRef.current(company);
           relayout();
         });
