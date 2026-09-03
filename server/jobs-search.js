@@ -14,6 +14,7 @@
 //      JOBS_MAX_SPEND_CENTS (per-request cap, default 25).
 
 import { createOrthogonalSession, orthogonalData, OrthogonalError } from './agent/orthogonal.js';
+import { geocodePlace, reverseGeocode, geocodeEndpointsInUse } from './geocode.js';
 
 const SUPABASE_URL = (process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || '').replace(/\/$/, '');
 const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
@@ -695,6 +696,15 @@ export default async function jobsSearchHandler(req, res, { geocode, nearestCity
   if (!limit.ok) {
     res.setHeader('Retry-After', String(limit.retryAfter));
     return res.status(429).json({ ok: false, error: 'rate_limited', retryAfter: limit.retryAfter });
+  }
+
+  // TEMPORARY: proves the live geocoder against the real catalog before the
+  // hand-written coordinate table is removed. Deleted once verified.
+  if (body?.probe === 'geocode') {
+    const forward = body?.place ? await geocodePlace(body.place) : null;
+    const reverse =
+      body?.lat != null && body?.lng != null ? await reverseGeocode(body.lat, body.lng) : null;
+    return res.status(200).json({ ok: true, forward, reverse, endpoints: geocodeEndpointsInUse() });
   }
 
   // Heal rows the geocoder can place now but could not when they were written.
