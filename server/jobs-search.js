@@ -592,13 +592,18 @@ const JOB_TERMS = ['job_opening', 'job-opening', 'job', 'hiring', 'career', 'vac
  * shape does not work across providers, so intent is mapped onto whatever each
  * endpoint actually accepts.
  */
-const buildRunBody = (candidate, query, city) => {
+const buildRunBody = (candidate, query, city, companyDomain = '') => {
   const declared = Array.isArray(candidate?.params) ? candidate.params : [];
   // No schema published: fall back to the broadest common spelling.
   if (!declared.length) return { query, location: city || undefined, limit: PAGE_SIZE };
 
   const has = (name) => declared.includes(name);
   const body = {};
+
+  // Asking for one company's roles: the domain filter is far more precise than
+  // putting its name in a free-text search, which matches anyone who mentions it.
+  const domainKey = companyDomain ? ['company_domain', 'domain', 'organization'].find(has) : null;
+  if (domainKey) body[domainKey] = companyDomain;
 
   const queryKey = ['search', 'query', 'title', 'q'].find(has);
   if (queryKey && query) body[queryKey] = query;
@@ -830,6 +835,63 @@ const runShape = (run) => {
 
 const BUDGET_STOP = new Set(['orthogonal_budget_reached', 'orthogonal_insufficient_credits', 'orthogonal_call_limit']);
 
+/**
+ * Fetch the individual roles for ONE company, on demand.
+ *
+ * A city-wide discovery only keeps the first few pages of job rows, so plenty
+ * of companies end up with a role COUNT and no roles behind it — and so does
+ * every company discovered before roles were stored at all. Rather than
+ * re-running a whole city to chase one company, ask the hiring endpoint for
+ * that company alone.
+ *
+ * Paid, so it happens when someone actually opens the company, and the result
+ * is stored: a company is fetched once, not once per viewer.
+ */
+const fetchCompanyRoles = async ({ domain, name, city }) => {
+  const budgetCents = jobsBudgetCents();
+  const session = createOrthogonalSession({ maxCalls: 20, maxSpendCents: budgetCents });
+
+  const prompt = `open job postings at a specific company: ${name || domain}`;
+  const { priced } = await priceCandidates(session, prompt);
+  const affordable = priced.filter(
+    (c) => !c.dynamic && c.priceCents != null && c.priceCents <= budgetCents,
+  );
+
+  for (const candidate of affordable.slice(0, 3)) {
+    // Only endpoints that can actually narrow to one company are worth paying
+    // for here; a city-wide feed would just return the same partial page.
+    const declared = Array.isArray(candidate.params) ? candidate.params : [];
+    const canTargetCompany = ['company_domain', 'domain', 'organization', 'company_name'].some((k) =>
+      declared.includes(k),
+    );
+    if (!canTargetCompany) continue;
+
+    try {
+      const runBody = buildRunBody(candidate, name, city, domain);
+      const isGet =
+        candidate.method !== 'POST' && candidate.method !== 'PUT' && candidate.method !== 'PATCH';
+      const asQuery = Object.fromEntries(Object.entries(runBody).map(([k, v]) => [k, String(v)]));
+      const run = await session.run({
+        api: candidate.api,
+        path: candidate.path,
+        body: isGet ? {} : runBody,
+        query: isGet ? asQuery : {},
+      });
+
+      const { jobs } = aggregateCompanies(extractItems(run), city);
+      // The endpoint may answer with neighbours too; keep only this company's.
+      const mine = jobs.filter((job) => job.company_domain === domain);
+      if (!mine.length) continue;
+
+      await upsertJobs(mine.slice(0, MAX_UPSERT_ROWS));
+      return mine.length;
+    } catch (error) {
+      if (error instanceof OrthogonalError && BUDGET_STOP.has(error.code)) break;
+    }
+  }
+  return 0;
+};
+
 // ---------- handler ----------
 
 const readJsonBody = async (req) => {
@@ -867,6 +929,23 @@ export default async function jobsSearchHandler(req, res, { geocode }) {
   }
 
   const body = await readJsonBody(req);
+
+  if (body?.roles && typeof body.roles === 'object') {
+    const gate = await rateLimitOk(req);
+    if (!gate.ok) {
+      res.setHeader('Retry-After', String(gate.retryAfter));
+      return res.status(429).json({ ok: false, error: 'rate_limited', retryAfter: gate.retryAfter });
+    }
+    const domain = clean(body.roles.domain, 200).toLowerCase();
+    if (!domain) return res.status(400).json({ ok: false, error: 'domain_required' });
+
+    const stored = await fetchCompanyRoles({
+      domain,
+      name: clean(body.roles.name, 200),
+      city: clean(body.roles.city, 120),
+    });
+    return res.status(200).json({ ok: true, stored });
+  }
 
   if (Array.isArray(body?.resolve)) {
     const gate = await rateLimitOk(req);

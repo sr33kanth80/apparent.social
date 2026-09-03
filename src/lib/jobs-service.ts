@@ -264,3 +264,30 @@ export const resolvePreciseLocations = async (
     return [];
   }
 };
+
+/**
+ * Fetch one company's individual roles.
+ *
+ * A city-wide discovery only keeps the first few pages of job rows, so many
+ * companies carry a role COUNT with no roles behind it — as does every company
+ * discovered before roles were stored at all. This asks for that company alone
+ * and the server stores the result, so it is paid for once rather than once
+ * per viewer.
+ */
+export const fetchCompanyRoles = async (
+  domain: string,
+  name: string,
+  city: string,
+): Promise<number> => {
+  try {
+    const res = await fetch('/api/jobs', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ roles: { domain, name, city } }),
+    });
+    const data = await res.json().catch(() => null);
+    return typeof data?.stored === 'number' ? data.stored : 0;
+  } catch {
+    return 0;
+  }
+};

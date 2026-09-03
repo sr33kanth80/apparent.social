@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { ArrowUpRight, Briefcase, MapPin, X } from 'lucide-react';
-import { loadJobsForCompany } from '@/lib/jobs-service';
+import { fetchCompanyRoles, loadJobsForCompany } from '@/lib/jobs-service';
 import type { CompanyJob, HiringCompany } from '@/lib/apparent-types';
 
 const BLUE = '#1d9bf0';
@@ -25,18 +25,34 @@ export function CompanyPanel({ company, onClose }: { company: HiringCompany; onC
     let mounted = true;
     setLoadingJobs(true);
     setJobs([]);
-    loadJobsForCompany(company.domain)
-      .then((rows) => {
-        if (mounted) setJobs(rows);
-      })
-      .catch(() => undefined)
-      .finally(() => {
-        if (mounted) setLoadingJobs(false);
-      });
+
+    (async () => {
+      const stored = await loadJobsForCompany(company.domain).catch(() => []);
+      if (!mounted) return;
+
+      if (stored.length || company.openRoles === 0) {
+        setJobs(stored);
+        setLoadingJobs(false);
+        return;
+      }
+
+      // A role count with nothing behind it: the roles were never stored for
+      // this company, either because a city-wide discovery only kept the first
+      // few pages or because it predates roles being stored at all. Fetch
+      // them now rather than showing a number we cannot substantiate.
+      const added = await fetchCompanyRoles(company.domain, company.name, company.city);
+      if (!mounted) return;
+
+      const refreshed = added ? await loadJobsForCompany(company.domain).catch(() => []) : [];
+      if (!mounted) return;
+      setJobs(refreshed);
+      setLoadingJobs(false);
+    })();
+
     return () => {
       mounted = false;
     };
-  }, [company.domain]);
+  }, [company.domain, company.name, company.city, company.openRoles]);
 
   return (
     <div className="absolute right-4 top-[5.5rem] z-20 flex max-h-[calc(100%-7rem)] w-[340px] max-w-[calc(100vw-2rem)] flex-col border border-black/12 bg-[#fdf9f7] shadow-[0_10px_40px_rgba(0,0,0,0.14)]">
@@ -91,7 +107,7 @@ export function CompanyPanel({ company, onClose }: { company: HiringCompany; onC
 
         {!loadingJobs && jobs.length === 0 && (
           <p className="mt-3 text-sm text-black/45">
-            No individual roles stored yet — use “View careers” for their listings.
+            Couldn’t list these individually — use “View careers” for their listings.
           </p>
         )}
 

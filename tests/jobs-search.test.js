@@ -435,3 +435,94 @@ test('a cached row past the TTL is refreshed, and the response carries its age',
   assert.ok(returned.lastEnrichedAt, 'refreshed rows must carry lastEnrichedAt');
   assert.ok(Date.now() - Date.parse(returned.lastEnrichedAt) < 60_000);
 });
+
+test('fetching one company\'s roles targets that company and stores them', async () => {
+  let sentQuery = null;
+  let jobRows = [];
+
+  globalThis.fetch = async (url, options = {}) => {
+    const href = String(url);
+    const json = (v) => ({ ok: true, status: 200, text: async () => JSON.stringify(v), json: async () => v });
+
+    if (href.includes('/rpc/consume_agent_rate_limit')) return json([{ allowed: true }]);
+    if (href.includes('/rest/v1/company_jobs')) { jobRows = JSON.parse(options.body); return json({}); }
+    if (href.includes('/rest/v1/companies')) return json([]);
+    if (href.endsWith('/v1/search')) {
+      return json({
+        results: [
+          {
+            slug: 'signalbase',
+            endpoints: [
+              // A city-wide feed cannot narrow to one company, so it must be
+              // skipped rather than paid for.
+              { path: '/signals/city-feed', method: 'GET', description: 'hiring by city' },
+              { path: '/signals/hiring', method: 'GET', description: 'hiring signals job openings' },
+            ],
+          },
+        ],
+      });
+    }
+    if (href.endsWith('/v1/details')) {
+      const body = JSON.parse(options.body);
+      return json({
+        endpoint: {
+          price: 0.02,
+          parameters:
+            body.path === '/signals/hiring'
+              ? ['limit', 'company_domain', 'search']
+              : ['limit', 'city'],
+        },
+      });
+    }
+    if (href.endsWith('/v1/run')) {
+      sentQuery = JSON.parse(options.body).query;
+      return json({
+        priceCents: 2,
+        results: [
+          { jobId: 'r1', companyName: 'Wonder', companyWebsite: 'wonder.com', city: 'Boston', title: 'Chef', jobUrl: 'https://j/1' },
+          { jobId: 'r2', companyName: 'Wonder', companyWebsite: 'wonder.com', city: 'Boston', title: 'Driver', jobUrl: 'https://j/2' },
+          // A neighbour the endpoint threw in; must not be stored under Wonder.
+          { jobId: 'r3', companyName: 'Other', companyWebsite: 'other.com', city: 'Boston', title: 'Analyst', jobUrl: 'https://j/3' },
+        ],
+      });
+    }
+    throw new Error(`unexpected fetch: ${href}`);
+  };
+
+  const res = makeRes();
+  await jobsSearchHandler(
+    makeReq({ roles: { domain: 'wonder.com', name: 'Wonder', city: 'Boston' } }),
+    res,
+    { geocode },
+  );
+
+  assert.equal(res.statusCode, 200);
+  assert.equal(res.body.stored, 2);
+
+  // The domain filter is what makes this precise; a name in free text would
+  // match anyone who merely mentions the company.
+  assert.equal(sentQuery.company_domain, 'wonder.com');
+
+  // Only this company's roles are written, not the neighbour's.
+  assert.equal(jobRows.length, 2);
+  assert.ok(jobRows.every((j) => j.company_domain === 'wonder.com'));
+  assert.deepEqual(jobRows.map((j) => j.title).sort(), ['Chef', 'Driver']);
+});
+
+test('a roles request without a domain is refused', async () => {
+  let orthogonalCalls = 0;
+  globalThis.fetch = async (url) => {
+    const href = String(url);
+    const json = (v) => ({ ok: true, status: 200, text: async () => JSON.stringify(v), json: async () => v });
+    if (href.includes('/rpc/consume_agent_rate_limit')) return json([{ allowed: true }]);
+    if (href.includes('api.orthogonal.com')) { orthogonalCalls += 1; return json({}); }
+    return json([]);
+  };
+
+  const res = makeRes();
+  await jobsSearchHandler(makeReq({ roles: { name: 'Wonder' } }), res, { geocode });
+
+  assert.equal(res.statusCode, 400);
+  assert.equal(res.body.error, 'domain_required');
+  assert.equal(orthogonalCalls, 0, 'must not spend without a company to ask about');
+});
