@@ -637,7 +637,7 @@ const jobsBudgetCents = () => Number.parseInt(process.env.JOBS_MAX_SPEND_CENTS |
  * whatever the first result happens to cost. Endpoints without a fixed price are
  * skipped: the session wrapper refuses to auto-execute unbounded pricing anyway.
  */
-const priceCandidates = async (session, prompt) => {
+const priceCandidates = async (session, prompt, { allowTemplated = false } = {}) => {
   const found = await session.search(prompt, 10);
   const items = extractItems(found);
 
@@ -662,11 +662,15 @@ const priceCandidates = async (session, prompt) => {
     for (const endpoint of endpoints.slice(0, 4)) {
       const path = clean(endpoint?.path ?? endpoint?.endpoint, 200);
       if (!api || !path.startsWith('/')) continue;
-      // Templated paths ("/v3/companies/{company_id_or_domain}/job_openings")
-      // need an identifier a discovery search does not have, so they can never
-      // be satisfied here — and being cheap, they otherwise crowd out the
-      // endpoints that can actually answer.
-      if (path.includes('{')) continue;
+      /**
+       * Templated paths ("/v3/companies/{company_id_or_domain}/job_openings")
+       * need an identifier the caller has to supply. A city-wide discovery has
+       * none, so they can never be satisfied there and — being cheap — would
+       * crowd out the endpoints that can answer. Asking about ONE company is
+       * the opposite case: the identifier is exactly what we have, and these
+       * are the endpoints built for the job.
+       */
+      if (path.includes('{') && !allowTemplated) continue;
       try {
         const details = await session.details({ api, path });
         const info = details?.endpoint ?? details?.data?.endpoint ?? {};
@@ -853,8 +857,10 @@ const fetchCompanyRoles = async ({ domain, name, city }) => {
   // What was attempted, so a zero result can be explained rather than guessed at.
   const trace = [];
 
-  const prompt = `open job postings at a specific company: ${name || domain}`;
-  const { priced } = await priceCandidates(session, prompt);
+  // Named around the company filter, because a generic "job postings" prompt
+  // surfaced only city-wide feeds that cannot narrow to one company.
+  const prompt = `job openings for one specific company, by company domain or id: ${name || domain}`;
+  const { priced } = await priceCandidates(session, prompt, { allowTemplated: true });
   const affordable = priced.filter(
     (c) => !c.dynamic && c.priceCents != null && c.priceCents <= budgetCents,
   );
@@ -868,13 +874,21 @@ const fetchCompanyRoles = async ({ domain, name, city }) => {
     // Only endpoints that can actually narrow to one company are worth paying
     // for here; a city-wide feed would just return the same partial page.
     const declared = Array.isArray(candidate.params) ? candidate.params : [];
-    const canTargetCompany = ['company_domain', 'domain', 'organization', 'company_name'].some((k) =>
-      declared.includes(k),
-    );
+    // A path placeholder IS the company filter, and a better one than a
+    // parameter: the endpoint can only answer about that company.
+    const isTemplated = candidate.path.includes('{');
+    const canTargetCompany =
+      isTemplated ||
+      ['company_domain', 'domain', 'organization', 'company_name'].some((k) => declared.includes(k));
     if (!canTargetCompany) {
       trace.push({ step: 'skipped', endpoint: `${candidate.api}${candidate.path}`, params: declared.slice(0, 12) });
       continue;
     }
+
+    // Fill the placeholder with the company we are asking about.
+    const path = isTemplated
+      ? candidate.path.replace(/\{[^}]+\}/, encodeURIComponent(domain))
+      : candidate.path;
 
     try {
       const runBody = buildRunBody(candidate, name, city, domain);
@@ -883,7 +897,7 @@ const fetchCompanyRoles = async ({ domain, name, city }) => {
       const asQuery = Object.fromEntries(Object.entries(runBody).map(([k, v]) => [k, String(v)]));
       const run = await session.run({
         api: candidate.api,
-        path: candidate.path,
+        path,
         body: isGet ? {} : runBody,
         query: isGet ? asQuery : {},
       });
@@ -904,6 +918,9 @@ const fetchCompanyRoles = async ({ domain, name, city }) => {
         found
           .filter(
             (c) =>
+              // A templated path can only be about this company, so anything it
+              // returns is ours regardless of what the provider calls them.
+              isTemplated ||
               c.canonical_domain === domain ||
               (wantedName && c.name.toLowerCase() === wantedName),
           )
@@ -918,7 +935,7 @@ const fetchCompanyRoles = async ({ domain, name, city }) => {
 
       trace.push({
         step: 'ran',
-        endpoint: `${candidate.api}${candidate.path}`,
+        endpoint: `${candidate.api}${path}`,
         sent: runBody,
         itemsBack: extractItems(run).length,
         companiesBack: found.map((c) => `${c.name}|${c.canonical_domain}`).slice(0, 6),
