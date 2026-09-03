@@ -857,9 +857,16 @@ const fetchCompanyRoles = async ({ domain, name, city }) => {
   // What was attempted, so a zero result can be explained rather than guessed at.
   const trace = [];
 
-  // Named around the company filter, because a generic "job postings" prompt
-  // surfaced only city-wide feeds that cannot narrow to one company.
-  const prompt = `job openings for one specific company, by company domain or id: ${name || domain}`;
+  /**
+   * Deliberately the same shape of prompt discovery uses.
+   *
+   * A prompt worded around "one specific company" surfaced only endpoints
+   * keyed on a provider's own company id, which 404 for anything not in their
+   * database. This wording surfaces the hiring feed that found these companies
+   * in the first place — and it accepts a company_domain filter, so it can be
+   * narrowed to one of them.
+   */
+  const prompt = `companies hiring with open job postings and careers page: ${name || domain}`;
   const { priced } = await priceCandidates(session, prompt, { allowTemplated: true });
   const affordable = priced.filter(
     (c) => !c.dynamic && c.priceCents != null && c.priceCents <= budgetCents,
@@ -870,7 +877,9 @@ const fetchCompanyRoles = async ({ domain, name, city }) => {
     affordable: affordable.map((c) => `${c.api}${c.path}`).slice(0, 6),
   });
 
-  for (const candidate of affordable.slice(0, 3)) {
+  // A few attempts, because the cheapest company-targeting endpoint may 404 on
+  // an identifier its provider does not carry.
+  for (const candidate of affordable.slice(0, 5)) {
     // Only endpoints that can actually narrow to one company are worth paying
     // for here; a city-wide feed would just return the same partial page.
     const declared = Array.isArray(candidate.params) ? candidate.params : [];
