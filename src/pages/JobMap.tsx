@@ -57,6 +57,25 @@ const TILTED_PITCH = 55;
  */
 const DISCOVER_MIN_ZOOM = 8;
 const DISCOVER_WHEN_FEWER_THAN = 4;
+/**
+ * How old cached rows may be before exploring an area refreshes them.
+ *
+ * Without this the map only ever filled empty areas: once somewhere had a few
+ * companies it was never looked at again, so a city discovered days ago kept
+ * showing days-old openings forever. Matches the server's own cache window.
+ */
+const STALE_AFTER_MS = 30 * 60 * 1000;
+
+const isStale = (rows: HiringCompany[]) => {
+  if (!rows.length) return true;
+  let newest = 0;
+  for (const row of rows) {
+    const ms = row.lastEnrichedAt ? Date.parse(row.lastEnrichedAt) : NaN;
+    if (Number.isFinite(ms) && ms > newest) newest = ms;
+  }
+  // No timestamp at all means it predates freshness tracking: treat as stale.
+  return newest === 0 || Date.now() - newest > STALE_AFTER_MS;
+};
 
 type PlacedCompany = HiringCompany & { lat: number; lng: number };
 
@@ -354,8 +373,18 @@ export default function JobMap() {
       const next = { ...prev };
       for (const row of rows) {
         const existing = next[row.domain];
-        // Keep whichever record knows about more roles.
-        if (!existing || row.openRoles > existing.openRoles) next[row.domain] = row;
+        if (!existing) {
+          next[row.domain] = row;
+          continue;
+        }
+        // Freshness wins over role count: a refresh that legitimately finds
+        // fewer openings must replace the older row, not lose to it. Only when
+        // neither is newer does the richer record win.
+        const incoming = row.lastEnrichedAt ? Date.parse(row.lastEnrichedAt) : 0;
+        const current = existing.lastEnrichedAt ? Date.parse(existing.lastEnrichedAt) : 0;
+        if (incoming > current || (incoming === current && row.openRoles > existing.openRoles)) {
+          next[row.domain] = row;
+        }
       }
       const keys = Object.keys(next);
       if (keys.length <= MAX_LOADED) return next;
@@ -383,10 +412,12 @@ export default function JobMap() {
       setLoadingView(false);
       merge(rows);
 
-      // Nothing here yet and the user has zoomed somewhere specific: go find out
-      // who is hiring. Deliberately gated -- this is the one path where moving
+      // Read-through: fetch when the area is empty, and also when what we have
+      // has gone stale. Deliberately gated -- this is the one path where moving
       // the map can cost money.
-      if (zoom < DISCOVER_MIN_ZOOM || rows.length >= DISCOVER_WHEN_FEWER_THAN) return;
+      if (zoom < DISCOVER_MIN_ZOOM) return;
+      const sparse = rows.length < DISCOVER_WHEN_FEWER_THAN;
+      if (!sparse && !isStale(rows)) return;
 
       // No place label under the centre means open water or somewhere too
       // coarse to search, and there is nothing meaningful to ask for.
@@ -396,16 +427,20 @@ export default function JobMap() {
       if (triedAreas.current.has(areaKey)) return;
       triedAreas.current.add(areaKey);
 
-      setDiscovering(`Looking for companies hiring in ${placeName}…`);
+      setDiscovering(
+        sparse
+          ? `Looking for companies hiring in ${placeName}…`
+          : `Refreshing ${placeName}…`,
+      );
       const found = await discoverArea(placeName);
       setDiscovering('');
 
       if (found.companies.length) {
         merge(found.companies);
         setNotice(
-          found.resolvedCity
-            ? `Found ${found.companies.length} hiring in ${found.resolvedCity}.`
-            : `Found ${found.companies.length} hiring here.`,
+          sparse
+            ? `Found ${found.companies.length} hiring in ${found.resolvedCity || placeName}.`
+            : `Refreshed ${found.resolvedCity || placeName} — ${found.companies.length} hiring.`,
         );
       } else if (!found.error) {
         setNotice('Nothing hiring found in this area yet.');

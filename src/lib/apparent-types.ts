@@ -686,6 +686,8 @@ export interface HiringCompany {
   latitude: number | null;
   longitude: number | null;
   openRoles: number;
+  /** When this row was last refreshed from Orthogonal; drives cache staleness. */
+  lastEnrichedAt?: string | null;
 }
 
 /** One open role at a company on the Jobs Map. */

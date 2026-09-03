@@ -21,7 +21,16 @@ import { geocodePlace, reverseGeocode, geocodeEndpointsInUse, geocodeCandidates,
 const SUPABASE_URL = (process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || '').replace(/\/$/, '');
 const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
 
-const STALE_MS = 7 * 24 * 60 * 60 * 1000;
+/**
+ * How long a stored row is allowed to answer for.
+ *
+ * The table is a read-through cache, not a corpus: results are always Orthogonal's
+ * live data, and this only stops the same place being re-billed in quick
+ * succession. A week made the map a stale archive; half an hour keeps it live
+ * while a burst of visitors to one city still costs a single lookup.
+ */
+const STALE_MS =
+  (Number.parseInt(process.env.JOBS_CACHE_TTL_MINUTES || '', 10) || 30) * 60 * 1000;
 const RATE_WINDOW_MS = 60_000;
 const RATE_MAX = 5; // per IP per minute — this route can spend money.
 const MAX_QUERY_CHARS = 200;
@@ -688,6 +697,9 @@ const toClient = (row) => ({
   latitude: row.latitude ?? null,
   longitude: row.longitude ?? null,
   openRoles: Number(row.open_roles ?? row.openRoles ?? 0),
+  // The client merges by freshness, so a row that omits this would look older
+  // than the cached copy it is meant to replace.
+  lastEnrichedAt: row.last_enriched_at ?? row.lastEnrichedAt ?? null,
 });
 
 export default async function jobsSearchHandler(req, res, { geocode }) {

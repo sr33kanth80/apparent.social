@@ -367,3 +367,49 @@ test('roles are stored per job, not collapsed into the company', async () => {
   assert.equal(design.posted_at, null);
   assert.equal(design.employment_type, 'Contract');
 });
+
+test('a cached row past the TTL is refreshed, and the response carries its age', async () => {
+  // Just over the 30-minute cache window.
+  const staleRow = {
+    ...freshRow,
+    last_enriched_at: new Date(Date.now() - 31 * 60 * 1000).toISOString(),
+  };
+  let orthogonalRuns = 0;
+
+  globalThis.fetch = async (url, options = {}) => {
+    const href = String(url);
+    const json = (v) => ({ ok: true, status: 200, text: async () => JSON.stringify(v), json: async () => v });
+
+    if (href.includes('/rpc/consume_agent_rate_limit')) return json([{ allowed: true }]);
+    if (href.includes('/rest/v1/company_jobs')) return json({});
+    if (href.includes('/rest/v1/companies')) {
+      const method = options.method || 'GET';
+      if (method === 'POST' || method === 'PATCH') return json({});
+      return json([staleRow]);
+    }
+    if (href.endsWith('/v1/search')) {
+      return json({ results: [{ slug: 'signalbase', endpoints: [{ path: '/signals/hiring', method: 'GET' }] }] });
+    }
+    if (href.endsWith('/v1/details')) return json({ endpoint: { price: 0.02, parameters: ['limit', 'city'] } });
+    if (href.endsWith('/v1/run')) {
+      orthogonalRuns += 1;
+      return json({ priceCents: 2, results: [
+        { companyName: 'Ramp', companyWebsite: 'ramp.com', city: 'Boston', jobUrl: 'https://j.example/1', title: 'Engineer' },
+      ] });
+    }
+    throw new Error(`unexpected fetch: ${href}`);
+  };
+
+  const res = makeRes();
+  await jobsSearchHandler(makeReq({ city: 'Boston' }), res, { geocode });
+
+  // Half an hour old is stale now, so the cache must not answer on its own.
+  assert.equal(res.body.source, 'orthogonal');
+  assert.equal(orthogonalRuns, 1);
+
+  // Freshness has to reach the client, which merges on it: without a timestamp
+  // a fresh row looks older than the cached copy it replaces and loses.
+  const returned = res.body.companies[0];
+  assert.ok(returned.lastEnrichedAt, 'refreshed rows must carry lastEnrichedAt');
+  assert.ok(Date.now() - Date.parse(returned.lastEnrichedAt) < 60_000);
+});

@@ -20,6 +20,7 @@ type CompanyRow = {
   latitude: number | null;
   longitude: number | null;
   open_roles: number | null;
+  last_enriched_at?: string | null;
 };
 
 const fromRow = (row: CompanyRow): HiringCompany => ({
@@ -32,10 +33,11 @@ const fromRow = (row: CompanyRow): HiringCompany => ({
   latitude: row.latitude,
   longitude: row.longitude,
   openRoles: Number(row.open_roles ?? 0),
+  lastEnrichedAt: row.last_enriched_at ?? null,
 });
 
 const SELECT_COLUMNS =
-  'canonical_domain,name,website,careers_url,one_liner,city,latitude,longitude,open_roles';
+  'canonical_domain,name,website,careers_url,one_liner,city,latitude,longitude,open_roles,last_enriched_at';
 
 /** Everything already discovered — the free path that paints the map on load. */
 export const browseCompanies = async (limit = 500): Promise<HiringCompany[]> => {
