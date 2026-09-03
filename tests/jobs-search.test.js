@@ -506,6 +506,10 @@ test('fetching one company\'s roles targets that company and stores them', async
   // The domain filter is what makes this precise; a name in free text would
   // match anyone who merely mentions the company.
   assert.equal(sentQuery.company_domain, 'wonder.com');
+  // And it is used ALONE: adding the name and city alongside it over-constrained
+  // the query to zero results for real companies.
+  assert.equal(sentQuery.search, undefined, 'domain filter must not be narrowed further');
+  assert.equal(sentQuery.city, undefined);
 
   // Matched by name despite a different website, re-keyed to our canonical
   // domain so the foreign key resolves — and the neighbour is still excluded.

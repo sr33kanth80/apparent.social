@@ -622,10 +622,22 @@ const buildRunBody = (candidate, query, city, companyDomain = '') => {
   const has = (name) => declared.includes(name);
   const body = {};
 
-  // Asking for one company's roles: the domain filter is far more precise than
-  // putting its name in a free-text search, which matches anyone who mentions it.
+  /**
+   * Asking for one company's roles: the domain filter is far more precise than
+   * putting its name in a free-text search, which matches anyone who mentions
+   * it.
+   *
+   * And when the domain filter is available it is used ALONE. Sending the name
+   * and city alongside it over-constrains the query into nothing: ABB filtered
+   * by domain returned nine roles, but domain plus "ABB" plus "New Berlin"
+   * returned zero.
+   */
   const domainKey = companyDomain ? ['company_domain', 'domain', 'organization'].find(has) : null;
-  if (domainKey) body[domainKey] = companyDomain;
+  if (domainKey) {
+    body[domainKey] = companyDomain;
+    if (has('limit')) body.limit = PAGE_SIZE;
+    return body;
+  }
 
   const queryKey = ['search', 'query', 'title', 'q'].find(has);
   if (queryKey && query) body[queryKey] = query;
