@@ -208,6 +208,16 @@ const discoverEndpoint = async (session, wantReverse, budgetCents) => {
 const lastCandidates = { forward: [], reverse: [] };
 export const geocodeCandidates = () => lastCandidates;
 
+/** Diagnostics: keys of the last reverse payload, to find the place-name field. */
+export const lastReverseShape = () => lastShape;
+let lastShape = null;
+export const recordReverseShape = (items) => {
+  lastShape = items.slice(0, 2).map((raw) => {
+    const item = raw?.attributes && typeof raw.attributes === 'object' ? { ...raw, ...raw.attributes } : raw;
+    return Object.keys(item || {}).slice(0, 25);
+  });
+};
+
 /** Map our intent onto whatever parameter names the endpoint declares. */
 const buildParams = (endpoint, { place, latitude, longitude }) => {
   const declared = Array.isArray(endpoint.params) ? endpoint.params : [];
@@ -302,14 +312,28 @@ export const reverseGeocode = async (latitude, longitude, options = {}) => {
     if (!endpointCache.reverse) {
       endpointCache.reverse = await discoverEndpoint(session, true, budgetCents);
     }
-    if (!endpointCache.reverse) return rememberPlace(key, null);
 
-    const result = await runEndpoint(
-      session,
-      endpointCache.reverse,
-      buildParams(endpointCache.reverse, { latitude: lat, longitude: lng }),
-    );
-    for (const item of extractItems(result)) {
+    // The catalog carries no dedicated reverse geocoder: every geo endpoint it
+    // offers is forward-only. Map search APIs commonly accept a "lat,lng"
+    // string as their query and answer with the place there, so the forward
+    // endpoint is reused that way rather than reintroducing a local table.
+    let endpoint = endpointCache.reverse;
+    let params;
+    if (endpoint) {
+      params = buildParams(endpoint, { latitude: lat, longitude: lng });
+    } else {
+      if (!endpointCache.forward) {
+        endpointCache.forward = await discoverEndpoint(session, false, budgetCents);
+      }
+      if (!endpointCache.forward) return rememberPlace(key, null);
+      endpoint = endpointCache.forward;
+      params = buildParams(endpoint, { place: `${lat},${lng}` });
+    }
+
+    const result = await runEndpoint(session, endpoint, params);
+    const items = extractItems(result);
+    recordReverseShape(items);
+    for (const item of items) {
       const name = readPlaceName(item);
       if (name) return rememberPlace(key, { name, latitude: lat, longitude: lng });
     }
