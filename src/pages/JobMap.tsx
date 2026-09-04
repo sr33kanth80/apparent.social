@@ -6,6 +6,8 @@ import { CompanyPanel } from '@/components/jobs/CompanyPanel';
 import { CommandPalette } from '@/components/jobs/CommandPalette';
 import { JobsHeader } from '@/components/jobs/JobsHeader';
 import { AddCompanyModal, ReportProblemModal } from '@/components/jobs/SubmissionModals';
+import { SavedPanel } from '@/components/jobs/SavedPanel';
+import { useSavedJobs } from '@/lib/saved-jobs';
 
 /**
  * Jobs Map — a real 3D city of companies that are hiring.
@@ -41,6 +43,9 @@ export default function JobMap() {
   const [searchOpen, setSearchOpen] = useState(false);
   const [addOpen, setAddOpen] = useState(false);
   const [reportOpen, setReportOpen] = useState(false);
+  const [minRoles, setMinRoles] = useState(0);
+  const [savedOpen, setSavedOpen] = useState(false);
+  const saved = useSavedJobs();
   const mapRef = useRef<CityMap3DHandle | null>(null);
   // Cities already refreshed this session, so switching back and forth does not
   // re-bill the same place.
@@ -99,10 +104,11 @@ export default function JobMap() {
     return [...counts.entries()].sort((a, b) => b[1] - a[1]).map(([city]) => city);
   }, [all]);
 
-  const visible = useMemo(
-    () => (activeCity ? all.filter((company) => company.city === activeCity) : all),
-    [all, activeCity],
-  );
+  const visible = useMemo(() => {
+    let rows = activeCity ? all.filter((company) => company.city === activeCity) : all;
+    if (minRoles > 0) rows = rows.filter((company) => company.openRoles >= minRoles);
+    return rows;
+  }, [all, activeCity, minRoles]);
 
   /**
    * Where to point the camera when the city changes.
@@ -239,6 +245,10 @@ export default function JobMap() {
           setActiveCity(city);
           setSelected(null);
         }}
+        minRoles={minRoles}
+        onMinRolesChange={setMinRoles}
+        savedCount={Object.keys(saved).length}
+        onOpenSaved={() => setSavedOpen((open) => !open)}
         onOpenSearch={() => setSearchOpen(true)}
         onAddCompany={() => setAddOpen(true)}
         onReportProblem={() => setReportOpen(true)}
@@ -255,6 +265,16 @@ export default function JobMap() {
               : 'Pick a city to start')}
         </p>
       </div>
+
+      {savedOpen && (
+        <SavedPanel
+          onClose={() => setSavedOpen(false)}
+          onPickCompany={(domain) => {
+            const company = companies[domain];
+            if (company) focusCompany(company);
+          }}
+        />
+      )}
 
       {selected && <CompanyPanel company={selected} onClose={() => setSelected(null)} />}
 

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { ChevronDown, Search } from 'lucide-react';
+import { Bookmark, ChevronDown, Search } from 'lucide-react';
 
 /**
  * Fixed overlay header: city picker, local time, search affordance and the two
@@ -20,10 +20,22 @@ const useLocalTime = () => {
   return time.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }).toLowerCase();
 };
 
+/** Role-count bands, not a free number: nobody wants to type "7". */
+export const ROLE_BANDS = [
+  { value: 0, label: 'Any openings' },
+  { value: 3, label: '3+ roles' },
+  { value: 10, label: '10+ roles' },
+  { value: 25, label: '25+ roles' },
+];
+
 type Props = {
   cities: string[];
   activeCity: string;
   onCityChange: (city: string) => void;
+  minRoles: number;
+  onMinRolesChange: (value: number) => void;
+  savedCount: number;
+  onOpenSaved: () => void;
   onOpenSearch: () => void;
   onAddCompany: () => void;
   onReportProblem: () => void;
@@ -33,6 +45,10 @@ export function JobsHeader({
   cities,
   activeCity,
   onCityChange,
+  minRoles,
+  onMinRolesChange,
+  savedCount,
+  onOpenSaved,
   onOpenSearch,
   onAddCompany,
   onReportProblem,
@@ -64,6 +80,22 @@ export function JobsHeader({
           <ChevronDown className="pointer-events-none absolute right-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-black/35" />
         </div>
 
+        <div className="relative">
+          <select
+            value={minRoles}
+            onChange={(event) => onMinRolesChange(Number(event.target.value))}
+            aria-label="Filter by number of open roles"
+            className="w-[120px] appearance-none truncate rounded-lg border border-black/10 bg-white py-1.5 pl-2.5 pr-7 text-xs text-black/75 outline-none transition-colors hover:border-black/20"
+          >
+            {ROLE_BANDS.map((band) => (
+              <option key={band.value} value={band.value}>
+                {band.label}
+              </option>
+            ))}
+          </select>
+          <ChevronDown className="pointer-events-none absolute right-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-black/35" />
+        </div>
+
         <span className="hidden text-xs tabular-nums text-black/45 sm:inline">{localTime}</span>
 
         <button
@@ -79,6 +111,15 @@ export function JobsHeader({
         </button>
 
         <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={onOpenSaved}
+            className="flex shrink-0 items-center gap-1.5 rounded-lg border border-black/12 px-3 py-1.5 text-xs text-black/65 transition-colors hover:bg-black/[0.04] hover:text-black"
+          >
+            <Bookmark className="h-3.5 w-3.5" style={savedCount ? { color: '#16a34a' } : undefined} />
+            Saved
+            {savedCount > 0 && <span className="tabular-nums text-black/45">{savedCount}</span>}
+          </button>
           <button
             type="button"
             onClick={onAddCompany}

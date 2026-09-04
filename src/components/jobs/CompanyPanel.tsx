@@ -1,9 +1,13 @@
-import { useEffect, useState } from 'react';
-import { ArrowUpRight, Briefcase, MapPin, X } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
+import { ArrowUpRight, Bookmark, Briefcase, MapPin, X } from 'lucide-react';
 import { fetchCompanyRoles, loadJobsForCompany } from '@/lib/jobs-service';
+import { savedKey, toggleSaved, useSavedJobs } from '@/lib/saved-jobs';
+import { SORTS, sortJobs, type SortKey } from '@/components/jobs/sort-jobs';
 import type { CompanyJob, HiringCompany } from '@/lib/apparent-types';
 
 const BLUE = '#1d9bf0';
+/** Same green as the map pins, so a saved role reads as part of the map. */
+const GREEN = '#16a34a';
 
 /** "3d ago" reads faster than a date when scanning for fresh postings. */
 const postedLabel = (postedAt: string | null) => {
@@ -20,6 +24,16 @@ const postedLabel = (postedAt: string | null) => {
 export function CompanyPanel({ company, onClose }: { company: HiringCompany; onClose: () => void }) {
   const [jobs, setJobs] = useState<CompanyJob[]>([]);
   const [loadingJobs, setLoadingJobs] = useState(true);
+  const [sort, setSort] = useState<SortKey>('fresh');
+  const [savedOnly, setSavedOnly] = useState(false);
+  const saved = useSavedJobs();
+
+  const shown = useMemo(() => {
+    const filtered = savedOnly
+      ? jobs.filter((job) => saved[savedKey(company.domain, job.jobKey)])
+      : jobs;
+    return sortJobs(filtered, sort);
+  }, [jobs, saved, savedOnly, sort, company.domain]);
 
   useEffect(() => {
     let mounted = true;
@@ -111,27 +125,93 @@ export function CompanyPanel({ company, onClose }: { company: HiringCompany; onC
           </p>
         )}
 
+        {/* Sorting only earns its space once there is more than one role. */}
+        {jobs.length > 1 && (
+          <div className="mt-3 flex items-center gap-2">
+            <select
+              value={sort}
+              onChange={(event) => setSort(event.target.value as SortKey)}
+              aria-label="Sort roles"
+              className="rounded-md border border-black/12 bg-white px-2 py-1 text-xs text-black/70 outline-none transition-colors hover:border-black/25"
+            >
+              {SORTS.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+
+            <button
+              type="button"
+              onClick={() => setSavedOnly((value) => !value)}
+              aria-pressed={savedOnly}
+              className="flex items-center gap-1 rounded-md border px-2 py-1 text-xs transition-colors"
+              style={
+                savedOnly
+                  ? { borderColor: GREEN, background: GREEN, color: '#fff' }
+                  : { borderColor: 'rgba(0,0,0,0.12)', color: 'rgba(0,0,0,0.6)' }
+              }
+            >
+              <Bookmark className={`h-3 w-3 ${savedOnly ? 'fill-current' : ''}`} />
+              Saved
+            </button>
+          </div>
+        )}
+
+        {!loadingJobs && jobs.length > 0 && shown.length === 0 && (
+          <p className="mt-3 text-sm text-black/45">No saved roles here yet.</p>
+        )}
+
         <ul className="mt-3 space-y-3">
-          {jobs.map((job) => {
+          {shown.map((job) => {
             const posted = postedLabel(job.postedAt);
             const meta = [job.seniority, job.employmentType, job.location].filter(Boolean).join(' · ');
+            const key = savedKey(company.domain, job.jobKey);
+            const isSaved = Boolean(saved[key]);
             return (
-              <li key={job.jobKey} className="border-b border-black/8 pb-3 last:border-0 last:pb-0">
-                {job.jobUrl ? (
-                  <a
-                    href={job.jobUrl}
-                    target="_blank"
-                    rel="noopener noreferrer nofollow"
-                    className="text-sm font-medium leading-snug text-black underline-offset-2 hover:underline"
-                    style={{ color: BLUE }}
-                  >
-                    {job.title}
-                  </a>
-                ) : (
-                  <span className="text-sm font-medium leading-snug text-black">{job.title}</span>
-                )}
-                {meta && <p className="mt-0.5 text-xs text-black/50">{meta}</p>}
-                {posted && <p className="mt-0.5 text-xs text-black/35">Posted {posted}</p>}
+              <li
+                key={job.jobKey}
+                className="flex items-start gap-2 border-b border-black/8 pb-3 last:border-0 last:pb-0"
+              >
+                <div className="min-w-0 flex-1">
+                  {job.jobUrl ? (
+                    <a
+                      href={job.jobUrl}
+                      target="_blank"
+                      rel="noopener noreferrer nofollow"
+                      className="text-sm font-medium leading-snug text-black underline-offset-2 hover:underline"
+                      style={{ color: BLUE }}
+                    >
+                      {job.title}
+                    </a>
+                  ) : (
+                    <span className="text-sm font-medium leading-snug text-black">{job.title}</span>
+                  )}
+                  {meta && <p className="mt-0.5 text-xs text-black/50">{meta}</p>}
+                  {posted && <p className="mt-0.5 text-xs text-black/35">Posted {posted}</p>}
+                </div>
+
+                <button
+                  type="button"
+                  aria-pressed={isSaved}
+                  aria-label={isSaved ? `Unsave ${job.title}` : `Save ${job.title}`}
+                  title={isSaved ? 'Saved' : 'Save this role'}
+                  onClick={() =>
+                    toggleSaved({
+                      key,
+                      domain: company.domain,
+                      company: company.name,
+                      title: job.title,
+                      jobUrl: job.jobUrl,
+                      location: job.location || company.city,
+                      postedAt: job.postedAt,
+                    })
+                  }
+                  className="shrink-0 p-0.5 transition-colors"
+                  style={{ color: isSaved ? GREEN : 'rgba(0,0,0,0.28)' }}
+                >
+                  <Bookmark className={`h-4 w-4 ${isSaved ? 'fill-current' : ''}`} />
+                </button>
               </li>
             );
           })}
