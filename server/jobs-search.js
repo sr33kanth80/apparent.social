@@ -51,6 +51,15 @@ const MAX_RESOLVE_PER_REQUEST = 12;
  * marker silently teleports to another continent.
  */
 const MAX_OFFICE_DRIFT_KM = 75;
+/**
+ * How long a roles lookup is remembered, successful or not.
+ *
+ * Some companies genuinely have nothing to find — their domain is not in the
+ * provider's index. Without remembering the attempt, every visitor who opened
+ * one would pay for the same empty lookup again.
+ */
+const ROLES_RECHECK_MS =
+  (Number.parseInt(process.env.JOBS_ROLES_RECHECK_HOURS || '', 10) || 24) * 60 * 60 * 1000;
 
 const distanceKm = (aLat, aLng, bLat, bLng) => {
   const toRad = (deg) => (deg * Math.PI) / 180;
@@ -873,6 +882,19 @@ const runShape = (run) => {
 
 const BUDGET_STOP = new Set(['orthogonal_budget_reached', 'orthogonal_insufficient_credits', 'orthogonal_call_limit']);
 
+/** Record that a roles lookup happened, whatever it returned. */
+const markRolesChecked = async (domain) => {
+  if (!SUPABASE_URL || !SERVICE_KEY) return;
+  await fetch(
+    `${SUPABASE_URL}/rest/v1/companies?canonical_domain=eq.${encodeURIComponent(domain)}`,
+    {
+      method: 'PATCH',
+      headers: { ...serviceHeaders(), Prefer: 'return=minimal' },
+      body: JSON.stringify({ roles_checked_at: new Date().toISOString() }),
+    },
+  ).catch(() => null);
+};
+
 /**
  * Fetch the individual roles for ONE company, on demand.
  *
@@ -886,6 +908,25 @@ const BUDGET_STOP = new Set(['orthogonal_budget_reached', 'orthogonal_insufficie
  * is stored: a company is fetched once, not once per viewer.
  */
 const fetchCompanyRoles = async ({ domain, name, city }) => {
+  // Already looked at recently? Do not pay to be told the same thing twice.
+  if (SUPABASE_URL && SERVICE_KEY) {
+    try {
+      const res = await fetch(
+        `${SUPABASE_URL}/rest/v1/companies?select=roles_checked_at&canonical_domain=eq.${encodeURIComponent(domain)}&limit=1`,
+        { headers: serviceHeaders() },
+      );
+      if (res.ok) {
+        const rows = (await res.json().catch(() => [])) || [];
+        const at = Date.parse(str(rows[0]?.roles_checked_at));
+        if (Number.isFinite(at) && Date.now() - at < ROLES_RECHECK_MS) {
+          return { stored: 0, trace: [{ step: 'skipped', reason: 'checked_recently' }] };
+        }
+      }
+    } catch {
+      // Unreadable is not a reason to refuse; fall through and fetch.
+    }
+  }
+
   const budgetCents = jobsBudgetCents();
   const session = createOrthogonalSession({ maxCalls: 20, maxSpendCents: budgetCents });
   // What was attempted, so a zero result can be explained rather than guessed at.
@@ -996,6 +1037,7 @@ const fetchCompanyRoles = async ({ domain, name, city }) => {
       // Same job_key can arrive twice once re-keyed; keep one row each.
       const unique = [...new Map(mine.map((job) => [job.job_key, job])).values()];
       await upsertJobs(unique.slice(0, MAX_UPSERT_ROWS));
+      await markRolesChecked(domain);
       return { stored: unique.length, trace };
     } catch (error) {
       trace.push({
@@ -1007,6 +1049,8 @@ const fetchCompanyRoles = async ({ domain, name, city }) => {
       if (error instanceof OrthogonalError && BUDGET_STOP.has(error.code)) break;
     }
   }
+  // Nothing found is still an answer, and one worth remembering.
+  await markRolesChecked(domain);
   return { stored: 0, trace };
 };
 

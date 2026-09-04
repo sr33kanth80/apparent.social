@@ -535,3 +535,35 @@ test('a roles request without a domain is refused', async () => {
   assert.equal(res.body.error, 'domain_required');
   assert.equal(orthogonalCalls, 0, 'must not spend without a company to ask about');
 });
+
+test('a company checked recently is not paid for again', async () => {
+  let orthogonalCalls = 0;
+  globalThis.fetch = async (url, options = {}) => {
+    const href = String(url);
+    const json = (v) => ({ ok: true, status: 200, text: async () => JSON.stringify(v), json: async () => v });
+
+    if (href.includes('/rpc/consume_agent_rate_limit')) return json([{ allowed: true }]);
+    if (href.includes('/rest/v1/companies')) {
+      if ((options.method || 'GET') === 'GET') {
+        // Looked at an hour ago; nothing found then either.
+        return json([{ roles_checked_at: new Date(Date.now() - 3600_000).toISOString() }]);
+      }
+      return json({});
+    }
+    if (href.includes('api.orthogonal.com')) { orthogonalCalls += 1; return json({}); }
+    throw new Error(`unexpected fetch: ${href}`);
+  };
+
+  const res = makeRes();
+  await jobsSearchHandler(
+    makeReq({ roles: { domain: 'procore.com', name: 'Procore', city: 'Austin' } }),
+    res,
+    { geocode },
+  );
+
+  assert.equal(res.statusCode, 200);
+  assert.equal(res.body.stored, 0);
+  // Companies whose roles cannot be found would otherwise be re-fetched, and
+  // re-charged, by every visitor who opened them.
+  assert.equal(orthogonalCalls, 0, 'must not pay to be told the same thing twice');
+});
