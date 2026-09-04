@@ -2929,14 +2929,14 @@ a.rounded-full:hover {
 /* Markers are DOM, not canvas, so they stay crisp and clickable over a
    pitched WebGL scene.
 
-   Orange-red rather than blue: the basemap is beige ground under grey-blue
+   Green rather than blue: the basemap is beige ground under grey-blue
    buildings, so a blue pin sat in the same colour family as everything behind
-   it. Warm against cool is the strongest separation available here, and it
-   keeps the pins reading as an overlay rather than part of the map. */
+   it. This is the site's investor green, dark enough to hold its own against
+   pale ground and to keep white badge text legible when a pin is selected. */
 :root {
-  --jobs-pin: #ef4d1f;
-  --jobs-pin-deep: #b8300a;
-  --jobs-pin-ink: #7c2408;
+  --jobs-pin: #16a34a;
+  --jobs-pin-deep: #15803d;
+  --jobs-pin-ink: #14532d;
 }
 
 .jobs-marker {
@@ -2984,7 +2984,7 @@ a.rounded-full:hover {
 .jobs-marker-stem {
   width: 1.5px;
   height: 14px;
-  background: linear-gradient(to bottom, var(--jobs-pin), rgb(239 77 31 / 10%));
+  background: linear-gradient(to bottom, var(--jobs-pin), rgb(22 163 74 / 10%));
 }
 
 .jobs-marker[data-selected='true'] { z-index: 10; }
@@ -2992,13 +2992,13 @@ a.rounded-full:hover {
   border-color: var(--jobs-pin-deep);
   background: var(--jobs-pin);
   color: #fff;
-  box-shadow: 0 6px 20px rgb(239 77 31 / 55%);
+  box-shadow: 0 6px 20px rgb(22 163 74 / 55%);
 }
 .jobs-marker[data-selected='true'] .jobs-marker-count {
   background: rgb(255 255 255 / 26%);
 }
 .jobs-marker[data-selected='true'] .jobs-marker-stem {
-  background: linear-gradient(to bottom, var(--jobs-pin-deep), rgb(184 48 10 / 10%));
+  background: linear-gradient(to bottom, var(--jobs-pin-deep), rgb(21 128 61 / 10%));
 }
 
 /* Approximate placement: a marker on a city centroid must not look as certain
@@ -3049,5 +3049,5 @@ a.rounded-full:hover {
 }
 .jobs-marker[data-fanned='true'] .jobs-marker-stem {
   height: 20px;
-  background: linear-gradient(to bottom, var(--jobs-pin), rgb(239 77 31 / 12%));
+  background: linear-gradient(to bottom, var(--jobs-pin), rgb(22 163 74 / 12%));
 }
