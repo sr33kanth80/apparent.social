@@ -2927,7 +2927,18 @@ a.rounded-full:hover {
 
 /* ---------- Jobs map markers (3D OSM city) ---------- */
 /* Markers are DOM, not canvas, so they stay crisp and clickable over a
-   pitched WebGL scene. */
+   pitched WebGL scene.
+
+   Orange-red rather than blue: the basemap is beige ground under grey-blue
+   buildings, so a blue pin sat in the same colour family as everything behind
+   it. Warm against cool is the strongest separation available here, and it
+   keeps the pins reading as an overlay rather than part of the map. */
+:root {
+  --jobs-pin: #ef4d1f;
+  --jobs-pin-deep: #b8300a;
+  --jobs-pin-ink: #7c2408;
+}
+
 .jobs-marker {
   display: flex;
   flex-direction: column;
@@ -2947,12 +2958,14 @@ a.rounded-full:hover {
   gap: 6px;
   max-width: 190px;
   padding: 4px 8px;
-  border: 1px solid rgb(0 0 0 / 10%);
+  /* A coloured hairline instead of a grey one: the plate reads as a pin even
+     before you notice the badge. */
+  border: 1.5px solid var(--jobs-pin);
   border-radius: 7px;
-  background: rgb(255 255 255 / 96%);
-  box-shadow: 0 4px 14px rgb(0 0 0 / 18%);
-  font: 500 11.5px/1.25 ui-sans-serif, system-ui, sans-serif;
-  color: #1c1a17;
+  background: rgb(255 255 255 / 97%);
+  box-shadow: 0 4px 14px rgb(124 36 8 / 28%);
+  font: 600 11.5px/1.25 ui-sans-serif, system-ui, sans-serif;
+  color: var(--jobs-pin-ink);
   white-space: nowrap;
 }
 .jobs-marker-name { overflow: hidden; text-overflow: ellipsis; }
@@ -2961,35 +2974,38 @@ a.rounded-full:hover {
   flex: none;
   padding: 1px 5px;
   border-radius: 999px;
-  background: #1d9bf0;
+  background: var(--jobs-pin);
   color: #fff;
   font-size: 10px;
-  font-weight: 600;
+  font-weight: 700;
 }
 
 /* The stem is what visually plants a marker on its building. */
 .jobs-marker-stem {
-  width: 1px;
+  width: 1.5px;
   height: 14px;
-  background: linear-gradient(to bottom, rgb(0 0 0 / 32%), rgb(0 0 0 / 6%));
+  background: linear-gradient(to bottom, var(--jobs-pin), rgb(239 77 31 / 10%));
 }
 
 .jobs-marker[data-selected='true'] { z-index: 10; }
 .jobs-marker[data-selected='true'] .jobs-marker-body {
-  border-color: #1d9bf0;
-  background: #1d9bf0;
+  border-color: var(--jobs-pin-deep);
+  background: var(--jobs-pin);
   color: #fff;
-  box-shadow: 0 6px 20px rgb(29 155 240 / 45%);
+  box-shadow: 0 6px 20px rgb(239 77 31 / 55%);
 }
 .jobs-marker[data-selected='true'] .jobs-marker-count {
-  background: rgb(255 255 255 / 25%);
+  background: rgb(255 255 255 / 26%);
+}
+.jobs-marker[data-selected='true'] .jobs-marker-stem {
+  background: linear-gradient(to bottom, var(--jobs-pin-deep), rgb(184 48 10 / 10%));
 }
 
 /* Approximate placement: a marker on a city centroid must not look as certain
    as one resolved to a real address. */
 .jobs-marker[data-approx='true'] .jobs-marker-body {
   border-style: dashed;
-  opacity: 0.9;
+  opacity: 0.92;
 }
 
 /* Marker packing states, set by the map's screen-space layout pass.
@@ -3004,33 +3020,34 @@ a.rounded-full:hover {
   height: 13px;
   padding: 0;
   border-radius: 999px;
-  background: #fff;
-  border: 2px solid #1d9bf0;
-  box-shadow: 0 2px 8px rgb(0 0 0 / 25%);
+  background: var(--jobs-pin);
+  border: 2px solid #fff;
+  box-shadow: 0 2px 8px rgb(124 36 8 / 45%);
 }
 .jobs-marker[data-state='dot'] .jobs-marker-stem { height: 8px; }
 /* A collapsed marker still deserves its name on hover. */
 .jobs-marker[data-state='dot']:hover { z-index: 20; }
 
-/* Count of markers folded underneath this one. */
+/* Count of markers folded underneath this one. Deep burnt red so it separates
+   from the open-roles badge without leaving the palette. */
 .jobs-marker-stack {
   flex: none;
   margin-left: 2px;
   padding: 1px 5px;
   border-radius: 999px;
-  background: #2c2a26;
+  background: var(--jobs-pin-ink);
   color: #fff;
   font-size: 10px;
-  font-weight: 600;
+  font-weight: 700;
 }
-.jobs-marker[data-stack='true'] .jobs-marker-body { border-color: #2c2a26; }
+.jobs-marker[data-stack='true'] .jobs-marker-body { border-color: var(--jobs-pin-ink); }
 
 /* Fanned-out members get a leader line back toward their real position. */
 .jobs-marker[data-fanned='true'] { z-index: 15; }
 .jobs-marker[data-fanned='true'] .jobs-marker-body {
-  box-shadow: 0 6px 18px rgb(0 0 0 / 26%);
+  box-shadow: 0 6px 18px rgb(124 36 8 / 34%);
 }
 .jobs-marker[data-fanned='true'] .jobs-marker-stem {
   height: 20px;
-  background: linear-gradient(to bottom, rgb(29 155 240 / 70%), rgb(29 155 240 / 10%));
+  background: linear-gradient(to bottom, var(--jobs-pin), rgb(239 77 31 / 12%));
 }
