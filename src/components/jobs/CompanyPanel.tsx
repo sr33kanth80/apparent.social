@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { ArrowUpRight, Bookmark, Briefcase, MapPin, X } from 'lucide-react';
+import { ArrowUpRight, Bookmark, Briefcase, MapPin, RefreshCw, X } from 'lucide-react';
 import { fetchCompanyRoles, loadJobsForCompany } from '@/lib/jobs-service';
 import { savedKey, toggleSaved, useSavedJobs } from '@/lib/saved-jobs';
 import { SORTS, sortJobs, type SortKey } from '@/components/jobs/sort-jobs';
@@ -8,6 +8,17 @@ import type { CompanyJob, HiringCompany } from '@/lib/apparent-types';
 const BLUE = '#1d9bf0';
 /** Same green as the map pins, so a saved role reads as part of the map. */
 const GREEN = '#16a34a';
+
+/**
+ * Freshness windows. 0 means "don't filter" rather than "today", so the default
+ * shows everything and narrowing is always a deliberate choice.
+ */
+const WINDOWS = [
+  { days: 0, label: 'Any time' },
+  { days: 7, label: 'Past week' },
+  { days: 30, label: 'Past month' },
+  { days: 90, label: 'Past 3 months' },
+];
 
 /** "3d ago" reads faster than a date when scanning for fresh postings. */
 const postedLabel = (postedAt: string | null) => {
@@ -26,19 +37,56 @@ export function CompanyPanel({ company, onClose }: { company: HiringCompany; onC
   const [loadingJobs, setLoadingJobs] = useState(true);
   const [sort, setSort] = useState<SortKey>('fresh');
   const [savedOnly, setSavedOnly] = useState(false);
+  const [windowDays, setWindowDays] = useState(0);
+  const [refreshing, setRefreshing] = useState(false);
+  const [note, setNote] = useState('');
   const saved = useSavedJobs();
 
   const shown = useMemo(() => {
-    const filtered = savedOnly
+    let filtered = savedOnly
       ? jobs.filter((job) => saved[savedKey(company.domain, job.jobKey)])
       : jobs;
+    if (windowDays > 0) {
+      // A role with no date cannot be shown as fresh — the count of what this
+      // hides is surfaced below, so the filter never silently swallows roles.
+      const cutoff = Date.now() - windowDays * 86_400_000;
+      filtered = filtered.filter((job) => {
+        const ms = job.postedAt ? Date.parse(job.postedAt) : NaN;
+        return Number.isFinite(ms) && ms >= cutoff;
+      });
+    }
     return sortJobs(filtered, sort);
-  }, [jobs, saved, savedOnly, sort, company.domain]);
+  }, [jobs, saved, savedOnly, sort, windowDays, company.domain]);
+
+  /**
+   * Ask the provider for postings newer than what we hold.
+   *
+   * The window is sent along rather than only applied here: an endpoint that
+   * accepts a recency filter returns different rows for "past week" than for
+   * "any time", so filtering client-side alone would keep showing the same
+   * stale page no matter how many times it was pressed.
+   */
+  const refresh = async () => {
+    if (refreshing) return;
+    setRefreshing(true);
+    setNote('');
+    const before = jobs.length;
+    const added = await fetchCompanyRoles(company.domain, company.name, company.city, {
+      sinceDays: windowDays,
+      refresh: true,
+    });
+    const rows = added ? await loadJobsForCompany(company.domain).catch(() => []) : jobs;
+    setJobs(rows);
+    const gained = rows.length - before;
+    setNote(gained > 0 ? `${gained} new ${gained === 1 ? 'posting' : 'postings'}.` : 'Nothing new.');
+    setRefreshing(false);
+  };
 
   useEffect(() => {
     let mounted = true;
     setLoadingJobs(true);
     setJobs([]);
+    setNote('');
 
     (async () => {
       const stored = await loadJobsForCompany(company.domain).catch(() => []);
@@ -127,7 +175,20 @@ export function CompanyPanel({ company, onClose }: { company: HiringCompany; onC
 
         {/* Sorting only earns its space once there is more than one role. */}
         {jobs.length > 1 && (
-          <div className="mt-3 flex items-center gap-2">
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            <select
+              value={windowDays}
+              onChange={(event) => setWindowDays(Number(event.target.value))}
+              aria-label="Only roles posted within"
+              className="rounded-md border border-black/12 bg-white px-2 py-1 text-xs text-black/70 outline-none transition-colors hover:border-black/25"
+            >
+              {WINDOWS.map((option) => (
+                <option key={option.days} value={option.days}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+
             <select
               value={sort}
               onChange={(event) => setSort(event.target.value as SortKey)}
@@ -155,11 +216,36 @@ export function CompanyPanel({ company, onClose }: { company: HiringCompany; onC
               <Bookmark className={`h-3 w-3 ${savedOnly ? 'fill-current' : ''}`} />
               Saved
             </button>
+
+            <button
+              type="button"
+              onClick={refresh}
+              disabled={refreshing}
+              title={
+                windowDays
+                  ? `Check for postings from the last ${windowDays} days`
+                  : 'Check for new postings'
+              }
+              className="ml-auto flex items-center gap-1 rounded-md border border-black/12 px-2 py-1 text-xs text-black/60 transition-colors hover:bg-black/[0.04] hover:text-black disabled:opacity-50"
+            >
+              <RefreshCw className={`h-3 w-3 ${refreshing ? 'animate-spin' : ''}`} />
+              {refreshing ? 'Checking…' : 'Refresh'}
+            </button>
           </div>
         )}
 
+        {note && <p className="mt-2 text-xs text-black/45">{note}</p>}
+
+        {windowDays > 0 && jobs.length > shown.length && (
+          <p className="mt-2 text-xs text-black/40">
+            {jobs.length - shown.length} older or undated hidden by this window.
+          </p>
+        )}
+
         {!loadingJobs && jobs.length > 0 && shown.length === 0 && (
-          <p className="mt-3 text-sm text-black/45">No saved roles here yet.</p>
+          <p className="mt-3 text-sm text-black/45">
+            {savedOnly ? 'No saved roles here yet.' : 'Nothing posted in that window.'}
+          </p>
         )}
 
         <ul className="mt-3 space-y-3">

@@ -567,3 +567,95 @@ test('a company checked recently is not paid for again', async () => {
   // re-charged, by every visitor who opened them.
   assert.equal(orthogonalCalls, 0, 'must not pay to be told the same thing twice');
 });
+
+// A refresh asks for postings newer than what is already stored, so the daily
+// guard must not silence it — but the freshness window has to actually reach
+// the provider, or every press returns the same page.
+const rolesFetchFixture = ({ parameters, seenAt }) => {
+  const state = { runQuery: null, orthogonalCalls: 0 };
+  globalThis.fetch = async (url, options = {}) => {
+    const href = String(url);
+    const json = (v) => ({ ok: true, status: 200, text: async () => JSON.stringify(v), json: async () => v });
+
+    if (href.includes('/rpc/consume_agent_rate_limit')) return json([{ allowed: true }]);
+    if (href.includes('/rest/v1/company_jobs')) return json({});
+    if (href.includes('/rest/v1/companies')) {
+      if ((options.method || 'GET') === 'GET') return json([{ roles_checked_at: seenAt }]);
+      return json({});
+    }
+    if (href.endsWith('/v1/search')) {
+      state.orthogonalCalls += 1;
+      return json({
+        results: [{ slug: 'signalbase', endpoints: [{ path: '/signals/hiring', method: 'GET', description: 'hiring signals job openings' }] }],
+      });
+    }
+    if (href.endsWith('/v1/details')) return json({ endpoint: { price: 0.02, parameters } });
+    if (href.endsWith('/v1/run')) {
+      state.runQuery = JSON.parse(options.body).query;
+      return json({
+        priceCents: 2,
+        results: [{ jobId: 'r1', companyName: 'Wonder', companyWebsite: 'wonder.com', city: 'Boston', title: 'Chef', jobUrl: 'https://j/1' }],
+      });
+    }
+    throw new Error(`unexpected fetch: ${href}`);
+  };
+  return state;
+};
+
+test('a refresh sends the freshness window as a day count when the endpoint takes one', async () => {
+  const state = rolesFetchFixture({
+    parameters: ['limit', 'company_domain', 'posted_within_days'],
+    // Checked minutes ago: without refresh this would be skipped outright.
+    seenAt: new Date(Date.now() - 20 * 60_000).toISOString(),
+  });
+
+  const res = makeRes();
+  await jobsSearchHandler(
+    makeReq({ roles: { domain: 'wonder.com', name: 'Wonder', city: 'Boston', sinceDays: 7, refresh: true } }),
+    res,
+    { geocode },
+  );
+
+  assert.equal(res.statusCode, 200);
+  assert.equal(state.runQuery.posted_within_days, '7');
+  // Narrowing by date must not drop the company filter it narrows.
+  assert.equal(state.runQuery.company_domain, 'wonder.com');
+});
+
+test('an endpoint that wants a cutoff date gets a date, not a day count', async () => {
+  const state = rolesFetchFixture({
+    parameters: ['limit', 'company_domain', 'posted_after'],
+    seenAt: null,
+  });
+
+  const res = makeRes();
+  await jobsSearchHandler(
+    makeReq({ roles: { domain: 'wonder.com', name: 'Wonder', city: 'Boston', sinceDays: 30 } }),
+    res,
+    { geocode },
+  );
+
+  // A bare "30" here would be read as a date and mean 1970 — accepted, and
+  // silently wrong, which is worse than being rejected.
+  assert.match(state.runQuery.posted_after, /^\d{4}-\d{2}-\d{2}$/);
+  const days = Math.round((Date.now() - Date.parse(state.runQuery.posted_after)) / 86_400_000);
+  assert.ok(days >= 29 && days <= 31, `cutoff should be ~30 days back, got ${days}`);
+});
+
+test('refresh still refuses to re-bill within the floor', async () => {
+  const state = rolesFetchFixture({
+    parameters: ['limit', 'company_domain', 'posted_within_days'],
+    // Seconds ago: a second press of the button must answer from storage.
+    seenAt: new Date(Date.now() - 30_000).toISOString(),
+  });
+
+  const res = makeRes();
+  await jobsSearchHandler(
+    makeReq({ roles: { domain: 'wonder.com', name: 'Wonder', city: 'Boston', refresh: true } }),
+    res,
+    { geocode },
+  );
+
+  assert.equal(res.body.stored, 0);
+  assert.equal(state.orthogonalCalls, 0, 'a button one click away must not bill per click');
+});

@@ -61,6 +61,10 @@ const MAX_OFFICE_DRIFT_KM = 75;
 const ROLES_RECHECK_MS =
   (Number.parseInt(process.env.JOBS_ROLES_RECHECK_HOURS || '', 10) || 24) * 60 * 60 * 1000;
 
+/** The shortest gap an explicit "check for new postings" is allowed to bill at. */
+const REFRESH_FLOOR_MS =
+  (Number.parseInt(process.env.JOBS_REFRESH_FLOOR_MINUTES || '', 10) || 5) * 60 * 1000;
+
 const distanceKm = (aLat, aLng, bLat, bLng) => {
   const toRad = (deg) => (deg * Math.PI) / 180;
   const dLat = toRad(bLat - aLat);
@@ -623,7 +627,31 @@ const JOB_TERMS = ['job_opening', 'job-opening', 'job', 'hiring', 'career', 'vac
  * shape does not work across providers, so intent is mapped onto whatever each
  * endpoint actually accepts.
  */
-const buildRunBody = (candidate, query, city, companyDomain = '') => {
+/**
+ * Ask the provider for recent postings only, when it can answer that.
+ *
+ * Providers spell recency two different ways: a cutoff DATE, or a NUMBER of
+ * days. Sending an ISO date to a parameter that wants "30" is rejected, and a
+ * bare number to a date parameter is worse — it is accepted and means 1970. So
+ * the two shapes are kept apart rather than guessed at.
+ */
+const DATE_KEYS = ['posted_after', 'posted_since', 'date_posted_after', 'since', 'from_date'];
+const DAY_KEYS = ['posted_within_days', 'max_age_days', 'days', 'days_ago', 'last_n_days'];
+
+const applyFreshness = (body, has, sinceDays) => {
+  if (!sinceDays) return;
+  const dayKey = DAY_KEYS.find(has);
+  if (dayKey) {
+    body[dayKey] = sinceDays;
+    return;
+  }
+  const dateKey = DATE_KEYS.find(has);
+  if (dateKey) {
+    body[dateKey] = new Date(Date.now() - sinceDays * 86_400_000).toISOString().slice(0, 10);
+  }
+};
+
+const buildRunBody = (candidate, query, city, companyDomain = '', sinceDays = 0) => {
   const declared = Array.isArray(candidate?.params) ? candidate.params : [];
   // No schema published: fall back to the broadest common spelling.
   if (!declared.length) return { query, location: city || undefined, limit: PAGE_SIZE };
@@ -644,6 +672,9 @@ const buildRunBody = (candidate, query, city, companyDomain = '') => {
   const domainKey = companyDomain ? ['company_domain', 'domain', 'organization'].find(has) : null;
   if (domainKey) {
     body[domainKey] = companyDomain;
+    // Recency is a narrowing of the same company, not a competing filter, so
+    // it is the one thing allowed alongside the domain.
+    applyFreshness(body, has, sinceDays);
     if (has('limit')) body.limit = PAGE_SIZE;
     return body;
   }
@@ -656,6 +687,7 @@ const buildRunBody = (candidate, query, city, companyDomain = '') => {
     if (cityKey) body[cityKey] = city;
   }
 
+  applyFreshness(body, has, sinceDays);
   if (has('limit')) body.limit = PAGE_SIZE;
   if (has('active_only')) body.active_only = true;
   if (has('not_closed')) body.not_closed = true;
@@ -907,7 +939,15 @@ const markRolesChecked = async (domain) => {
  * Paid, so it happens when someone actually opens the company, and the result
  * is stored: a company is fetched once, not once per viewer.
  */
-const fetchCompanyRoles = async ({ domain, name, city }) => {
+const fetchCompanyRoles = async ({ domain, name, city, sinceDays = 0, refresh = false }) => {
+  /**
+   * An explicit refresh is someone asking for postings newer than what they
+   * are looking at, so the daily guard does not apply — but a floor does. The
+   * button is one click away and every click is billed, so repeat presses
+   * inside a few minutes answer from what is already stored.
+   */
+  const guardMs = refresh ? REFRESH_FLOOR_MS : ROLES_RECHECK_MS;
+
   // Already looked at recently? Do not pay to be told the same thing twice.
   if (SUPABASE_URL && SERVICE_KEY) {
     try {
@@ -918,7 +958,7 @@ const fetchCompanyRoles = async ({ domain, name, city }) => {
       if (res.ok) {
         const rows = (await res.json().catch(() => [])) || [];
         const at = Date.parse(str(rows[0]?.roles_checked_at));
-        if (Number.isFinite(at) && Date.now() - at < ROLES_RECHECK_MS) {
+        if (Number.isFinite(at) && Date.now() - at < guardMs) {
           return { stored: 0, trace: [{ step: 'skipped', reason: 'checked_recently' }] };
         }
       }
@@ -978,7 +1018,7 @@ const fetchCompanyRoles = async ({ domain, name, city }) => {
     const placeholder = isTemplated ? candidate.path.match(/\{([^}]+)\}/)?.[1] : null;
 
     try {
-      const runBody = buildRunBody(candidate, name, city, domain);
+      const runBody = buildRunBody(candidate, name, city, domain, sinceDays);
       // Name the path variable exactly as the catalog declares it.
       if (placeholder) runBody[placeholder] = domain;
       const isGet =
@@ -1101,10 +1141,15 @@ export default async function jobsSearchHandler(req, res, { geocode }) {
     const domain = clean(body.roles.domain, 200).toLowerCase();
     if (!domain) return res.status(400).json({ ok: false, error: 'domain_required' });
 
+    // Clamped: a window is a filter, not a way to ask for an unbounded scan.
+    const sinceDays = Math.min(Math.max(Number(body.roles.sinceDays) || 0, 0), 365);
+
     const result = await fetchCompanyRoles({
       domain,
       name: clean(body.roles.name, 200),
       city: clean(body.roles.city, 120),
+      sinceDays,
+      refresh: body.roles.refresh === true,
     });
     return res.status(200).json(
       withDebug({ ok: true, stored: result.stored }, { trace: result.trace }),

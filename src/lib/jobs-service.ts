@@ -278,12 +278,16 @@ export const fetchCompanyRoles = async (
   domain: string,
   name: string,
   city: string,
+  /** `sinceDays` narrows the provider query; `refresh` bypasses the daily guard. */
+  options: { sinceDays?: number; refresh?: boolean } = {},
 ): Promise<number> => {
   try {
     const res = await fetch('/api/jobs', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ roles: { domain, name, city } }),
+      body: JSON.stringify({
+        roles: { domain, name, city, sinceDays: options.sinceDays ?? 0, refresh: options.refresh === true },
+      }),
     });
     const data = await res.json().catch(() => null);
     return typeof data?.stored === 'number' ? data.stored : 0;
