@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Bookmark, ChevronDown, Search } from 'lucide-react';
+import { Bookmark, ChevronDown, LocateFixed, Search } from 'lucide-react';
 
 /**
  * Fixed overlay header: city picker, local time, search affordance and the two
@@ -36,6 +36,8 @@ type Props = {
   onMinRolesChange: (value: number) => void;
   savedCount: number;
   onOpenSaved: () => void;
+  onNearMe: () => void;
+  locating: boolean;
   onOpenSearch: () => void;
   onAddCompany: () => void;
   onReportProblem: () => void;
@@ -49,6 +51,8 @@ export function JobsHeader({
   onMinRolesChange,
   savedCount,
   onOpenSaved,
+  onNearMe,
+  locating,
   onOpenSearch,
   onAddCompany,
   onReportProblem,
@@ -111,6 +115,15 @@ export function JobsHeader({
         </button>
 
         <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={onNearMe}
+            disabled={locating}
+            className="flex shrink-0 items-center gap-1.5 rounded-lg border border-black/12 px-3 py-1.5 text-xs text-black/65 transition-colors hover:bg-black/[0.04] hover:text-black disabled:opacity-50"
+          >
+            <LocateFixed className={`h-3.5 w-3.5 ${locating ? 'animate-pulse' : ''}`} />
+            {locating ? 'Locating…' : 'Near me'}
+          </button>
           <button
             type="button"
             onClick={onOpenSaved}

@@ -30,6 +30,31 @@ export type CityMap3DHandle = {
   flyToCity: (latitude: number, longitude: number) => void;
 };
 
+/** What the viewer is currently looking at, reported after the camera settles. */
+export type MapView = {
+  bounds: { west: number; south: number; east: number; north: number };
+  latitude: number;
+  longitude: number;
+  zoom: number;
+  /** Nearest city/town label rendered under the camera, when the tiles carry one. */
+  place: string;
+  /** True when the viewer moved the camera, false when code flew it somewhere. */
+  userDriven: boolean;
+};
+
+/** Which OSM place classes may name a view, and how much they are discounted. */
+const PLACE_PENALTY: Record<string, number> = {
+  city: 1,
+  town: 1.6,
+  village: 3,
+  suburb: 4,
+};
+
+/** Below this, the view spans more places than a single lookup could answer for. */
+const EXPLORE_MIN_ZOOM = 10;
+/** How still the camera must be before the view counts as somewhere someone went. */
+const EXPLORE_SETTLE_MS = 700;
+
 type MarkerEntry = { marker: Marker; company: HiringCompany };
 
 type Props = {
@@ -40,10 +65,12 @@ type Props = {
   /** Identity of the place `centre` describes. The camera moves when THIS
    *  changes, never merely because the coordinates were recomputed. */
   centreKey: string;
+  /** Fired once the camera settles somewhere, so the page can load what is there. */
+  onExplore?: (view: MapView) => void;
 };
 
 export const CityMap3D = forwardRef<CityMap3DHandle, Props>(function CityMap3D(
-  { companies, selectedDomain, onSelect, centre, centreKey },
+  { companies, selectedDomain, onSelect, centre, centreKey, onExplore },
   ref,
 ) {
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -61,6 +88,8 @@ export const CityMap3D = forwardRef<CityMap3DHandle, Props>(function CityMap3D(
   const readyRef = useRef(false);
   const onSelectRef = useRef(onSelect);
   onSelectRef.current = onSelect;
+  const onExploreRef = useRef(onExplore);
+  onExploreRef.current = onExplore;
 
   // ---- map setup -------------------------------------------------------
   useEffect(() => {
@@ -498,6 +527,100 @@ export const CityMap3D = forwardRef<CityMap3DHandle, Props>(function CityMap3D(
       map.off('zoom', onMove);
     };
   }, [relayout]);
+
+  /**
+   * Report where the viewer has arrived, once they stop moving.
+   *
+   * Debounced rather than fired per frame: a single drag emits hundreds of
+   * move events, and each one would otherwise become a database read and,
+   * worse, a paid discovery of somewhere the viewer merely passed over.
+   *
+   * The place name is read off the basemap's own `place` labels, which are
+   * already rendered — so knowing what city is on screen costs nothing and
+   * needs no reverse geocoder.
+   */
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return undefined;
+
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    // A drag means the viewer went looking; a flyTo means we took them. Only
+    // the first should be allowed to override a filter they chose.
+    let userDriven = false;
+    const markUser = (event: { originalEvent?: unknown }) => {
+      if (event?.originalEvent) userDriven = true;
+    };
+
+    const nearestPlace = (): string => {
+      try {
+        const features = map.querySourceFeatures('openmaptiles', { sourceLayer: 'place' });
+        const centreOfView = map.getCenter();
+        let best = '';
+        let bestScore = Infinity;
+        for (const feature of features) {
+          /**
+           * A city label beats a town at the same distance: the bigger place is
+           * the one a viewer would say they were looking at. Smaller classes
+           * are still accepted, heavily penalised — zoomed right into a city
+           * centre, the city's own label point can sit outside the loaded
+           * tiles, and a suburb name beats reporting nowhere at all.
+           */
+          const penalty = PLACE_PENALTY[String(feature.properties?.class ?? '')];
+          if (!penalty) continue;
+          const name = String(feature.properties?.name ?? '').trim();
+          if (!name || feature.geometry?.type !== 'Point') continue;
+          const [lng, lat] = feature.geometry.coordinates as [number, number];
+          const score =
+            metresBetween([centreOfView.lng, centreOfView.lat], [lng, lat]) * penalty;
+          if (score < bestScore) {
+            bestScore = score;
+            best = name;
+          }
+        }
+        return best;
+      } catch {
+        // Tiles not loaded yet: an unnamed view is still worth reporting, since
+        // the bounds alone are enough to read what is already stored.
+        return '';
+      }
+    };
+
+    const settle = () => {
+      if (timer) clearTimeout(timer);
+      timer = setTimeout(() => {
+        const report = onExploreRef.current;
+        if (!report || map.getZoom() < EXPLORE_MIN_ZOOM) return;
+        const bounds = map.getBounds();
+        const at = map.getCenter();
+        report({
+          bounds: {
+            west: bounds.getWest(),
+            south: bounds.getSouth(),
+            east: bounds.getEast(),
+            north: bounds.getNorth(),
+          },
+          latitude: at.lat,
+          longitude: at.lng,
+          zoom: map.getZoom(),
+          place: nearestPlace(),
+          userDriven,
+        });
+        userDriven = false;
+      }, EXPLORE_SETTLE_MS);
+    };
+
+    map.on('dragstart', markUser);
+    map.on('zoomstart', markUser);
+    map.on('moveend', settle);
+    map.on('zoomend', settle);
+    return () => {
+      if (timer) clearTimeout(timer);
+      map.off('dragstart', markUser);
+      map.off('zoomstart', markUser);
+      map.off('moveend', settle);
+      map.off('zoomend', settle);
+    };
+  }, []);
 
   // ---- camera ----------------------------------------------------------
   /**

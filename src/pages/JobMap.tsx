@@ -1,12 +1,19 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { browseCompanies, discoverArea, resolvePreciseLocations } from '@/lib/jobs-service';
+import {
+  browseCompanies,
+  browseCompaniesInBounds,
+  discoverArea,
+  resolvePreciseLocations,
+} from '@/lib/jobs-service';
 import type { HiringCompany } from '@/lib/apparent-types';
-import { CityMap3D, type CityMap3DHandle } from '@/components/jobs/CityMap3D';
+import { CityMap3D, type CityMap3DHandle, type MapView } from '@/components/jobs/CityMap3D';
 import { CompanyPanel } from '@/components/jobs/CompanyPanel';
 import { CommandPalette } from '@/components/jobs/CommandPalette';
 import { JobsHeader } from '@/components/jobs/JobsHeader';
 import { AddCompanyModal, ReportProblemModal } from '@/components/jobs/SubmissionModals';
 import { SavedPanel } from '@/components/jobs/SavedPanel';
+import { NearbyPanel } from '@/components/jobs/NearbyPanel';
+import { decideDiscovery } from '@/components/jobs/explore-policy';
 import { useSavedJobs } from '@/lib/saved-jobs';
 
 /**
@@ -20,6 +27,21 @@ import { useSavedJobs } from '@/lib/saved-jobs';
  * Everything shown originates live from Orthogonal; the table behind it is a
  * read-through cache, not a corpus.
  */
+
+/**
+ * Zoom at which panning starts discovering. Below it the view spans several
+ * cities and the label under the crosshair is not what the viewer is looking at.
+ */
+const DISCOVER_MIN_ZOOM = 12;
+
+/**
+ * How many places one session will discover on its own.
+ *
+ * Every discovery is billed, and a long drag across a continent crosses dozens
+ * of cities. Deliberate acts — picking a city, searching, Near me — are not
+ * capped; only what happens without anyone asking.
+ */
+const AUTO_DISCOVERY_LIMIT = 8;
 
 /** How stale cached rows may be before looking at a city refreshes them. */
 const STALE_AFTER_MS = 30 * 60 * 1000;
@@ -45,11 +67,15 @@ export default function JobMap() {
   const [reportOpen, setReportOpen] = useState(false);
   const [minRoles, setMinRoles] = useState(0);
   const [savedOpen, setSavedOpen] = useState(false);
+  const [nearbyOpen, setNearbyOpen] = useState(false);
+  const [origin, setOrigin] = useState<{ latitude: number; longitude: number } | null>(null);
+  const [locating, setLocating] = useState(false);
   const saved = useSavedJobs();
   const mapRef = useRef<CityMap3DHandle | null>(null);
   // Cities already refreshed this session, so switching back and forth does not
   // re-bill the same place.
   const refreshed = useRef<Set<string>>(new Set());
+  const autoDiscoveries = useRef(0);
 
   const merge = useCallback((rows: HiringCompany[]) => {
     if (!rows.length) return;
@@ -203,6 +229,100 @@ export default function JobMap() {
     };
   }, [activeCity, all, merge]);
 
+  /**
+   * Load whatever is where the viewer just arrived.
+   *
+   * Two halves, deliberately unequal. Reading the viewport is free, so it runs
+   * on every settled view and is what makes pinning feel continuous — pins
+   * appear as you travel rather than only when a city is picked. Discovery is
+   * paid, so it needs a named place, a close enough zoom, and a session cap.
+   */
+  const handleExplore = useCallback(
+    (view: MapView) => {
+      browseCompaniesInBounds(view.bounds, 300).then(merge).catch(() => undefined);
+
+      // Panning away from the chosen city drops the filter, otherwise every
+      // company found along the way would be loaded and then hidden. Only a
+      // real drag counts: the opening flight to the busiest city would
+      // otherwise undo the city it had just chosen.
+      if (view.userDriven && view.place && activeCity && view.place !== activeCity) {
+        setActiveCity('');
+      }
+
+      const held = all.filter((company) => company.city === view.place);
+      const verdict = decideDiscovery({
+        place: view.place,
+        zoom: view.zoom,
+        minZoom: DISCOVER_MIN_ZOOM,
+        seen: refreshed.current,
+        autoDiscoveries: autoDiscoveries.current,
+        limit: AUTO_DISCOVERY_LIMIT,
+        holdsFresh: held.length > 0 && !isStale(held),
+      });
+      // Remembering a place we deliberately skipped stops it being reconsidered
+      // on every small pan around it.
+      if (verdict === 'held-fresh') refreshed.current.add(view.place);
+      if (verdict !== 'discover') return;
+
+      refreshed.current.add(view.place);
+      autoDiscoveries.current += 1;
+      setStatus(`Looking for who’s hiring in ${view.place}…`);
+
+      discoverArea(view.place)
+        .then((result) => {
+          merge(result.companies);
+          setStatus(
+            result.error ||
+              (result.companies.length
+                ? `${result.companies.length} hiring in ${view.place}.`
+                : `Nothing hiring found in ${view.place} yet.`),
+          );
+          window.setTimeout(() => setStatus(''), 4000);
+        })
+        .catch(() => undefined);
+    },
+    [activeCity, all, merge],
+  );
+
+  /**
+   * Point the map at the viewer.
+   *
+   * Nothing else is needed: the camera move settles, and the explore handler
+   * above loads and discovers whatever is around them, the same as if they had
+   * panned there themselves.
+   */
+  const findNearMe = useCallback(() => {
+    if (!navigator.geolocation) {
+      setStatus('This browser can’t share a location.');
+      return;
+    }
+    setLocating(true);
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const { latitude, longitude } = position.coords;
+        setOrigin({ latitude, longitude });
+        setNearbyOpen(true);
+        setSavedOpen(false);
+        setSelected(null);
+        // The city filter would hide everything found around a viewer who is
+        // not in the city that happened to be selected.
+        setActiveCity('');
+        setLocating(false);
+        mapRef.current?.flyToCity(latitude, longitude);
+      },
+      (error) => {
+        setLocating(false);
+        setStatus(
+          error.code === error.PERMISSION_DENIED
+            ? 'Location permission denied — pick a city instead.'
+            : 'Couldn’t get your location.',
+        );
+        window.setTimeout(() => setStatus(''), 4000);
+      },
+      { timeout: 10_000, maximumAge: 300_000 },
+    );
+  }, []);
+
   // ⌘K / Ctrl+K anywhere on the page.
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
@@ -236,6 +356,7 @@ export default function JobMap() {
         onSelect={setSelected}
         centre={centre}
         centreKey={activeCity}
+        onExplore={handleExplore}
       />
 
       <JobsHeader
@@ -248,7 +369,12 @@ export default function JobMap() {
         minRoles={minRoles}
         onMinRolesChange={setMinRoles}
         savedCount={Object.keys(saved).length}
-        onOpenSaved={() => setSavedOpen((open) => !open)}
+        onOpenSaved={() => {
+          setSavedOpen((open) => !open);
+          setNearbyOpen(false);
+        }}
+        onNearMe={findNearMe}
+        locating={locating}
         onOpenSearch={() => setSearchOpen(true)}
         onAddCompany={() => setAddOpen(true)}
         onReportProblem={() => setReportOpen(true)}
@@ -265,6 +391,16 @@ export default function JobMap() {
               : 'Pick a city to start')}
         </p>
       </div>
+
+      {nearbyOpen && (
+        <NearbyPanel
+          origin={origin}
+          companies={all}
+          status={status}
+          onClose={() => setNearbyOpen(false)}
+          onPick={focusCompany}
+        />
+      )}
 
       {savedOpen && (
         <SavedPanel
