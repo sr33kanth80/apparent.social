@@ -61,6 +61,16 @@ const MAX_OFFICE_DRIFT_KM = 75;
 const ROLES_RECHECK_MS =
   (Number.parseInt(process.env.JOBS_ROLES_RECHECK_HOURS || '', 10) || 24) * 60 * 60 * 1000;
 
+/**
+ * How recent a posting must be for discovery to ask for it.
+ *
+ * A role posted six weeks ago and still open is a real opening, so this is a
+ * preference, not a truth filter: when an endpoint can narrow by date we ask
+ * for the last week, and when that comes back empty we ask again without the
+ * window rather than showing an empty city.
+ */
+const DISCOVERY_FRESH_DAYS = Number.parseInt(process.env.JOBS_FRESH_DAYS || '', 10) || 7;
+
 /** The shortest gap an explicit "check for new postings" is allowed to bill at. */
 const REFRESH_FLOOR_MS =
   (Number.parseInt(process.env.JOBS_REFRESH_FLOOR_MINUTES || '', 10) || 5) * 60 * 1000;
@@ -638,6 +648,12 @@ const JOB_TERMS = ['job_opening', 'job-opening', 'job', 'hiring', 'career', 'vac
 const DATE_KEYS = ['posted_after', 'posted_since', 'date_posted_after', 'since', 'from_date'];
 const DAY_KEYS = ['posted_within_days', 'max_age_days', 'days', 'days_ago', 'last_n_days'];
 
+/** The recency parameter an endpoint declares, if any. */
+const freshnessKey = (declared) => {
+  const has = (name) => declared.includes(name);
+  return DAY_KEYS.find(has) || DATE_KEYS.find(has) || null;
+};
+
 const applyFreshness = (body, has, sinceDays) => {
   if (!sinceDays) return;
   const dayKey = DAY_KEYS.find(has);
@@ -756,6 +772,8 @@ const priceCandidates = async (session, prompt, { allowTemplated = false } = {})
           path,
           method: (clean(endpoint?.method, 10) || 'GET').toUpperCase(),
           jobScore: JOB_TERMS.reduce((n, term) => (haystack.includes(term) ? n + 1 : n), 0),
+          // Filled below, once the declared parameters are known.
+          freshScore: 0,
           description: clean(endpoint?.description, 200),
           params: (() => {
             const raw = info?.parameters ?? info?.params ?? info?.queryParams ?? info?.schema;
@@ -772,9 +790,22 @@ const priceCandidates = async (session, prompt, { allowTemplated = false } = {})
     }
   }
 
-  // Relevance before price: the cheapest endpoint in a jobs search was a
-  // "startup platform posts" feed, which is not hiring data at any price.
-  priced.sort((a, b) => (b.jobScore - a.jobScore) || ((a.priceCents ?? Infinity) - (b.priceCents ?? Infinity)));
+  // An endpoint that can be asked for recent postings is worth more than a
+  // cheaper one that can only return whatever page it feels like — stale
+  // listings are the main thing wrong with a jobs map.
+  for (const candidate of priced) {
+    candidate.freshScore = freshnessKey(candidate.params) ? 1 : 0;
+  }
+
+  // Relevance before freshness before price: the cheapest endpoint in a jobs
+  // search was a "startup platform posts" feed, which is not hiring data at any
+  // price, and freshness cannot rescue the wrong dataset either.
+  priced.sort(
+    (a, b) =>
+      b.jobScore - a.jobScore ||
+      b.freshScore - a.freshScore ||
+      (a.priceCents ?? Infinity) - (b.priceCents ?? Infinity),
+  );
   return { priced, shape };
 };
 
@@ -790,9 +821,11 @@ const discoverAndRun = async (query, city, geocode) => {
   // so the call ceiling is generous. Spending stays bounded by maxSpendCents.
   const session = createOrthogonalSession({ maxCalls: 40, maxSpendCents: budgetCents });
 
+  // The wording asks for recent postings too, so the catalog surfaces feeds
+  // that carry a date at all — several return undated rows we cannot rank.
   const prompt = city
-    ? `companies hiring in ${city} with open job postings and careers page: ${query}`
-    : `companies hiring with open job postings and careers page: ${query}`;
+    ? `companies hiring in ${city} with recent open job postings and careers page: ${query}`
+    : `companies hiring with recent open job postings and careers page: ${query}`;
 
   const { priced: candidates, shape } = await priceCandidates(session, prompt);
   const affordable = candidates.filter((c) => !c.dynamic && c.priceCents != null && c.priceCents <= budgetCents);
@@ -808,19 +841,37 @@ const discoverAndRun = async (query, city, geocode) => {
       // A GET endpoint takes its filters as query parameters. Sending them in
       // the body meant every filter was silently ignored and the same default
       // page came back for every search.
-      const runBody = buildRunBody(candidate, query, city);
       const isGet = candidate.method !== 'POST' && candidate.method !== 'PUT' && candidate.method !== 'PATCH';
       // Query parameters must be strings — a numeric limit is rejected with
       // "Expected string, received number".
-      const asQuery = Object.fromEntries(Object.entries(runBody).map(([k, v]) => [k, String(v)]));
-      const run = await session.run({
-        api: candidate.api,
-        path: candidate.path,
-        body: isGet ? {} : runBody,
-        query: isGet ? asQuery : {},
-      });
+      const asQuery = (body) =>
+        Object.fromEntries(Object.entries(body).map(([k, v]) => [k, String(v)]));
+      const call = (body) =>
+        session.run({
+          api: candidate.api,
+          path: candidate.path,
+          body: isGet ? {} : body,
+          query: isGet ? asQuery(body) : {},
+        });
 
+      /**
+       * Ask for the last week first.
+       *
+       * Only endpoints that declare a date parameter can answer that, and only
+       * those are retried without it — for anything else the two calls would be
+       * byte-identical and the second would be billed for nothing.
+       */
+      const canNarrow = Boolean(freshnessKey(candidate.params));
+      let runBody = buildRunBody(candidate, query, city, '', canNarrow ? DISCOVERY_FRESH_DAYS : 0);
+      let run = await call(runBody);
       let items = extractItems(run);
+
+      if (!items.length && canNarrow) {
+        // A quiet week in a small city is not a reason to show an empty map.
+        runBody = buildRunBody(candidate, query, city);
+        run = await call(runBody);
+        items = extractItems(run);
+      }
 
       // One page of job rows collapses to only a handful of companies once
       // grouped, which is why the corpus grew so slowly. Pull further pages
@@ -830,16 +881,7 @@ const discoverAndRun = async (query, city, geocode) => {
       if (supportsPaging && items.length) {
         for (let page = 2; page <= MAX_DISCOVERY_PAGES; page += 1) {
           try {
-            const pageBody = { ...runBody, page };
-            const pageQuery = Object.fromEntries(
-              Object.entries(pageBody).map(([k, v]) => [k, String(v)]),
-            );
-            const more = await session.run({
-              api: candidate.api,
-              path: candidate.path,
-              body: isGet ? {} : pageBody,
-              query: isGet ? pageQuery : {},
-            });
+            const more = await call({ ...runBody, page });
             const moreItems = extractItems(more);
             if (!moreItems.length) break; // ran out of results
             items = items.concat(moreItems);

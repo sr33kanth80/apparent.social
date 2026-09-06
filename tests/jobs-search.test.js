@@ -659,3 +659,79 @@ test('refresh still refuses to re-bill within the floor', async () => {
   assert.equal(res.body.stored, 0);
   assert.equal(state.orthogonalCalls, 0, 'a button one click away must not bill per click');
 });
+
+// Discovery asks for recent postings, because a jobs map full of month-old
+// listings is the main thing that makes one useless.
+const discoveryFixture = ({ parameters, resultsByCall }) => {
+  const state = { queries: [], runs: 0 };
+  globalThis.fetch = async (url, options = {}) => {
+    const href = String(url);
+    const json = (v) => ({ ok: true, status: 200, text: async () => JSON.stringify(v), json: async () => v });
+
+    if (href.includes('/rpc/consume_agent_rate_limit')) return json([{ allowed: true }]);
+    if (href.includes('/rest/v1/company_jobs')) return json({});
+    if (href.includes('/rest/v1/companies')) return json([]);
+    if (href.endsWith('/v1/search')) {
+      return json({
+        results: [{ slug: 'signalbase', endpoints: [{ path: '/signals/hiring', method: 'GET', description: 'hiring signals job openings' }] }],
+      });
+    }
+    if (href.endsWith('/v1/details')) return json({ endpoint: { price: 0.02, parameters } });
+    if (href.endsWith('/v1/run')) {
+      const sent = JSON.parse(options.body);
+      state.queries.push(sent.query);
+      const results = resultsByCall[state.runs] ?? [];
+      state.runs += 1;
+      return json({ priceCents: 2, results });
+    }
+    throw new Error(`unexpected fetch: ${href}`);
+  };
+  return state;
+};
+
+const oneJob = [
+  { jobId: 'j1', companyName: 'Linear', companyWebsite: 'linear.app', city: 'Berlin', title: 'Engineer', jobUrl: 'https://j/1' },
+];
+
+test('discovery asks for the last week when the endpoint can narrow by date', async () => {
+  const state = discoveryFixture({
+    parameters: ['limit', 'city', 'search', 'posted_within_days'],
+    resultsByCall: [oneJob],
+  });
+
+  const res = makeRes();
+  await jobsSearchHandler(makeReq({ query: 'startups', city: 'Berlin' }), res, { geocode });
+
+  assert.equal(res.statusCode, 200);
+  assert.equal(state.queries[0].posted_within_days, '7');
+  assert.equal(state.runs, 1, 'a window that returns rows needs no second call');
+});
+
+test('an empty week falls back to no window rather than an empty city', async () => {
+  const state = discoveryFixture({
+    parameters: ['limit', 'city', 'search', 'posted_within_days'],
+    // Nothing posted in the last week; everything when unfiltered.
+    resultsByCall: [[], oneJob],
+  });
+
+  const res = makeRes();
+  await jobsSearchHandler(makeReq({ query: 'startups', city: 'Berlin' }), res, { geocode });
+
+  assert.equal(state.runs, 2);
+  assert.equal(state.queries[0].posted_within_days, '7');
+  assert.equal(state.queries[1].posted_within_days, undefined, 'the retry must drop the window');
+  assert.equal(res.body.companies.length, 1);
+});
+
+test('an endpoint with no date parameter is not called twice for nothing', async () => {
+  const state = discoveryFixture({
+    parameters: ['limit', 'city', 'search'],
+    resultsByCall: [[]],
+  });
+
+  const res = makeRes();
+  await jobsSearchHandler(makeReq({ query: 'startups', city: 'Berlin' }), res, { geocode });
+
+  // Both calls would be byte-identical, so the second is pure cost.
+  assert.equal(state.runs, 1);
+});
