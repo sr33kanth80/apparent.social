@@ -3,8 +3,10 @@ import {
   browseCompanies,
   browseCompaniesInBounds,
   discoverArea,
+  loadRoleIndex,
   resolvePreciseLocations,
 } from '@/lib/jobs-service';
+import type { JobCategory } from '@/lib/job-category';
 import type { HiringCompany } from '@/lib/apparent-types';
 import { CityMap3D, type CityMap3DHandle, type MapView } from '@/components/jobs/CityMap3D';
 import { CompanyPanel } from '@/components/jobs/CompanyPanel';
@@ -66,6 +68,8 @@ export default function JobMap() {
   const [addOpen, setAddOpen] = useState(false);
   const [reportOpen, setReportOpen] = useState(false);
   const [minRoles, setMinRoles] = useState(0);
+  const [category, setCategory] = useState<JobCategory | ''>('');
+  const [roleIndex, setRoleIndex] = useState<Map<string, Set<JobCategory>> | null>(null);
   const [savedOpen, setSavedOpen] = useState(false);
   const [nearbyOpen, setNearbyOpen] = useState(false);
   const [origin, setOrigin] = useState<{ latitude: number; longitude: number } | null>(null);
@@ -130,11 +134,31 @@ export default function JobMap() {
     return [...counts.entries()].sort((a, b) => b[1] - a[1]).map(([city]) => city);
   }, [all]);
 
+  /**
+   * Which kinds of role each company has — loaded only once someone filters by
+   * one, because until then it answers a question nobody asked.
+   */
+  useEffect(() => {
+    if (!category || roleIndex) return;
+    let mounted = true;
+    loadRoleIndex()
+      .then((index) => mounted && setRoleIndex(index))
+      .catch(() => undefined);
+    return () => {
+      mounted = false;
+    };
+  }, [category, roleIndex]);
+
   const visible = useMemo(() => {
     let rows = activeCity ? all.filter((company) => company.city === activeCity) : all;
     if (minRoles > 0) rows = rows.filter((company) => company.openRoles >= minRoles);
+    if (category && roleIndex) {
+      // A company whose individual roles were never stored cannot be shown to
+      // have a sales job, so it drops out rather than being assumed to match.
+      rows = rows.filter((company) => roleIndex.get(company.domain)?.has(category));
+    }
     return rows;
-  }, [all, activeCity, minRoles]);
+  }, [all, activeCity, minRoles, category, roleIndex]);
 
   /**
    * Where to point the camera when the city changes.
@@ -368,6 +392,8 @@ export default function JobMap() {
         }}
         minRoles={minRoles}
         onMinRolesChange={setMinRoles}
+        category={category}
+        onCategoryChange={setCategory}
         savedCount={Object.keys(saved).length}
         onOpenSaved={() => {
           setSavedOpen((open) => !open);
@@ -388,7 +414,11 @@ export default function JobMap() {
               ? `${visible.length} ${visible.length === 1 ? 'company' : 'companies'} hiring${
                   activeCity ? ` in ${activeCity}` : ''
                 } · drag to pan, right-drag to orbit, scroll to zoom`
-              : 'Pick a city to start')}
+              : category && !roleIndex
+                ? 'Loading roles…'
+                : category
+                  ? 'Nobody here is hiring for that right now.'
+                  : 'Pick a city to start')}
         </p>
       </div>
 
@@ -412,7 +442,9 @@ export default function JobMap() {
         />
       )}
 
-      {selected && <CompanyPanel company={selected} onClose={() => setSelected(null)} />}
+      {selected && (
+        <CompanyPanel company={selected} category={category} onClose={() => setSelected(null)} />
+      )}
 
       <CommandPalette
         open={searchOpen}

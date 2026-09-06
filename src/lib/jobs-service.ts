@@ -1,4 +1,5 @@
 import { supabase } from './supabase';
+import { categorize, type JobCategory } from './job-category';
 import type { CompanyJob, HiringCompany } from './apparent-types';
 
 /**
@@ -198,6 +199,36 @@ export const loadJobsForCompany = async (domain: string, limit = 25): Promise<Co
     jobFunction: row.job_function ?? '',
     postedAt: row.posted_at,
   }));
+};
+
+/**
+ * Which kinds of role each company is hiring for.
+ *
+ * The companies table only carries a count, so filtering the map to "sales"
+ * needs the roles themselves. One read of title + function for every stored
+ * role is enough to answer it, and it is a free anon select — the alternative,
+ * a query per company, would be hundreds of round trips.
+ *
+ * ponytail: loaded once per session and capped. If the corpus ever outgrows
+ * the cap, this becomes a view with the categories precomputed.
+ */
+export const loadRoleIndex = async (limit = 6000): Promise<Map<string, Set<JobCategory>>> => {
+  const index = new Map<string, Set<JobCategory>>();
+  if (!supabase) return index;
+
+  const { data, error } = await supabase
+    .from('company_jobs')
+    .select('company_domain,title,job_function')
+    .limit(limit);
+  if (error || !data) return index;
+
+  for (const row of data as { company_domain: string; title: string; job_function: string | null }[]) {
+    const category = categorize(row.title ?? '', row.job_function ?? '');
+    const existing = index.get(row.company_domain);
+    if (existing) existing.add(category);
+    else index.set(row.company_domain, new Set([category]));
+  }
+  return index;
 };
 
 export type CompanySubmission = {

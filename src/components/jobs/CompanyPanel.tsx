@@ -3,6 +3,7 @@ import { ArrowUpRight, Bookmark, Briefcase, MapPin, RefreshCw, X } from 'lucide-
 import { fetchCompanyRoles, loadJobsForCompany } from '@/lib/jobs-service';
 import { savedKey, toggleSaved, useSavedJobs } from '@/lib/saved-jobs';
 import { SORTS, sortJobs, type SortKey } from '@/components/jobs/sort-jobs';
+import { CATEGORY_LABELS, categorize, type JobCategory } from '@/lib/job-category';
 import type { CompanyJob, HiringCompany } from '@/lib/apparent-types';
 
 const BLUE = '#1d9bf0';
@@ -32,12 +33,22 @@ const postedLabel = (postedAt: string | null) => {
   return `${Math.floor(days / 30)}mo ago`;
 };
 
-export function CompanyPanel({ company, onClose }: { company: HiringCompany; onClose: () => void }) {
+export function CompanyPanel({
+  company,
+  category,
+  onClose,
+}: {
+  company: HiringCompany;
+  /** The map's kind-of-role filter, so the panel opens on what was searched for. */
+  category: JobCategory | '';
+  onClose: () => void;
+}) {
   const [jobs, setJobs] = useState<CompanyJob[]>([]);
   const [loadingJobs, setLoadingJobs] = useState(true);
   const [sort, setSort] = useState<SortKey>('fresh');
   const [savedOnly, setSavedOnly] = useState(false);
   const [windowDays, setWindowDays] = useState(0);
+  const [kind, setKind] = useState<JobCategory | ''>(category);
   const [refreshing, setRefreshing] = useState(false);
   const [note, setNote] = useState('');
   const saved = useSavedJobs();
@@ -46,6 +57,9 @@ export function CompanyPanel({ company, onClose }: { company: HiringCompany; onC
     let filtered = savedOnly
       ? jobs.filter((job) => saved[savedKey(company.domain, job.jobKey)])
       : jobs;
+    if (kind) {
+      filtered = filtered.filter((job) => categorize(job.title, job.jobFunction) === kind);
+    }
     if (windowDays > 0) {
       // A role with no date cannot be shown as fresh — the count of what this
       // hides is surfaced below, so the filter never silently swallows roles.
@@ -56,7 +70,7 @@ export function CompanyPanel({ company, onClose }: { company: HiringCompany; onC
       });
     }
     return sortJobs(filtered, sort);
-  }, [jobs, saved, savedOnly, sort, windowDays, company.domain]);
+  }, [jobs, saved, savedOnly, sort, windowDays, kind, company.domain]);
 
   /**
    * Ask the provider for postings newer than what we hold.
@@ -81,6 +95,10 @@ export function CompanyPanel({ company, onClose }: { company: HiringCompany; onC
     setNote(gained > 0 ? `${gained} new ${gained === 1 ? 'posting' : 'postings'}.` : 'Nothing new.');
     setRefreshing(false);
   };
+
+  useEffect(() => {
+    setKind(category);
+  }, [category, company.domain]);
 
   useEffect(() => {
     let mounted = true;
@@ -190,6 +208,19 @@ export function CompanyPanel({ company, onClose }: { company: HiringCompany; onC
             </select>
 
             <select
+              value={kind}
+              onChange={(event) => setKind(event.target.value as JobCategory | '')}
+              aria-label="Only roles of this kind"
+              className="rounded-md border border-black/12 bg-white px-2 py-1 text-xs text-black/70 outline-none transition-colors hover:border-black/25"
+            >
+              {CATEGORY_LABELS.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+
+            <select
               value={sort}
               onChange={(event) => setSort(event.target.value as SortKey)}
               aria-label="Sort roles"
@@ -236,15 +267,15 @@ export function CompanyPanel({ company, onClose }: { company: HiringCompany; onC
 
         {note && <p className="mt-2 text-xs text-black/45">{note}</p>}
 
-        {windowDays > 0 && jobs.length > shown.length && (
+        {!savedOnly && jobs.length > shown.length && (
           <p className="mt-2 text-xs text-black/40">
-            {jobs.length - shown.length} older or undated hidden by this window.
+            {jobs.length - shown.length} hidden by these filters.
           </p>
         )}
 
         {!loadingJobs && jobs.length > 0 && shown.length === 0 && (
           <p className="mt-3 text-sm text-black/45">
-            {savedOnly ? 'No saved roles here yet.' : 'Nothing posted in that window.'}
+            {savedOnly ? 'No saved roles here yet.' : 'Nothing here matches those filters.'}
           </p>
         )}
 

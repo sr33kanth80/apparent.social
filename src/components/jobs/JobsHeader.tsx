@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Bookmark, ChevronDown, LocateFixed, Search } from 'lucide-react';
+import { CATEGORY_LABELS, type JobCategory } from '@/lib/job-category';
 
 /**
  * Fixed overlay header: city picker, local time, search affordance and the two
@@ -34,6 +35,8 @@ type Props = {
   onCityChange: (city: string) => void;
   minRoles: number;
   onMinRolesChange: (value: number) => void;
+  category: JobCategory | '';
+  onCategoryChange: (value: JobCategory | '') => void;
   savedCount: number;
   onOpenSaved: () => void;
   onNearMe: () => void;
@@ -49,6 +52,8 @@ export function JobsHeader({
   onCityChange,
   minRoles,
   onMinRolesChange,
+  category,
+  onCategoryChange,
   savedCount,
   onOpenSaved,
   onNearMe,
@@ -78,6 +83,22 @@ export function JobsHeader({
             {cities.map((city) => (
               <option key={city} value={city}>
                 {city}
+              </option>
+            ))}
+          </select>
+          <ChevronDown className="pointer-events-none absolute right-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-black/35" />
+        </div>
+
+        <div className="relative">
+          <select
+            value={category}
+            onChange={(event) => onCategoryChange(event.target.value as JobCategory | '')}
+            aria-label="Filter by kind of role"
+            className="w-[130px] appearance-none truncate rounded-lg border border-black/10 bg-white py-1.5 pl-2.5 pr-7 text-xs text-black/75 outline-none transition-colors hover:border-black/20"
+          >
+            {CATEGORY_LABELS.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
               </option>
             ))}
           </select>
